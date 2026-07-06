@@ -514,7 +514,8 @@ knitr::kable(
 
 The two rows of @tbl-rng-kind share a seed and share a
 line of code, `set.seed(123); sample(1:10)`, and yet
-they disagree from the first draw. An analyst who set a
+they diverge almost at once, agreeing only on the very
+first value before parting company. An analyst who set a
 seed under R 3.5, confident that the seed made the
 analysis reproducible, would find the draws silently
 changed on upgrading to R 3.6 or later. The seed was
