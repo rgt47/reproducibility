@@ -1,0 +1,4 @@
+# Continuous Integration and Verification {#sec-verification}
+
+*Chapter under development. Maps to Week 9.*
+

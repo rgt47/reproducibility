@@ -1,0 +1,21 @@
+# Credits {.unnumbered}
+
+The framework at the centre of this book, `zzcollab`, and
+the argument that motivates it are developed in the
+accompanying methodological paper, *zzcollab: A Flexible
+Extension of rrtools for Reproducible, Collaborative
+Research Compendia in R*. The book draws its worked
+apparatus, its reproducibility-levels ladder, and its
+capture-versus-validation framing from that work and from
+the framework's documentation.
+
+The book stands on the shoulders of the reproducibility
+literature it surveys, in particular the research-compendium
+lineage of Gentleman and Temple Lang and of Marwick,
+Boettiger, and Mullen; the containerisation work of the
+Rocker project; and the many rules-and-practices papers
+cited in the chapters.
+
+Cover artwork palette anchored on a verification teal
+`#14746f`. Typography follows the sequence house style:
+body text in a serif face, code in a monospace face.

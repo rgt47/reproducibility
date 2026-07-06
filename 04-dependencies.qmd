@@ -1,0 +1,4 @@
+# Pinning Packages with renv {#sec-dependencies}
+
+*Chapter under development. Maps to Week 4.*
+

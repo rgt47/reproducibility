@@ -1,0 +1,62 @@
+/*-- scss:defaults --*/
+
+$primary: #14746f;
+$link-color: #14746f;
+$code-color: #14746f;
+$code-block-bg: #f4faf9;
+
+$font-family-sans-serif: 'Source Serif 4', Charter, Georgia,
+  'Times New Roman', serif;
+$font-family-monospace: 'JetBrains Mono', 'Fira Mono', Menlo,
+  monospace;
+
+$body-color: #1f2229;
+$body-bg: #ffffff;
+
+/*-- scss:rules --*/
+
+.sidebar-title {
+  color: $primary;
+  font-weight: 600;
+}
+
+.callout.callout-style-default > .callout-header {
+  font-weight: 600;
+}
+
+.chapter-title {
+  font-weight: 700;
+}
+
+div.callout-tip.callout-titled .callout-title {
+  color: darken($primary, 8%);
+}
+
+div.callout-important.callout-titled .callout-title {
+  color: #a3541f;
+}
+
+img.cover {
+  max-width: 250px;
+  margin: 0 0 1em 1.5em;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.bookepigraph {
+  max-width: 32em;
+  margin: 0.2em 0 2.2em auto;
+  text-align: right;
+  font-size: 0.95em;
+  color: #555;
+  line-height: 1.4;
+}
+
+.bookepigraph em {
+  font-style: italic;
+}
+
+.bookepigraph .smallcaps {
+  font-variant: small-caps;
+  color: #333;
+}

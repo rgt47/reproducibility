@@ -1,0 +1,115 @@
+# Preface {.unnumbered}
+
+This book grew out of a recurring and dispiriting
+experience: an analysis that ran perfectly on the machine
+where it was written, and nowhere else. The script that
+produced last year's figures now errors on a colleague's
+laptop. The supplement that accompanied a published paper
+will not knit, because a package it silently depended on
+has moved on. The reviewer who asks, reasonably, for the
+code receives a folder that does everything except
+reproduce the result. None of these failures is a failure
+of statistics. Each is a failure of computational
+reproducibility, and each was avoidable.
+
+The health sciences have absorbed the lesson that a
+result must be reproducible in principle, and journals now
+ask for the code. What the field has not yet absorbed is
+that making a computational result reproducible in
+practice is a technical discipline with its own tools,
+its own failure modes, and its own standards of evidence.
+This book teaches that discipline to an audience that
+already has the quantitative training to appreciate why it
+matters.
+
+## The organizing idea
+
+The book's organizing idea is that reproducibility is
+layered, and that honesty about which layer one has
+reached is itself a scientific virtue. We develop a ladder
+of four levels. A locatable analysis (L0) is under version
+control and can be found, but nothing about its
+computational environment is fixed. A pinned analysis (L1)
+records the exact versions of the packages it used. A
+pinned-environment analysis (L2) fixes, in addition, the
+operating system, the language runtime, and the system
+libraries, most often inside a container. A verified
+analysis (L3) has gone one step further: its recorded
+computational outputs have been regenerated from scratch
+and shown to match. The book teaches how to reach each
+level, how to tell which one an analysis has actually
+reached, and, just as important, when a lower level is the
+honest and sufficient choice.
+
+Running underneath the ladder is a distinction we return
+to constantly: the difference between capturing
+reproducibility and validating it. Pinning packages and
+pinning the environment are acts of capture; they fix the
+inputs and thereby set the level. Continuous integration,
+dependency checking, and verification are acts of
+validation; they confirm the level without capturing
+anything new. Conflating the two is the source of a great
+deal of false confidence, and separating them is the
+source of a great deal of clarity.
+
+## The tool, and why it is here
+
+The book uses `zzcollab`, an R framework for building
+reproducible research compendia, as its concrete
+apparatus. The choice is deliberate and, we hope, honestly
+motivated. Reproducibility is not learned in the abstract;
+it is learned by building something that reproduces, and
+that requires a real toolchain. `zzcollab` composes the
+established R tools into one workflow organised by the
+levels ladder, which lets the book teach the concepts and
+demonstrate them in the same breath. A reader who prefers a
+different toolchain will find that the concepts transfer
+without loss; the ladder, the compendium, and the
+capture-validation distinction are properties of the
+problem, not of any one program.
+
+## What this book covers
+
+The ten chapters proceed in four parts.
+
+1. **Foundations.** The reproducibility crisis and its
+   specifically computational character; a framework of
+   reproducibility levels and the determinants that set
+   them; and the research compendium as the unit of
+   reproducible work.
+2. **Capturing the environment.** Pinning packages with a
+   lockfile; pinning the operating system and runtime with
+   a container; and the alternatives, from Nix to Podman to
+   the high-performance-computing runtime Apptainer.
+3. **Validation.** Literate programming and the rendered
+   report; testing and code quality; and continuous
+   integration and computational verification, the acts
+   that turn a claimed level into a confirmed one.
+4. **Collaboration and stewardship.** Sharing a compendium
+   with a team and with the world: the team environment
+   model, package registries, archival deposition, and the
+   FAIR principles.
+
+## What this book does not cover
+
+The book is not a statistics text; it assumes the reader
+can already conduct an analysis and concerns itself only
+with making that analysis reproducible. It is not a
+comprehensive manual for any single tool; where a tool's
+own documentation is the right reference, we point to it.
+Nor is it a treatise on replicability in the scientific
+sense of an independent study reaching the same conclusion
+on new data; that is a vital matter, but a different one,
+and we are careful throughout to keep the computational
+question of re-execution distinct from it.
+
+## Chapter template
+
+Each content chapter follows the same sequence: learning
+objectives, an orientation that motivates the chapter from
+a concrete research problem, the analyst's contribution
+that no tool automates, content sections with worked R and
+shell examples, a section on collaborating with a language
+model, exercises, and further reading. The pattern repeats
+deliberately, so that by the third chapter the reader knows
+where to find each component.

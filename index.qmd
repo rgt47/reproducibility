@@ -1,0 +1,69 @@
+# Welcome {.unnumbered .unlisted}
+
+This is the online version of **Reproducible Research for
+the Health Sciences** by Ronald 'Ryy' G. Thomas, a graduate
+course textbook.
+
+The book takes a position that a health scientist will
+recognise from their own methodological training:
+computational reproducibility is not a property of any
+single file but a property of the relationships among the
+operating system, the language runtime, the package set,
+the session configuration, the source code, and the data.
+A result reproduces when those relationships are captured
+well enough that another person, on another machine, at a
+later time, obtains the same answer. The mature tools of
+the R ecosystem each capture one or two of these
+relationships; the unsolved problem, and the subject of
+this book, is composing them into a single workflow that a
+working analyst can actually adopt.
+
+The book is organised around three ideas that recur in
+every chapter. The first is a ladder of reproducibility
+levels, from a merely locatable analysis (L0) through
+pinned packages (L1) and a pinned environment (L2) to a
+verified analysis whose recorded outputs have been shown to
+regenerate (L3). The second is a distinction between
+capturing reproducibility and validating it: pinning an
+environment captures a level, whereas continuous
+integration and verification confirm it. The third is the
+research compendium, a single directory that bundles data,
+code, and manuscript inside a structure that any reader can
+navigate and any machine can rebuild.
+
+The concrete vehicle throughout is `zzcollab`, an
+open-source R framework that composes the standard tools
+(`renv` or Nix for packages, Docker or a runtime
+alternative for the environment, a research-compendium
+package structure, continuous integration, testing, and
+data-integrity checking) into one system organised by the
+levels ladder. The book teaches the concepts first and the
+tool second: a reader who finishes it should be able to
+reason about reproducibility with any toolchain, and to
+operate this one.
+
+## What the reader is assumed to know
+
+- R at a working level: writing functions and scripts,
+  installing packages, and rendering an R Markdown or
+  Quarto document.
+- Comfort at the command line: running a shell command,
+  editing a text file, and using `git` at a basic level.
+- No prior experience with Docker, containers, continuous
+  integration, or Nix is assumed. Each is built up from
+  first principles.
+
+The intended reader is a graduate student or working
+analyst in public health, biostatistics, epidemiology, or a
+related quantitative health science, who produces analyses
+that others will need to trust, audit, and rebuild.
+
+## License
+
+This book is licensed under
+[Creative Commons
+Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+
+Code samples are licensed under
+[Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/),
+i.e. public domain.

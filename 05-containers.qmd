@@ -1,0 +1,4 @@
+# Pinning the Environment with Docker {#sec-containers}
+
+*Chapter under development. Maps to Week 5.*
+

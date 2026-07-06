@@ -1,0 +1,4 @@
+# Literate Programming and the Rendered Report {#sec-literate}
+
+*Chapter under development. Maps to Week 7.*
+

@@ -1,0 +1,78 @@
+# Conventions {.unnumbered}
+
+This page summarises the visual and structural conventions
+used throughout the book.
+
+## Code
+
+Two kinds of code appear. R code is shown in
+syntax-highlighted blocks; its output is prefixed with `#>`
+to make the boundary between input and output explicit:
+
+```r
+mean(c(1, 2, 3, 4, 5))
+#> [1] 3
+```
+
+Shell commands, which recur constantly in this book, are
+shown with a `$` prompt that is not part of the command:
+
+```bash
+$ zzc status
+```
+
+Inline code is in `monospace`. File and directory names
+(`renv.lock`, `analysis/`) and command names (`make`, `zzc`)
+are also set in monospace.
+
+## Callouts
+
+Four callout types appear:
+
+::: {.callout-tip}
+## Tip
+
+A small practical recommendation.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: example
+
+A short question testing comprehension of the just-read
+material. Click to expand the answer.
+:::
+
+::: {.callout-warning}
+## Warning
+
+A pitfall the reader may otherwise hit.
+:::
+
+::: {.callout-important}
+## The honest level
+
+A reminder that a reproducibility claim must be matched to
+the level actually reached, never asserted above it.
+:::
+
+## The reproducibility levels
+
+Throughout the book, an analysis is placed on a four-rung
+ladder, and the reader is trained to name the rung:
+
+- **L0, locatable.** Under version control; the source can
+  be found, but no computational input is pinned.
+- **L1, pinned packages.** The package versions are fixed
+  by a lockfile.
+- **L2, pinned environment.** The operating system, the
+  runtime, and the system libraries are fixed as well,
+  usually in a container.
+- **L3, verified.** The recorded computational outputs have
+  been regenerated and shown to match.
+
+## Cross-references
+
+Sections, figures, and tables are referenced by their
+Quarto label (`@sec-levels`, `@fig-ladder`, `@tbl-tools`).
+Literature is cited by `@bibkey` and collected in the
+References.

@@ -1,0 +1,3 @@
+# Reproducible Research for the Health Sciences {.unnumbered .unlisted}
+
+*Compendia, containers, and computational verification in R.*
