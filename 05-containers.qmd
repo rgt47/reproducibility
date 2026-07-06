@@ -1,5 +1,22 @@
 # Pinning the Environment with Docker {#sec-containers}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*Though computational reproducibility seems more straight
+forward than replicating physical experiments, the complex
+and rapidly changing nature of computer environments makes
+being able to reproduce and extend such work a serious
+challenge.*
+
+[Carl Boettiger]{.smallcaps}, *An Introduction to Docker
+for Reproducible Research* (2015)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able

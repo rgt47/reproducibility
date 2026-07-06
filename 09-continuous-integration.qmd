@@ -1,5 +1,19 @@
 # Continuous Integration and Verification {#sec-verification}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*Provide Public Access to Scripts, Runs, and Results.*
+
+[Sandve, Nekrutenko, Taylor, and Hovig]{.smallcaps}, *Ten
+Simple Rules for Reproducible Computational Research*,
+Rule 10 (2013)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able

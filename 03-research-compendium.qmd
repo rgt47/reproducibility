@@ -1,5 +1,22 @@
 # The Research Compendium {#sec-compendium}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*The purpose of this article is to show how the R package
+can be a suitable template for organising files into a
+research compendium to enhance the reproducibility of
+research.*
+
+[Marwick, Boettiger, and Mullen]{.smallcaps}, *Packaging
+Data Analytical Work Reproducibly Using R (and Friends)*
+(2018)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able

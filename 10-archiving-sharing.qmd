@@ -1,5 +1,20 @@
 # Collaboration, Archiving, and Stewardship {#sec-archiving}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*The intent is that these may act as a guideline for those
+wishing to enhance the reusability of their data holdings.*
+
+[Wilkinson and colleagues]{.smallcaps}, *The FAIR Guiding
+Principles for Scientific Data Management and Stewardship*
+(2016)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able

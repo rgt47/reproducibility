@@ -1,5 +1,21 @@
 # Backends and Runtimes: Nix, Podman, and Apptainer {#sec-backends}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*Using Singularity containers, developers can work in
+reproducible environments of their choosing and design, and
+these complete environments can easily be copied and
+executed on other platforms.*
+
+[Kurtzer, Sochat, and Bauer]{.smallcaps}, *Singularity:
+Scientific Containers for Mobility of Compute* (2017)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able

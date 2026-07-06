@@ -1,5 +1,20 @@
 # Levels of Reproducibility {#sec-levels}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*Reproducibility has the potential to serve as a minimum
+standard for judging scientific claims when full
+independent replication of a study is not possible.*
+
+[Roger D. Peng]{.smallcaps}, *Reproducible Research in
+Computational Science* (2011)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able

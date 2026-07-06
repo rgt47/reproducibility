@@ -1,5 +1,20 @@
 # The Reproducibility Crisis {#sec-crisis}
 
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*More than 70% of researchers have tried and failed to
+reproduce another scientist's experiments, and more than
+half have failed to reproduce their own experiments.*
+
+[Monya Baker]{.smallcaps}, *1,500 Scientists Lift the Lid
+on Reproducibility* (2016)
+```{=latex}
+\end{flushright}
+```
+:::
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able
