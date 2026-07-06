@@ -1,4 +1,848 @@
 # The Research Compendium {#sec-compendium}
 
-*Chapter under development. Maps to Week 3.*
+## Learning objectives
 
+By the end of this chapter the reader should be able
+to:
+
+- Explain what a research compendium is, and trace its
+  lineage from Gentleman and Temple Lang through
+  `rrtools`.
+- Justify why the R-package structure is the ideal
+  compendium container, and describe how `R CMD check`
+  thereby becomes a universal integrity gate.
+- Enumerate the Five Pillars of a compendium and name
+  the single artifact that captures each.
+- Distinguish the five compendium archetypes and state,
+  for each, how the directory layout, the presence of a
+  rendered report, and the applicable validation gates
+  differ while the reproducibility machinery stays the
+  same.
+- Apply the principle of progressive disclosure to let a
+  project evolve from one archetype to another without
+  structural reorganisation.
+
+## Orientation
+
+Consider a first-year epidemiology student who has spent
+three months on a cohort analysis: an incident-diabetes
+study drawn from a registry, with a cleaning script, a
+handful of models, four figures, and a draft of a
+results section. The work exists, but it exists as a
+scatter. The cleaning script sits in a downloads folder,
+the models in a second file that reads a spreadsheet
+whose path is hard-coded to one laptop, the figures as
+loose `png` files pasted by hand into a manuscript, and
+the record of which package versions produced any of it
+nowhere at all. Nothing here is wrong as statistics. The
+problem is that the analysis is not an object. It cannot
+be handed to a colleague, cited, archived, or re-run,
+because there is no single thing to hand over.
+
+The remedy is to make the analysis one object. A
+*research compendium* is that object: a single,
+self-describing directory that bundles the code, the
+data, the prose, and the record of the environment in
+which the analysis was run, organised by convention so
+that another person, or the same person a year later,
+can find every part and regenerate the result. The
+compendium is the third of the recurring ideas of this
+book, after the levels ladder and the
+capture-versus-validate distinction, and it is the one
+that gives the other two something to act on. A
+reproducibility level is a property *of* a compendium; a
+validation gate is a check run *against* a compendium.
+
+The compendium also sets the starting rung on the
+ladder. Merely by being a version-controlled directory
+whose parts can be located, a compendium reaches L0,
+locatable. It is not yet L1, because nothing has pinned
+the package versions; it is not yet L2, because nothing
+has pinned the environment; and it is certainly not yet
+L3, because nothing has re-run it and shown the numbers
+to match. What the compendium provides is the container
+into which the later chapters install those higher
+guarantees. We build the box first, and the chapters
+that follow fill it.
+
+## The analyst's contribution
+
+Three judgements at the centre of this chapter are the
+analyst's alone. No tool scaffolds them, and getting
+them wrong produces a tidy directory that is
+nonetheless the wrong shape for the work.
+
+1. **Naming the archetype.** The analyst must decide
+   what kind of object the project is: a data analysis,
+   a manuscript, a reusable package, a simulation study,
+   or a blog. This choice governs the layout, whether a
+   report is rendered, and which gates apply. It is a
+   statement of intent, not a technical setting, and it
+   is the organising decision of the chapter.
+
+2. **Fixing the raw-and-derived boundary.** The analyst
+   must decide what is an immutable input and what is a
+   product of the analysis. A file placed in
+   `raw_data/` is a promise that it will never be
+   modified; a file in `derived_data/` is a promise that
+   it can always be regenerated from the raw inputs and
+   the code. No program can draw this line, because it
+   depends on where the analyst judges the science to
+   begin.
+
+3. **Deciding what becomes a function.** The analyst
+   must decide which code is a throwaway pipeline step,
+   belonging in `analysis/scripts/`, and which is a
+   reusable procedure worth documenting and testing,
+   belonging in `R/`. This judgement determines what
+   `R CMD check` and the test suite will actually
+   protect, and it is revisited continuously as a
+   project matures.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+- **Research compendium**: a single self-describing
+  directory bundling the code, data, prose, and
+  environment record of an analysis, organised by
+  convention so that it can be located and re-run.
+- **R-package skin**: the minimal set of files
+  (`DESCRIPTION`, `NAMESPACE`, an `R/` directory) that
+  makes a directory a valid R package, and therefore
+  checkable by the R build tools.
+- **`R CMD check`**: the standard R command that builds
+  a package, runs its tests, and applies several hundred
+  correctness checks; here it serves as a universal
+  integrity gate on the whole compendium.
+- **The Five Pillars**: the five artifacts a compendium
+  manages, one per capture point: the `Dockerfile`,
+  `renv.lock`, `.Rprofile`, the source code, and the
+  data.
+- **Archetype**: the kind of research object a
+  compendium is (data analysis, manuscript, package,
+  simulation study, or blog), which varies the layout
+  and the gates but not the underlying machinery.
+- **Render gate**: a validation check that a report or
+  document rebuilds cleanly from source; it applies to
+  archetypes that carry a report and not to those that
+  do not.
+- **Raw versus derived data**: immutable original
+  inputs versus the processed datasets regenerated from
+  them by code.
+- **Progressive disclosure**: the property that one
+  layout supports a project's evolution from one
+  archetype to another with no reorganisation.
+:::
+
+## The compendium as the unit of reproducible work
+
+The idea is not new, and its history is worth a
+paragraph because it explains the shape of the modern
+object. Gentleman and Temple Lang, writing in 2007,
+proposed the compendium in its current sense: a document
+that combines text, code, and data in a form a reader
+can actually execute, rather than a paper that merely
+describes an analysis performed elsewhere
+[@gentleman2007]. The proposal drew on Knuth's earlier
+notion of literate programming, in which prose and code
+are woven into one source [@knuth1984]. For some years
+the compendium remained an aspiration without a
+conventional implementation, and Peng, arguing that
+reproducibility should be treated as a minimum standard
+for computational science, sharpened the motivation
+without settling the container [@peng2011].
+
+The decisive move came from Marwick, Boettiger, and
+Mullen, who observed that a container of exactly the
+required shape already existed and was in daily use by
+thousands of R developers: the R package
+[@marwick2018]. An R package, as standardised by Wickham
+[@wickham2015], already provides a `DESCRIPTION` file
+recording metadata and dependencies, an `R/` directory
+for reusable functions, a `tests/` directory for unit
+tests, a `vignettes/` directory for long-form prose, and
+a rigorously specified build system. Marwick and
+colleagues extended this layout with a single top-level
+`analysis/` directory holding subdirectories for raw
+data, derived data, scripts, figures, and the manuscript
+itself, and packaged the whole as the `rrtools` tool.
+The resulting compendium can be installed, tested, and
+checked with the very same commands used for any R
+package. Nust, Boettiger, and Marwick later wrote a
+companion guide on how to *read* such a compendium, which
+is a useful sign that the object had matured enough to
+have a reading protocol at all [@nust2018].
+
+## The R package as the compendium container
+
+The choice of the R package as the container is the
+single most consequential design decision in this
+lineage, and it repays careful statement. It appears at
+first to be a convenience, reuse of a familiar layout,
+but its real value is that it makes an existing,
+rigorous, and universal gate apply to the whole
+compendium for free.
+
+The gate is `R CMD check`. When R was designed as a
+system for distributing statistical software, its
+authors built a command that takes a package and subjects
+it to several hundred checks: that the code parses and
+loads, that every documented function matches its
+documentation, that declared dependencies are actually
+available, that the examples run, and that the tests
+pass. The command was built to keep the tens of thousands
+of packages on CRAN mutually consistent. By dressing a
+compendium in the R-package skin, one inherits this
+entire apparatus at no cost. A compendium that passes
+`R CMD check` is one whose code loads, whose stated
+dependencies resolve, and whose tests succeed, in a clean
+process that carries none of the author's accumulated and
+undeclared state.
+
+This is why the R-package structure is not incidental to
+the compendium but constitutive of it. Every archetype we
+shall meet below, however different in outward shape,
+carries the same minimal R-package skin, and therefore
+`R CMD check` is the one gate that applies to all of
+them. A manuscript compendium adds a render gate on top;
+a simulation compendium adds a seeding discipline; a
+package compendium leans on the check most heavily of
+all; but the universal floor is the same. We return to
+this point when we tabulate the archetypes, because it is
+the thread that unifies them.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why an R package?
+
+A colleague proposes to organise a compendium as a plain
+folder with sensible subdirectory names, arguing that the
+R-package files (`DESCRIPTION`, `NAMESPACE`) are empty
+ceremony for an analysis that is not a package anyone will
+install. What is lost by this choice?
+
+The plain folder can still be locatable and can still
+hold all five artifacts, so it can in principle reach the
+higher levels of the ladder. What is lost is the universal
+gate. Without the R-package skin, `R CMD check` has
+nothing to check, so there is no single, standard,
+pre-built command that verifies the code loads, the
+dependencies resolve, and the tests pass. The analyst
+must then assemble an equivalent set of checks by hand for
+every project. The ceremony is precisely the interface
+that makes an existing verification apparatus apply.
+:::
+
+## The Five Pillars
+
+A compendium is defined by convention, but it *manages* a
+specific and small set of artifacts. The `zzcollab`
+framework organises these as the Five Pillars: the five
+things a compendium reads, writes, and version-controls,
+one for each point at which reproducibility can be
+captured [@marwick2018]. An analysis is reproducible only
+to the extent that all five are captured, and the pillars
+are layered rather than independent, each resting on the
+ones beneath it.
+
+1. **Computational environment**, captured by the
+   `Dockerfile`. This pillar fixes the operating system,
+   the R version itself, the system libraries, and the
+   document toolchain, all the software beneath the R
+   packages. It is the subject of @sec-containers.
+
+2. **Package versions**, captured by `renv.lock`. This
+   pillar records the exact version of every R package the
+   analysis loads, so that the same set can be restored on
+   another machine. It is the subject of
+   @sec-dependencies.
+
+3. **Session configuration**, captured by the project
+   `.Rprofile`. This pillar fixes the R options, the
+   random-number-generator kind, the locale and timezone,
+   and the thread counts that shape a session before any
+   user code runs.
+
+4. **Source code**, captured by the version-control
+   history. This pillar holds the scripts, the functions,
+   the manuscript source, and the tests that implement the
+   analysis.
+
+5. **Data**, captured either by inclusion in the
+   compendium, for small redistributable files, or by
+   reference to an external repository with a resolvable
+   identifier, for large or restricted data.
+
+Two of the pillars are not coordinate with the other
+three. Source code and data, pillars four and five, are
+the inputs whose re-execution is the goal; the
+environment, packages, and session, pillars one through
+three, are the conditions under which that re-execution
+occurs. This chapter is about the container that holds all
+five and the shape that container takes. The individual
+pillars are developed in the chapters named against them.
+
+::: {.callout-important}
+## The honest level
+
+Assembling the five artifacts into a tidy compendium is a
+capture activity, and it is easy to mistake the tidiness
+for a reproducibility guarantee. A compendium that
+contains a `Dockerfile`, a `renv.lock`, and a clean
+`analysis/` tree looks reproducible, but until the image
+has been rebuilt from the recipe, the lockfile restored,
+and the outputs regenerated and compared, the compendium
+sits at L0 or L1, not at L2 or L3. Match the claim to the
+rung actually reached. A well-organised directory is a
+precondition for reproducibility, not evidence of it.
+:::
+
+## The directory layout, concretely
+
+It helps to see the whole layout at once. The following
+is the top-level structure of a `zzcollab` compendium.
+The block is illustrative and is not executed.
+
+```
+penguin-analysis/
+├── DESCRIPTION           # package metadata and dependencies
+├── NAMESPACE             # generated; exported functions
+├── LICENSE
+├── R/                    # reusable, documented functions
+├── man/                  # generated function documentation
+├── tests/                # tinytest runner
+├── inst/tinytest/        # unit tests (test-*.R)
+├── vignettes/            # long-form prose
+├── analysis/
+│   ├── data/
+│   │   ├── raw_data/       # immutable inputs
+│   │   ├── derived_data/   # regenerable script outputs
+│   │   └── metadata/       # data dictionaries, provenance
+│   ├── scripts/           # numbered pipeline steps
+│   ├── report/            # report.Rmd / index.qmd manuscript
+│   ├── figures/           # generated figures
+│   └── tables/            # generated tables
+├── Dockerfile            # Pillar 1: environment
+├── renv.lock             # Pillar 2: package versions
+├── .Rprofile             # Pillar 3: session configuration
+├── Makefile              # workflow entry points
+├── zzcollab.yaml         # configuration: base image, archetype
+├── .zzcollab-state       # generated state record; never hand-edited
+└── .github/workflows/    # continuous-integration definitions
+```
+
+The reader will note the division. Above the `analysis/`
+directory sits the standard R-package machinery: this is
+the skin that makes `R CMD check` apply. Within
+`analysis/` sits the research proper, in the Marwick
+convention, with the raw-and-derived data separation that
+is the analyst's second judgement made physical. At the
+root sit the three environment artifacts, one per pillar,
+alongside the `Makefile` that provides the commands and
+the `zzcollab.yaml` that records, among a small set of
+parameters, the archetype. That last file is our bridge
+to the centrepiece of the chapter, because the archetype
+is a first-class parameter recorded there, elicited at
+creation time alongside the choice of base image.
+
+## The five archetypes
+
+We come now to the heart of the matter, and to the point
+this book returns to in every chapter: a research
+compendium is not only a manuscript. It is tempting, once
+one has seen the `analysis/report/` directory, to imagine
+that the purpose of a compendium is always to render a
+paper. This is the common case, but it is one case among
+five, and treating it as the whole is the error the
+present section exists to prevent.
+
+`zzcollab` treats the research archetype as a first-class
+initialisation parameter, orthogonal to the choice of
+computational environment [@marwick2018]. Where the base
+image fixes the environment, the archetype determines the
+starting scaffolding: the directory emphasis, whether a
+primary report exists, and which validation gates apply on
+top of the universal one. Five archetypes are advertised,
+and because every one of them carries the minimal
+R-package skin, `R CMD check` remains the universal gate
+across all five, as the framework's own whitepaper stresses
+in its account of the archetype axis. What varies is not
+the reproducibility machinery, which is identical, but the
+shape of the work and the gates it warrants. We take each
+in turn, with a health-sciences example, and then tabulate
+the differences.
+
+### 1. Data analysis (a cohort study)
+
+The first archetype is the exploratory and confirmatory
+data analysis with no manuscript as its primary organising
+document. This is the closest to the original `rrtools`
+use case, and it is the archetype of the epidemiology
+student of our orientation. The work lives in
+`analysis/scripts/`, as numbered pipeline steps, and in
+`analysis/figures/`, with the derived datasets in
+`analysis/data/derived_data/`. Consider an
+incident-diabetes cohort study: a cleaning script that
+reads the registry extract from `raw_data/` and writes an
+analysis-ready table to `derived_data/`, a modelling
+script that fits a Cox proportional-hazards model and
+writes the coefficient table to `tables/`, and a plotting
+script that writes the Kaplan-Meier curves to `figures/`.
+There may be a short results document, but it is not the
+point; the point is the pipeline and its outputs.
+
+The applicable gates are the universal `R CMD check` and
+the unit tests, the latter guarding the cleaning logic and
+the data invariants (that the cohort has the expected
+number of subjects, that no derived rate is negative). A
+render gate is optional here, because there may be no
+report to render. The reproducibility machinery,
+environment and packages and session, is nonetheless
+present in full.
+
+### 2. Scholarly manuscript (a comorbidity paper)
+
+The second archetype makes the manuscript the organising
+principle. A `report.Rmd` or `index.qmd` file in
+`analysis/report/` is created on day one and written in
+parallel with the analysis, so that the prose and the
+numbers never drift apart, and every figure in the paper is
+regenerated on each render rather than pasted in by hand. A
+representative deployment is a study of the comorbidity of
+PTSD, depression, and diabetes among Black women drawn from
+a trauma-study cohort, using variable selection, multiple
+imputation, and causal mediation analysis. The compendium
+organises the manuscript in `analysis/report/report.Rmd`,
+the statistical functions in `R/` with `roxygen2`
+documentation, the analysis pipeline in
+`analysis/scripts/`, and the imputed datasets in
+`analysis/data/derived_data/`.
+
+Here the render gate is central, not optional: a
+validation run rebuilds the report from source, and a
+failure to render is a failure of the compendium. The gates
+are therefore `R CMD check`, the unit tests, and the render
+of `report.Rmd` to PDF. This is the archetype most readers
+imagine when they hear the word compendium, and the burden
+of the present section is that it is only the second of
+five.
+
+### 3. R package (a trial-design function)
+
+The third archetype arises when the reusable code matures
+into something of general interest, at which point `R/`,
+`man/`, and `tests/` become the first-class content and the
+compendium is shareable as a CRAN-style package. The
+distinguishing feature, and the reason this archetype
+matters for the argument, is that *there is no report to
+render at all*. A package that computes the required sample
+size for a group-sequential clinical trial, or the
+operating characteristics of a Bayesian dose-finding
+design, has no manuscript as its deliverable; its
+deliverable is the exported, documented, tested function. A
+representative deployment is a package for generating
+publication-quality clinical-trial summary tables, hosting
+its source in `R/`, its examples in `vignettes/`, and its
+documentation as a generated website.
+
+The gates for this archetype are `R CMD check`, run at its
+full strength, and the unit tests. There is no render gate,
+because there is nothing to render. This case is the
+clearest refutation of the manuscript-only view: an
+entirely valid, fully reproducible compendium can produce
+no report whatsoever, and its integrity rests on the
+universal check and the tests alone.
+
+### 4. Simulation study (a power analysis)
+
+The fourth archetype is the simulation study: a power
+calculation, or an assessment of the operating
+characteristics of a proposed trial design, in which the
+compendium enumerates a grid of parameter configurations,
+runs Monte Carlo replicates at each, and stores the
+results. The layout leans on `analysis/scripts/` for the
+simulation driver and on `analysis/data/derived_data/` for
+the stored replicate results, which are treated as derived
+data because they can be regenerated from the code and the
+seeds.
+
+The distinguishing discipline of this archetype is
+*seeding*. A simulation whose random draws are not pinned
+by an explicit `set.seed()` is not reproducible even in
+principle, because a second run produces different numbers
+by construction. The framework's simulation scaffolding
+therefore seeds a parallel-ready starter script, and a
+recommended practice is to store a seed column alongside
+the parameter grid so that each replicate is individually
+reproducible. Consider a power simulation for a
+longitudinal trial: the driver builds a grid over sample
+size and effect size, assigns each row an integer seed,
+simulates a dataset for each row, fits the planned model,
+and records whether the null was rejected; the empirical
+power is then the rejection rate within each cell. The
+gates are `R CMD check`, the unit tests, and, as an
+emphasis particular to this archetype, a test that the
+seeded simulation returns identical output on a second
+call. A render gate is optional, since the deliverable is
+often the stored results rather than a paper.
+
+### 5. Blog (a teaching notebook)
+
+The fifth archetype is the blog or lab notebook, in which
+the compendium renders not one report but many documents. A
+teaching blog carrying a series of methods posts, or a
+running lab notebook of analyses, is a single compendium
+whose `analysis/` tree holds many `index.qmd` files, each
+rendered to a static site by the same machinery that renders
+a manuscript. Integration with Quarto [@allaire2024]
+enables publication to the site from the same compendium
+that produced the underlying analyses, so that the full
+five-pillar reproducibility stack applies to web-published
+teaching content without any change to the workflow.
+
+The gate here is again the universal `R CMD check`, joined
+by a render gate that must succeed for *each* post rather
+than for a single report. The multiplicity is the
+distinguishing feature: a blog compendium is a
+render-many, where the manuscript is a render-one and the
+package is a render-none. The machinery beneath all three
+is, once more, identical.
+
+The five archetypes and their differences are summarised
+in @tbl-archetypes, and @fig-gates shows which validation
+gates apply to each. The reader should read both across the
+rows, to see how the layout and the gates vary, and down
+the two universal columns, to see how much stays fixed.
+
+```{r}
+#| label: tbl-archetypes
+#| tbl-cap: 'The five research-compendium archetypes. The reproducibility machinery is identical across all five; only the directory emphasis, the presence of a rendered report, and the gates that apply on top of the universal R CMD check differ.'
+
+library(tibble)
+library(knitr)
+
+archetypes <- tibble::tibble(
+  archetype = c(
+    'Data analysis', 'Scholarly manuscript', 'R package',
+    'Simulation study', 'Blog'
+  ),
+  directory = c(
+    'analysis/scripts/, analysis/figures/',
+    'analysis/report/',
+    'R/, man/, tests/',
+    'analysis/scripts/, derived_data/',
+    'many analysis/ index.qmd posts'
+  ),
+  report = c(
+    'Optional', 'Yes, to PDF', 'No',
+    'Optional', 'Yes, many'
+  ),
+  gate = c(
+    'R CMD check and tests',
+    'R CMD check plus render',
+    'R CMD check and unit tests',
+    'R CMD check plus seed determinism',
+    'R CMD check plus render of each post'
+  ),
+  example = c(
+    'Incident-diabetes cohort analysis',
+    'PTSD and diabetes comorbidity paper',
+    'Group-sequential trial-design function',
+    'Power and operating-characteristics simulation',
+    'Teaching blog or lab notebook'
+  )
+)
+
+knitr::kable(
+  archetypes,
+  col.names = c(
+    'Archetype', 'Directory emphasis', 'Renders a report?',
+    'Primary validation gate', 'Health-sciences example'
+  )
+)
+```
+
+```{r}
+#| label: fig-gates
+#| fig-cap: 'Validation gates by archetype. The R-package check and the unit tests apply universally; the render and seeding gates apply selectively. The underlying reproducibility machinery, the Five Pillars, is identical across every row.'
+
+library(ggplot2)
+
+archs <- c(
+  'Data analysis', 'Scholarly manuscript', 'R package',
+  'Simulation study', 'Blog'
+)
+gates <- c(
+  'R CMD check', 'Unit tests', 'Render report',
+  'Seed determinism'
+)
+grid <- expand.grid(
+  archetype = archs, gate = gates,
+  stringsAsFactors = FALSE
+)
+
+renders <- c('Data analysis', 'Scholarly manuscript', 'Blog')
+seeded <- c('Simulation study')
+
+grid$status <- 'not emphasised'
+grid$status[grid$gate %in% c('R CMD check', 'Unit tests')] <-
+  'universal'
+grid$status[grid$gate == 'Render report' &
+              grid$archetype %in% renders] <- 'applies'
+grid$status[grid$gate == 'Seed determinism' &
+              grid$archetype %in% seeded] <- 'applies'
+
+grid$archetype <- factor(grid$archetype, levels = rev(archs))
+grid$gate <- factor(grid$gate, levels = gates)
+grid$status <- factor(
+  grid$status,
+  levels = c('universal', 'applies', 'not emphasised')
+)
+
+ggplot(grid, aes(x = gate, y = archetype, fill = status)) +
+  geom_tile(colour = 'white', linewidth = 1.2) +
+  scale_fill_manual(
+    values = c(
+      'universal' = '#2c7fb8',
+      'applies' = '#7fcdbb',
+      'not emphasised' = '#edf2f4'
+    )
+  ) +
+  labs(x = NULL, y = NULL, fill = NULL) +
+  theme_minimal(base_size = 11) +
+  theme(
+    panel.grid = element_blank(),
+    legend.position = 'bottom'
+  )
+```
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the render-none case
+
+A reviewer objects that a compendium producing no rendered
+document cannot be a reproducible research object, since
+there is no result to reproduce. Which archetype answers
+this objection, and how?
+
+The R-package archetype answers it. A package that exports
+a trial-design function has no report to render, yet it is
+fully reproducible: its result is the behaviour of the
+function, and that behaviour is protected by `R CMD check`
+and by the unit tests, which regenerate and verify the
+function's outputs on every check. The absence of a render
+gate does not weaken reproducibility; it simply reflects
+that the deliverable is a tested procedure rather than a
+document. Reproducibility is a property of re-execution,
+not of rendering.
+:::
+
+## Progressive disclosure
+
+The five archetypes are not walls between separate kinds
+of project. They are, rather, stages a single project may
+pass through, and the framework's most useful structural
+property is that the same layout supports the whole
+trajectory without reorganisation. This is what the
+framework calls *progressive disclosure*: the same
+directory layout, the same `Makefile`, and the same Five
+Pillars carry a project from one archetype to the next, so
+that no transition demands that the analyst tear the
+project apart and rebuild it in a new shape.
+
+The trajectory is easy to picture, and it is the one our
+epidemiology student is likely to walk. The project begins
+as a data analysis: scripts and figures, no manuscript. As
+the findings firm up, a `report.Rmd` is added to
+`analysis/report/` and the project becomes a manuscript
+compendium, with the render gate now active, but nothing
+already written needs to move. In the course of the
+analysis a cleaning routine and a modelling helper prove
+useful enough to document and test, so they migrate from
+`analysis/scripts/` into `R/`, and the package archetype's
+gates begin to bite on them without any change to the
+layout. Should one of those functions reach general
+interest, the compendium can be shared as a package, its
+`R/` and `man/` and `tests/` now first-class, while the
+`analysis/` directory recedes to a development notebook.
+The same compendium has been, in turn, a data analysis, a
+manuscript, and a package, and at no point was it
+reorganised.
+
+The lesson we draw, and it is the organising lesson of the
+chapter, is that the archetype is a description of a
+project's current emphasis rather than a permanent
+category. The reproducibility machinery is invariant across
+the archetypes and across the transitions between them, and
+it is precisely this invariance that lets a project evolve
+without ever leaving the reproducible state it started in.
+
+## Worked example
+
+To make the progressive-disclosure trajectory concrete, we
+follow a single compendium through its first two
+archetypes, staying at the level of the directory and the
+gates rather than the analysis. Suppose our student begins
+the incident-diabetes study. The compendium is created and
+its archetype recorded as a data analysis. The shell
+session below is illustrative and is not executed.
+
+```bash
+$ mkdir diabetes-cohort && cd diabetes-cohort
+$ zzc analysis        # scaffold; archetype recorded in zzcollab.yaml
+```
+
+The student places the registry extract under `raw_data/`,
+writes `analysis/scripts/01_clean.R` to produce a derived
+cohort table, and writes `analysis/scripts/02_model.R` to
+fit the Cox model. A unit test in `inst/tinytest/` asserts
+the cohort size and that no fitted hazard ratio is
+negative. At this point the only gates that apply are the
+universal check and the tests, run in a clean environment:
+
+```bash
+$ make check-renv     # dependencies declared and locked
+$ make docker-test    # R CMD check plus tinytest
+```
+
+Some weeks later the results are firm enough to write up.
+The student adds `analysis/report/report.Rmd`, moving the
+figure code out of `02_model.R` and into report chunks that
+regenerate the figures on render. The compendium is now a
+manuscript, and the archetype line in `zzcollab.yaml` is
+updated to reflect it, but not a single existing file has
+moved. A render gate now joins the others:
+
+```bash
+$ make docker-render  # rebuild report.Rmd to PDF
+```
+
+The cleaning routine, meanwhile, has grown into a general
+helper worth documenting, so it migrates from
+`analysis/scripts/01_clean.R` into `R/prepare_cohort.R`,
+gains a `roxygen2` block, and picks up its own unit tests.
+The package archetype's discipline now protects it, and
+`R CMD check` verifies that the documentation matches the
+function signature. The same compendium is now doing the
+work of three archetypes at once, on one unchanged layout,
+with each gate applying to the part of the project that
+warrants it. This is progressive disclosure in operation,
+and it is the payoff of having chosen a single, principled
+container at the outset.
+
+## Collaborating with an LLM
+
+A language model is a capable assistant for scaffolding and
+organising a compendium, and an unreliable one for the
+judgements that define it. The three triples below mark the
+division.
+
+**Prompt.** 'I have a folder of R scripts and CSV files for
+a cohort analysis. Propose a research-compendium directory
+structure and tell me which files go where.'
+
+*Watch for*: a plausible layout that silently guesses the
+raw-and-derived boundary, placing a file the model cannot
+distinguish as input or output into the wrong directory,
+and an omission of the R-package skin (`DESCRIPTION`,
+`NAMESPACE`) that quietly forfeits the `R CMD check` gate.
+
+*Verification*: confirm by hand that every file in
+`raw_data/` is a genuine immutable input and every file in
+`derived_data/` is regenerable from code, because this is
+the analyst's judgement and not the model's. Confirm the
+R-package skin is present, and run `R CMD check` to
+establish that the proposed structure is in fact checkable.
+
+**Prompt.** 'Which archetype should this project be, and
+which validation gates apply?'
+
+*Watch for*: a default to the manuscript archetype, since
+that is the most common case in the model's training data,
+even when the project has no report and is really a package
+or a simulation study; and a confident enumeration of gates
+that includes a render gate for a project that renders
+nothing.
+
+*Verification*: decide the archetype yourself from the
+project's actual deliverable, a document, a function, or a
+set of stored simulation results, and then check that the
+gates the model lists match @tbl-archetypes for that
+archetype. A render gate on a render-none package is the
+tell that the model has guessed the archetype wrongly.
+
+**Prompt.** 'Write the unit tests that should gate this
+compendium.'
+
+*Watch for*: tests that assert only that functions exist or
+that a script runs without error, which are structural
+checks rather than correctness tests, and, for a simulation
+compendium, an absence of any test that the seeded output
+is reproducible.
+
+*Verification*: read each generated test and confirm it
+checks a value the analysis actually depends on, not merely
+that code executes. For a simulation study, add or verify a
+test that a fixed seed yields identical output on a second
+call, since that is the property the archetype exists to
+protect and the one a model is most likely to omit.
+
+## Exercises
+
+1. Take an existing analysis of your own, currently a
+   scatter of scripts and data files, and classify it as
+   one of the five archetypes. State the deliverable that
+   determines the classification, and list the validation
+   gates that should apply on top of `R CMD check`.
+
+2. For that same analysis, draw the raw-and-derived
+   boundary explicitly: list every data file and assign it
+   to `raw_data/` or `derived_data/`, justifying each
+   assignment by whether the file is an immutable input or a
+   regenerable product. Identify any file whose status is
+   genuinely ambiguous and explain the ambiguity.
+
+3. Explain, in a paragraph, why `R CMD check` is described
+   in this chapter as a universal gate. What does dressing a
+   compendium in the R-package skin buy that a plain,
+   well-named folder does not?
+
+4. Sketch a progressive-disclosure trajectory for a project
+   that begins as a simulation study and ends as an R
+   package. At each transition, state which gate becomes
+   active or inactive, and confirm that no directory needs
+   to be reorganised.
+
+5. Consider a simulation compendium whose driver script
+   contains no `set.seed()` call. At which rung of the
+   reproducibility ladder can such a compendium sit at best,
+   and why can it not, even in principle, reach L3? Write
+   the one-line test you would add to gate the seeding.
+
+6. The chapter claims that the manuscript is only one of
+   five archetypes. Construct the strongest argument you can
+   for the opposing view, that every serious research
+   compendium should ultimately produce a rendered document,
+   and then state where the argument fails.
+
+## Further reading
+
+The foundational proposal is Gentleman and Temple Lang's
+account of the compendium as an executable document
+combining text, code, and data [@gentleman2007]; it reads
+well alongside Knuth's original statement of literate
+programming, from which the idea descends [@knuth1984]. The
+operationalisation that this chapter builds on is Marwick,
+Boettiger, and Mullen's proposal that an R package is the
+natural compendium container, together with their `rrtools`
+tool [@marwick2018]; the reader who wants the R-package
+mechanics in full should consult Wickham's book on R
+packages, which is the standard reference for the skin that
+makes `R CMD check` apply [@wickham2015]. For the
+complementary skill of *reading* a compendium one has
+received rather than writing one, Nust, Boettiger, and
+Marwick offer a short and practical guide [@nust2018].
+Finally, Peng's argument that reproducibility is a minimum
+standard for computational science supplies the motivation
+that the compendium is built to serve [@peng2011], and the
+individual pillars named in this chapter are developed in
+@sec-dependencies, @sec-containers, and the validation
+chapters that follow.

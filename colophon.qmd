@@ -5,11 +5,15 @@ Its examples use R 4.4 or later, the `zzcollab` framework,
 Docker, and `renv`, each introduced in the chapter that
 first requires it.
 
-Fittingly for its subject, the book is itself a
-reproducible compendium: the sources build to HTML and PDF
-with `quarto render`, every computational figure and table
-is generated at build time from the code shown beside it,
-and the environment that produces it is pinned. The book
-therefore practises, on itself, the discipline it teaches.
+Fittingly for its subject, the book is built as a Quarto
+project: the sources render to HTML and PDF with `quarto
+render`, and wherever the book presents a computed figure
+or table, that result is generated at build time from the
+code shown beside it, so the printed output and the code
+that produced it cannot drift apart. Pinning the book's
+own environment to the standard the later chapters
+develop, a lockfile and a container, is planned rather than
+complete; the book will disclose its own reproducibility
+level here, honestly, as it reaches each rung.
 
 Last rendered: see the build timestamp on the homepage.

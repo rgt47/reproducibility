@@ -1,4 +1,918 @@
 # Testing and Code Quality {#sec-testing}
 
-*Chapter under development. Maps to Week 8.*
+## Learning objectives
 
+By the end of this chapter the reader should be
+able to:
+
+- Explain the reproducibility paradox, and say
+  why testing is a reproducibility layer rather
+  than a software nicety.
+- Distinguish capturing reproducibility from
+  validating it, and place testing squarely in
+  the validation register.
+- Write the four kinds of test a compendium
+  wants, using `tinytest` bare expectations:
+  unit, integration, data-validation, and
+  reproducibility tests.
+- Test behaviour rather than implementation, so
+  that a test survives an honest refactor.
+- Apply `lintr`, `styler`, and a pre-commit hook
+  to keep code legible and consistent, and say
+  why legibility is itself a reproducibility aid.
+- State how the testing effort shifts across the
+  compendium archetypes, from an R package to a
+  data analysis to a simulation to a blog.
+
+## Orientation
+
+Consider a registry study in which an analyst
+has written a small function to compute a mean
+biomarker value for each treatment arm, and the
+function carries a quiet bug: it sums the values
+but forgets to divide by their count. The
+analysis runs without error. It produces a
+table, a figure, a p-value. Sent to a colleague,
+cloned onto a second machine, restored from a
+lockfile inside a pinned container, it runs again
+and produces the identical table, the identical
+figure, the identical p-value. Every rung of the
+ladder of @sec-levels is satisfied: the source is
+locatable, the packages are pinned, the
+environment is pinned. The result is perfectly
+reproducible. It is also perfectly wrong.
+
+This is the reproducibility paradox, and it is
+the pivot of this chapter. A buggy function that
+returns the wrong answer returns the *same* wrong
+answer everywhere, on every machine, at every
+later date. Reproducibility machinery, faithfully
+applied, does not detect the error; it propagates
+it with mechanical fidelity. The lesson, pressed
+by Leek and Peng in their aptly titled note that
+reproducible research can still be wrong
+[@leek2015], is that reproducibility is a floor
+and not a ceiling. It guarantees that a result can
+be regenerated. It says nothing whatever about
+whether the result is correct.
+
+The remedy is testing, and the reason testing
+belongs in a book about reproducibility, rather
+than in a separate book about software
+engineering, is precisely the paradox. Pinning a
+package version, building a container, restoring a
+lockfile: each of these *captures* a determinant
+of the computation, and none of them examines
+whether the computation is right. Testing captures
+nothing. A test adds no package to the lockfile
+and no library to the image. What a test does is
+*confirm* that a function, a pipeline, or a dataset
+behaves as the analyst intended. It belongs, in the
+vocabulary this book has used since @sec-intro, to
+the validation register rather than the capture
+register, alongside the continuous integration and
+output verification of @sec-verification. Capture
+fixes the inputs; validation checks that the
+fixed inputs still produce the answer they are
+supposed to. A reproducible analysis without tests
+is trusted; a reproducible analysis with tests is
+checked, and the difference between trusting and
+checking is the difference this chapter develops.
+
+There is a further and more constructive link to
+the ladder. The highest rung, L3 verified, is
+reached not by capturing more but by *confirming*
+that a recorded computational output regenerates.
+That confirmation is itself a test, of a
+particular kind we shall meet below as the
+reproducibility test. Testing is therefore not
+merely adjacent to the levels; the topmost level
+is defined by a test. We begin with the human
+judgements that no testing tool can make, then
+develop the four kinds of test in turn, then take
+up code quality as a second validation feature,
+and close with the way the emphasis shifts across
+archetypes.
+
+## The analyst's contribution
+
+Testing tooling runs the checks, tallies the
+passes and failures, and reports them. It does not
+originate a single one of the judgements that give
+a test its value. Three of these judgements are
+worth naming at the outset, because they are the
+human core of everything that follows.
+
+1. **The analyst decides what 'correct' means.**
+   A test compares a computed value against an
+   expected one, and the expected one has to come
+   from somewhere outside the code under test. This
+   source of independent truth is called an oracle:
+   a mean of one, two, and three that the analyst
+   knows to be two; a count of rows that a data
+   dictionary fixes at some known number; a
+   coefficient that a textbook formula supplies. No
+   tool knows the right answer. The analyst supplies
+   it, and a test is only as trustworthy as the
+   oracle behind it.
+
+2. **The analyst chooses which behaviours to pin.**
+   A function has an infinity of properties, most of
+   them incidental to its purpose. The analyst
+   decides which few constitute the function's
+   contract, the behaviours a future change must not
+   break, and writes tests for those. This is the
+   distinction, developed below, between testing
+   behaviour and testing implementation, and it is a
+   design judgement, not a mechanical one.
+
+3. **The analyst encodes the domain constraints.**
+   The rule that an age lies between zero and one
+   hundred and twenty, that a treatment arm is one
+   of a fixed set of labels, that a probability sits
+   in the unit interval: these are not facts the
+   computer can infer. They are clinical and
+   scientific knowledge, and a data-validation test
+   is the place where that knowledge is written down
+   in executable form, so that a violation halts the
+   analysis rather than passing silently into a
+   result.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+- **Unit test.** A focused check that one small
+  piece of code, typically a single function,
+  behaves as intended on known inputs.
+- **Integration test.** A check that several
+  components behave correctly when composed into a
+  pipeline, from raw input to final result.
+- **Data-validation test.** A check on the data
+  itself rather than the code: that a value lies in
+  a plausible range, that no impossible ages appear,
+  that the expected columns are present.
+- **Reproducibility test.** A check that a recorded
+  computational result regenerates, either across
+  repeated runs with a fixed seed or against a
+  stored baseline.
+- **Oracle.** The source of independent truth a
+  test compares against; the known correct answer.
+- **`tinytest`.** A lightweight, zero-dependency R
+  testing framework in which a test file is a plain
+  script of bare, top-level expectation calls
+  [@vanderloo2020].
+- **Expectation.** A single assertion, such as
+  `expect_equal(actual, expected)`, that passes or
+  fails.
+- **Linting.** Static analysis of source code for
+  stylistic and likely-error patterns, performed by
+  `lintr`, without running the code.
+- **Styling.** Automatic reformatting of source code
+  to a consistent layout, performed by `styler`.
+- **Pre-commit hook.** A script that git runs
+  automatically before a commit is recorded, used
+  here to run the linter and the styler as a gate.
+:::
+
+## The reproducibility paradox, stated precisely
+
+It is worth stating the paradox with a little more
+care, because its precise form dictates the remedy.
+A computational result depends on the code, the
+data, and the stack of determinants beneath them
+that @sec-levels enumerated. The capture tools of
+Part II fix those determinants, so that the
+mapping from input to output is held constant
+across machines and across time. But holding a
+mapping constant says nothing about whether the
+mapping is the intended one. If the code encodes
+the function 'sum' where the analyst meant the
+function 'mean', then capture faithfully preserves
+'sum', and every reproduction returns the sum. The
+error is not in the reproduction; the reproduction
+is flawless. The error is in the mapping, and the
+only instrument that examines the mapping is a
+test.
+
+Two consequences follow, and they cut in opposite
+directions. On the one hand, a result that fails to
+reproduce is thereby shown to be untrustworthy,
+which is a genuine service; irreproducibility is a
+detectable defect. On the other hand, a result that
+does reproduce has been shown only to be stable, not
+to be right, and stability is easily mistaken for
+correctness by an analyst who has watched the same
+number appear three times. The paradox is dangerous
+exactly because reproduction is so persuasive.
+Testing exists to break the false inference from
+'it came out the same' to 'it came out correct'.
+
+::: {.callout-important}
+## The honest level
+
+Placing an analysis at L2 pinned environment, or
+even at L3 verified, is a claim about
+reproducibility, not about correctness. A result
+can sit at the top of the ladder and still be
+wrong, if the code faithfully regenerates a
+mistaken number. When reporting a level, the honest
+formulation is that the analysis reliably
+reproduces a result, and that the result has, to
+the extent the test suite reaches, been checked for
+correctness. The two claims are distinct, and
+conflating them is the precise error the paradox
+warns against.
+:::
+
+## tinytest: bare expectations
+
+The framework this book uses adopts `tinytest`
+[@vanderloo2020] as its testing tool, and the
+choice rewards a moment's explanation because it
+shapes how the tests look. `tinytest` is
+lightweight and carries no dependencies of its own,
+which matters in a reproducible compendium: every
+additional test dependency enlarges the lockfile
+and the container image, and a testing framework
+that dragged in a dozen packages would tax the very
+machinery it is meant to protect. The more visible
+consequence is stylistic. A `tinytest` test file is
+an ordinary R script containing bare, top-level
+expectation calls, with no wrapping function around
+them.
+
+A reader who has met `testthat` will notice the
+difference at once. Where `testthat` nests each
+assertion inside a `test_that('description', {
+... })` block, `tinytest` writes the assertion
+directly:
+
+```r
+# inst/tinytest/test-calculate_mean.R
+expect_equal(calculate_mean(c(1, 2, 3)), 2)
+expect_equal(calculate_mean(5), 5)
+expect_true(is.nan(calculate_mean(numeric(0))))
+```
+
+Each line is a complete test. The file is also a
+runnable script, so during development an analyst
+can source it directly and watch the expectations
+evaluate. The available expectations cover the
+common cases, `expect_equal()`, `expect_true()`,
+`expect_false()`, `expect_identical()`,
+`expect_error()`, `expect_inherits()`, and a few
+others, and a compendium's tests are collected in
+`inst/tinytest/` and driven by a small
+`tests/tinytest.R` runner that `R CMD check`
+invokes. We follow the convention throughout: bare
+top-level expectations, one concern per file, named
+`test-<thing>.R`.
+
+## The four kinds of test
+
+A research compendium wants four kinds of test, and
+they form a progression from the smallest unit of
+code to the reproduction of a whole result. We take
+them in turn, illustrating each on synthetic data
+of the sort a health study might produce.
+
+### Unit tests of functions
+
+A unit test checks that one function behaves as
+intended on inputs whose correct outputs are known
+independently. The `calculate_mean` function of the
+orientation is the canonical case. Its contract is
+that it returns the arithmetic mean, and the oracle
+is arithmetic done by hand:
+
+```r
+# inst/tinytest/test-calculate_mean.R
+expect_equal(calculate_mean(c(2, 4, 6)), 4)
+expect_equal(calculate_mean(c(-1, 0, 1)), 0)
+expect_true(is.nan(calculate_mean(numeric(0))))
+expect_equal(calculate_mean(c(1, NA, 3),
+                            na.rm = TRUE), 2)
+```
+
+The first two lines pin the ordinary behaviour
+against hand-computed answers; the third and fourth
+pin the edge cases, the empty vector and the
+missing value, which are exactly the inputs on which
+an untested function tends to misbehave. A unit test
+suite is, in effect, a written record of what the
+analyst believes each function promises.
+
+### Integration tests of the pipeline
+
+A unit test exercises a function in isolation, but a
+health analysis is rarely one function; it is a
+pipeline, in which raw data is loaded, cleaned,
+modelled, and summarised, and the components can be
+individually correct yet compose incorrectly. An
+integration test runs the pipeline end to end and
+checks the result:
+
+```r
+# inst/tinytest/test-pipeline.R
+raw <- load_cohort('inst/tinytest/data/sample.csv')
+clean <- clean_cohort(raw)
+fit <- fit_model(clean)
+summary_tbl <- summarise_fit(fit)
+
+expect_inherits(fit, 'lm')
+expect_true(all(c('term', 'estimate') %in%
+                names(summary_tbl)))
+expect_equal(nrow(summary_tbl), 3L)
+```
+
+The integration test does not re-check what the unit
+tests already cover; it checks the seams, that the
+output of `clean_cohort` is a valid input to
+`fit_model`, that the model summary has the expected
+shape. A pipeline that passes its unit tests can
+still fail here, if a column is renamed in one step
+and read under its old name in the next.
+
+### Data-validation tests
+
+The third kind of test turns its attention from the
+code to the data. Much of what goes wrong in a
+health analysis is not a coding error but a data
+defect: an age of two hundred, a negative
+laboratory value, a treatment label misspelled, a
+column silently dropped by an upstream export. A
+data-validation test encodes the analyst's domain
+knowledge as executable constraints and fails when
+the data violates them:
+
+```r
+# inst/tinytest/test-data-validation.R
+dat <- load_cohort('inst/tinytest/data/sample.csv')
+
+# the expected columns are present
+expect_true(all(c('id', 'age', 'arm', 'outcome')
+                %in% names(dat)))
+
+# ages are humanly possible
+expect_true(all(dat$age >= 0 & dat$age <= 120))
+
+# the treatment arm is one of the known labels
+expect_true(all(dat$arm %in%
+                c('placebo', 'active')))
+
+# the outcome probability is a probability
+expect_true(all(dat$outcome >= 0 &
+                dat$outcome <= 1))
+```
+
+These are the tests that most directly repay a
+health scientist, because they catch the errors that
+no amount of correct code can prevent, the errors
+that live in the data before the analysis begins. In
+a data-analysis or simulation archetype, where there
+may be few reusable functions to unit-test, the
+data-validation tests are often the heart of the
+suite.
+
+### Reproducibility tests
+
+The fourth kind closes the loop back to the ladder.
+A reproducibility test checks that a result
+regenerates, and it comes in two forms. The first
+fixes a seed and confirms that a stochastic
+procedure returns the same draw twice, which guards
+against the accidental omission of `set.seed` and
+against the silent RNG-default changes discussed in
+@sec-intro:
+
+```r
+# inst/tinytest/test-reproducibility.R
+set.seed(2024)
+a <- bootstrap_ci(sample_data, n = 1000)
+
+set.seed(2024)
+b <- bootstrap_ci(sample_data, n = 1000)
+
+expect_equal(a, b)
+```
+
+The second form is stronger and is the machinery of
+L3: it compares a freshly computed result against a
+baseline recorded at an earlier and trusted moment,
+typically stored as a small file alongside the
+tests.
+
+```r
+# inst/tinytest/test-baseline.R
+baseline <- readRDS(
+  'inst/tinytest/data/known-result.rds')
+current <- run_primary_analysis()
+expect_equal(current$estimate,
+             baseline$estimate,
+             tolerance = 1e-6)
+```
+
+A suite that includes this last test is doing, at
+the scale of a single result, what `zzc verify`
+does at the scale of the whole compendium in
+@sec-verification: regenerating a recorded output
+and confirming that it matches. This is the rung
+the ladder calls verified, and it is reached by a
+test.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which test catches it?
+
+For each defect, name the kind of test most likely
+to catch it. (a) A colleague refactors
+`clean_cohort` and accidentally drops the rows with
+a missing outcome, changing the sample size. (b) An
+upstream export encodes age in months rather than
+years, so ages read as up to fourteen hundred. (c)
+A function meant to return a standard deviation
+returns a variance. (d) After an R upgrade, a
+seeded bootstrap returns different draws than the
+manuscript reported.
+
+*Answer.* (a) An integration test on the pipeline,
+which would see the changed row count, or a
+data-validation test asserting the expected sample
+size. (b) A data-validation test on the age range.
+(c) A unit test against a hand-computed standard
+deviation. (d) A reproducibility test comparing the
+seeded result against a recorded baseline, which is
+exactly the L3 check. Note that the unit and
+data-validation tests catch defects that
+reproduction alone would happily propagate: this is
+the paradox in operation.
+:::
+
+## Test behaviour, not implementation
+
+A test is worth writing only if it survives changes
+that ought not to break it and fails on changes that
+ought to. The way to secure this is to test what a
+function does, its observable behaviour, rather than
+how it does it, its internal implementation. The
+distinction is easiest to see in a pair of tests for
+the same function:
+
+```r
+# fragile: pins an implementation detail
+expect_true(exists('filter',
+                   envir = environment(my_clean)))
+
+# robust: pins the behaviour
+result <- my_clean(data.frame(x = c(1, NA, 3)))
+expect_false(anyNA(result))
+```
+
+The first test asserts that `my_clean` uses a
+function called `filter` internally. If the analyst
+later rewrites `my_clean` in base R, removing the
+`filter` call while leaving its behaviour
+unchanged, the first test fails, and it fails for no
+good reason: the function still does exactly what it
+promised. Such a test punishes honest refactoring
+and trains the analyst to distrust the suite. The
+second test asserts only that the cleaned data
+carries no missing values, which is the behaviour
+that actually matters, and it passes under any
+correct implementation. As a general rule, a test
+should fail when, and only when, the function's
+contract is broken. Tests that fail for other
+reasons are a tax on maintenance, and Wilson and
+colleagues, in their best-practices and
+good-enough-practices guidance, make behavioural
+testing a recurring recommendation [@wilson2014;
+@wilson2017].
+
+A corollary concerns how much to test. A test that
+merely confirms a result is a data frame, without
+checking any value in it, tests too little and gives
+false comfort; a test that pins every incidental
+property tests too much and breaks on every
+revision. The judgement of what to pin, named above
+as the second of the analyst's contributions, is the
+skill the tooling cannot supply.
+
+## Code quality as a validation feature
+
+Testing confirms that code is correct. A second
+family of tools confirms that code is *legible and
+consistent*, and although these tools do not check
+correctness directly, they belong to the same
+validation register and serve the same
+reproducibility end. The argument is one of
+mechanism. Code that a reader can follow is code
+whose errors a reader can find; consistent
+formatting removes the visual noise that hides a
+transposed argument or a misplaced parenthesis; and
+a single house style across a compendium means that
+a difference in the code is always a difference in
+meaning, never merely a difference in whitespace.
+Sandve and colleagues, in their ten simple rules,
+and Wilson and colleagues in both of their practice
+papers, treat readable, conventional code as a
+component of reproducible work rather than an
+aesthetic preference [@sandve2013; @wilson2014;
+@wilson2017].
+
+Two tools mechanise this, and a third enforces them.
+
+**Linting** is static analysis: `lintr` reads the
+source without running it and flags stylistic
+deviations and likely errors, an assignment with
+`=` where the house style is `<-`, a line past the
+width limit, a variable assigned and never used, a
+call to a function that does not exist. Because it
+does not execute the code, it catches a class of
+mistake that tests, which only exercise the paths
+they call, may miss.
+
+**Styling** is automatic reformatting: `styler`
+rewrites the source into a consistent layout,
+fixing indentation, spacing, and alignment, so that
+formatting is never a matter for human attention or
+for a code review. The two are complementary;
+`styler` fixes the formatting that `lintr` would
+otherwise complain about.
+
+In the framework, both run inside the project
+container through Makefile targets, so that no host
+R installation is required and every collaborator
+runs the identical checks:
+
+```bash
+$ make style   # reformat R code with styler
+$ make lint    # analyse R code with lintr
+```
+
+**A pre-commit hook** enforces them. A hook is a
+script that git runs automatically at a defined
+moment; a pre-commit hook runs before a commit is
+recorded, and can refuse the commit if a check
+fails. Configuring the linter and styler as a
+pre-commit hook means that unstyled or unlinted code
+cannot enter the history in the first place, which
+is a far stronger guarantee than a convention that
+relies on the analyst's memory. The configuration
+lives in a `.pre-commit-config.yaml` file at the
+project root:
+
+```yaml
+# .pre-commit-config.yaml
+repos:
+  - repo: https://github.com/lorenzwalthert/precommit
+    rev: v0.4.3
+    hooks:
+      - id: style-files
+      - id: lintr
+      - id: readme-rmd-rendered
+      - id: no-browser-statement
+```
+
+With this in place, an attempt to commit code that
+`styler` would reformat, or that `lintr` flags, or
+that contains a stray `browser()` left over from
+debugging, is stopped before the commit completes,
+and the analyst is prompted to fix it. Continuous
+integration, in @sec-verification, runs the same
+checks again on the server, so that a collaborator
+who has not installed the hook is caught
+nonetheless. The hook is the fast local gate; CI is
+the authoritative remote one.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: capture or validation?
+
+Classify each of the following as belonging to the
+capture register or the validation register, and
+say what would be lost by removing it. (a) The
+`renv.lock` lockfile. (b) A unit test of
+`calculate_mean`. (c) The `.pre-commit-config.yaml`
+hook. (d) The Dockerfile.
+
+*Answer.* (a) Capture: it fixes the package
+versions; removing it drops the analysis from L1 to
+L0. (b) Validation: it checks that a captured
+function is correct; removing it leaves the analysis
+at the same level but now trusted rather than
+checked. (c) Validation: it checks that code is
+consistently formatted; removing it captures nothing
+less but permits legibility to decay. (d) Capture:
+it fixes the environment; removing it drops the
+analysis from L2. The rule of thumb is that
+removing a capture feature lowers the level, while
+removing a validation feature leaves the level
+unchanged and only stops the checking.
+:::
+
+## Testing across the archetypes
+
+The four kinds of test are the same in every
+compendium, but their relative weight shifts with
+the archetype, and it is worth making the shift
+explicit, because a student who has met testing only
+in the context of R packages may wrongly conclude
+that a data analysis has nothing to test.
+
+Testing is native to the **R-package** archetype.
+The package is the setting in which the machinery
+grew up: tests live in a conventional directory,
+`R CMD check` runs them as a matter of course, and
+the whole apparatus of unit testing was designed
+around functions with clean inputs and outputs. A
+package's suite is dominated by unit tests, because
+a package is mostly a collection of functions, and
+the universal gate that @sec-compendium described,
+`R CMD check`, exercises them on every build.
+
+The **data-analysis** and **simulation** archetypes
+are where testing is less conventional and, for that
+reason, most in need of emphasis. Such a compendium
+may contain few reusable functions and no exported
+interface, so the unit-test surface is small. Its
+risk lives elsewhere: in the data, which may be
+malformed, and in the result, which must
+regenerate. Here the data-validation tests and the
+reproducibility tests carry the weight. A simulation
+archetype in particular leans on the reproducibility
+test, because its entire output is a function of a
+seed, and a test that fixes the seed and checks the
+draw is the guarantee that the reported numbers can
+be recovered. The point developed at length in
+@sec-verification, that seeding is the load-bearing
+determinant of a simulation, has its testing
+counterpart exactly here.
+
+The **manuscript** archetype adds one further
+concern, that the rendered report itself continues
+to build, which sits between testing and the
+literate-programming machinery of @sec-literate; a
+test that the report renders, and that its headline
+numbers match a baseline, guards the paradox at the
+level of the whole document.
+
+The **blog** archetype tests the code that its posts
+depend on. A teaching blog whose posts contain
+runnable examples has a reproducibility obligation
+to its readers no smaller than a manuscript's to its
+reviewers: a code snippet that no longer runs, or
+that now returns a different number than the prose
+around it claims, is a published error. Testing the
+functions and the example computations that the
+posts rely on is how a blog keeps that promise
+across the many posts it renders. In every
+archetype, then, the tests are drawn from the same
+four kinds; what changes is which kinds bear the
+load.
+
+## Worked example
+
+We now make the paradox concrete and executable. The
+following chunk defines the `calculate_mean` function
+in two forms, one correct and one carrying the bug of
+the orientation, and checks each against three inputs
+whose means are known by hand. Rather than call the
+`tinytest` package, which may be absent from a bare R
+session, we hand-roll a one-line expectation, which
+is all a bare check really is: a comparison of an
+actual value against an expected one.
+
+```{r}
+#| label: tbl-paradox
+#| tbl-cap: 'A correct function and a buggy variant checked against three inputs with hand-computed means. The buggy variant returns the same wrong value on every input and would return it on every machine and every rerun: it is perfectly reproducible and still wrong.'
+
+# the function under test, in a correct and a
+# buggy form
+calculate_mean <- function(x) {
+  sum(x) / length(x)
+}
+
+calculate_mean_buggy <- function(x) {
+  sum(x)                 # bug: division dropped
+}
+
+# a minimal hand-rolled expectation: no testing
+# package required
+expect <- function(actual, expected, tol = 1e-8) {
+  isTRUE(abs(actual - expected) < tol)
+}
+
+# three inputs whose means are known independently
+cases <- list(c(1, 2, 3),
+              c(10, 20, 30, 40),
+              c(5, 5, 5, 5, 5))
+oracle <- c(2, 25, 5)
+
+results <- data.frame(
+  input = vapply(cases,
+                 function(x) paste(x, collapse = ', '),
+                 character(1)),
+  expected = oracle,
+  correct = vapply(cases, calculate_mean, numeric(1)),
+  buggy = vapply(cases, calculate_mean_buggy,
+                 numeric(1))
+)
+results$correct_passes <-
+  mapply(expect, results$correct, oracle)
+results$buggy_passes <-
+  mapply(expect, results$buggy, oracle)
+
+knitr::kable(results)
+```
+
+The table records the whole of the lesson. The
+correct function passes every check; the buggy
+function fails every check, and it fails them
+identically. Were we to rerun this chunk a thousand
+times, on a thousand machines, the `buggy` column
+would hold the same wrong values every time. The bug
+is not a source of variability, which reproducibility
+tooling might eventually surface; it is a source of
+constant, faithful, reproducible error, which only a
+comparison against an independent oracle can catch.
+That comparison is what a test is.
+
+In a real compendium, the hand-rolled `expect` gives
+way to the `tinytest` expectations, and the checks
+live in a file under `inst/tinytest/`. The following
+is that file, shown as a static listing rather than
+run here, and it is exactly the unit test that would
+have caught the bug before it reached a result:
+
+```r
+# inst/tinytest/test-calculate_mean.R
+expect_equal(calculate_mean(c(1, 2, 3)), 2)
+expect_equal(calculate_mean(c(10, 20, 30, 40)), 25)
+expect_equal(calculate_mean(rep(5, 5)), 5)
+expect_true(is.nan(calculate_mean(numeric(0))))
+expect_equal(calculate_mean(c(1, NA, 3),
+                            na.rm = TRUE), 2)
+```
+
+The runner `tests/tinytest.R` that `R CMD check`
+invokes is a three-line file:
+
+```r
+# tests/tinytest.R
+if (requireNamespace('tinytest', quietly = TRUE)) {
+  tinytest::test_package('mycompendium')
+}
+```
+
+and the pre-commit configuration shown earlier
+completes the picture: the linter and styler guard
+the code's legibility on every commit, the tinytest
+suite guards its correctness, and continuous
+integration re-runs both on a clean machine so that
+neither guarantee depends on the author's local
+setup.
+
+## Collaborating with an LLM
+
+A language model is a capable assistant for writing
+tests, and a dangerous one for a specific reason: it
+will readily produce tests that pass, which is not
+the same as tests that are correct. The analyst's
+verification duty is heaviest exactly where the
+model is most fluent.
+
+**Prompt.** 'Here is my `calculate_mean` function.
+Write `tinytest` unit tests for it, including edge
+cases.'
+
+*Watch for.* A model tends to derive the expected
+values by running the function it was given, rather
+than by independent computation. If the function is
+buggy, the model may generate an oracle that
+matches the bug, producing tests that pass against
+wrong behaviour and thereby certifying the error.
+It may also test only the paths the code obviously
+takes and miss the empty vector or the missing
+value.
+
+*Verification.* Check every expected value by hand
+or from an independent formula, not by running the
+function. The oracle must come from outside the code
+under test; that is the whole point of an oracle.
+Confirm that the edge cases you care about, the
+empty input, the single value, the missing value,
+each have a test.
+
+**Prompt.** 'Write data-validation tests for this
+cohort data frame.'
+
+*Watch for.* The model will propose generic checks,
+non-missing identifiers, numeric outcomes, that are
+reasonable but do not encode *your* domain. It does
+not know that your outcome is a probability bounded
+in the unit interval, or that your ages were
+recorded in years, or which treatment labels are
+admissible.
+
+*Verification.* Supply the domain constraints
+yourself, or check that the generated ranges match
+your data dictionary. A validation test asserting a
+plausible-looking but wrong range is worse than no
+test, because it lends false authority.
+
+**Prompt.** 'Explain why this test is failing.'
+
+*Watch for.* The model may recommend changing the
+test to match the current output, which makes the
+failure disappear without establishing whether the
+code or the test was wrong. A failing test is
+sometimes correct: it may be reporting a real bug.
+
+*Verification.* Decide first, from the oracle,
+whether the code or the expectation is at fault, and
+only then change the one that is wrong. Never
+silence a failing test by editing its expected value
+to whatever the code currently returns; that
+converts a test into a tautology.
+
+## Exercises
+
+1. Take a function you have written for a current
+   analysis and write three `tinytest` unit tests
+   for it: one ordinary case with a hand-computed
+   oracle, and two edge cases. State, for each, where
+   the expected value came from.
+
+2. Introduce the `calculate_mean` bug of this chapter
+   into a copy of one of your own summary functions,
+   confirm that the analysis still runs and produces
+   a stable result, and then write the single unit
+   test that would have caught it. Reflect in a
+   sentence on why reproduction did not catch it.
+
+3. Write a data-validation test file for a dataset
+   you use, encoding at least four domain constraints:
+   an expected set of columns, a plausible range for a
+   continuous variable, an admissible set of labels
+   for a categorical variable, and a bound on the
+   missing-data rate. Justify each range from a data
+   dictionary or from clinical knowledge.
+
+4. Classify each test you wrote in exercises 1 and 3
+   as belonging to the capture register or the
+   validation register, and state what removing it
+   would and would not change about the analysis's
+   position on the L0 to L3 ladder.
+
+5. Write a reproducibility test of the baseline form:
+   run a small analysis, save its result with
+   `saveRDS`, and write a test that recomputes the
+   result and compares it against the saved baseline
+   with an appropriate tolerance. Then change one line
+   of the analysis and observe the test fail.
+
+6. Install the `precommit` package, add the
+   `.pre-commit-config.yaml` of this chapter to a
+   project, and attempt to commit deliberately
+   misformatted R code. Report what the hook does, and
+   contrast it with what continuous integration would
+   do in @sec-verification if the hook were absent.
+
+## Further reading
+
+The single most important reference for this chapter
+is the short note by Leek and Peng, that reproducible
+research can still be wrong [@leek2015], which states
+the paradox that motivates every test in a compendium
+and argues for a prevention-oriented rather than a
+correction-oriented stance toward analytical error.
+
+For the testing tool itself, van der Loo's
+documentation of `tinytest` [@vanderloo2020] explains
+the design rationale for a zero-dependency,
+bare-expectation framework, and is worth reading for
+the argument that a testing framework should not
+itself be a heavy dependency.
+
+For the practice of testing and code quality as
+components of scientific computing rather than as
+software-engineering appendages, the two papers by
+Wilson and colleagues are the standard references:
+the best-practices paper [@wilson2014] and the
+good-enough-practices paper [@wilson2017], the latter
+pitched deliberately at researchers without a
+software background. Sandve and colleagues' ten
+simple rules [@sandve2013] cover the same ground in a
+compact, rule-by-rule form, and situate readable code
+and recorded results within a general reproducibility
+discipline.
+
+For the connection between testing and the highest
+rung of the ladder, the reader is referred forward to
+@sec-verification, where the reproducibility test of
+this chapter reappears at the scale of the whole
+compendium as output verification, and to @sec-levels
+for the capture-and-validation distinction that places
+testing in the validation register. Peng's early
+account of reproducibility as a spectrum [@peng2011]
+remains the clearest short statement of why confirming
+a result, and not merely producing it, is a minimum
+scientific standard.

@@ -1,4 +1,744 @@
 # Backends and Runtimes: Nix, Podman, and Apptainer {#sec-backends}
 
-*Chapter under development. Maps to Week 6.*
+## Learning objectives
 
+By the end of this chapter the reader should be able
+to:
+
+- Explain why Docker is one route to the
+  pinned-environment level and not the only one.
+- Distinguish the three axes along which the framework
+  organises the alternatives: a different runtime over
+  the same image, a different environment model without a
+  container, and remote execution that moves the
+  container off the analyst's machine.
+- Run a container image under Podman or Apptainer, and
+  read a small `default.nix` declaration produced by
+  `rix`, without conflating the three.
+- Choose a backend or runtime to fit a concrete setting:
+  a high-performance cluster, a Windows-only laboratory,
+  a reviewer who must install nothing, a project
+  demanding maximum rigour, or an institution with a
+  licensing constraint.
+- State honestly which reproducibility level each option
+  reaches, and match the claim to the level.
+
+## Orientation
+
+In @sec-containers we reached the pinned-environment
+level, L2 on the ladder of @sec-levels, by packaging an
+analysis inside a Docker image: an image fixes the
+operating system, the system libraries, and the R
+interpreter that a lockfile alone leaves to chance. It is
+easy to come away from that chapter believing that Docker
+is reproducibility, that the two words name the same
+thing. They do not. Docker is one instrument for reaching
+L2, and a reader who mistakes the instrument for the goal
+will be at a loss the first time Docker is unavailable,
+unwanted, or forbidden.
+
+Consider three health scientists who cannot simply follow
+the Docker recipe of the previous chapter. The first runs
+a large simulation study that must execute on a shared
+university cluster, where the scheduler will not grant her
+the administrative privileges a Docker daemon requires. The
+second works in a laboratory of Windows machines and a
+pipeline that mixes R with Python, a combination that sits
+awkwardly inside the Rocker images. The third has prepared
+a teaching blog and wants a reviewer to re-run a single
+post in a browser, installing nothing at all. Each needs
+the pinned environment that L2 names; none of them can
+obtain it in the ordinary Docker way. The purpose of this
+chapter is to show that the ladder does not depend on any
+one tool, and to equip the reader to choose among the
+alternatives with judgement rather than habit.
+
+The framework this book uses organises those
+alternatives along three axes, and the organisation is
+worth internalising before any command is typed, because
+it prevents the common error of treating every unfamiliar
+tool as a special case. The first axis changes only the
+runner: a different program runs the very same image, and
+nothing about the image, its pinning, or its base changes.
+The second axis changes the environment model itself,
+dispensing with the container and declaring the
+environment directly, so that the pinned environment is
+reached by a different mechanism. The third axis keeps the
+container but moves it off the analyst's machine, into a
+browser or a hosted service, so that the person
+reproducing the work provides no environment of their own.
+A tool belongs to exactly one axis, and knowing which axis
+a tool occupies tells the analyst almost everything about
+what it does and does not change.
+
+## The analyst's contribution
+
+No tool in this chapter chooses itself. Three judgements
+remain the analyst's, and they are the substance of the
+chapter.
+
+1. **Diagnose the constraint before selecting the
+   tool.** The decisive question is rarely which tool is
+   best in the abstract but which constraint is binding:
+   an absence of administrative rights on a cluster, an
+   operating system, a mixed-language pipeline, a
+   licensing term, a reviewer's patience, a demand for
+   maximum rigour. The analyst identifies the binding
+   constraint first, and the constraint usually selects
+   the axis, and often the tool.
+
+2. **Locate each alternative on the correct axis.** A
+   great deal of confusion in practice comes from
+   treating Podman, Nix, and Binder as interchangeable
+   answers to one question. They are answers to three
+   different questions. The analyst who keeps the axes
+   distinct will not, for example, expect Podman to solve
+   a Windows-and-Python problem, nor expect Nix to spare
+   a reviewer an installation.
+
+3. **State the level each option actually reaches.** A
+   Podman run of a digest-pinned image reaches L2 exactly
+   as the Docker run did; a Nix declaration reaches L2
+   without a container; a Binder session reaches L2 for
+   the duration of the session but pins nothing on the
+   reviewer's own machine. The analyst reports the level
+   honestly and never lets the novelty of a tool inflate
+   the claim.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+- **Runtime.** The program that runs a container image:
+  Docker, Podman, or Apptainer. The runtime is
+  interchangeable when the image is a standard OCI image.
+- **OCI image.** An image built to the Open Container
+  Initiative specification, the common format that
+  Docker, Podman, and Apptainer can all consume. A Docker
+  image is an OCI image.
+- **Daemon.** A background system service that runs
+  continuously with elevated privilege. Docker relies on
+  one; Podman and Apptainer do not, which is why they run
+  without administrative rights.
+- **Rootless.** Able to run under an ordinary user
+  account, without the `root` superuser privilege. A
+  requirement on shared clusters, where users are not
+  administrators.
+- **Backend.** The mechanism that supplies the
+  environment. Docker is the container backend; Nix is a
+  container-free backend that declares the environment
+  directly.
+- **Purely functional package manager.** A package
+  manager, such as Nix, in which the installed result is
+  a deterministic function of the declared inputs, so
+  that the same declaration yields a bit-identical
+  environment.
+- **Content-addressed.** Identified by a hash of the
+  content itself rather than by a mutable name, so that a
+  reference cannot silently point at different content
+  later.
+- **SIF.** The Singularity Image Format, a single-file
+  archive that Apptainer produces from an image, suitable
+  for depositing alongside a compendium.
+:::
+
+## Axis one: a different runtime over the same image
+
+We begin with the cheapest of the three changes, because
+it changes the least. The image built in @sec-containers,
+pinned to its base by content digest and installing its
+packages from a dated snapshot, is a standard OCI image.
+Docker is the program that ran it, but the image does not
+belong to Docker; any OCI-compatible runtime can run it.
+Selecting a different runtime is therefore a parameter,
+not a redesign: the base image, the digest pin, the dated
+snapshot, and the lockfile all carry over unchanged, and
+only the command that launches the container differs.
+
+### Podman
+
+Podman is a daemonless, rootless,
+Docker-command-compatible runtime. Where Docker interposes
+a background daemon running with elevated privilege,
+Podman runs the container directly under the invoking
+user's account, and its command-line interface is close
+enough to Docker's that `podman run` stands in for
+`docker run` in most cases:
+
+```bash
+$ podman build -t myproject .
+$ podman run --rm -v "$(pwd)":/project myproject \
+    Rscript -e 'source("analysis/run.R")'
+```
+
+Two properties recommend Podman to the health scientist.
+The first is that, being daemonless and rootless, it runs
+on a multi-user Linux machine where an analyst has no
+administrative rights, a situation in which Docker's
+daemon is often simply unavailable. The second is a matter
+of licensing rather than technology, and it is worth
+stating plainly because it catches many university users
+unawares. Docker Desktop, the packaged Docker distribution
+for macOS and Windows, is under its current terms not free
+for use by larger commercial and institutional
+organisations, and many universities fall within those
+terms. Podman carries no such restriction. For an analyst
+whose institution has declined to license Docker Desktop,
+Podman reaches exactly the same L2 environment, from the
+same image, at no licensing cost.
+
+### Apptainer
+
+Apptainer, known until its move to the Linux Foundation as
+Singularity, is the runtime built for high-performance
+computing [@kurtzer2017]. Kurtzer and colleagues designed
+it for precisely the setting that defeats Docker on a
+cluster: it runs unprivileged, integrating with the batch
+schedulers, message-passing libraries, and graphics
+processors that scientific clusters provide, so that a
+user with no administrative rights can nonetheless run a
+containerised analysis under the cluster's job system.
+
+Two rules govern its use, and observing them keeps the
+image pinning of @sec-containers intact. The first is that
+an Apptainer image should be built from the
+digest-pinned Docker image, never authored independently,
+so that the same content digest carries through:
+
+```bash
+$ apptainer build env.sif \
+    docker://ghcr.io/lab/env@sha256:9f2c...
+
+$ apptainer exec env.sif \
+    Rscript -e 'source("analysis/run.R")'
+```
+
+The second is that the single file Apptainer produces, the
+SIF, is itself an archival artifact. Unlike a Docker image,
+which lives in a layered local store, an Apptainer image is
+one file that can be checksummed, deposited in a data
+repository, and cited alongside the compendium. It is thus
+both the thing that runs the analysis on the cluster and
+the thing that is archived to let others run it later, a
+convenient coincidence for the verification of
+@sec-verification.
+
+The expected pattern, and the one we recommend, is to
+develop on the laptop with Docker or Podman and to run at
+scale on the cluster with Apptainer, all from a single
+image. Nothing is rebuilt for the cluster; the same pinned
+environment is merely run by a different program.
+
+This is the point at which the archetypes of @sec-compendium
+begin to matter. A **simulation study**, which may need to
+run thousands of replicates across the nodes of a cluster,
+is the archetype that most naturally reaches for Apptainer:
+the SIF file travels to the cluster, the scheduler runs it
+unprivileged across many cores, and the same file is later
+deposited as the archival record of the environment. A
+plain **data-analysis** project that runs comfortably on a
+laptop has no such need and is better served by Docker or
+Podman. The archetype does not change the image; it changes
+which runtime is the natural fit.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what changes with the runtime
+
+An analyst has a Docker image pinned as
+`FROM rocker/verse@sha256:...` with packages installed
+from a dated snapshot. She switches from Docker to Podman
+to avoid a licensing constraint. Which of the following
+change: the base image, the pinned digest, the installed
+package versions, the reproducibility level reached?
+
+*Answer.* None of them change. The runtime is a parameter
+over the same OCI image. The base image, its digest, and
+the package versions are all properties of the image, not
+of the program that runs it, and the level reached is L2
+in either case. Only the launching command differs
+(`podman run` for `docker run`). This is exactly why a
+runtime swap is the cheapest of the three axes: it changes
+the runner and nothing else.
+:::
+
+## Axis two: a different environment model without a container
+
+The second axis is a deeper change. Here we abandon the
+container altogether and declare the environment directly,
+reaching the pinned environment by a different mechanism.
+The container is not run by a different program; it is not
+run at all, because there is none.
+
+### Nix and the rix front-end
+
+Nix is a purely functional, content-addressed package
+manager [@dolstra2004]. The phrase repays unpacking.
+'Purely functional' means that the installed environment
+is a deterministic function of a declaration: given the
+same declaration, Nix builds a bit-identical result, on
+any machine, at any later time. 'Content-addressed' means
+that every built component is identified by a hash of its
+inputs, so that a reference cannot silently come to mean
+something else, the mutable-tag failure we guarded against
+in @sec-containers by pinning digests. Dolstra, in the
+work that introduced Nix, made deterministic build the
+organising principle rather than an afterthought, and it
+is that property that recommends Nix here.
+
+The decisive fact for our purposes is that a single Nix
+declaration fixes the R version, the R packages, and the
+system libraries together. It therefore reaches the
+pinned-environment level, L2, without a container at all.
+This is why the ladder of @sec-levels speaks of 'a Docker
+or Nix image': Nix is not a supplement to the container, in
+the way that `renv` is a supplement, but a peer of it, an
+alternative road to the same rung.
+
+The obstacle is that the Nix language is unfamiliar to
+almost every biostatistician, and this is the dominant
+reason it is not the default. The `rix` package removes
+much of that obstacle by generating the Nix declaration
+from R, in R idiom that a health scientist already knows
+[@rodrigues2024rix]. Rodrigues and Baumann designed `rix`
+so that the analyst writes a familiar R call and `rix`
+writes the Nix:
+
+```r
+library(rix)
+
+rix(
+  r_ver = "4.4.1",
+  r_pkgs = c("dplyr", "ggplot2", "targets"),
+  system_pkgs = NULL,
+  git_pkgs = NULL,
+  ide = "rstudio",
+  project_path = "."
+)
+```
+
+That call produces a `default.nix` file, the declaration
+that pins the environment. A reader need not master the
+Nix language to recognise its shape; a minimal
+`default.nix` reads, in outline, as follows:
+
+```nix
+let
+  pkgs = import (fetchTarball
+    "https://github.com/NixOS/nixpkgs/archive/<rev>.tar.gz")
+    {};
+  rpkgs = with pkgs.rPackages; [ dplyr ggplot2 targets ];
+  system_packages = with pkgs; [ R glibcLocales ];
+in
+pkgs.mkShell {
+  buildInputs = [ rpkgs system_packages ];
+}
+```
+
+The pinned `nixpkgs` revision, written as `<rev>` above, is
+the analogue of the base-image digest: it fixes the exact
+set of package definitions from which the environment is
+built. Entering the environment is then a single command,
+and no image is built:
+
+```bash
+$ nix-shell default.nix
+```
+
+Newer Nix workflows prefer a flake, a `flake.nix` paired
+with a generated `flake.lock` that records the exact pin,
+the direct analogue of `renv.lock`. Because flakes remain
+behind an experimental flag in current Nix, the framework
+tolerates both the classic `default.nix` and the flake
+form, and the reader will encounter both in the wild.
+
+We should be candid about the trade-offs, in the two-sided
+manner this book prefers. On the plus side, Nix delivers
+the entire environment pillar in one mechanism, reaches L2
+without the container machinery, and gives bit-identical
+builds that Docker, whose reproducibility depends on
+careful digest and snapshot discipline, approaches but does
+not guarantee by construction. On the minus side, the Nix
+model is genuinely alien to the audience, and although
+`rix` hides much of the language, diagnosing a build that
+has failed still calls for some Nix knowledge; the first
+build is slow and consumes substantial disk; Nix is a host
+prerequisite comparable to Docker, requiring Linux, macOS,
+or the Windows Subsystem for Linux; and `rix` is young
+enough that its own version must be pinned. These caveats
+are the reason Nix is carried as an opt-in backend for the
+analyst who wants maximum rigour, while `renv` with a
+container remains the accessible default. The choice is
+real, and it is not free either way.
+
+### Guix and the conda family
+
+Two neighbours of Nix deserve mention, because a reader
+will meet them and should know where they sit. GNU Guix is
+Nix's close sibling, sharing the purely functional,
+content-addressed model, with a smaller R ecosystem; for
+the health scientist it is best understood simply as Nix's
+relation, reaching the same rung by the same idea.
+
+The conda family occupies a genuinely different middle
+ground, and it answers two constraints the container route
+handles awkwardly [@anaconda2023]. Conda, with the faster
+resolver `mamba` and the lockfile-oriented `pixi`
+[@pixi2024], reproduces natively on Windows, without the
+Linux-emulation layer a Docker image requires there, and it
+spans R and Python in a single environment rather than
+forcing the mixed-language analyst to bridge two toolchains.
+For a Windows-only laboratory running a pipeline that mixes
+the two languages, this is a decisive practical advantage.
+The cost is rigour: conda draws its packages from
+conda-forge rather than from CRAN or the Posit Package
+Manager, and it pins less strictly than Nix. It is, in the
+honest accounting, a middle-ground option, more reproducible
+than an unpinned install and less exacting than Nix, and it
+is the right choice precisely when its two native strengths,
+Windows and mixed languages, are the binding constraint.
+
+::: {.callout-important}
+## The honest level
+
+It is tempting, having adopted a tool as sophisticated as
+Nix, to describe an analysis as 'fully reproducible' on the
+strength of the tool's reputation. Resist this. Nix reaches
+L2, the pinned environment, and reaches it well; it does not
+by itself reach L3, verification, which requires actually
+regenerating the recorded outputs and showing they match, as
+@sec-verification develops. A `default.nix` in the
+repository is a claim of L2, no more, until the outputs have
+been reproduced. Match the claim to the rung, whichever
+backend supplied it.
+:::
+
+## Axis three: remote execution
+
+The third axis keeps the container but moves it off the
+analyst's machine. The pinning is unchanged; what changes
+is who runs it. This axis exists to answer a specific
+limitation, the learning curve and installation burden that
+a container imposes on the person reproducing the work,
+rather than to replace the container format.
+
+Binder runs a compendium's container in the browser, so
+that a reviewer or reader installs nothing whatever
+[@jupyter2018]. Jupyter's Binder service reads the
+configuration files already present in a well-formed
+compendium, builds the environment on a hosted server, and
+serves it as an interactive session reached by a single
+link. For the health scientist the appeal is exact: a
+reviewer clicks a link and is inside the running
+environment, with no Docker, no Nix, and no local
+installation of any kind. The corresponding limitation is
+equally exact, and it returns us to the honest-level
+theme: the Binder session reaches L2 for the life of the
+session, on a server that pins the environment, but it
+pins nothing on the reviewer's own machine and does not
+persist. It is superb for demonstration and review, and it
+is not an archival guarantee.
+
+Development containers, and the hosted Codespaces service
+built on them, bring the same pinned environment into an
+editor rather than a browser [@devcontainers]. A
+`.devcontainer/` configuration in the compendium describes
+the environment, and a compatible editor or the Codespaces
+service builds and opens it, so that a collaborator edits
+and runs inside the pinned environment without assembling
+it locally. The principle is the same presence-driven one
+we have met throughout: the configuration file's existence
+drives the automated build.
+
+Here again the archetype guides the choice. A **blog** or a
+**manuscript** archetype, whose whole purpose is to be read
+and its results inspected by others, benefits most from
+browser execution: a reader of a teaching post, or a
+reviewer of a manuscript, re-runs the analysis in Binder
+with nothing to install, which is exactly the low-friction
+path such archetypes want. A blog that renders many posts
+gains the most, since each post becomes independently
+re-runnable by a reader at a link. A **simulation** archetype,
+by contrast, gains little from browser execution and much
+from the cluster, which is the Apptainer story of the first
+axis. The reproducibility machinery is the same across all
+archetypes; the archetype tells the analyst which face of it
+to present.
+
+## Choosing among the alternatives
+
+Having laid out the three axes, we can now give the
+concrete guidance the chapter exists to deliver. The
+governing question, as the analyst's second contribution
+insisted, is which constraint binds. We answer it by
+setting the guidance beside a compact comparison, generated
+at build time from the same tibble that a reader could
+inspect directly.
+
+```{r}
+#| label: tbl-backends
+#| tbl-cap: 'Backends and runtimes for reaching the pinned environment, by axis'
+library(tibble)
+library(knitr)
+
+comparison <- tibble(
+  name = c(
+    "Docker", "Podman", "Apptainer",
+    "Nix (via rix)", "Guix", "conda / pixi",
+    "Binder", "Devcontainer / Codespaces"
+  ),
+  axis = c(
+    "runtime", "runtime", "runtime",
+    "backend", "backend", "backend",
+    "remote", "remote"
+  ),
+  pins = c(
+    "the image (OS, R, libraries)",
+    "the image (OS, R, libraries)",
+    "the image, as one SIF file",
+    "R, packages, system libraries",
+    "R, packages, system libraries",
+    "R and Python packages, less strictly",
+    "the image (server-side, per session)",
+    "the image (in the editor)"
+  ),
+  container = c(
+    "yes", "yes", "yes",
+    "no", "no", "no",
+    "yes (hosted)", "yes (hosted)"
+  ),
+  best_fit = c(
+    "the default local runtime",
+    "licensing constraint; rootless Linux",
+    "an HPC cluster; archival SIF",
+    "maximum rigour; bit-identical builds",
+    "a Nix-aligned site",
+    "Windows-only or mixed R and Python",
+    "a reviewer who installs nothing",
+    "a collaborator editing in the environment"
+  )
+)
+
+kable(
+  comparison,
+  col.names = c(
+    "Name", "Axis", "What it pins",
+    "Container?", "Best-fit setting"
+  )
+)
+```
+
+Read as guidance, the table resolves into a short set of
+recommendations, each keyed to a binding constraint. When
+the destination is an **HPC cluster** and the analyst has
+no administrative rights, the choice is Apptainer, built
+from the same digest-pinned image and run under the
+scheduler, with the SIF file doubling as the archival
+deposit. When the setting is a **Windows-only laboratory**,
+or the pipeline **mixes R and Python**, the choice is the
+conda family, `pixi` in particular, which reproduces
+natively on Windows and spans both languages at the cost of
+strict pinning. When a **reviewer must install nothing**,
+the choice is Binder, which serves the running environment
+in a browser for the life of a session. When the project
+demands **maximum rigour** and the team can absorb the
+learning curve, the choice is Nix through `rix`, which
+gives bit-identical builds and reaches L2 without a
+container. And when the obstacle is a **licensing
+constraint**, an institution that has not licensed Docker
+Desktop, the choice is Podman, which reaches the identical
+L2 environment from the identical image at no licensing
+cost. The default, for the analyst under none of these
+constraints, remains Docker with `renv`, the composition of
+@sec-containers.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: match the constraint to the axis
+
+For each situation, name the axis and the tool. (a) A
+genomics simulation must run ten thousand replicates on a
+university cluster where you are not an administrator. (b) A
+reviewer of your manuscript should re-run the main figure
+without installing anything. (c) Your laboratory runs
+Windows and your pipeline calls both R and Python.
+
+*Answer.* (a) Axis one, a different runtime over the same
+image: Apptainer, built from the digest-pinned image and
+run under the scheduler, with the SIF as the archival
+record. (b) Axis three, remote execution: Binder, which
+serves the container in a browser per session. (c) Axis
+two, a different environment model: the conda family, and
+`pixi` in particular, the one option that reproduces
+natively on Windows and spans both languages. Note that no
+single tool answers all three; each constraint selects a
+different axis.
+:::
+
+## Worked example
+
+To make the axes concrete, consider a single research
+group with one image and three destinations, which is a
+common situation once a project matures. The group has
+built a pinned image for a cohort-analysis compendium,
+`ghcr.io/lab/cohort-env`, resolved to an immutable digest.
+
+On the analyst's own laptop, an institution that has
+declined to license Docker Desktop, the image runs under
+Podman with no change to the image and no licensing cost:
+
+```bash
+$ podman run --rm -v "$(pwd)":/project \
+    ghcr.io/lab/cohort-env@sha256:9f2c... \
+    Rscript -e 'source("analysis/run.R")'
+```
+
+When a sensitivity analysis must be repeated across many
+simulated cohorts, the work moves to the university
+cluster. The analyst builds a SIF from the same digest and
+submits it to the scheduler; nothing is rebuilt, and the
+environment is provably the one used on the laptop:
+
+```bash
+$ apptainer build cohort-env.sif \
+    docker://ghcr.io/lab/cohort-env@sha256:9f2c...
+
+$ apptainer exec cohort-env.sif \
+    Rscript -e 'source("analysis/simulate.R")'
+```
+
+Finally, when the paper is submitted, a reviewer wishes to
+re-run the principal figure without installing anything. A
+`.binder/` configuration in the compendium lets Binder
+build the same environment on a hosted server and serve it
+in the browser, reached by a single link in the cover
+letter.
+
+Three destinations, three tools drawn from two of the three
+axes, and one image throughout. The pinning was done once,
+in @sec-containers; this chapter merely ran it in three
+places. Had the group instead chosen Nix from the outset,
+the image would have been replaced by a `default.nix`, and
+the laptop and cluster runs would have entered the
+environment through `nix-shell` rather than a runtime, but
+the discipline, one pinned declaration exercised in several
+places, would have been identical.
+
+## Collaborating with an LLM
+
+A language model is a capable assistant for the mechanics
+of this chapter and a poor judge of its trade-offs. The
+following triples show where each stands.
+
+**Translating a Docker command to another runtime.**
+
+- *Prompt.* 'Convert this `docker run` command to the
+  equivalent Podman and Apptainer commands, preserving the
+  bind mount and the digest-pinned image.'
+- *Watch for.* A model may drop the `--platform` flag, may
+  invent an Apptainer `--volume` syntax that differs from
+  the real one, or may translate a mutable tag rather than
+  the digest, quietly undoing the pin.
+- *Verification.* Run the translated command and confirm
+  it executes the analysis; confirm the digest, not a tag,
+  appears in the Apptainer `docker://` reference; and
+  confirm the bind mount exposes the working tree as
+  expected.
+
+**Generating a Nix declaration.**
+
+- *Prompt.* 'Write a `rix::rix()` call that pins R 4.4.1
+  with dplyr, ggplot2, and targets, producing a
+  `default.nix`.'
+- *Watch for.* A model may hand-write raw Nix rather than
+  the `rix` call requested, may omit the `nixpkgs` revision
+  that is the whole point of the pin, or may name packages
+  that do not exist under `pkgs.rPackages`.
+- *Verification.* Run the `rix` call, inspect the generated
+  `default.nix` for a concrete pinned revision, and enter
+  the environment with `nix-shell` to confirm the packages
+  load. A declaration that builds is the only evidence that
+  counts.
+
+**Advising on which alternative to adopt.**
+
+- *Prompt.* 'My analysis mixes R and Python and my lab uses
+  Windows. Should I use Nix, Podman, or conda?'
+- *Watch for.* A model may recommend the most fashionable
+  tool rather than the one that fits the constraint, and
+  may overstate a tool's rigour, presenting conda as
+  reaching the same level as Nix.
+- *Verification.* Check the recommendation against the
+  binding constraint: mixed languages on Windows point to
+  the conda family, whatever a tool's general reputation.
+  The analyst, not the model, owns the honest statement of
+  the level reached.
+
+## Exercises
+
+1. Take a Docker image you have built in a previous
+   chapter and run it under Podman without rebuilding it.
+   Confirm that the container starts and that the analysis
+   runs. State, in one sentence, why the reproducibility
+   level is unchanged.
+
+2. Build an Apptainer SIF file from a digest-pinned
+   `docker://` reference. Compute a checksum of the SIF and
+   explain how that single file could serve both as the
+   cluster runtime and as an archival deposit.
+
+3. Using `rix::rix()`, generate a `default.nix` that pins
+   a specific R version and three packages. Locate the
+   pinned `nixpkgs` revision in the generated file and
+   explain what would change in the built environment if
+   that revision were altered.
+
+4. For each of the following, name the axis and the single
+   most appropriate tool, and justify the choice in one
+   sentence: (a) a laboratory forbidden from licensing
+   Docker Desktop; (b) a manuscript reviewer who must run a
+   figure with no local installation; (c) a simulation
+   study destined for a shared cluster; (d) a Windows-only
+   pipeline mixing R and Python.
+
+5. A colleague claims that adopting Nix makes an analysis
+   'fully reproducible'. Write a two-sentence reply that
+   corrects the level claim without dismissing Nix, naming
+   the rung Nix reaches and the rung it does not.
+
+6. Consider a simulation archetype and a blog archetype
+   built from the same compendium machinery. Describe which
+   runtime or backend each most naturally uses and why the
+   underlying pinning is nonetheless identical.
+
+## Further reading
+
+The high-performance-computing runtime is described by its
+authors in @kurtzer2017, which sets out the unprivileged,
+scheduler-integrated design and the single-file image
+format that make Apptainer, formerly Singularity, the
+natural cluster companion to a Docker workflow.
+
+The foundational account of the purely functional,
+content-addressed model is @dolstra2004, and the R
+front-end that makes it approachable for the health
+scientist is documented in @rodrigues2024rix, whose `rix`
+package generates the Nix declaration from ordinary R code.
+
+For the conda family as a middle-ground backend, the
+reference documentation of the conda ecosystem
+[@anaconda2023] and of the lockfile-oriented `pixi`
+[@pixi2024] together describe the native-Windows and
+mixed-language reproduction that distinguishes it from the
+container route.
+
+The remote-execution axis is introduced by @jupyter2018,
+whose Binder service runs a compendium's container in the
+browser, and by the development-containers specification
+[@devcontainers], which brings the same environment into an
+editor. Both rest on the presence-driven principle, a
+configuration file's existence driving an automated build,
+that recurs throughout this book and is developed in
+@sec-verification.
+
+The container backend against which all of these are
+alternatives is developed in @sec-containers, and the
+ladder of levels that lets us state honestly what each of
+them reaches is @sec-levels.

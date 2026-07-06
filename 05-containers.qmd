@@ -1,4 +1,839 @@
 # Pinning the Environment with Docker {#sec-containers}
 
-*Chapter under development. Maps to Week 5.*
+## Learning objectives
 
+By the end of this chapter the reader should be able
+to:
+
+- Explain which determinants of a computational
+  result a package lockfile leaves unpinned, and why
+  a container is required to fix them.
+- Distinguish a Docker image from a container, and
+  explain image layers and the precise sense in which
+  an image 'runs the same everywhere it runs'.
+- Pin a base image by its immutable content digest and
+  point its in-image installer at a dated repository
+  snapshot, and say what each step secures.
+- Set the environment variables that govern locale,
+  time zone, and thread determinism, and predict a
+  concrete failure that each one prevents.
+- Select a Rocker profile appropriate to a given
+  research archetype, from a minimal base to a
+  publishing base carrying a LaTeX toolchain.
+- State honestly which rung of the reproducibility
+  ladder a given image reaches, and which it does not.
+
+## Orientation
+
+Consider an epidemiologist who has done everything
+the previous chapter asked. Her cohort analysis is
+under version control, and every R package it uses is
+fixed to an exact version in a lockfile. She has
+reached L1, pinned packages, and she is entitled to
+some confidence. She sends the project to a
+collaborator, who runs `renv::restore()` and watches
+it fail: one of her packages links against the
+geospatial library GDAL, which is present on her
+machine and absent on his, and the package will not
+install without it. On a third machine the restore
+succeeds, but the analysis returns a subtly different
+figure, because that machine runs an older release of
+R in which a numerical default differs. The lockfile
+did its job perfectly. What defeated the collaborator
+was everything the lockfile does not describe.
+
+The lockfile pins the R packages and nothing beneath
+them. It says nothing about the operating system, the
+system libraries such as GDAL or `libxml2` that many
+packages link against, or the R interpreter itself.
+As Ushey observed in documenting `renv`, the tool
+records the packages an analysis used, not the
+platform it ran on [@ushey2020]. A lockfile restored
+under a different R version, or on an operating system
+missing a required system library, may fail to
+install or, more insidiously, may install and behave
+differently. This is the gap the present chapter
+closes. Its subject is the container, the technology
+that fixes the operating system, the system
+libraries, and the runtime, and so carries an
+analysis from L1 to L2, pinned environment.
+
+We shall build the container from first principles,
+assuming no prior contact with it, because the health
+scientist who most needs reproducibility is rarely the
+one with a systems-administration background. We begin
+with what a container is, proceed to the Rocker
+project that supplies R-specific containers, and then
+to the two refinements that make a container itself
+reproducible rather than merely convenient. We close
+with the profiles, a short menu of base environments,
+and a first look at how a team shares one.
+
+## The analyst's contribution
+
+A container is a tool, and like every tool in this
+book it automates the mechanical part of the work and
+leaves the judgement to the analyst. Three decisions
+belong to the analyst and to no script.
+
+1. **The choice of base environment must match the
+   archetype, not the maximum.** A container can carry
+   anything, and it is tempting to reach for the
+   largest base image that surely contains whatever
+   one might need. That instinct is wrong. A manuscript
+   archetype needs a base carrying a LaTeX toolchain;
+   an R-package archetype needs only R and the check
+   tools; a simulation archetype may want more cores
+   than it wants software. Provisioning far above the
+   need inflates the image, slows every rebuild, and
+   obscures what the analysis actually depends on. The
+   analyst chooses the smallest base that carries the
+   real requirement.
+
+2. **The decision of how far to pin is a decision
+   about honesty, not convenience.** A container built
+   on a mutable tag such as `latest`, installing
+   whatever the package repository serves on the day
+   of the build, looks reproducible and is not. Two
+   builds from the same recipe on different days
+   produce different images. Fixing this costs a little
+   effort now, in pinning the base by digest and the
+   installer by date, and the analyst must decide to
+   spend it. The chapter will argue that the effort is
+   the difference between claiming L2 and reaching it.
+
+3. **The environment variables that govern
+   determinism are the analyst's to set.** A container
+   inherits a locale, a time zone, and a default
+   thread count, and these silently shape sorting,
+   date arithmetic, and the last bits of a floating
+   point sum. No tool infers what the analysis needs;
+   the analyst declares it, in a few lines that a
+   later reader can inspect and trust.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+- **Image.** A frozen, read-only filesystem together
+  with metadata, bundling an operating system, R, a
+  set of packages, and configuration. It is analogous
+  to a snapshot of a fully installed computer, packaged
+  so it can be shipped.
+- **Container.** A running instance of an image. One
+  image can start many containers; each begins from the
+  same frozen filesystem.
+- **Layer.** Each instruction in an image's recipe
+  produces one filesystem layer. An image is the stack
+  of its layers, and identical layers are shared and
+  cached across images.
+- **Base image.** The starting image a recipe builds
+  on, named on the `FROM` line. Here, a Rocker image
+  providing a fixed R version on a fixed operating
+  system.
+- **Tag and digest.** A tag, such as
+  `rocker/tidyverse:4.4.0`, is a human-readable pointer
+  that may later be repointed. A digest,
+  `@sha256:...`, is an immutable hash of the image's
+  exact content. The same digest always denotes
+  byte-identical bytes.
+- **Rocker.** The community project that publishes the
+  standard R Docker images.
+- **Dated snapshot.** A frozen view of a package
+  repository on a particular day, so that installing
+  'the current version' resolves to the same version
+  on every build.
+- **Profile.** The base-image bundle a project is built
+  from, such as `minimal`, `tidyverse`, `rstudio`, or
+  `publishing`. It selects the `FROM` image.
+:::
+
+## What the lockfile leaves standing
+
+It is worth stating precisely what a lockfile fixes,
+because the boundary is the whole motivation for the
+container. A lockfile records, for every R package an
+analysis loaded, the exact version and the repository
+it came from, and `renv::restore()` reinstalls that
+precise set [@ushey2020]. That is the L0-to-L1
+transition, and it is genuine progress. Beneath the
+packages, however, sits a stack of determinants the
+lockfile never touches.
+
+Three of these matter most. The first is the operating
+system, which supplies the C library and the
+conventions for locale and sorting against which every
+package was compiled. The second is the layer of
+system libraries, the compiled non-R software that
+packages link against: GDAL for spatial data, `libxml2`
+for XML parsing, the numerical libraries that implement
+linear algebra. A package that needs GDAL will not
+install on a machine that lacks it, and the lockfile
+cannot supply it, because GDAL is not an R package. The
+third is the R interpreter itself. A lockfile pins the
+packages but not the R version, and, as we saw in the
+introduction, a change between R releases can alter a
+result silently: the random-number default that changed
+in R 3.6.0, the `stringsAsFactors` default that flipped
+in R 4.0.0. Restore the same lockfile under a different
+R, and the packages match while their behaviour does
+not.
+
+The lesson is that `renv` is necessary and, by itself,
+insufficient. It closes the package layer cleanly and
+leaves the three layers beneath it exposed. To fix
+those, we need a tool that packages not just the
+packages but the whole computer they ran on. That tool
+is the container.
+
+## Images and containers
+
+The idea of the container is simple, and it is easiest
+to grasp through the distinction between an image and a
+container, which are as different as a recipe from a
+meal, or a class from an object.
+
+An **image** is a frozen filesystem plus metadata. It
+is, quite literally, a snapshot of a fully installed
+computer: an operating system, the system libraries, a
+particular R, a particular set of R packages, and the
+configuration that ties them together, all captured as
+a single read-only artifact. The image does not run.
+It is inert, like a disk image or a virtual-machine
+template, waiting to be started.
+
+A **container** is what one gets by starting an image.
+It is a running instance: the frozen filesystem is
+made live, a process begins inside it, and that process
+sees exactly the operating system and libraries the
+image froze, regardless of what the host machine
+outside the container happens to have. One image can
+start many containers, each an independent running copy
+that begins from the same frozen state. When a
+container exits, any change it made to its own
+filesystem is ordinarily discarded, and the next
+container starts again from the pristine image. The
+image is the durable, shippable thing; the container is
+the ephemeral, running thing.
+
+Images are built in **layers**, and the layering is
+worth understanding because it explains both the speed
+of the tool and the way we shall pin it. An image is
+built from a recipe, the Dockerfile, whose instructions
+execute in order, and each instruction adds one layer
+to a stack. A layer that installs the operating system
+sits at the bottom; a layer that installs R sits on top
+of it; a layer that installs packages sits on top of
+that. Because layers are content-addressed and cached,
+an unchanged lower layer is never rebuilt, and two
+images that share a base share its layers on disk. This
+is why building a second project from the same base is
+fast, and why, later, we shall be careful about which
+layer a given change invalidates.
+
+The property that earns the container its place in this
+book is often summarised as 'it runs the same
+everywhere it runs'. The claim is precise, and the
+repetition of 'runs' is deliberate. Wherever a
+container runtime is present, the same image starts a
+container with the same operating system, the same
+system libraries, and the same R, so a result computed
+inside it does not depend on the host. The
+qualification is that the container must actually run:
+the guarantee holds across every machine with a
+compatible runtime, and it is silent about machines
+that have none. This is a real boundary, and we return
+to it, and to the runtimes that widen it, in
+@sec-backends. For present purposes the container gives
+us what the lockfile could not: a fixed operating
+system, fixed system libraries, and a fixed R,
+travelling together as one artifact.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: image or container
+
+A colleague says, 'I deleted a file inside the
+container by accident, so I restarted it and the file
+was back. Docker must have a recovery feature.' What is
+actually happening, in the vocabulary of this section?
+
+::: {.callout-note collapse=true}
+## Answer
+
+There is no recovery feature. A container is a running
+instance of a read-only image, and changes a container
+makes to its filesystem are ordinarily discarded when
+it stops. Restarting produces a fresh container that
+begins again from the pristine image, in which the file
+was never deleted. The image is durable and the
+container is ephemeral. This is the same property that
+makes a container reproducible: every run starts from
+the identical frozen state. It also means that anything
+one wants to keep, such as edited source or output,
+must live outside the container, on a host directory
+made visible inside it.
+:::
+:::
+
+## The Rocker project
+
+A Dockerfile could, in principle, begin from a bare
+operating system and install R by hand. Almost no one
+does, because the R community maintains a set of ready
+base images that have become the standard starting
+point. This is the Rocker project. Boettiger introduced
+Docker to the reproducible-research audience and argued
+that a container is the natural unit for shipping a
+computational environment [@boettiger2015]; Boettiger
+and Eddelbuettel then built and documented the Rocker
+images themselves, a family of R-specific base images
+maintained in step with R releases [@boettiger2017].
+The fuller account, including the tooling that has grown
+around the images, is given by Nüst and colleagues in
+their survey of what they call the Rockerverse
+[@nust2020rockerverse].
+
+The practical value of Rocker is that it supplies, for
+each R version, a tested base image with R already
+installed on a known operating system, so that the
+analyst's recipe begins from a solid and shared
+foundation rather than reconstructing one. The images
+form a small hierarchy. At the bottom sits
+`rocker/r-ver`, R on Ubuntu and little else. Above it,
+`rocker/tidyverse` adds the tidyverse packages and the
+`pandoc` document converter; `rocker/rstudio` adds the
+RStudio Server development environment; and
+`rocker/verse` adds a LaTeX toolchain for rendering
+manuscripts to PDF. Each higher image is built on the
+one below, so they share layers, and each fixes a
+larger environment than the last. We shall meet these
+again as the profiles.
+
+## Making the image itself reproducible
+
+Here we must be careful, because a container is
+reproducible only if the recipe that builds it is, and
+the naive recipe is not. Two refinements separate a
+container that merely runs today from one that will
+rebuild to the same image next year. Nüst and
+colleagues collect the full set of practices in their
+ten simple rules for writing Dockerfiles for
+reproducible data science [@nust2020]; the two that do
+the most work are the following.
+
+The first refinement pins the base image by its
+**digest** rather than by a **tag**. A tag such as
+`rocker/tidyverse:4.4.0` is a mutable pointer. It names
+an image today, but the maintainers may rebuild and
+repoint it tomorrow, for instance to patch a security
+flaw in the operating system, and a recipe that named
+the tag would then build on different bytes without any
+change to the recipe itself. A digest is an immutable
+hash of the exact image content, so that
+
+```docker
+FROM rocker/tidyverse@sha256:1c2f...e8a9
+```
+
+names not 'whatever `4.4.0` points to' but one specific,
+byte-identical image that the digest will denote
+forever. Pinning the digest is the difference between a
+`FROM` line that is a promise and one that is a hope.
+
+The second refinement concerns what happens inside the
+image when it installs packages. An installer pointed at
+a live package repository resolves 'the current version'
+to whatever is current on the day of the build, so that
+an image built in March and an image built in June from
+the same recipe carry different packages. The remedy is
+to point the in-image installer at a **dated snapshot**
+of the repository, a frozen view of the repository as it
+stood on a chosen day. With the snapshot fixed, 'the
+current version' resolves to the same version on every
+build. The two refinements together close the loop: the
+digest fixes the ground the image is built on, and the
+dated snapshot fixes what is installed onto it, so that
+the recipe becomes a deterministic function from text to
+image.
+
+A small, faithful Dockerfile with both refinements in
+place, and with the environment variables of the next
+section, looks like this. It is shown as static text;
+we do not execute it here.
+
+```docker
+# Pin the base image by immutable digest, not a tag.
+FROM rocker/r-ver:4.4.0@sha256:6f05...8eac
+
+LABEL org.opencontainers.image.licenses="GPL-3.0-or-later" \
+      zzcollab.base.image="rocker/r-ver:4.4.0" \
+      zzcollab.ppm.snapshot="2026-06-27"
+
+# Determinism: fix locale, time zone, and threads.
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    TZ=UTC \
+    OMP_NUM_THREADS=1
+
+# Point the installer at a dated repository snapshot,
+# so 'the current version' is the same on every build.
+RUN echo 'options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/noble/2026-06-27"))' \
+        >> /usr/local/lib/R/etc/Rprofile.site
+
+# Restore the exact package set from the lockfile.
+COPY renv.lock renv.lock
+RUN R -e "renv::init(bare = TRUE); renv::restore()"
+```
+
+The reader will note how the container and the lockfile
+divide the labour. The `FROM` line and the snapshot fix
+the environment, the operating system, the R, and what
+may be installed; the `COPY renv.lock` and
+`renv::restore()` fix the exact package versions inside
+that environment. Neither alone is enough. A container
+without a lockfile fixes the environment but not which
+package versions live in it; a lockfile without a
+container fixes the packages but not the platform. A
+genuinely L2 analysis uses both, and the honest reading
+of an image is that it reaches L2 only when both
+refinements are present and a lockfile is restored
+inside it.
+
+::: {.callout-important}
+## The honest level
+
+An image built on a mutable tag, installing from a live
+repository, is not L2, however much it looks like a
+container. It will rebuild to a different image next
+year, and a result it produced cannot be regenerated
+from the recipe alone. Reaching L2 requires the digest
+pin, the dated snapshot, and a restored lockfile
+together. Match the claim to what the recipe actually
+fixes. A useful discipline is to build the image twice
+and confirm the two builds carry the same digest; if
+they do not, the recipe is not yet pinned, and the
+honest level is still L1.
+:::
+
+## Environment-variable determinism
+
+A fixed operating system and a fixed R are still not
+quite enough, because the same R on the same operating
+system can behave differently according to a handful of
+environment variables that the container inherits. Two
+of these deserve concrete illustration, because the
+failures they cause are silent and the fixes are one
+line each.
+
+The first is the **locale**, carried in `LANG` and
+`LC_ALL`, which governs, among other things, how text is
+sorted and how numbers are formatted and parsed. A
+locale that uses a comma as the decimal mark, common
+across much of Europe, writes the number one and a half
+as `1,5`, whereas a locale that uses a period writes
+`1.5`. Code that reads a data file written under one
+convention on a machine configured for the other will
+not error. It will misread the numbers. To make the
+failure concrete, consider the same numeric vector
+written under each convention, and what a parser that
+assumes a period decimal mark reads back from the
+comma-convention strings.
+
+```{r}
+#| label: tbl-decimal-mark
+#| tbl-cap: 'The same numbers written under a period decimal mark and a comma decimal mark, and what a parser assuming a period reads back from each. The comma-convention values are silently misread, with no error raised.'
+library(tibble)
+
+x <- c(1.5, 2200.75, 0.333)
+
+period <- formatC(x, format = 'f', digits = 3, big.mark = ',')
+
+comma <- gsub(',', '#', period)
+comma <- gsub('\\.', ',', comma)
+comma <- gsub('#', '.', comma)
+
+read_back <- as.numeric(gsub(',', '', comma))
+
+decimal_demo <- tibble(
+  original      = x,
+  period_locale = period,
+  comma_locale  = comma,
+  parsed_value  = read_back
+)
+
+knitr::kable(decimal_demo)
+```
+
+The parsed values are not approximately wrong; they are
+wildly wrong, and nothing warns the analyst. The number
+`1.5` returns as `1500`, the number `2200.75` as
+roughly `2.2`, and the number `0.333` as `333`, because
+the period-assuming parser treats the European comma as
+noise and strips it. Fixing `LANG` and `LC_ALL` in the
+image removes the ambiguity: every container runs under
+the one declared locale, so the parse is the same
+everywhere the image runs. This is exactly why the
+generated Dockerfile above sets both to `en_US.UTF-8`.
+
+The second is the **time zone**, carried in `TZ`. Date
+and time arithmetic depends on it, and an analysis that
+buckets events by calendar day will assign a
+late-evening event to different days in different time
+zones. Fixing `TZ=UTC` in the image makes the
+calculation independent of where the container runs.
+
+The third is the **thread count**, carried in variables
+such as `OMP_NUM_THREADS`. Numerical libraries that
+implement linear algebra may split a computation across
+several threads, and because floating-point addition is
+not exactly associative, the order in which partial sums
+are combined can change the last bits of a result. Two
+runs of the same bootstrap or the same mixed model, one
+on four threads and one on eight, may therefore differ
+in the final digits. Setting `OMP_NUM_THREADS=1` forces
+a single, deterministic order of summation, trading a
+little speed for bitwise reproducibility. Whether that
+trade is worth making is a judgement, and it is the
+analyst's; the point is that a container lets the
+judgement be recorded and enforced rather than left to
+whatever the host defaults to.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which variable
+
+A collaborator in Berlin and a collaborator in San
+Diego run the same containerised script on the same
+image and obtain identical package versions, yet their
+daily case-count tables disagree by one case on several
+days, always at the boundaries between days. Which
+environment variable is the likely culprit, and why
+does pinning it in the image resolve the disagreement?
+
+::: {.callout-note collapse=true}
+## Answer
+
+The likely culprit is `TZ`, the time zone. If the image
+does not fix it, each container may inherit the host's
+time zone, and an event recorded near midnight is
+assigned to different calendar days in Berlin and San
+Diego. The daily buckets then differ at the day
+boundaries, which is exactly the pattern described.
+Setting `TZ` in the image, conventionally to `UTC`,
+makes the day assignment independent of the host, so
+both collaborators bucket the events identically. Note
+that identical package versions, that is, a shared L1,
+did nothing to prevent this: the failure is an
+environment failure, which is precisely what the
+container layer exists to fix.
+:::
+:::
+
+## Profiles as base images
+
+The choice of base image is, in practice, a choice from
+a short menu, and the framework this book uses names the
+entries **profiles**. A profile is a base-image bundle,
+and selecting one sets the `FROM` line and little else.
+Four profiles cover most needs.
+
+The **minimal** profile builds on `rocker/r-ver`: R on
+Ubuntu with the development essentials and nothing more.
+It is the smallest base, and the right one when the
+analysis pulls in whatever it needs through the
+lockfile. The **tidyverse** profile builds on
+`rocker/tidyverse`, adding the tidyverse packages and
+`pandoc`, and is the natural default for data analysis.
+The **rstudio** profile builds on `rocker/rstudio`,
+adding the RStudio Server environment for those who
+prefer to work in the browser-based IDE. The
+**publishing** profile builds on `rocker/verse`, which
+carries a LaTeX toolchain, and is the base to choose
+when the deliverable is a rendered PDF manuscript.
+
+The design intent is that the profiles differ in as few
+lines as possible. Moving a project from one profile to
+another changes the `FROM` line and, at most, a single
+system-installation line, while the
+reproducibility-relevant configuration, the locale and
+time-zone variables, the dated snapshot, and the
+lockfile restore, stays constant. The profile decides
+what the base carries; the lockfile decides what is
+installed on top; and the two remain cleanly separated.
+
+The archetypes of @sec-compendium map onto the profiles
+naturally, and the mapping is the concrete form of the
+first analyst judgement above. The same machinery, a
+digest-pinned base, a dated snapshot, a restored
+lockfile, and the determinism variables, serves every
+archetype; only the base changes.
+
+- A **data-analysis** archetype is well served by the
+  tidyverse or minimal base, according to how much of
+  its stack it draws from the base rather than the
+  lockfile.
+- A **manuscript** archetype needs the publishing base,
+  because rendering to PDF requires the LaTeX toolchain
+  that `rocker/verse` carries and the lighter bases do
+  not.
+- An **R-package** archetype needs very little: R and
+  the check tools suffice, so the minimal base is the
+  honest choice, and provisioning a LaTeX toolchain it
+  never uses would be waste.
+- A **simulation** archetype often wants more cores than
+  software, so the base may be minimal while the
+  container is run with a larger core allocation. Here
+  the analyst must weigh the determinism point above:
+  more cores may speed the simulation while changing the
+  last bits of a result, so `OMP_NUM_THREADS` and the
+  random-number discipline of @sec-dependencies deserve
+  particular care.
+- A **blog** archetype renders many posts rather than one
+  report, and is well served by the publishing or
+  tidyverse base according to whether any post needs
+  PDF output.
+
+The point to carry forward is that a research compendium
+is not only a manuscript, and the container does not
+assume it is. One set of machinery, varied by a single
+`FROM` line, pins the environment for all of them.
+
+## A first look at the two-layer team model
+
+A container fixes an environment for one analyst; a team
+needs every member to share the same environment, and
+this introduces a wrinkle we shall only sketch here and
+develop fully in @sec-archiving. Building an image from
+a Rocker base and a full package set takes many minutes,
+and it would be wasteful for every member of a lab, and
+every one of a lab's projects, to rebuild the same base
+from scratch.
+
+The remedy is a two-layer model. A team lead builds a
+comprehensive **team image** once, carrying the lab's
+preferred packages, and pushes it to a shared registry;
+each project then builds a thin second layer on top of
+that team image rather than on the raw Rocker base. The
+first layer, the team image, is built once and reused
+everywhere; the second layer, the per-project image,
+adds only what the project needs and builds in seconds
+rather than minutes. Because the team image is itself
+pinned by digest and recorded in a committed file, every
+member pulls byte-identical bytes, so 'works on my
+machine' cannot arise: there is, in the relevant sense,
+only one machine. The mechanics of building, pushing,
+digest-recording, and updating the team image are the
+business of @sec-archiving; for now it is enough to see
+that the image is not only a solo instrument but the
+natural unit of a shared, reproducible environment.
+
+## Worked example
+
+Let us follow a concrete case through, in the manner of
+the framework this book uses, which generates the
+Dockerfile rather than asking the analyst to write one
+by hand. A biostatistician is analysing a registry
+cohort. The deliverable is a set of tables and figures,
+not a typeset manuscript, so the appropriate archetype
+is data analysis and the appropriate profile is minimal:
+R and the essentials, with the analysis stack drawn from
+the lockfile. She scaffolds the project and builds the
+image. The shell session, shown as static text and never
+executed here, is short.
+
+```bash
+$ mkdir cohort-study && cd cohort-study
+$ zzc minimal
+$ make docker-build
+$ make r
+```
+
+The `zzc minimal` step generates the project, including
+a Dockerfile pinned to a digest and a dated snapshot;
+`make docker-build` builds the image; and `make r` starts
+a container and drops her into an R session inside it.
+The generated Dockerfile is, in essence, the one shown
+earlier: a digest-pinned `FROM rocker/r-ver`, the locale
+and time-zone and thread variables, the dated snapshot
+wired into the repository options, and a
+`renv::restore()` that installs the locked packages
+inside the fixed environment. The image records its own
+provenance in labels, the base image, its digest, and
+the snapshot date, so a later reader can see exactly what
+was pinned without leaving the image.
+
+Now suppose a reviewer asks for a typeset manuscript with
+the analysis embedded. The archetype has shifted, and so
+should the profile. She regenerates against the
+publishing base:
+
+```bash
+$ zzc publishing
+$ make docker-build
+```
+
+The `FROM` line now names `rocker/verse`, the LaTeX
+toolchain comes with it, and the manuscript renders to
+PDF inside the container. Almost nothing else in the
+recipe changed: the locale and thread variables, the
+dated snapshot, and the lockfile restore are identical.
+This is the design intent made concrete. The same
+reproducibility machinery served both archetypes, and
+the move between them was a single changed line.
+
+What has she gained, in the vocabulary of the ladder?
+Before the container, at L1, her collaborator's restore
+could fail for a missing system library, or succeed and
+compute a different number under a different R. After
+it, at L2, the operating system, the system libraries,
+and the R are fixed and travel with the analysis, and
+the locale and time-zone and thread variables are
+declared rather than inherited. What she has not yet
+gained is verification, L3: an image that builds and a
+report that renders are not the same as a report whose
+numbers have been regenerated and shown to match a
+recorded baseline. That is the subject of
+@sec-verification, and it is the honest boundary of what
+this chapter delivers.
+
+## Collaborating with an LLM
+
+A language model is a capable assistant for container
+work and a confident source of subtly wrong Dockerfiles,
+because the most common Dockerfile on the public internet
+is not a reproducible one. The analyst who delegates must
+verify, and the following three exchanges show what to
+watch for.
+
+**Prompt.** 'Write me a Dockerfile for my R analysis.'
+
+*Watch for.* The default answer will very likely open
+with `FROM rocker/tidyverse:latest` or a bare version
+tag, install packages from the live repository, and set
+none of the determinism variables. Every one of these
+is a reproducibility defect: the mutable tag, the
+undated installer, the absent locale and time zone. The
+result runs today and is not L2.
+
+*Verification.* Confirm that the `FROM` line carries an
+`@sha256:` digest, not merely a tag; that the in-image
+installer points at a dated snapshot rather than a live
+repository; and that `LANG`, `LC_ALL`, and `TZ` are set.
+Then build the image twice and confirm the two builds
+produce the same digest. If they do not, the recipe is
+not pinned, whatever the model asserted.
+
+**Prompt.** 'My container gives different numbers than my
+laptop. Why?'
+
+*Watch for.* The model is likely to reach first for the
+code, suggesting a bug in the analysis, and to overlook
+the environment. The environment is the more probable
+cause precisely because the container was supposed to
+fix it and may have fixed it incompletely: a missing
+locale variable, a different thread count, an unpinned
+package version inside a pinned environment.
+
+*Verification.* Compare the environment inside the
+container with the one outside it: inspect `LANG`,
+`LC_ALL`, `TZ`, and the thread-count variables in both,
+and compare the installed package versions against the
+lockfile. Do not accept a diagnosis of the code until
+the environment has been ruled out, because a difference
+the container failed to pin is the more likely
+explanation.
+
+**Prompt.** 'Which Rocker base should I use for my
+project?'
+
+*Watch for.* The model tends to recommend a large,
+capable base by default, often the verse or a
+data-science image, regardless of need. Over-provisioning
+inflates the image and obscures the real dependencies;
+under-provisioning, recommending a minimal base for a
+project that must render a PDF, produces a build that
+fails only when the manuscript is rendered.
+
+*Verification.* Match the base to the archetype, not to
+the maximum. If the deliverable is a PDF manuscript,
+confirm the base carries a LaTeX toolchain, for instance
+by checking that the LaTeX tools are present in the built
+image; if it is an R package, confirm that R and the
+check tools suffice and resist any heavier base. The
+judgement is the first of this chapter's analyst
+contributions, and it is not one to delegate.
+
+## Exercises
+
+1. Take any Rocker image on your machine or on Docker
+   Hub and find both its tag and its content digest.
+   Explain, in two or three sentences, what could change
+   about the image named by the tag while the image named
+   by the digest could not, and why a reproducible recipe
+   pins the latter.
+
+2. You are handed a Dockerfile that begins
+   `FROM rocker/tidyverse:latest` and installs packages
+   with a plain `install.packages()` from the live
+   repository. Identify every reason this recipe fails to
+   reach L2, and rewrite the two lines that most need
+   fixing.
+
+3. For each of the five archetypes, data analysis,
+   manuscript, R package, simulation, and blog, name the
+   profile you would choose and justify the choice in one
+   sentence. For the two archetypes where the choice is
+   genuinely arguable, state the trade-off on both sides.
+
+4. Extend the executable table in this chapter to a date
+   example. Construct two synthetic character vectors
+   representing the same three dates under a
+   month-first and a day-first convention, parse each
+   under a single assumed convention, and show which
+   dates are silently swapped. Relate the result to the
+   role of `TZ` and locale in the image.
+
+5. Explain, to a colleague who has never met the idea,
+   why setting `OMP_NUM_THREADS=1` can change the last
+   digits of a bootstrap confidence interval or a
+   mixed-model estimate. State clearly what is traded
+   away by fixing it, and name one analysis where you
+   would judge the trade worth making.
+
+6. A collaborator reports that after pulling your image
+   and running `renv::restore()`, she still obtains
+   different package versions from yours. The environment
+   is pinned; the packages are not matching. Diagnose the
+   most likely cause, and explain why a container alone,
+   without the lockfile restored inside it, does not
+   guarantee identical packages.
+
+## Further reading
+
+The foundational case for containers in reproducible
+research is @boettiger2015, which introduces Docker to a
+scientific-computing audience and is the natural first
+read for anyone new to the tool. The Rocker images
+themselves are documented by @boettiger2017, and the
+wider ecosystem of R containerisation tooling is
+surveyed thoroughly by @nust2020rockerverse; both are
+worth consulting before building a base image of one's
+own.
+
+On making a container genuinely reproducible rather than
+merely convenient, the essential reference is @nust2020,
+whose ten simple rules for writing Dockerfiles codify
+the digest pin, the dated snapshot, and much else this
+chapter has drawn from. Read it as a checklist against
+any Dockerfile one is asked to trust.
+
+For the division of labour between the container and the
+package layer, return to @ushey2020 on `renv`, keeping in
+mind that its remit stops exactly where this chapter's
+begins. The compendium structure into which both fit is
+the subject of @marwick2018, whose `rrtools` first
+combined a lockfile and a Dockerfile in a packaged
+analysis. The alternatives to Docker as a runtime, from
+the high-performance-computing runtime Apptainer
+[@kurtzer2017] to the browser-based Binder
+[@jupyter2018] and the container-free Nix, are taken up
+in @sec-backends, and the team-image model sketched here
+is developed in full in @sec-archiving.

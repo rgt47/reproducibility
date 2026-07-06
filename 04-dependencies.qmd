@@ -1,4 +1,737 @@
 # Pinning Packages with renv {#sec-dependencies}
 
-*Chapter under development. Maps to Week 4.*
+## Learning objectives
 
+By the end of this chapter the reader should be able
+to:
+
+- Explain the package-churn failure mode and why
+  pinning package versions is the step that lifts an
+  analysis from locatable (L0) to package-pinned (L1).
+- Describe what an `renv.lock` file records, and carry
+  out the init, snapshot, and restore workflow that
+  produces and consumes it.
+- State the dependency-triad invariant relating the
+  code, the `DESCRIPTION`, and the lockfile, and run
+  the automated check that keeps the three in
+  agreement.
+- Configure a dated snapshot of a package repository
+  so that a restore draws fixed, pre-compiled binaries.
+- Delimit what `renv` does and does not pin, and thus
+  explain why a lockfile alone cannot reach the
+  pinned-environment level.
+- Compare `renv` with the lighter, date-based
+  alternatives `rang`, `groundhog`, and `capsule`.
+
+## Orientation
+
+Consider a familiar situation. A doctoral student
+completes the analysis for a registry study of
+hospital readmissions, renders a clean report, and
+deposits the code alongside the manuscript. The work
+is under version control, so a reader can locate every
+script; on the ladder of @sec-levels the analysis has
+reached L0, locatable. Eighteen months later a
+reviewer asks for a minor revision. The student pulls
+the repository onto a new laptop, installs the
+packages afresh, and reruns the analysis. The model
+now reports a different coefficient. Nothing in the
+code changed. What changed is that `dplyr` had moved
+from version 1.1.0 to 1.2.1, a grouping default had
+been refined, and one intermediate summary was
+computed over a slightly different partition. The
+number in the published table can no longer be
+regenerated, and the student cannot say with certainty
+which number was correct.
+
+This is the package-churn failure mode, and it is the
+specifically computational failure that the empirical
+studies of @sec-crisis isolate. The R package
+ecosystem is healthy precisely because it changes:
+maintainers fix bugs, sharpen defaults, and deprecate
+awkward interfaces. Every such improvement is,
+however, a potential threat to the exact reproduction
+of an analysis written against the older behaviour. A
+script names the packages it loads but almost never
+the versions it loaded them at, and so it inherits
+whatever versions the next machine happens to provide.
+Reproducibility fails in the gap between the packages
+the analysis was written against and the packages a
+later installation supplies.
+
+The remedy for this one layer is a lockfile: a file
+that records the exact version of every package the
+analysis used, so that the same set can be reinstalled
+later. Recording that file is the transition from L0 to
+L1, from locatable to package-pinned, and it is the
+whole business of this chapter. We shall be equally
+careful about the transition's limit. A lockfile pins
+the packages and nothing beneath them, so an analysis
+at L1 is pinned at the package layer and exposed at
+every layer below, a boundary that motivates the
+container of @sec-containers.
+
+## The analyst's contribution
+
+The tooling in this chapter automates a great deal, but
+three judgements remain irreducibly the analyst's.
+
+1. **Deciding when to snapshot, and what a snapshot
+   claims.** A lockfile is a dated assertion that these
+   versions produced this result. The analyst chooses
+   the moment to make that assertion, typically once an
+   analysis is stable, and must understand that a
+   snapshot taken mid-exploration pins whatever
+   half-installed state the library happens to be in.
+   The tool records; the analyst decides what is worth
+   recording.
+
+2. **Distinguishing a result dependency from a
+   development tool.** No scanner can know that
+   `languageserver` powers the editor while `dplyr`
+   powers the analysis. The analyst must keep the
+   lockfile an honest, minimal record of what
+   determines the result, and keep mere tooling out of
+   it, a distinction we develop below and that the
+   accompanying whitepaper treats at length.
+
+3. **Matching the reproducibility claim to the layer
+   actually pinned.** A lockfile secures the package
+   layer and no other. Presenting a lockfile-equipped
+   analysis as fully reproducible, when the R version,
+   the operating system, and the system libraries
+   remain unpinned, overstates what has been achieved.
+   The honesty is the analyst's responsibility, not the
+   tool's.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+- **Lockfile.** A machine-generated file, `renv.lock`,
+  recording the exact version, source repository, and
+  content hash of every package in a project's library.
+- **Package library.** The directory into which R
+  installs packages. A project-local library belongs to
+  one project rather than being shared across all of a
+  user's work.
+- **Snapshot.** The act of scanning a project, resolving
+  the versions currently installed, and writing them
+  into the lockfile.
+- **Restore.** The reverse act of reading the lockfile
+  and reinstalling exactly the packages it records.
+- **`DESCRIPTION`.** The human-authored file that
+  declares a project's direct dependencies by role
+  (`Imports`, `Suggests`, `Depends`), with optional
+  version floors.
+- **Content hash.** A short fingerprint computed from a
+  package's contents, so that two installations claiming
+  the same version can be confirmed byte-identical.
+- **Package repository.** A server, such as CRAN or the
+  Posit Package Manager, from which packages are
+  installed.
+- **Dated snapshot.** A view of a repository frozen as
+  it stood on a particular calendar day, so that an
+  install run today and one run next year fetch the same
+  versions.
+:::
+
+## From packrat to renv
+
+The idea of a project-local library governed by a
+lockfile is not new to R. The `packrat` package,
+introduced in 2013, was the first widely adopted
+attempt to give each project its own isolated set of
+packages recorded in a manifest. Its mechanics were
+sound but its ergonomics were not, and it acquired a
+reputation for surprising behaviour that discouraged
+routine use. The `renv` package, introduced by
+@ushey2020 and now the community standard, superseded
+it in 2019. It kept the essential idea, a
+project-local library plus a lockfile, and rebuilt the
+surface around a small, predictable set of verbs, a
+human-readable JSON lockfile, and a shared package
+cache that lets many projects share one physical copy
+of a given package version.
+
+The design rests on a separation the analyst should
+hold clearly in mind. The **library** is where
+packages physically live; the **lockfile** is the
+written record of what should live there. The two are
+kept in agreement by two complementary operations. A
+snapshot reads the library and updates the lockfile to
+match it; a restore reads the lockfile and updates the
+library to match it. Everything `renv` does is a
+variation on keeping these two representations in step.
+
+### What the lockfile records
+
+The lockfile is the artifact that does the pinning, so
+it repays close reading. For each package it records
+four things that together make a later reinstallation
+unambiguous: the exact version, the source repository
+the package came from, a content hash, and the
+package's own declared dependencies. The top of the
+file additionally records the R version and the
+repositories in force. A lightly abbreviated excerpt,
+shown here as a static block because `renv` does not
+run while this book renders, conveys the structure.
+
+```json
+{
+  "R": {
+    "Version": "4.6.0",
+    "Repositories": [
+      {
+        "Name": "CRAN",
+        "URL": "https://packagemanager.posit.co/cran/2026-06-29"
+      }
+    ]
+  },
+  "Packages": {
+    "dplyr": {
+      "Package": "dplyr",
+      "Version": "1.2.1",
+      "Source": "Repository",
+      "Repository": "RSPM",
+      "Hash": "5d1c2e3a...",
+      "Requirements": [
+        "R6", "cli", "generics", "glue",
+        "lifecycle", "magrittr", "pillar",
+        "rlang", "tibble", "tidyselect", "vctrs"
+      ]
+    }
+  }
+}
+```
+
+Three features deserve comment. First, the version is
+recorded exactly, `1.2.1` and not `>= 1.2`, so there is
+no latitude for a later install to drift upward.
+Second, the source is named. A package that came from
+CRAN, from a Posit Package Manager mirror (recorded as
+`RSPM`), from Bioconductor, or from a specific GitHub
+commit is restored from that same source, which matters
+because the same version number can denote different
+code on different repositories. Third, the content
+hash lets `renv` confirm that a restored package is
+byte-identical to the one recorded, catching the rare
+but real case of a repository serving altered contents
+under an unchanged version string. The `Requirements`
+field lists each package's own dependencies, so the
+lockfile captures the full transitive closure, not
+merely the packages the analyst named.
+
+### The init, snapshot, restore workflow
+
+Three commands drive the ordinary lifecycle. Because
+none of them can execute while this book renders, we
+show them as static R blocks; the reader runs them at
+an interactive prompt inside the project.
+
+Initialisation creates the project-local library and a
+first lockfile.
+
+```r
+renv::init()
+```
+
+From this point, packages installed into the project go
+into its private library rather than the shared
+system-wide one, so one project's `dplyr` upgrade
+cannot disturb another's. As the analysis develops and
+new packages are installed, a snapshot writes the
+current state into the lockfile.
+
+```r
+renv::snapshot()
+```
+
+The snapshot does not blindly record every installed
+package. It first scans the project's source for the
+packages the code actually references, through
+`library()`, `require()`, and `pkg::fun()` calls, and
+records those together with their transitive
+dependencies. A package sitting in the library but
+called nowhere in the code is, by default, left out, a
+behaviour that keeps the lockfile a record of what the
+analysis uses rather than of everything that happens to
+be installed.
+
+On another machine, or the same machine a year later, a
+restore reads the lockfile and rebuilds the library to
+match.
+
+```r
+renv::restore()
+```
+
+This is the operation that redeems the pin. A
+collaborator who clones the repository and calls
+`renv::restore()` obtains the exact package set the
+analysis was written against, irrespective of what
+versions are current. Snapshot is capture; restore is
+the later consumption of what was captured.
+
+In the framework this book uses, this lifecycle is
+partly automated so that an analyst does not forget the
+snapshot. The project's generated `.Rprofile` installs
+an exit hook that snapshots the library when an
+interactive session ends, and restores missing packages
+when a session begins, so a package installed during
+analysis is captured rather than lost. The automation
+does not change the model; it merely removes the two
+most common ways the library and the lockfile drift
+apart.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: snapshot versus restore
+
+A colleague clones your project, opens R, and is
+puzzled that the packages are not yet installed. They
+ask whether they should run `renv::snapshot()` to get
+them. What do you advise, and why?
+
+They should run `renv::restore()`, not
+`renv::snapshot()`. Restore reads the existing lockfile
+and installs the recorded versions into the local
+library, which is exactly what a fresh clone needs.
+Snapshot runs in the opposite direction: it would
+overwrite the lockfile with whatever is currently
+installed, which on a fresh clone is nothing relevant,
+and would thereby destroy the very record the colleague
+needs. The mnemonic is that snapshot writes the
+lockfile and restore reads it.
+:::
+
+## The dependency-triad invariant
+
+A lockfile solves the pinning problem, but it
+introduces a bookkeeping problem in its place: the
+lockfile can fall out of step with the code it is
+supposed to describe. A contributor installs a package
+for an exploratory notebook and forgets to snapshot, so
+the code now uses a package the lockfile does not
+record. Or a package is dropped from the analysis but
+left in the project's `DESCRIPTION`, so the declared
+dependencies name something the code no longer touches.
+Either drift silently degrades the pin.
+
+The framework this book uses formalises the correct
+relationship as the dependency triad. Three sources of
+information describe the packages an analysis uses, and
+in a healthy compendium they satisfy a nesting relation.
+
+- The **code** references some set of packages, through
+  its `library()`, `require()`, and `pkg::fun()` calls.
+- The **`DESCRIPTION`** declares a set of direct
+  dependencies.
+- The **`renv.lock`** records a set of pinned packages.
+
+The invariant is that each set is contained in the
+next:
+
+$$
+\mathrm{Code} \subseteq \mathrm{DESCRIPTION}
+\subseteq \mathrm{renv.lock}.
+$$
+
+Read left to right, it says that every package the code
+calls must be declared in `DESCRIPTION`, and every
+declared dependency must be pinned in the lockfile. The
+lockfile is the largest set because it additionally
+records the transitive dependencies that the analyst
+never named directly. Base and recommended packages,
+which every R installation provides, are excluded from
+the code set, so the first inclusion concerns only
+contributed packages.
+
+The invariant matters because it is checkable by
+machine. The framework's `check-renv` gate, backed by
+the `zzrenvcheck` package, scans all three sources,
+tests the two inclusions, and reports any violation: a
+package used in code but undeclared, or declared but
+unpinned. Crucially it can repair many violations
+automatically, adding a missing declaration to
+`DESCRIPTION` or installing and snapshotting a missing
+package, so that the analyst's ordinary workflow is to
+write the analysis and let the check reconcile the
+bookkeeping.
+
+```bash
+$ make check-renv
+```
+
+This runs the check with automatic repair before a
+commit, and the same check runs again under continuous
+integration, so a drift that escapes the developer's
+machine is caught on the clean build. It is worth being
+precise about what the gate does and does not verify.
+It is a presence check: it guarantees that the three
+sets nest, that nothing used is unpinned. It does not
+verify that the version floors in `DESCRIPTION` agree
+with the exact pins in the lockfile, which is a separate
+concern.
+
+::: {.callout-important}
+## The honest level
+
+Passing `check-renv` confirms that the package layer is
+internally consistent, not that the analysis is
+reproducible in any fuller sense. The triad says the
+packages the code uses are all pinned; it says nothing
+about the R version, the operating system, or the
+system libraries beneath them. An analysis that passes
+the dependency check has reached L1 and no higher, and
+should be described as package-pinned, not as
+reproducible without qualification.
+:::
+
+### The triad across archetypes
+
+The lockfile discipline is identical across the
+archetypes of @sec-compendium, because every archetype
+records its packages in the same `renv.lock` by the
+same snapshot and restore. What varies slightly is how
+natural the declared-dependency middle term feels. In
+the R-package archetype, `DESCRIPTION` is not an
+optional extra but the package's defining interface:
+`R CMD check` reads it, an installer reads it, and CRAN
+reads it. The triad is therefore especially natural
+there, since the declared set already exists for
+reasons independent of reproducibility. A data-analysis
+project, a manuscript compendium, a simulation study,
+and a blog each also carry a `DESCRIPTION` in this
+framework precisely so that the same invariant applies
+uniformly, but the R-package case is the one where the
+middle term would exist even if reproducibility were
+not a concern. A subtlety follows for the R-package
+archetype: a package used only by an analysis script or
+report belongs in `Suggests` rather than `Imports`, so
+that `R CMD check` does not hard-require a package the
+package's own exported functions never call.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: locating a drift
+
+Continuous integration fails with the message that
+`survival` is referenced in `analysis/model.R` but is
+absent from `renv.lock`. Which inclusion of the triad
+has been violated, and what single command would most
+likely repair it?
+
+The violated inclusion is
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$: the code
+references a package that the lockfile does not pin
+(and, presumably, that `DESCRIPTION` does not declare).
+The likely cause is that `survival` was installed
+interactively but never snapshotted. Running
+`make check-renv`, which invokes
+`zzrenvcheck::check_packages()` with automatic repair,
+would add `survival` to `DESCRIPTION` and snapshot it
+into `renv.lock`, restoring both inclusions. The fix
+must then be committed so the clean CI build sees it.
+:::
+
+## Dated snapshots of a package repository
+
+A lockfile records which versions to install, but a
+plain CRAN mirror will happily serve only whatever is
+current, and older source packages must often be
+recompiled, which is slow and can fail when a system
+library has since moved on. The Posit Package Manager
+resolves both problems by offering dated snapshots of
+CRAN. A snapshot URL freezes the repository as it stood
+on one calendar day, so that a request for a package
+returns the version that was current on that date, and
+returns it as a pre-compiled binary rather than as
+source to be built.
+
+The mechanism is a URL that embeds a date.
+
+```r
+options(repos = c(
+  CRAN = "https://packagemanager.posit.co/cran/2026-06-29"
+))
+```
+
+With repositories pointed at a dated snapshot, an
+install run today and the same install run next year
+draw from an identical, frozen catalogue, and the
+lockfile above records exactly this URL in its
+`Repositories` block, so that a restore reproduces not
+only the versions but the source they came from. The
+gain is twofold: fixity, because the catalogue cannot
+drift, and speed, because binaries install in seconds
+where source builds take minutes. In the framework this
+book uses, the project's generated configuration points
+R at a dated snapshot automatically, so that the two
+benefits accrue without the analyst assembling the URL
+by hand. The date of the snapshot becomes, in effect,
+part of the environment's identity, and a topic we take
+up again when the container fixes a snapshot date at
+image-build time in @sec-containers.
+
+## The limits of renv
+
+It is essential to be precise about what a lockfile does
+not do, because the temptation to overclaim is strong
+and the gap it leaves is exactly the subject of the next
+chapter. `renv` pins the R packages. It does not pin the
+R interpreter itself, so a lockfile produced under R
+4.6.0 may restore under R 4.2.1 with different results,
+or fail to restore at all when a recorded version
+requires a newer R. It does not pin the operating
+system, so a lockfile assembled on macOS carries no
+guarantee on Linux. And it does not pin the system
+libraries that many packages link against, the GDAL
+behind a spatial package or the `libxml2` behind an XML
+parser, so a restore on a machine lacking a required
+system library may fail to compile a package or, more
+insidiously, may install a differently behaving one.
+
+The point is not a criticism of `renv`, which does its
+one job well. It is that the package layer is one layer
+of a taller stack, and pinning it leaves every layer
+beneath it as the next machine happens to provide.
+@ushey2020 designed `renv` to solve the package problem
+and no more; the environment problem is out of its scope
+by design. An analysis equipped with a faithful lockfile
+has reached L1, pinned packages, and is exposed at L2 and
+below. Closing that remaining gap is the work of the
+container, and it is where @sec-containers begins.
+
+## Lighter and alternative approaches
+
+The lockfile-and-restore idiom is not the only way to
+pin the package layer, and a reader should know the
+principal alternatives, because some suit particular
+settings better and because the tradeoffs illuminate
+what `renv` is doing.
+
+The most important shift of idiom is from preserving a
+lockfile to reconstructing an environment from a date.
+The `rang` package of @chan2023 takes a set of packages
+and a target date and resolves the versions that were
+current then, reaching back through CRAN's archive to
+reconstruct a historical environment even for a project
+that never recorded a lockfile at all. Where `renv`
+requires foresight, a committed lockfile written while
+the analysis was live, `rang` offers hindsight,
+recovering an approximate environment after the fact.
+It is the natural instrument for a legacy analysis that
+one wishes to resurrect.
+
+The `groundhog` package of @simonsohn2026 pursues the
+same date-based idea but at a different point in the
+workflow. Rather than restoring a library before the
+script runs, it loads version-specific packages at run
+time: a `groundhog.library()` call carries a date, and
+the packages current on that date are loaded for that
+session. It needs no project library and no snapshot
+step, trading `renv`'s explicit committed lockfile for a
+date-stamped call evaluated against the repository's
+history. The convenience is real, and so is the cost:
+the pin now lives inside the script's control flow
+rather than in a separate, inspectable manifest, which a
+reviewer must read the code to discover.
+
+Finally, `capsule` [@capsule] is best understood as a
+lazier discipline layered over `renv` itself. It defers
+building the project library until it is actually needed,
+letting the analyst develop against their ordinary
+user library and materialise the pinned library only
+when reproducing or checking the work. For analysts who
+find `renv`'s always-on project library intrusive during
+exploratory work, it lowers the friction of adoption
+while preserving the lockfile as the eventual source of
+truth.
+
+Across all of these the invariant lesson holds. Each
+pins the package layer and only the package layer;
+whether the pin is a committed lockfile, a reconstructed
+date, or a run-time call, none reaches down to the R
+version, the operating system, or the system libraries.
+The choice among them is a choice of ergonomics and of
+foresight versus hindsight, not a choice of how far down
+the determinant stack one has pinned.
+
+## Worked example
+
+To make the package-churn failure mode concrete, and to
+generate a computed artifact at build time, we
+construct a small synthetic lockfile diff: a comparison
+of two snapshots of the same project taken some months
+apart. This is the kind of table a version-control diff
+of `renv.lock` would summarise, and reading it is the
+routine skill of noticing which pins moved. The data
+are synthetic and no packages are installed; the
+computation uses only `tibble`, `dplyr`, and `knitr`.
+
+```{r}
+#| label: tbl-lockdiff
+#| tbl-cap: 'A synthetic lockfile diff between two snapshots of one project. The changed column flags every package whose pinned version moved between the earlier and later snapshot.'
+
+library(tibble)
+library(dplyr)
+
+lock_diff <- tibble(
+  package    = c('dplyr', 'ggplot2', 'tidyr',
+                 'survival', 'lubridate', 'rlang'),
+  version_a  = c('1.1.0', '3.4.4', '1.3.0',
+                 '3.5-7', '1.9.3', '1.1.2'),
+  version_b  = c('1.2.1', '3.4.4', '1.3.1',
+                 '3.5-8', '1.9.3', '1.1.4')
+) |>
+  mutate(changed = if_else(
+    version_a == version_b, '', 'changed'
+  ))
+
+knitr::kable(lock_diff)
+```
+
+Four of the six pins moved between the two snapshots.
+Two of the moves are patch-level (`tidyr` and
+`survival`), the kind that ordinarily preserve
+behaviour but occasionally do not; one is a minor
+version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
+that can refine a default; and `rlang`, a package almost
+nothing calls directly but almost everything depends on,
+moved beneath the whole stack. The lesson is that a diff
+of the lockfile is a reviewable record of exactly this
+churn. Without a committed lockfile, none of these
+movements would be visible, and the analyst confronted
+with a changed result would have no way to see which
+package had shifted. The lockfile does not prevent
+packages from changing; it makes the change legible, and
+lets the analyst restore the earlier column deliberately
+rather than discover the drift by accident.
+
+## Collaborating with an LLM
+
+A language model is a capable assistant for the
+mechanics of `renv`, but its confident fluency is
+precisely the hazard, because a plausible-looking
+lockfile instruction can pin the wrong thing or nothing
+at all. Each of the following triples pairs a useful
+prompt with what the analyst must watch for and verify.
+
+**Prompt.** 'My collaborator cloned our project and the
+packages are missing. Write the R command they should
+run.'
+
+*Watch for.* A model may suggest reinstalling packages
+by hand with `install.packages()`, or may propose
+`renv::snapshot()`, either of which is wrong for a fresh
+clone. The correct answer is `renv::restore()`.
+
+*Verification.* Confirm that the suggested command reads
+the lockfile rather than writing it, and that after
+running it the installed versions match the lockfile.
+Run the check gate and confirm the triad holds.
+
+**Prompt.** 'Explain why my `renv.lock` includes
+`roxygen2` and `testthat` when my analysis never calls
+them, and whether I should remove them.'
+
+*Watch for.* A model may assert flatly that any unused
+package should be purged, missing the deliberate
+convention by which test infrastructure is pinned while
+pure development tooling is not. The distinction is a
+judgement, not a rule the model can read off the file.
+
+*Verification.* Decide the placement yourself against
+the two-test procedure: does the package's version
+affect the result, and does the code reference it?
+Confirm that development-only tools such as
+`languageserver` are in the Dockerfile and absent from
+the lockfile, and that test packages are handled by your
+stated convention.
+
+**Prompt.** 'Set my repository to a dated Posit Package
+Manager snapshot for 2026-06-29.'
+
+*Watch for.* A model may produce a URL with the wrong
+path structure, an implausible date, or a mirror that
+does not offer binaries for your platform. It may also
+silently assume a Linux distribution codename that does
+not match your system.
+
+*Verification.* Check the constructed URL against the
+Posit Package Manager documentation, confirm the date is
+the one you intend, and confirm that an install actually
+draws binaries rather than falling back to source. The
+recorded URL should then appear in the lockfile's
+`Repositories` block.
+
+## Exercises
+
+1. Initialise `renv` in a throwaway project, install two
+   packages, and snapshot. Open `renv.lock` in a text
+   editor and locate, for one package, its version,
+   source, and hash. Explain in a sentence what each of
+   the three would let a later restore verify.
+
+2. With the project of Exercise 1, upgrade one package
+   to a newer version, snapshot again, and inspect the
+   diff of `renv.lock` under version control. Which
+   fields changed, and which stayed fixed? Relate the
+   diff to the synthetic table of @tbl-lockdiff.
+
+3. Deliberately break the dependency triad: add a
+   `library()` call for a package you have not declared
+   or pinned. Run the project's dependency check and
+   record which inclusion it reports as violated and how
+   it repairs the violation. Then remove the call and
+   confirm the check passes.
+
+4. Point your repository at a dated Posit Package Manager
+   snapshot and reinstall one package. Time the install,
+   then compare it with an install of the same package
+   from source. Report the difference and explain, in
+   terms of binaries versus source, why it arises.
+
+5. Take a small analysis that has no lockfile and use
+   `rang` to reconstruct the package environment as it
+   stood on a chosen past date. Compare the resulting
+   version set with what a current `install.packages()`
+   would provide. Which packages differ, and by how much?
+
+6. Argue, in a short paragraph, why an analysis that
+   passes its dependency check has reached L1 and not
+   L2. Name one concrete determinant that a lockfile
+   leaves unpinned and describe a plausible way it could
+   change a result across two machines.
+
+## Further reading
+
+The authoritative reference for the tool is @ushey2020,
+the package documentation for `renv`, whose introductory
+and collaboration vignettes are the fastest route to
+fluent daily use and whose treatment of the cache and of
+custom repositories repays study once the basics are in
+hand. The relationship of `renv` to its predecessor
+`packrat`, and its place in the wider stack, is set out
+compactly in the survey portions of @sec-intro.
+
+For the date-based alternatives, @chan2023 presents
+`rang` and its strategy of reconstructing a historical
+environment from CRAN's archive, with a clear account of
+the cases where hindsight succeeds and where it cannot;
+@simonsohn2026 documents `groundhog` and its run-time,
+date-stamped loading model; and @capsule describes the
+lazy discipline that `capsule` layers over `renv`.
+Reading the three together clarifies that pinning the
+package layer admits several idioms with different
+demands on foresight.
+
+On the discipline of where a package belongs, the
+placement whitepaper accompanying the framework develops
+the two-test decision procedure and the two-layer model
+that this chapter summarises, and is the place to turn
+when a package sits awkwardly between the lockfile and
+the Dockerfile. Finally, the boundary this chapter
+insists on, that the lockfile pins the packages and
+nothing beneath them, is taken up directly in
+@sec-containers, where the container fixes the R version,
+the operating system, and the system libraries that
+`renv` by design does not.

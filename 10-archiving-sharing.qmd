@@ -1,4 +1,871 @@
 # Collaboration, Archiving, and Stewardship {#sec-archiving}
 
-*Chapter under development. Maps to Week 10.*
+## Learning objectives
 
+By the end of this chapter the reader should be able
+to:
+
+- Explain the two-layer team model, distinguishing the
+  slow-moving environment layer a team lead fixes once
+  from the fast-moving package layer that every
+  contributor extends under the renv union model.
+- State why the Dockerfile, and not the pushed image,
+  is the reproducibility guarantee, and choose a
+  registry and a forge with vendor independence in
+  view.
+- Deposit a research compendium for the long term,
+  minting a persistent identifier and archiving the
+  environment as a single file, and relate these steps
+  to the FAIR principles.
+- Recover a decayed environment from a date when the
+  original pins are no longer resolvable, and describe
+  the sustainability limits of any young framework
+  honestly.
+- Adapt the sharing and archiving workflow to each
+  research archetype: a package published to a
+  repository, a blog deployed as a website, a
+  manuscript deposited beside its compendium.
+
+## Orientation
+
+We arrive at the last question a reproducible analysis
+must answer, and it is not a technical question but a
+social and temporal one. The nine chapters preceding
+this one were concerned with a single machine and a
+single analyst: how to pin the packages (@sec-dependencies),
+fix the environment (@sec-containers), render the
+report (@sec-literate), and validate the whole with
+tests and continuous integration (@sec-verification).
+The present chapter concerns what happens when the
+analysis must leave that machine, first to reach a
+collaborator down the hall, and eventually to reach a
+stranger, a reviewer, or the analyst's own future self,
+years after the original laptop has been recycled.
+
+Consider a concrete case. A five-person laboratory
+runs a multi-site observational cohort. The
+principal investigator fixes the computational
+environment at the project's start; over the following
+year, one contributor adds survival-analysis packages,
+a second adds table-formatting packages for the
+manuscript, and a third adds spatial packages for a
+geographic sub-study. Each installs freely, on their
+own machine, without asking the others' permission.
+Two years after the paper appears, a journal requests
+the analysis for a reproducibility audit, and the
+original environment must be reconstructed from
+whatever survives in the repository. Nothing in the
+single-analyst workflow of the earlier chapters tells
+us how the laboratory should have coordinated during
+that year, nor how the compendium should have been
+deposited so that the audit could succeed.
+
+These are two distinct problems, and we shall keep
+them apart. The first is collaboration: sharing a
+compendium with a team while it is under active
+development, so that contributors do not drift into
+mutually incompatible environments. The second is
+archiving and stewardship: depositing the finished
+compendium so that it remains findable and executable
+long after the project ends, and recovering it when
+the pins have decayed. Both sit at the top of the
+reproducibility ladder rather than adding a new rung.
+Sharing a compendium changes nothing about its
+level: an L2 compendium shared with a team is still an
+L2 compendium, and a verified L3 compendium deposited
+in an archive is still L3. What sharing and archiving
+add is the assurance that the level already reached
+survives contact with other people and with the
+passage of time. That assurance is the subject of this
+chapter, and, being the last chapter, it is also where
+we draw the threads of the whole book together.
+
+## The analyst's contribution
+
+Three judgements in this chapter are the analyst's own,
+and no tool makes them.
+
+1. **Where to draw the governance boundary, between
+   what the team fixes and what each member may vary.**
+   The framework offers the two-layer model as a
+   default, but only a person who understands the
+   project can decide which layer a given decision
+   belongs to. Fixing too much makes the team rigid and
+   slows every contributor; fixing too little lets the
+   environment fracture. The base image, the R version,
+   and the system libraries are almost always the
+   lead's to fix; the analysis packages are almost
+   always the members' to add. The awkward cases in
+   between, a version of a system library that one
+   sub-study needs and the others do not, are decided
+   by the analyst, not the tool.
+
+2. **When to deposit, at what depth, and at what level
+   to claim.** An archival deposit is a public and
+   permanent act, and the honest disclosure of the
+   level reached is part of the deposit, not an
+   afterthought. Depositing a compendium and labelling
+   it 'reproducible' without stating whether it has
+   been verified, or whether the environment was pinned
+   by digest or merely by tag, misrepresents the work.
+   The analyst decides when the compendium is ready,
+   which artifacts accompany it, and, above all, what
+   the accompanying claim honestly says.
+
+3. **Where the work lives, and how dependent that
+   choice makes it.** A registry and a forge are
+   conveniences, but each is also a dependency on a
+   commercial vendor whose terms may change. The
+   analyst weighs the convenience of a popular platform
+   against the vendor independence of an institutional
+   or self-hosted alternative, and does so knowing that
+   a compendium tied to a service that disappears is a
+   compendium at risk.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+- **Registry.** A server that stores and distributes
+  container images, from which collaborators pull a
+  pre-built environment. GitHub Container Registry
+  (GHCR) and Docker Hub are the two in common use.
+- **Forge.** A platform that hosts a version-controlled
+  repository and runs its continuous integration.
+  GitHub and GitLab are the two principal forges;
+  GitLab is frequently self-hosted by universities.
+- **Two-layer team model.** A division of a project
+  into a slow-moving environment layer, fixed once by a
+  team lead, and a fast-moving package layer, extended
+  by every contributor.
+- **Union model.** The rule that the project lockfile
+  records the union of every package any contributor
+  has installed, so that a rebuilt image carries what
+  the whole team needs, not only what one member used.
+- **Persistent identifier (DOI).** A durable, resolvable
+  name for a deposited artifact, such as a Digital
+  Object Identifier, that continues to resolve even if
+  the artifact moves.
+- **FAIR.** A set of principles holding that a research
+  object should be Findable, Accessible, Interoperable,
+  and Reusable, formulated for data and later adapted
+  for research software.
+- **OCI or SIF tarball.** A container image exported as
+  a single file, checksummable and depositable as an
+  archival artifact. SIF is the single-file format used
+  by the Apptainer runtime.
+- **Zenodo.** A general-purpose research repository,
+  operated at CERN, that mints a DOI for any deposited
+  file set.
+:::
+
+## Sharing with a team: the two-layer model
+
+We begin with the collaboration problem, and with the
+observation that motivates the whole design: the two
+things a team shares change at very different rates.
+The computational environment, the operating system,
+the R version, and the system libraries, is chosen at
+most a handful of times over the life of a project. The
+set of R packages, by contrast, changes almost weekly
+as the analysis grows. A model that forces both to be
+renegotiated on the same schedule will either freeze
+the packages to the cadence of the environment, which
+is too slow, or churn the environment to the cadence of
+the packages, which is too disruptive. The resolution,
+adopted by the framework this book uses and set out by
+its authors, is to separate the two into layers with
+different change rates and different governance.
+
+**Layer 1 is the environment, and it is lead-governed.**
+A designated team lead selects a base image at the
+project's start, resolves it to an immutable content
+digest, and fixes it for every collaborator. This is
+the slow-moving half. It corresponds to pillar one, the
+computational environment, and it is where the L1-to-L2
+transition of the ladder is secured. The lead builds
+this environment once, and the whole team reuses it;
+the vignette that describes the pattern calls this
+'build once, use everywhere', and reports that reusing
+a pre-built team image reduces the setup of a new
+project from the fifteen or twenty minutes of a full
+build to a matter of seconds. The saving is real, but
+it is not the point that matters most for
+reproducibility. The point that matters is that every
+collaborator works from the same fixed floor.
+
+**Layer 2 is the package set, and it is
+contributor-governed under the union model.** Each
+member installs the packages their part of the work
+requires, freely and without coordination, and the
+project lockfile at any moment records the *union* of
+everything anyone has installed. When the shared image
+is rebuilt from that lockfile, periodically rather than
+on every change, it carries the full set every
+contributor needs, not merely the subset one member
+happened to use. A collaborator who pulls the latest
+main branch and rebuilds therefore inherits the survival
+packages, the table packages, and the spatial packages
+all at once, whether or not their own work touches any
+of them. This is the fast-moving half, corresponding to
+pillar two, and it is governed by every member rather
+than by the lead.
+
+The union model buys the elimination of a common and
+maddening failure, the analysis that runs for its author
+and nowhere else, at the price of a little environmental
+bloat. A package installed once for an exploratory
+notebook remains in the lockfile for everyone until it
+is deliberately removed. In our view this is a sound
+trade. On the one hand, the bloat is bounded and
+visible, a few extra megabytes in an image that is
+already a gigabyte or more, and it can be pruned when it
+matters. On the other, the failure it prevents,
+a contributor blocked because a colleague forgot to
+record a dependency, is the precise 'works on my
+machine' pathology that the whole enterprise exists to
+abolish. We would rather carry an unused package than
+lose a day to a missing one.
+
+### The Dockerfile, not the image, is the guarantee
+
+Here we must state a principle that is easy to get
+backwards. The pushed team image is a convenience, a
+cache that saves build time; it is *not* the
+reproducibility guarantee. The guarantee is the
+Dockerfile, together with the lockfile it restores from,
+both committed to version control. The reason is that a
+pushed image is opaque and impermanent: it is a binary
+blob on a registry that may be deleted, may be pruned
+under a retention policy, may be pushed for one
+processor architecture and silently emulated on another,
+and cannot be inspected line by line to see how it was
+made. The Dockerfile is transparent and durable: it is a
+text recipe, readable and diffable, that reconstructs
+the image from named and pinned inputs. If the registry
+vanishes tomorrow, a compendium whose guarantee is the
+Dockerfile can be rebuilt; a compendium whose guarantee
+was the pushed image cannot.
+
+The framework's vignette makes the same point in a note
+that is worth restating in our terms: pushing the image
+to a registry is optional, and if the image is not
+available, building from the Dockerfile produces an
+identical environment. The image is the fast path; the
+recipe is the guarantee. A team that treats the pushed
+image as authoritative, and lets the Dockerfile drift
+out of step with it, has quietly converted its
+compendium from something reconstructable into something
+that merely happens to exist, which is exactly the
+regression to L0 that honest disclosure is meant to
+catch.
+
+### Registries and the forge
+
+Two distribution choices attend team sharing, and both
+are best understood as concerns about vendor
+independence rather than about reproducibility level.
+Neither changes the level a compendium has reached.
+
+The **registry** is where the team image is published:
+GitHub Container Registry, Docker Hub, or an
+institutional registry such as one hosted inside GitLab.
+Docker Hub is the most familiar, but its free tier rate-
+limits image pulls and permits only a single private
+repository, constraints that a small laboratory reaches
+quickly. GHCR integrates with the GitHub forge and has
+more generous terms for public research. An institution
+with confidentiality requirements may mandate a private
+or self-hosted registry. The choice is a trade between
+convenience and control, and, we would stress, it is
+reversible: because the guarantee is the Dockerfile, a
+team can re-push its image to a different registry at any
+time without altering the compendium.
+
+The **forge** is where the repository and its continuous
+integration live: GitHub, or, very often in the health
+sciences, an institutional GitLab. This choice matters
+more than it first appears, because research compendia
+are disproportionately authored on self-hosted GitLab.
+Many universities and laboratories, particularly those
+subject to on-premises data-governance rules, run their
+own GitLab and cannot push to a public forge. A
+framework whose premise is reproducibility for that
+audience must not lock its users into one forge. The
+practical difficulty is concentrated entirely in
+continuous integration: GitHub Actions and GitLab CI use
+structurally different configuration dialects, so
+supporting both without maintaining two parallel and
+divergent sets of workflow files requires that the CI
+logic be single-sourced, typically in the Makefile, with
+each forge's configuration reduced to a thin shim that
+calls it. The lesson for the analyst is to treat the
+forge as a replaceable host, not as the home of the
+work, and to keep the reproducibility logic in artifacts
+that travel between forges unchanged.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what survives a registry outage
+
+A colleague argues that the team should push its image
+to Docker Hub after every package installation, 'so the
+image is always the source of truth'. What is wrong with
+treating the pushed image as the source of truth, and
+what should be the source of truth instead?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The pushed image is an opaque, impermanent binary that
+may be deleted, rate-limited, pruned, or built for the
+wrong architecture, and it cannot be inspected to see
+how it was made. If Docker Hub removes it, an analysis
+that depended on it is lost. The source of truth should
+be the committed Dockerfile together with the lockfile
+it restores from: a transparent, diffable, durable
+recipe that reconstructs an identical image from pinned
+inputs. The image is a convenience cache; the recipe is
+the guarantee. Pushing after every install also wastes
+effort, since the image need only be rebuilt
+periodically from the union lockfile.
+:::
+:::
+
+## Sharing with the world: archiving
+
+Sharing with a team keeps a live project consistent.
+Archiving asks a different question: how does a finished
+compendium survive after the project ends, the
+collaborators disperse, and the laboratory's servers are
+decommissioned? A repository on a forge is not an
+archive. Forges delete inactive accounts, rename
+themselves, change ownership, and go out of business; a
+URL that resolves today may not resolve in a decade. An
+archive, by contrast, undertakes to preserve a deposit
+and to keep a name for it resolving indefinitely.
+
+The instrument is a deposit in a research repository
+that mints a **persistent identifier**. Depositing the
+compendium in Zenodo, the general-purpose repository
+operated at CERN, produces a Digital Object Identifier
+that continues to resolve even as the underlying storage
+moves, and that can be cited in the article the
+compendium supports. The DOI is what lifts a compendium
+from merely locatable on a forge, which is fragile, to
+durably findable, which is the archival requirement.
+
+A deposit should carry the environment, not only the
+source. Here the container runtimes of @sec-backends
+supply exactly the archival artifact needed. Apptainer,
+the high-performance-computing runtime, builds from a
+digest-pinned Docker image a single Singularity Image
+Format file, and that SIF, or equivalently an OCI image
+exported as a tarball, is checksummable and depositable
+as one object. A compendium archived as its source tree
+plus a pinned Dockerfile plus the built environment as a
+single file is reproducible by two independent routes: a
+reader may rebuild from the recipe, or, if the recipe's
+inputs have decayed, may run the archived environment
+directly. Depositing both is belt and braces, and for a
+result that matters it is worth the disk.
+
+These practices realise a set of principles that the
+community has crystallised under the acronym FAIR.
+Wilkinson and colleagues proposed that a research object
+should be Findable, Accessible, Interoperable, and
+Reusable, and framed the principles for research data
+[@wilkinson2016]; Barker and colleagues subsequently
+adapted them for research software, whose reuse involves
+execution and not only reading [@barker2022]. A DOI
+serves findability; an open repository serves
+accessibility; a documented, standard container format
+serves interoperability; and a pinned, rebuildable
+environment serves reusability. The archetype-agnostic
+compendium of @sec-compendium is, in this light, a FAIR
+object almost by construction, provided it is deposited
+rather than merely committed.
+
+Two broader efforts are worth the analyst's attention.
+The Whole Tale platform, described by Brinckman and
+colleagues, bundles code, data, and computational
+environment into a single executable research object
+that a reader can run in the browser without local
+installation [@brinckman2019], an ambition the
+compendium-plus-archived-image pattern approaches by
+other means. And the Turing Way, a community-authored
+handbook, collects the collaborative and stewardship
+practices of reproducible research into one continually
+updated reference [@turingway2022]; a reader who wants
+the social side of collaboration, from code review to
+project governance to credit, in more depth than a
+single chapter allows, should begin there.
+
+## Stewardship over time
+
+Archiving preserves the artifacts; stewardship is the
+longer discipline of keeping them runnable as the world
+underneath them changes. Even a carefully pinned
+compendium decays. A base image tag may be re-pushed; a
+package version pinned in a lockfile may age out of the
+repository that once served it; a system library may be
+dropped from a new operating-system release. The
+question stewardship answers is: when the pins have
+decayed and the archived image was lost or never built,
+can the environment still be recovered?
+
+For the R ecosystem the most useful recovery tool is
+`rang`, described by Chan and colleagues [@chan2023].
+Where the ordinary workflow pins prospectively, by
+recording a lockfile at development time and restoring
+from it, `rang` reconstructs an environment
+retrospectively, from a *date*. Given the date an
+analysis was run, it resolves the package versions
+current on the archives at that date and generates a
+Dockerfile that rebuilds a period-correct environment,
+achieving exact reconstruction for a high proportion of
+archival analyses even when no original lockfile
+survives. The two approaches are complementary on a time
+axis: the framework of this book enforces consistency
+prospectively over a project's active life, and `rang`
+provides a recovery path retrospectively when that
+consistency has lapsed. A prudent steward records the
+run date in the compendium precisely so that this
+recovery path stays open.
+
+::: {.callout-important}
+## The honest level
+
+An archival deposit is where a reproducibility claim
+becomes public and permanent, and it is therefore where
+honesty about the level matters most. A compendium
+deposited with a DOI and a rebuildable, digest-pinned
+environment, whose outputs have been regenerated and
+shown to match, may honestly be described as verified,
+L3. A compendium deposited with a lockfile and a
+Dockerfile but never re-run from scratch is pinned, L2,
+and should say so. A compendium deposited as source and
+data alone, however carefully organised, is locatable,
+L0, and calling it 'fully reproducible' in the
+accompanying article is a misstatement the reader cannot
+easily detect. State the level reached; never assert
+above it. The deposit outlives the memory of what was
+actually done, so the recorded claim must be the true
+one.
+:::
+
+We must extend the same honesty to the tools this book
+has taught, and to the framework it uses as its running
+example. Frameworks that compose the whole determinant
+stack are young. By its own accounting, the framework
+firmly pins roughly four of the ten determinants of
+computational reproducibility, the environment, the
+packages, the source, and much of the session
+configuration, and leaves others, the numerical
+libraries, the fonts and graphics device, and intrinsic
+non-determinism, to the base image or to convention. Its
+own system review describes it candidly as a strong
+scaffolding tool rather than a finished guarantor of
+reproducibility, and notes the sustainability risk that
+attends a small maintainer base: a single principal
+author is a bus factor of one, and a tool maintained by
+one person is a tool whose future is contingent. These
+are not reasons to withhold the tool; they are reasons
+to disclose its reach accurately, which is the same
+discipline the honest-level callout demands of any
+analysis. The evidence that disclosure cannot be taken
+for granted is empirical. Stodden and colleagues,
+examining the effectiveness of journal reproducibility
+policies, found that the mere existence of a policy is a
+weak predictor of an actually reproducible artifact
+[@stodden2018]: the gap between the reproducibility a
+project claims and the reproducibility it delivers is
+real, common, and worth the analyst's vigilance.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: recovering a decayed environment
+
+An analysis was run in 2024 and deposited as a source
+tree and an `renv.lock`, but no Docker image was ever
+built, and by 2029 several of the pinned package
+versions are no longer installable from CRAN. A reviewer
+asks you to reproduce it. Which tool addresses this
+situation, what single piece of recorded information
+does it most need, and why is this a stewardship failure
+rather than a capture failure?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The `rang` package [@chan2023] addresses it by
+reconstructing a period-correct environment from a date,
+resolving the package versions current at that date and
+generating a Dockerfile, even when the pinned versions
+are no longer installable directly. The single most
+useful recorded fact is the *date the analysis was run*,
+from which `rang` resolves the historical package set.
+It is a stewardship failure rather than a capture
+failure because the pins were captured correctly at the
+time (the compendium was genuinely L1); what lapsed was
+the preservation of a runnable environment over time,
+which an archived image or a recorded run date would have
+protected. Capturing the level and stewarding it are
+distinct obligations.
+:::
+:::
+
+## Across the archetypes
+
+The team and archiving machinery applies to every
+research archetype, because all archetypes share the
+same compendium structure and the same reproducibility
+pillars (@sec-compendium). The two-layer model, the
+union lockfile, the registry and forge choices, the DOI
+deposit, and the `rang` recovery path are archetype-
+agnostic. What varies is the final act of publication,
+and it is worth naming the variation explicitly so that
+the reader does not mistake the manuscript case for the
+only case.
+
+A **data-analysis** or **simulation** compendium is
+typically deposited as itself: the compendium, with its
+DOI, *is* the published object, and for a simulation the
+recorded seeds and the union lockfile together are what
+a re-runner needs.
+
+A **manuscript** compendium is deposited *beside* the
+article it supports. The article carries the narrative;
+the compendium, cited by DOI from the article's
+data-availability statement, carries the code, the data,
+and the environment that regenerate every figure and
+table. The two are separate deposits linked by
+identifier, and the honest-level claim belongs in the
+article's reproducibility statement.
+
+A **package** compendium has a further, ecosystem-native
+channel: it is published to a package repository. Beyond
+the archival deposit, an R package is released to CRAN,
+whose incoming checks are themselves a validation gate,
+or to an R-universe, which builds and serves a package
+repository from a set of source repositories. Here the
+'sharing with the world' step is a package submission
+rather than only a file deposit, and the same R-package
+skin that makes `R CMD check` a universal gate on the
+compendium is what makes the package installable by
+`install.packages()`.
+
+A **blog** compendium is deployed as a website. Rather
+than a single rendered report, a blog renders many
+posts, and 'sharing with the world' means publishing the
+rendered site to a hosting service, whether a forge's
+pages service or a general-purpose host. Tools built for
+this case, such as `workflowr` described by Blischak and
+colleagues [@blischak2019], bind each rendered page to
+the version-control commit that produced it, so that the
+published site carries its own provenance. The archival
+obligation still applies: a blog that documents an
+analysis should deposit the compendium behind the posts,
+not only the rendered pages, since the pages are output
+and the compendium is the reproducible source.
+
+In every case the underlying discipline is identical.
+Fix the environment once and govern it as a team; extend
+the packages under the union model; keep the Dockerfile
+as the guarantee; deposit with a persistent identifier
+and an archived environment; record the run date against
+future decay; and state the level honestly. Only the
+last mile, package submission, website deployment, or a
+deposit beside an article, differs.
+
+## Worked example
+
+We follow the multi-site cohort laboratory of the
+Orientation through one quarter of collaboration and one
+archival deposit, to make the abstractions concrete.
+
+At the project's start the lead selected a base image,
+resolved it to a digest, and built the team environment
+once. Over the quarter, three contributors extended the
+package layer independently. The union model records the
+result: the project lockfile always holds the union of
+every contributor's additions. The following chunk
+reconstructs the running union over the quarter and
+tabulates it. It uses only base R together with `tibble`
+and `knitr`, and computes the cumulative union
+deterministically, so it regenerates identically on
+every render.
+
+```{r}
+#| label: tbl-union
+#| tbl-cap: 'The renv union model over one quarter of team collaboration. Each contributor installs packages independently; the project lockfile records the cumulative union, which the shared image is periodically rebuilt from. The union size only grows, so every contributor who rebuilds inherits the full set.'
+
+library(tibble)
+library(knitr)
+
+contributions <- tibble::tribble(
+  ~contributor,          ~added,
+  'Lead (initial base)', 'here, renv, rmarkdown',
+  'Ana (survival)',      'survival, survminer',
+  'Ben (tables)',        'gtsummary, gt',
+  'Cai (spatial)',       'sf, tmap'
+)
+
+added_sets <- strsplit(contributions$added, ', ')
+running_union <- Reduce(union, added_sets,
+                        accumulate = TRUE)
+
+contributions$union_n <- vapply(
+  running_union, length, integer(1)
+)
+
+knitr::kable(
+  contributions[, c('contributor', 'added', 'union_n')],
+  col.names = c('Contributor', 'Packages added',
+                'Lockfile union (n)')
+)
+```
+
+The table shows the invariant that makes the model work:
+the union size is monotone, never shrinking as
+contributors are added, so a member who rebuilds the
+image at any point inherits everything the team needs up
+to that point. Ana never installs `sf`, yet after the
+quarterly rebuild her environment carries it, because
+Cai did, and the lockfile records the union.
+
+When the manuscript was accepted, the laboratory
+deposited the compendium. The session below, shown as a
+static illustration rather than executed, publishes the
+team image to a registry, records its immutable digest,
+exports the environment as a single archival file, and
+mints a DOI for the whole compendium. The `$` prompt is
+not part of the commands, and lines beginning `#>` are
+output.
+
+```bash
+# Rebuild the team image once, from the pinned
+# Dockerfile and the union lockfile, then publish it.
+$ make docker-build
+$ docker tag cohort-env:latest \
+    ghcr.io/mylab/cohort-env:2026-q3
+$ docker push ghcr.io/mylab/cohort-env:2026-q3
+
+# Record the immutable digest the team builds against.
+# This, not the mutable tag, is the reproducible name.
+$ docker inspect --format '{{index .RepoDigests 0}}' \
+    ghcr.io/mylab/cohort-env:2026-q3
+#> ghcr.io/mylab/cohort-env@sha256:4813816ad695...
+
+# Export the environment as a single archival file for
+# deposit, built from the digest-pinned image.
+$ apptainer build cohort-env.sif \
+    docker://ghcr.io/mylab/cohort-env@sha256:4813816ad695...
+
+# Deposit the compendium plus the archived environment
+# in Zenodo, which mints the persistent identifier the
+# article's data-availability statement will cite.
+$ zenodo-upload cohort-compendium-v1.0.zip cohort-env.sif
+#> Deposited. DOI: 10.5281/zenodo.7654321
+```
+
+Two features of the session deserve note. First, the
+image is pushed by a dated tag but *recorded* by digest;
+the tag is convenient for humans, the digest is the
+immutable name a collaborator or a reviewer builds
+against. Second, the deposit carries both the compendium
+and the archived environment, so that reproduction has
+two independent routes, rebuild-from-recipe and
+run-the-archived-image, and does not depend on the
+registry surviving.
+
+## Collaborating with an LLM
+
+A language model is a capable assistant for the
+mechanical parts of sharing and archiving, and an
+unreliable one for the parts that require judgement about
+this specific project. We give three exchanges, each with
+what to watch for and what the analyst must verify.
+
+**Prompt.** 'Write the shell commands to tag our image,
+push it to GHCR, record its digest, and export it as a
+SIF for archival deposit.'
+
+*Watch for.* A model will readily produce plausible
+commands, but may push and record the *mutable tag*
+rather than resolving and recording the *digest*, which
+silently discards the reproducibility the exercise exists
+to secure. It may also invent registry paths or flags
+that do not exist for your setup.
+
+*Verification.* Run each command and confirm the recorded
+reference is a `@sha256:...` digest, not a `:tag`. Pull
+the image fresh on a second machine using the recorded
+digest and confirm it resolves. Do not deposit until the
+digest round-trips.
+
+**Prompt.** 'Draft the data-availability and
+reproducibility statement for our manuscript, citing the
+deposited compendium.'
+
+*Watch for.* The model does not know what level your
+compendium actually reached, and will tend to reach for
+confident language ('fully reproducible', 'all results
+can be regenerated') regardless. It cannot know whether
+you verified the outputs or merely pinned them.
+
+*Verification.* Rewrite the level claim yourself against
+the honest-level standard: say verified only if you ran
+`zzc verify` or its equivalent and the outputs matched;
+say pinned if you pinned but did not re-run; name the DOI
+you actually minted, not a placeholder. The claim is the
+analyst's responsibility, not the model's.
+
+**Prompt.** 'Our 2024 analysis has an renv.lock but
+several pinned versions no longer install. How do we
+reproduce it?'
+
+*Watch for.* The model may confidently propose editing
+the lockfile to newer versions, which changes the
+analysis rather than reproducing it, or may recommend
+`rang` but misstate what input it needs.
+
+*Verification.* Confirm that the proposed route
+reconstructs the *original* versions rather than
+substituting current ones, and that it uses the recorded
+run date. Test the reconstructed environment against a
+known output from the original analysis before trusting
+it. A reproduction that quietly upgrades the packages is
+not a reproduction.
+
+## Exercises
+
+1. Take an existing single-analyst compendium of your
+   own and identify, for each package it uses, whether
+   the decision to include it belongs to the environment
+   layer or the package layer of a hypothetical team
+   version. Justify the two or three borderline cases.
+
+2. Explain, in a paragraph a collaborator could act on,
+   why the committed Dockerfile rather than the pushed
+   image is the reproducibility guarantee. Then describe
+   one concrete situation in which relying on the pushed
+   image would cause a reproduction to fail.
+
+3. Your institution runs a self-hosted GitLab and
+   forbids pushing to public forges. List the components
+   of a compendium's reproducibility workflow that must
+   change when moving from GitHub to GitLab, and the
+   components that do not, and identify which single
+   place the CI logic should live so that the change is
+   minimal.
+
+4. Deposit a small practice compendium in a research
+   repository that mints a DOI (Zenodo offers a sandbox
+   for exactly this). Record the DOI, then write a
+   data-availability statement that names the level the
+   compendium actually reached, defending your level
+   claim against the honest-level standard.
+
+5. Take a compendium with an `renv.lock` and, using
+   `rang`, generate a Dockerfile that reconstructs its
+   environment from the date it was created. Compare the
+   reconstructed package set against the lockfile and
+   report any differences, explaining why a
+   date-based reconstruction may not match a lockfile
+   exactly.
+
+6. For one archetype other than the manuscript (a
+   package, a blog, or a simulation), write the specific
+   'sharing with the world' step it requires beyond the
+   archival deposit, and explain what validation gate, if
+   any, that step adds.
+
+## Further reading
+
+- Wilkinson and colleagues [@wilkinson2016] formulate
+  the FAIR principles for research data; Barker and
+  colleagues [@barker2022] adapt them for research
+  software, whose reuse involves execution. Read both to
+  understand what an archival deposit is trying to
+  achieve, and why software reuse asks more than data
+  reuse.
+- Brinckman and colleagues [@brinckman2019] describe the
+  Whole Tale platform, which bundles code, data, and
+  environment into a single executable research object.
+  It is the most ambitious realisation of the
+  compendium-as-runnable-object idea.
+- The Turing Way [@turingway2022] is the community
+  handbook for reproducible and collaborative research.
+  For the social side of team collaboration, project
+  governance, credit, and code review, in more depth
+  than this chapter offers, it is the place to begin.
+- Chan and colleagues [@chan2023] present `rang`, the
+  retrospective recovery tool for decayed R
+  environments. Read it together with the pinning of
+  @sec-dependencies to see prospective capture and
+  retrospective recovery as two halves of stewardship.
+- Blischak and colleagues [@blischak2019] describe
+  `workflowr`, which binds each rendered page of a
+  versioned analysis website to its commit, the natural
+  tool for the blog archetype's deployment.
+- Stodden and colleagues [@stodden2018] provide the
+  empirical case that a reproducibility policy is a weak
+  predictor of an actually reproducible artifact, the
+  evidence behind this book's insistence on honest
+  disclosure over asserted reproducibility.
+
+## In conclusion
+
+We have reached the end of the book, and it is fitting
+to gather its argument into a few points, in the manner
+of a closing summary. Reproducibility, we have
+maintained throughout, is not a badge a project either
+holds or lacks; it is a level a project reaches, and the
+discipline is to reach as high as the work warrants and
+to say plainly how high that was.
+
+First, reproducibility comes in degrees, and the ladder
+names them: locatable (L0), pinned packages (L1), pinned
+environment (L2), and verified (L3). Every chapter of
+this book has been an ascent of that ladder, from finding
+the source, to pinning the packages with a lockfile, to
+fixing the environment with a container or a
+content-addressed alternative, to regenerating the
+outputs and confirming they match. The ladder is the
+common scale on which any analysis, built with any
+toolchain, can be placed and compared.
+
+Second, the rungs are reached by two different kinds of
+work, and conflating them is the source of much
+confusion. Capture fixes the inputs and sets the level:
+pinning the packages and the environment is capture.
+Validation confirms the captured level without adding to
+it: continuous integration and output verification are
+validation. Removing a validation feature does not lower
+the level; it stops the automated checking. Keeping the
+two registers distinct is what lets a project report,
+honestly and mechanically, exactly where it stands.
+
+Third, the unit of reproducible work is the research
+compendium, and it is not only a manuscript. The same
+machinery, the same pillars, and the same ladder serve a
+data analysis, a simulation study, an R package, a blog,
+and a scholarly manuscript alike; the archetypes differ
+only in their directory layout, in whether a report is
+rendered, and in the last mile of publication, a package
+submission, a deployed website, or a deposit beside an
+article. To treat the manuscript as the only case is to
+mistake one archetype for the whole.
+
+Fourth, and above all, the goal is reproducibility
+matched honestly to the level actually reached. The
+tools this book has taught, and the framework it has used
+as its running example, are strong but partial: they
+firmly secure some determinants and leave others to
+convention, and an honest practitioner discloses the
+difference rather than papering over it. A verified L3
+compendium and a locatable L0 script are both legitimate
+outputs of a scientific process; what is not legitimate
+is to present the second as the first. The reader who
+finishes this book with the judgement to name the level
+a given analysis has reached, across whatever archetype
+the work takes, and the honesty to claim no more, has
+learned the one thing the book most wished to teach.
