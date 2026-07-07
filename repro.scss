@@ -60,3 +60,37 @@ img.cover {
   font-variant: small-caps;
   color: #333;
 }
+
+/* On phones and narrow tablets Quarto hides the right-margin
+   per-page table of contents entirely. Surface it as a labelled
+   box at the top of the chapter instead, since the margin TOC
+   sits before the content in the DOM. */
+@media (max-width: 991.98px) {
+  #quarto-margin-sidebar {
+    display: block !important;
+    position: static !important;
+    float: none !important;
+    width: 100%;
+    max-width: 100%;
+    max-height: 45vh;
+    overflow-y: auto;
+    margin: 0 0 1.75rem 0;
+    padding: 0.6rem 0.95rem;
+    border: 1px solid #d3e8e4;
+    border-radius: 6px;
+    background: #f4faf9;
+    font-size: 0.9rem;
+  }
+
+  #quarto-margin-sidebar:empty {
+    display: none !important;
+  }
+
+  #quarto-margin-sidebar .quarto-sidebar-toc-title,
+  #quarto-margin-sidebar > nav > h2:first-child {
+    margin-top: 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: $primary;
+  }
+}

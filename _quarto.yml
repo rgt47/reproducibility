@@ -78,6 +78,8 @@ format:
     fig-height: 4.5
     fig-align: center
     tbl-cap-location: top
+    toc: true
+    toc-title: 'On this page'
     toc-depth: 3
     anchor-sections: true
     smooth-scroll: true
