@@ -26,9 +26,9 @@ to:
   studies that measure replication from those that
   measure computational re-execution.
 - State the distinction the National Academies draw
-  between reproducibility, replicability, and
-  robustness, and explain why the terminology is
-  contested.
+  between reproducibility and replicability, note that
+  the wider literature adds robustness as a third term,
+  and explain why the terminology is contested.
 - Explain why many re-execution failures are
   computational rather than statistical, using the
   silent-default changes in R as concrete cases.
@@ -174,7 +174,7 @@ isolate the computational failures.
 
 In psychology, the Open Science Collaboration
 re-ran one hundred published studies and could
-reproduce the original result in only thirty-nine of
+replicate the original finding in only thirty-nine of
 them [@opensciencecollaboration2015]. In preclinical
 oncology, Begley and Ellis, working from within
 industry, reported that only six of fifty-three
@@ -206,7 +206,7 @@ second time. Here the evidence is starker, because the
 failures are more avoidable. Trisovic and colleagues
 re-ran more than nine thousand R files deposited
 alongside published articles in the Harvard Dataverse
-and found that fewer than one in four executed without
+and found that roughly one in four executed without
 error, before any question of whether the output
 matched the published result [@trisovic2022]. Saju and
 colleagues, examining R code supplements archived on
@@ -294,11 +294,13 @@ to Claerbout and his colleagues in geophysics, who,
 in the early 1990s, built their published papers so
 that every figure could be regenerated from the
 archived code and data by a single command
-[@claerbout1992]. Their standard was demanding and
-their phrasing has become the field's motto: the
-published article is merely the advertisement of the
-scholarship, and the scholarship itself is the full
-computational apparatus that produced the figures.
+[@claerbout1992]. Their standard was demanding, and the
+phrasing that has become the field's motto is Buckheit
+and Donoho's paraphrase of it [@buckheit1995;
+@claerbout1992]: the published article is merely the
+advertisement of the scholarship, and the scholarship
+itself is the full computational apparatus that produced
+the figures.
 
 Reproducibility so understood is not a single
 threshold but a spectrum. Peng arranged computational
@@ -336,8 +338,10 @@ Then, in R 4.0.0, released in 2020, the
 `stringsAsFactors` default flipped from `TRUE` to
 `FALSE`, so that reading a data frame silently produced
 character columns where it once produced factors,
-changing the behaviour of every model that treated
-those columns as categorical [@rcoreteam2020]. Neither
+changing the behaviour of any code that depended on
+factor-specific behaviour, such as the ordering of
+levels or a function that requires a factor
+[@rcoreteam2020]. Neither
 change was a bug; both were deliberate improvements.
 Both would nonetheless break the exact reproduction of
 an analysis written under the old default, and neither
@@ -346,10 +350,9 @@ would say a word.
 To these language-level shifts we must add the
 steadier erosion of package churn, the phenomenon by
 which working code rots as the packages beneath it are
-updated. Wickham and colleagues note that a modern
-analysis may depend on dozens or hundreds of packages,
-each with its own release history and its own breaking
-changes [@wickham2015], and it is this churn that
+updated. A modern analysis may depend on dozens or
+hundreds of packages, each with its own release history
+and its own breaking changes, and it is this churn that
 Trisovic and colleagues measured when they found that
 most deposited R scripts ceased to run within a few
 years [@trisovic2022]. The code did not change; its
@@ -439,7 +442,7 @@ reproducible analysis is a correct one. The point is
 pressed by Leek and Peng, who observe that
 reproducibility guarantees only that a computation can
 be regenerated, not that the computation was the right
-one to perform [@leek2015; @leek2017]. A script that
+one to perform [@leek2015]. A script that
 faithfully regenerates a mistaken p-value on every
 machine, forever, is perfectly reproducible and
 perfectly wrong. Reproducibility disciplines the
@@ -529,8 +532,8 @@ knitr::kable(
 
 The two rows of @tbl-rng-kind share a seed and share a
 line of code, `set.seed(123); sample(1:10)`, and yet
-they diverge almost at once, agreeing only on the very
-first value before parting company. An analyst who set a
+they diverge almost immediately, coinciding only
+sporadically thereafter. An analyst who set a
 seed under R 3.5, confident that the seed made the
 analysis reproducible, would find the draws silently
 changed on upgrading to R 3.6 or later. The seed was
@@ -679,7 +682,7 @@ responsibility, not the model's.
 
 - On the load-bearing caveat that reproducibility is a
   floor and not a ceiling, Leek and Peng
-  [@leek2015; @leek2017] are brief, pointed, and worth
+  [@leek2015] are brief, pointed, and worth
   reading before one is tempted to equate a
   reproducible result with a correct one.
 

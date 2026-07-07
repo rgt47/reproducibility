@@ -128,8 +128,8 @@ nonetheless the wrong shape for the work.
   makes a directory a valid R package, and therefore
   checkable by the R build tools.
 - **`R CMD check`**: the standard R command that builds
-  a package, runs its tests, and applies several hundred
-  correctness checks; here it serves as a universal
+  a package, runs its tests, and applies dozens of
+  standardised checks; here it serves as a universal
   integrity gate on the whole compendium.
 - **The Five Pillars**: the five artifacts a compendium
   manages, one per capture point: the `Dockerfile`,
@@ -203,7 +203,7 @@ compendium for free.
 The gate is `R CMD check`. When R was designed as a
 system for distributing statistical software, its
 authors built a command that takes a package and subjects
-it to several hundred checks: that the code parses and
+it to dozens of standardised checks: that the code parses and
 loads, that every documented function matches its
 documentation, that declared dependencies are actually
 available, that the examples run, and that the tests
@@ -256,7 +256,7 @@ specific and small set of artifacts. The `zzcollab`
 framework organises these as the Five Pillars: the five
 things a compendium reads, writes, and version-controls,
 one for each point at which reproducibility can be
-captured [@marwick2018]. An analysis is reproducible only
+captured [@thomas2026zzcollab]. An analysis is reproducible only
 to the extent that all five are captured, and the pillars
 are layered rather than independent, each resting on the
 ones beneath it.
@@ -374,7 +374,7 @@ present section exists to prevent.
 
 `zzcollab` treats the research archetype as a first-class
 initialisation parameter, orthogonal to the choice of
-computational environment [@marwick2018]. Where the base
+computational environment [@thomas2026zzcollab]. Where the base
 image fixes the environment, the archetype determines the
 starting scaffolding: the directory emphasis, whether a
 primary report exists, and which validation gates apply on
@@ -443,7 +443,7 @@ imagine when they hear the word compendium, and the burden
 of the present section is that it is only the second of
 five.
 
-### 3. R package (a trial-design function)
+### 3. R package (a summary-table package)
 
 The third archetype arises when the reusable code matures
 into something of general interest, at which point `R/`,
@@ -451,14 +451,13 @@ into something of general interest, at which point `R/`,
 compendium is shareable as a CRAN-style package. The
 distinguishing feature, and the reason this archetype
 matters for the argument, is that *there is no report to
-render at all*. A package that computes the required sample
-size for a group-sequential clinical trial, or the
-operating characteristics of a Bayesian dose-finding
-design, has no manuscript as its deliverable; its
+render at all*. A package that generates
+publication-quality clinical-trial summary tables has no
+manuscript as its deliverable; its
 deliverable is the exported, documented, tested function. A
-representative deployment is a package for generating
-publication-quality clinical-trial summary tables, hosting
-its source in `R/`, its examples in `vignettes/`, and its
+representative deployment is exactly such a summary-table
+package, hosting its source in `R/`, its examples in
+`vignettes/`, and its
 documentation as a generated website.
 
 The gates for this archetype are `R CMD check`, run at its
@@ -486,8 +485,8 @@ The distinguishing discipline of this archetype is
 *seeding*. A simulation whose random draws are not pinned
 by an explicit `set.seed()` is not reproducible even in
 principle, because a second run produces different numbers
-by construction. The framework's simulation scaffolding
-therefore seeds a parallel-ready starter script, and a
+by construction. The archetype therefore emphasises
+explicit seeding and parallel execution, and a
 recommended practice is to store a seed column alongside
 the parameter grid so that each replicate is individually
 reproducible. Consider a power simulation for a
@@ -505,21 +504,25 @@ often the stored results rather than a paper.
 ### 5. Blog (a teaching notebook)
 
 The fifth archetype is the blog or lab notebook, in which
-the compendium renders not one report but many documents. A
+the compendium renders, in the general case, not one report
+but many documents. A
 teaching blog carrying a series of methods posts, or a
 running lab notebook of analyses, is a single compendium
-whose `analysis/` tree holds many `index.qmd` files, each
+whose `analysis/` tree may hold many `index.qmd` files, each
 rendered to a static site by the same machinery that renders
-a manuscript. Integration with Quarto [@allaire2024]
+a manuscript; the framework's representative deployment is
+the limiting case of a single post. Integration with Quarto
+[@allaire2024]
 enables publication to the site from the same compendium
 that produced the underlying analyses, so that the full
 five-pillar reproducibility stack applies to web-published
 teaching content without any change to the workflow.
 
 The gate here is again the universal `R CMD check`, joined
-by a render gate that must succeed for *each* post rather
-than for a single report. The multiplicity is the
-distinguishing feature: a blog compendium is a
+by a render gate that must succeed for *each* post the
+compendium carries rather than for a single report. The
+multiplicity is the distinguishing feature of the general
+case: a blog compendium is a
 render-many, where the manuscript is a render-one and the
 package is a render-none. The machinery beneath all three
 is, once more, identical.
@@ -563,7 +566,7 @@ archetypes <- tibble::tibble(
   example = c(
     'Incident-diabetes cohort analysis',
     'PTSD and diabetes comorbidity paper',
-    'Group-sequential trial-design function',
+    'Clinical-trial summary-table package',
     'Power and operating-characteristics simulation',
     'Teaching blog or lab notebook'
   )
@@ -641,7 +644,7 @@ there is no result to reproduce. Which archetype answers
 this objection, and how?
 
 The R-package archetype answers it. A package that exports
-a trial-design function has no report to render, yet it is
+a summary-table function has no report to render, yet it is
 fully reproducible: its result is the behaviour of the
 function, and that behaviour is protected by `R CMD check`
 and by the unit tests, which regenerate and verify the
@@ -704,7 +707,7 @@ session below is illustrative and is not executed.
 
 ```bash
 $ mkdir diabetes-cohort && cd diabetes-cohort
-$ zzc analysis        # scaffold; archetype recorded in zzcollab.yaml
+$ zzc analysis  # tidyverse base-image profile; archetype set separately
 ```
 
 The student places the registry extract under `raw_data/`,
@@ -717,7 +720,8 @@ universal check and the tests, run in a clean environment:
 
 ```bash
 $ make check-renv     # dependencies declared and locked
-$ make docker-test    # R CMD check plus tinytest
+$ make docker-test    # tinytest only
+$ make docker-check   # R CMD check
 ```
 
 Some weeks later the results are firm enough to write up.

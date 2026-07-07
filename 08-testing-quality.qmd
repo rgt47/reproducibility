@@ -410,11 +410,11 @@ b <- bootstrap_ci(sample_data, n = 1000)
 expect_equal(a, b)
 ```
 
-The second form is stronger and is the machinery of
-L3: it compares a freshly computed result against a
-baseline recorded at an earlier and trusted moment,
-typically stored as a small file alongside the
-tests.
+The second form is stronger and is the single-result
+analogue of the L3 check: it compares a freshly
+computed result against a baseline recorded at an
+earlier and trusted moment, typically stored as a
+small file alongside the tests.
 
 ```r
 # inst/tinytest/test-baseline.R
@@ -427,12 +427,14 @@ expect_equal(current$estimate,
 ```
 
 A suite that includes this last test is doing, at
-the scale of a single result, what `zzc verify`
+the scale of a single result, what `zzc verify --full`
 does at the scale of the whole compendium in
 @sec-verification: regenerating a recorded output
-and confirming that it matches. This is the rung
-the ladder calls verified, and it is reached by a
-test.
+and confirming that it matches. L3 proper is that
+full-compendium check, which rebuilds the environment
+and re-runs the whole analysis; the baseline test is
+its single-result counterpart, not a substitute that
+places a project at the verified rung on its own.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: which test catches it?
@@ -455,7 +457,8 @@ size. (b) A data-validation test on the age range.
 (c) A unit test against a hand-computed standard
 deviation. (d) A reproducibility test comparing the
 seeded result against a recorded baseline, which is
-exactly the L3 check. Note that the unit and
+the single-result form of the L3 check. Note that
+the unit and
 data-validation tests catch defects that
 reproduction alone would happily propagate: this is
 the paradox in operation.
@@ -473,8 +476,7 @@ the same function:
 
 ```r
 # fragile: pins an implementation detail
-expect_true(exists('filter',
-                   envir = environment(my_clean)))
+expect_true('filter' %in% all.names(body(my_clean)))
 
 # robust: pins the behaviour
 result <- my_clean(data.frame(x = c(1, NA, 3)))
@@ -525,12 +527,14 @@ transposed argument or a misplaced parenthesis; and
 a single house style across a compendium means that
 a difference in the code is always a difference in
 meaning, never merely a difference in whitespace.
-Sandve and colleagues, in their ten simple rules,
-and Wilson and colleagues in both of their practice
+Wilson and colleagues, in both of their practice
 papers, treat readable, conventional code as a
 component of reproducible work rather than an
-aesthetic preference [@sandve2013; @wilson2014;
-@wilson2017].
+aesthetic preference [@wilson2014; @wilson2017];
+Sandve and colleagues, in their ten simple rules,
+make the companion point that the provenance and the
+recorded results of an analysis must themselves be
+preserved [@sandve2013].
 
 Two tools mechanise this, and a third enforces them.
 
@@ -700,7 +704,8 @@ actual value against an expected one.
 
 # the function under test, in a correct and a
 # buggy form
-calculate_mean <- function(x) {
+calculate_mean <- function(x, na.rm = FALSE) {
+  if (na.rm) x <- x[!is.na(x)]
   sum(x) / length(x)
 }
 

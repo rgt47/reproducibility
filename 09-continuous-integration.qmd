@@ -578,12 +578,10 @@ digest, so the alteration cannot pass unnoticed.
 
 ```{r}
 #| label: tbl-integrity
-#| tbl-cap: 'A single altered value changes the digest of a derived dataset. The two frames differ in exactly one cell, yet their SHA-256 digests share no leading characters, so a checksum manifest detects the change.'
+#| tbl-cap: 'A single altered value changes the digest of a derived dataset. The two frames differ in exactly one cell, yet their SHA-256 digests differ from the first character, so a checksum manifest detects the change.'
 library(tibble)
 library(digest)
 library(knitr)
-
-set.seed(2718)
 
 cohort <- tibble(
   id      = 1:5,
@@ -614,8 +612,8 @@ kable(
 )
 ```
 
-The two digests share no leading characters despite the
-frames differing in a single cell. This is the property
+The two digests differ from the first character despite
+the frames differing in a single cell. This is the property
 that makes a checksum a reliable integrity guard: it is
 sensitive to any change and indifferent to none. A
 verification run that recomputes these digests and finds

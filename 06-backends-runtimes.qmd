@@ -75,7 +75,8 @@ worth internalising before any command is typed, because
 it prevents the common error of treating every unfamiliar
 tool as a special case. The first axis changes only the
 runner: a different program runs the very same image, and
-nothing about the image, its pinning, or its base changes.
+nothing about its pinning, its packages, or its base is
+reinstalled.
 The second axis changes the environment model itself,
 dispensing with the container and declaring the
 environment directly, so that the pinned environment is
@@ -146,10 +147,10 @@ chapter.
 - **Purely functional package manager.** A package
   manager, such as Nix, in which the installed result is
   a deterministic function of the declared inputs, so
-  that the same declaration yields a bit-identical
-  environment.
-- **Content-addressed.** Identified by a hash of the
-  content itself rather than by a mutable name, so that a
+  that the same declaration yields a deterministic,
+  reproducible environment.
+- **Input-addressed.** Identified by a hash of the build
+  inputs rather than by a mutable name, so that a
   reference cannot silently point at different content
   later.
 - **SIF.** The Singularity Image Format, a single-file
@@ -197,7 +198,11 @@ unawares. Docker Desktop, the packaged Docker distribution
 for macOS and Windows, is under its current terms not free
 for use by larger commercial and institutional
 organisations, and many universities fall within those
-terms. Podman carries no such restriction. For an analyst
+terms. The terms do carve out an exception for education,
+but institutions differ on whether a given use qualifies,
+and the point is contested, which is why many institutions
+either license Docker Desktop or avoid it. Podman carries
+no such restriction. For an analyst
 whose institution has declined to license Docker Desktop,
 Podman reaches exactly the same L2 environment, from the
 same image, at no licensing cost.
@@ -241,8 +246,11 @@ convenient coincidence for the verification of
 The expected pattern, and the one we recommend, is to
 develop on the laptop with Docker or Podman and to run at
 scale on the cluster with Apptainer, all from a single
-image. Nothing is rebuilt for the cluster; the same pinned
-environment is merely run by a different program.
+image. Nothing is reinstalled for the cluster; Apptainer
+repackages the pinned image into SIF, carrying the content
+over from the same digest and converting only the format,
+so the same pinned environment runs under a different
+program.
 
 This is the point at which the archetypes of @sec-compendium
 begin to matter. A **simulation study**, which may need to
@@ -286,16 +294,17 @@ run at all, because there is none.
 
 ### Nix and the rix front-end
 
-Nix is a purely functional, content-addressed package
-manager [@dolstra2004]. The phrase repays unpacking.
+Nix is a purely functional, input-addressed package
+manager [@dolstra2004]. The phrase deserves explanation.
 'Purely functional' means that the installed environment
 is a deterministic function of a declaration: given the
-same declaration, Nix builds a bit-identical result, on
-any machine, at any later time. 'Content-addressed' means
-that every built component is identified by a hash of its
-inputs, so that a reference cannot silently come to mean
-something else, the mutable-tag failure we guarded against
-in @sec-containers by pinning digests. Dolstra, in the
+same declaration, Nix reconstructs the same package set
+and dependency graph, on any machine, at any later time.
+'Input-addressed' means that every built component is
+identified by a hash of its inputs, so that a reference
+cannot silently come to mean something else, the
+mutable-tag failure we guarded against in @sec-containers
+by pinning digests. Dolstra, in the
 work that introduced Nix, made deterministic build the
 organising principle rather than an afterthought, and it
 is that property that recommends Nix here.
@@ -369,10 +378,10 @@ form, and the reader will encounter both in the wild.
 We should be candid about the trade-offs, in the two-sided
 manner this book prefers. On the plus side, Nix delivers
 the entire environment pillar in one mechanism, reaches L2
-without the container machinery, and gives bit-identical
-builds that Docker, whose reproducibility depends on
-careful digest and snapshot discipline, approaches but does
-not guarantee by construction. On the minus side, the Nix
+without the container machinery, and gives deterministic,
+reproducible environments that Docker, whose reproducibility
+depends on careful digest and snapshot discipline,
+approaches but does not guarantee by construction. On the minus side, the Nix
 model is genuinely alien to the audience, and although
 `rix` hides much of the language, diagnosing a build that
 has failed still calls for some Nix knowledge; the first
@@ -390,13 +399,13 @@ real, and it is not free either way.
 Two neighbours of Nix deserve mention, because a reader
 will meet them and should know where they sit. GNU Guix is
 Nix's close sibling, sharing the purely functional,
-content-addressed model, with a smaller R ecosystem; for
+input-addressed model, with a smaller R ecosystem; for
 the health scientist it is best understood simply as Nix's
 relation, reaching the same rung by the same idea.
 
 The conda family occupies a genuinely different middle
 ground, and it answers two constraints the container route
-handles awkwardly [@anaconda2023]. Conda, with the faster
+handles awkwardly. Conda [@anaconda2023], with the faster
 resolver `mamba` and the lockfile-oriented `pixi`
 [@pixi2024], reproduces natively on Windows, without the
 Linux-emulation layer a Docker image requires there, and it
@@ -525,7 +534,7 @@ comparison <- tibble(
     "the default local runtime",
     "licensing constraint; rootless Linux",
     "an HPC cluster; archival SIF",
-    "maximum rigour; bit-identical builds",
+    "maximum rigour; deterministic builds",
     "a Nix-aligned site",
     "Windows-only or mixed R and Python",
     "a reviewer who installs nothing",
@@ -557,8 +566,8 @@ the choice is Binder, which serves the running environment
 in a browser for the life of a session. When the project
 demands **maximum rigour** and the team can absorb the
 learning curve, the choice is Nix through `rix`, which
-gives bit-identical builds and reaches L2 without a
-container. And when the obstacle is a **licensing
+gives deterministic, reproducible builds and reaches L2
+without a container. And when the obstacle is a **licensing
 constraint**, an institution that has not licensed Docker
 Desktop, the choice is Podman, which reaches the identical
 L2 environment from the identical image at no licensing
@@ -733,7 +742,7 @@ format that make Apptainer, formerly Singularity, the
 natural cluster companion to a Docker workflow.
 
 The foundational account of the purely functional,
-content-addressed model is @dolstra2004, and the R
+input-addressed model is @dolstra2004, and the R
 front-end that makes it approachable for the health
 scientist is documented in @rodrigues2024rix, whose `rix`
 package generates the Nix declaration from ordinary R code.

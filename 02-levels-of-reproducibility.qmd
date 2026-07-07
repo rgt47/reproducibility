@@ -33,8 +33,8 @@ to:
   validating it, and explain why continuous
   integration adds no new pinned layer.
 - Distinguish a result that is reproduced from one
-  that is replicated, and navigate the inverted
-  terminology of the ACM and the National Academies.
+  that is replicated, and navigate the shifting use of
+  those two words across the literature.
 - Recognise that the ladder grades every archetype of
   research compendium, a manuscript, an analysis
   project, an R package, a simulation study, and a
@@ -221,7 +221,7 @@ secured by no rung of the capture ladder at all.
 
 ```{r}
 #| label: fig-determinant-stack
-#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, coloured by the rung of the ladder that first secures each layer. Package versions are secured at L1, the environment layers at L2, the analysis code and data are merely locatable at L0, and three layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
+#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, coloured by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
 #| fig-width: 7
 #| fig-height: 4.4
 library(ggplot2)
@@ -243,7 +243,7 @@ stack <- tibble::tibble(
               'L2 pinned environment',
               'L2 pinned environment',
               'L1 pinned packages',
-              'L2 pinned environment',
+              'L2 partially pinned',
               'L0 locatable',
               'L0 locatable',
               'Unpinned by any rung')
@@ -252,7 +252,8 @@ stack <- tibble::tibble(
 stack$secured <- factor(
   stack$secured,
   levels = c('L0 locatable', 'L1 pinned packages',
-             'L2 pinned environment', 'Unpinned by any rung'))
+             'L2 pinned environment', 'L2 partially pinned',
+             'Unpinned by any rung'))
 
 ggplot(stack, aes(x = reorder(layer, height),
                   y = 1, fill = secured)) +
@@ -262,6 +263,7 @@ ggplot(stack, aes(x = reorder(layer, height),
     values = c('L0 locatable' = '#6baed6',
                'L1 pinned packages' = '#3182bd',
                'L2 pinned environment' = '#08519c',
+               'L2 partially pinned' = '#fd8d3c',
                'Unpinned by any rung' = '#737373'),
     name = NULL) +
   labs(x = NULL, y = NULL,
@@ -367,7 +369,7 @@ ladder <- tibble::tibble(
     'A version-controlled repository',
     'A lockfile such as renv.lock',
     'A container image or a Nix environment',
-    'A passing verification run, recorded by continuous integration'),
+    'A passing verification run comparing regenerated outputs against a recorded baseline, re-run automatically by continuous integration'),
   `Health-research reading` = c(
     'A reviewer can find the code but cannot yet rebuild it',
     'A colleague installs the same packages the analysis used',
@@ -395,11 +397,10 @@ Where does the ladder come from, and is it arbitrary?
 It is not. It consolidates several graded views of
 reproducibility that the literature has offered in
 different vocabularies. @peng2011 arranged computational
-work along a spectrum, from a publication whose code and
-data are merely available, through code and data provided
-and then linked and executable, to full replication; our
-L0, L1, and L2 track the lower and middle reaches of
-that spectrum. The artifact-review badges used by the ACM
+work along a spectrum, from the merely published, through
+code available, code and data available, and linked and
+executable, to full replication; our L0, L1, and L2 track
+the lower and middle reaches of that spectrum. The artifact-review badges used by the ACM
 and several computing venues express a related ordering,
 from artifacts that are available, through artifacts
 evaluated as functional and then reusable, to results
@@ -447,8 +448,9 @@ capture-versus-validation distinction.
 The ladder grades re-execution, and re-execution is only
 one of the things the word 'reproducibility' is made to
 carry. A first-year student must fix the terms before
-reading the literature, because the two most authoritative
-bodies attach them to opposite meanings.
+reading the literature, because the same two words are
+attached to opposite meanings across the sources a reader
+will meet.
 
 The National Academies, in their 2019 consensus report,
 adopt the distinction this book follows [@nas2019].
@@ -472,27 +474,34 @@ of the distinction, casting replication as a question
 about the agreement of estimates across studies rather
 than about the re-running of code [@patil2016].
 
-Here is the warning. The ACM artifact-badge vocabulary
-uses the same two words, 'reproduced' and 'replicated',
-but attaches them in the reverse direction to the National
-Academies usage along the re-execution axis [@acm2020].
-Where one body calls the re-running of the author's own
-artifacts by one name, the other reserves that name for a
-new study with new artifacts. A reader who carries the
-sense of the words from one document into the other will
-be misled, silently and without any error to warn them,
-in exactly the manner of a shifted package default. This
-book fixes the meaning and states it once: throughout, L3
-denotes the ACM 'Results Reproduced' sense, namely that
-the captured analysis, rebuilt from its pinned definition
-and re-run, regenerates its own recorded outputs. It is
-deliberately not replication in the sense of an
-independent study on new data, which no software framework
-can supply. When the reader meets 'reproduced' or
-'replicated' in a journal's author instructions or a
-venue's badging policy, the first task is to determine
-which convention that document uses, because the word
-alone does not tell them.
+Here is the warning. The current ACM artifact-badge
+vocabulary, in its 2020 revision, agrees with the National
+Academies usage rather than inverting it [@acm2020]. Under
+both conventions, 'Reproduced' denotes obtaining a prior
+result using the author's own artifacts and the same
+setup, and 'Replicated' denotes obtaining it
+independently, with a different team and a new setup. The
+genuine word-swap that trips students belongs to two other
+places: the pre-2020 ACM badging, which attached the two
+words in the opposite direction along the re-execution
+axis, and some biomedical and field usages, which a reader
+may still encounter, where 'reproduce' names an
+independent study rather than a re-run. A reader who
+carries the sense of the words from one of those older
+documents into a current one will be misled, silently and
+without any error to warn them, in exactly the manner of a
+shifted package default. This book fixes the meaning and
+states it once: throughout, L3 denotes the ACM 'Results
+Reproduced' sense, which now coincides with the National
+Academies reproducibility sense, namely that the captured
+analysis, rebuilt from its pinned definition and re-run,
+regenerates its own recorded outputs. It is deliberately
+not replication in the sense of an independent study on
+new data, which no software framework can supply. When the
+reader meets 'reproduced' or 'replicated' in a journal's
+author instructions or a venue's badging policy, the first
+task is to determine which convention that document uses,
+because the word alone does not tell them.
 
 ::: {.callout-important}
 ## The honest level
@@ -657,8 +666,9 @@ packages need, and the lockfile restores inside it. The
 folder is now at **L2, pinned environment**. It will build
 and run identically on the colleague's laptop, on a
 reviewer's, and on a server. The analyst also sets the RNG
-kind and a seed in the project `.Rprofile`, because the Cox
-model's confidence intervals use a bootstrap, closing a
+kind and a seed in the project `.Rprofile`, because the
+analyst computes bootstrap confidence intervals for the
+hazard ratio, closing a
 session-configuration exposure that L2 does not close by
 default.
 
@@ -792,7 +802,7 @@ inference at hand.
 - @acm2020 documents the artifact-review badges whose
   'available', 'functional', 'reusable', and 'reproduced'
   ordering our ladder maps onto; read it alongside @nas2019 to
-  see the inverted use of the words at first hand.
+  see how the 2020 revision aligns the two vocabularies.
 - @turingway2022 crosses the reproducibility axis with a
   what-varies axis, same or different data against same or
   different analysis, and is the most accessible community

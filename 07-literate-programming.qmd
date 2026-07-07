@@ -251,7 +251,7 @@ output were formatted.
 
 The second, and the decisive advance, was `knitr`,
 written by Yihui Xie and released in 2012
-[@xie2018]. `knitr` generalised Sweave in two directions
+[@xie2015]. `knitr` generalised Sweave in two directions
 at once. It decoupled the computation from the output
 format, so that the same code chunks could be woven into
 LaTeX, into HTML, or into Markdown; and it gave the
@@ -263,7 +263,7 @@ including the executable chunk later in this chapter.
 
 The third was R Markdown, which paired `knitr` with
 `pandoc`, the universal document converter
-[@xie2020]. The author now wrote in Markdown, a light and
+[@xie2018]. The author now wrote in Markdown, a light and
 readable prose syntax, rather than in LaTeX, and
 `pandoc` converted the woven Markdown into whatever
 final format was wanted: HTML for the web, PDF by way of
@@ -372,9 +372,9 @@ ggplot(penguin_like,
 Within each of the three synthetic species, bill depth
 rises with bill length: the three solid lines slope
 upward. Pooled across the species, the relationship
-reverses, and the dashed line slopes down, because the
-species with the longest bills happen to have the
-shallowest ones. This is Simpson's paradox, and it is a
+reverses, and the dashed line slopes down, because
+across species longer bills are associated on average
+with shallower ones. This is Simpson's paradox, and it is a
 useful thing for a figure to show. For our purposes,
 however, the statistical lesson is secondary. The
 methodological lesson is that the preceding paragraph is
@@ -810,7 +810,11 @@ profile and its baked-in LaTeX distribution, while the
 latter needs neither. The `date` field is itself a small
 literate device: rather than a fixed string, it holds an
 inline R expression that inserts the render date, so the
-header cannot claim a date the render did not have.
+header cannot claim a date the render did not have. The
+provenance footer discussed below is not declared in this
+header at all; it is applied by the render tooling
+(`make docker-render`, by way of `tools/stamp-render.R`)
+rather than by the YAML.
 
 Below the header the author writes a setup chunk that fixes
 the chunk defaults and loads the packages the document
@@ -980,8 +984,8 @@ memory. The earlier formulation in @claerbout1992 and the
 signal-processing lineage surveyed by @vandewalle2009 give
 the argument its original setting.
 
-On the R realisations, @xie2018 is the definitive treatment
-of `knitr` by its author, and @xie2020 documents R Markdown
+On the R realisations, @xie2015 is the definitive treatment
+of `knitr` by its author, and @xie2018 documents R Markdown
 and its `pandoc`-based toolchain; @allaire2024 introduces
 Quarto and is the natural starting point for a reader
 beginning today. The compendium framing that binds the

@@ -208,7 +208,7 @@ run while this book renders, conveys the structure.
       "Package": "dplyr",
       "Version": "1.2.1",
       "Source": "Repository",
-      "Repository": "RSPM",
+      "Repository": "CRAN",
       "Hash": "5d1c2e3a...",
       "Requirements": [
         "R6", "cli", "generics", "glue",
@@ -224,11 +224,15 @@ Three features deserve comment. First, the version is
 recorded exactly, `1.2.1` and not `>= 1.2`, so there is
 no latitude for a later install to drift upward.
 Second, the source is named. A package that came from
-CRAN, from a Posit Package Manager mirror (recorded as
-`RSPM`), from Bioconductor, or from a specific GitHub
-commit is restored from that same source, which matters
-because the same version number can denote different
-code on different repositories. Third, the content
+CRAN, from a Posit Package Manager mirror, from
+Bioconductor, or from a specific GitHub commit is
+restored from that same source, which matters because
+the same version number can denote different code on
+different repositories. The `Repository` value is the
+registered name of the repository the package was drawn
+from, matching one of the names in the `Repositories`
+block above, which is why the excerpt records `CRAN`
+even though that entry points at a Posit mirror. Third, the content
 hash lets `renv` confirm that a restored package is
 byte-identical to the one recorded, catching the rare
 but real case of a repository serving altered contents
@@ -343,8 +347,8 @@ in a healthy compendium they satisfy a nesting relation.
   dependencies.
 - The **`renv.lock`** records a set of pinned packages.
 
-The invariant is that each set is contained in the
-next:
+The invariant is the composition of two atomic
+inclusions, each set contained in the next:
 
 $$
 \mathrm{Code} \subseteq \mathrm{DESCRIPTION}
@@ -361,26 +365,55 @@ which every R installation provides, are excluded from
 the code set, so the first inclusion concerns only
 contributed packages.
 
+One qualification keeps the invariant honest. Its strict
+form, with `DESCRIPTION` as the binding middle term,
+holds cleanly for the R-package archetype, where
+`DESCRIPTION` is the package's declared dependency
+interface and every package the code calls belongs there
+by definition. For a research or analysis compendium the
+middle term is looser: `DESCRIPTION` declares only the
+API of the reusable code in `R/`, while packages used
+solely by analysis scripts or reports legitimately live
+in `renv.lock` without appearing in `DESCRIPTION`. The
+operative invariant for a compendium is therefore the
+weaker $\mathrm{Code} \subseteq \mathrm{renv.lock}$, so
+the strict `DESCRIPTION` inclusion is exact for the
+package archetype but archetype-conditional in general.
+The framework still records analysis-script dependencies
+in `DESCRIPTION`, under `Suggests`, so that one uniform
+check serves every archetype, but for a compendium the
+binding guarantee is simply that nothing the code uses
+goes unpinned.
+
 The invariant matters because it is checkable by
 machine. The framework's `check-renv` gate, backed by
 the `zzrenvcheck` package, scans all three sources,
 tests the two inclusions, and reports any violation: a
 package used in code but undeclared, or declared but
 unpinned. Crucially it can repair many violations
-automatically, adding a missing declaration to
-`DESCRIPTION` or installing and snapshotting a missing
-package, so that the analyst's ordinary workflow is to
-write the analysis and let the check reconcile the
-bookkeeping.
+automatically. It writes a missing declaration into
+`DESCRIPTION` through the `desc` package, and for a
+package absent from the lockfile it queries the CRAN API
+for the current version and injects a resolved entry
+into `renv.lock` directly. It does not call
+`renv::snapshot()` or `install.packages()`; the repair
+edits the two manifests as text rather than installing
+anything or re-deriving the lockfile from the library.
+The analyst's ordinary workflow is thus to write the
+analysis and let the check reconcile the bookkeeping.
 
 ```bash
 $ make check-renv
 ```
 
 This runs the check with automatic repair before a
-commit, and the same check runs again under continuous
-integration, so a drift that escapes the developer's
-machine is caught on the clean build. It is worth being
+commit. The same check runs again under continuous
+integration, but there in a report-only mode: it runs
+strict and with repair disabled, so a drift that escaped
+the developer's machine fails the build rather than
+being silently repaired, forcing the contributor to
+commit the fix instead of letting the clean build paper
+over it. It is worth being
 precise about what the gate does and does not verify.
 It is a presence check: it guarantees that the three
 sets nest, that nothing used is unpinned. It does not
@@ -435,17 +468,25 @@ absent from `renv.lock`. Which inclusion of the triad
 has been violated, and what single command would most
 likely repair it?
 
-The violated inclusion is
-$\mathrm{Code} \subseteq \mathrm{renv.lock}$: the code
-references a package that the lockfile does not pin
-(and, presumably, that `DESCRIPTION` does not declare).
-The likely cause is that `survival` was installed
-interactively but never snapshotted. Running
-`make check-renv`, which invokes
+The invariant is the composition of two atomic
+inclusions, and the one violated here is the first,
+$\mathrm{Code} \subseteq \mathrm{DESCRIPTION}$: the code
+references `survival` while `DESCRIPTION` does not
+declare it, which in turn leaves it unpinned in the
+lockfile. The transitive composition
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$ therefore
+fails as a consequence, but the atomic breach is at the
+code-to-`DESCRIPTION` step. The likely cause is that
+`survival` was installed interactively but never
+declared. Running `make check-renv`, which invokes
 `zzrenvcheck::check_packages()` with automatic repair,
-would add `survival` to `DESCRIPTION` and snapshot it
-into `renv.lock`, restoring both inclusions. The fix
-must then be committed so the clean CI build sees it.
+would write `survival` into `DESCRIPTION` through the
+`desc` package and inject a CRAN-resolved entry for it
+directly into `renv.lock`, restoring both inclusions.
+This edits the two manifests as text and is distinct
+from an `renv::snapshot()`, which would instead re-derive
+the lockfile from the installed library. The fix must
+then be committed so the clean CI build sees it.
 :::
 
 ## Dated snapshots of a package repository
@@ -478,7 +519,13 @@ lockfile above records exactly this URL in its
 only the versions but the source they came from. The
 gain is twofold: fixity, because the catalogue cannot
 drift, and speed, because binaries install in seconds
-where source builds take minutes. In the framework this
+where source builds take minutes. On Linux the binary
+path is more specific: pre-compiled binaries are served
+only from the distribution-codename form of the URL,
+such as
+`https://packagemanager.posit.co/cran/__linux__/noble/2026-06-29`,
+whereas the plain dated path shown above delivers source
+to be built. In the framework this
 book uses, the project's generated configuration points
 R at a dated snapshot automatically, so that the two
 benefits accrue without the analyst assembling the URL
@@ -606,13 +653,16 @@ knitr::kable(lock_diff)
 ```
 
 Four of the six pins moved between the two snapshots.
-Two of the moves are patch-level (`tidyr` and
-`survival`), the kind that ordinarily preserve
+Three of the moves are patch-level (`tidyr`, `survival`,
+and `rlang`), the kind that ordinarily preserve
 behaviour but occasionally do not; one is a minor
 version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
-that can refine a default; and `rlang`, a package almost
-nothing calls directly but almost everything depends on,
-moved beneath the whole stack. The lesson is that a diff
+that can refine a default. The `rlang` move, from 1.1.2
+to 1.1.4, is likewise patch-level, and it is singled out
+here not for the distance it travelled but for its
+transitive position: a package almost nothing calls
+directly yet almost everything depends on, so it moved
+beneath the whole stack. The lesson is that a diff
 of the lockfile is a reviewable record of exactly this
 churn. Without a committed lockfile, none of these
 movements would be visible, and the analyst confronted

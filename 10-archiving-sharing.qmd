@@ -164,10 +164,11 @@ and no tool makes them.
   object should be Findable, Accessible, Interoperable,
   and Reusable, formulated for data and later adapted
   for research software.
-- **OCI or SIF tarball.** A container image exported as
-  a single file, checksummable and depositable as an
-  archival artifact. SIF is the single-file format used
-  by the Apptainer runtime.
+- **OCI tarball or SIF file.** A container image exported
+  as a single file, checksummable and depositable as an
+  archival artifact. An OCI image is exported as a tar
+  archive, whereas SIF is the self-contained single-file
+  format used by the Apptainer runtime.
 - **Zenodo.** A general-purpose research repository,
   operated at CERN, that mints a DOI for any deposited
   file set.
@@ -435,10 +436,8 @@ from it, `rang` reconstructs an environment
 retrospectively, from a *date*. Given the date an
 analysis was run, it resolves the package versions
 current on the archives at that date and generates a
-Dockerfile that rebuilds a period-correct environment,
-achieving exact reconstruction for a high proportion of
-archival analyses even when no original lockfile
-survives. The two approaches are complementary on a time
+Dockerfile that can often reconstruct a period-correct
+environment even when no original lockfile survives. The two approaches are complementary on a time
 axis: the framework of this book enforces consistency
 prospectively over a project's active life, and `rang`
 provides a recovery path retrospectively when that
@@ -610,7 +609,7 @@ every render.
 
 ```{r}
 #| label: tbl-union
-#| tbl-cap: 'The renv union model over one quarter of team collaboration. Each contributor installs packages independently; the project lockfile records the cumulative union, which the shared image is periodically rebuilt from. The union size only grows, so every contributor who rebuilds inherits the full set.'
+#| tbl-cap: 'The renv union model over one quarter of team collaboration. Each contributor installs packages independently; the project lockfile records the cumulative union, which the shared image is periodically rebuilt from. Because it is a union rather than a running total, a package a contributor installs that another already has does not enlarge it, so the union can grow by fewer than the number of packages added. The union size never shrinks, so every contributor who rebuilds inherits the full set.'
 
 library(tibble)
 library(knitr)
@@ -618,7 +617,7 @@ library(knitr)
 contributions <- tibble::tribble(
   ~contributor,          ~added,
   'Lead (initial base)', 'here, renv, rmarkdown',
-  'Ana (survival)',      'survival, survminer',
+  'Ana (survival)',      'survival, survminer, here',
   'Ben (tables)',        'gtsummary, gt',
   'Cai (spatial)',       'sf, tmap'
 )
@@ -642,9 +641,14 @@ The table shows the invariant that makes the model work:
 the union size is monotone, never shrinking as
 contributors are added, so a member who rebuilds the
 image at any point inherits everything the team needs up
-to that point. Ana never installs `sf`, yet after the
-quarterly rebuild her environment carries it, because
-Cai did, and the lockfile records the union.
+to that point. Because it is a union and not a running
+total, a package a contributor installs that the team
+already has does not enlarge it: Ana adds three packages,
+but one of them, `here`, was already in the lockfile from
+the initial base, so the union grows by only two, from
+three to five. Ana never installs `sf`, yet after the
+quarterly rebuild her environment carries it, because Cai
+did, and the lockfile records the union.
 
 When the manuscript was accepted, the laboratory
 deposited the compendium. The session below, shown as a
@@ -676,8 +680,10 @@ $ apptainer build cohort-env.sif \
 
 # Deposit the compendium plus the archived environment
 # in Zenodo, which mints the persistent identifier the
-# article's data-availability statement will cite.
-$ zenodo-upload cohort-compendium-v1.0.zip cohort-env.sif
+# article's data-availability statement will cite. The
+# command below is schematic; real deposition uses the
+# Zenodo REST API or the web upload interface.
+$ zenodo-upload cohort-compendium-v1.0.zip cohort-env.sif  # schematic
 #> Deposited. DOI: 10.5281/zenodo.7654321
 ```
 
@@ -851,12 +857,20 @@ toolchain, can be placed and compared.
 Second, the rungs are reached by two different kinds of
 work, and conflating them is the source of much
 confusion. Capture fixes the inputs and sets the level:
-pinning the packages and the environment is capture.
-Validation confirms the captured level without adding to
-it: continuous integration and output verification are
-validation. Removing a validation feature does not lower
-the level; it stops the automated checking. Keeping the
-two registers distinct is what lets a project report,
+pinning the packages and the environment is capture,
+which carries a compendium as far as L2. The last rung,
+L3, is reached not by capture but by an act of
+verification: regenerating the outputs and confirming
+they match is what certifies the verified state, so
+running `zzc verify` once is what lifts a pinned L2
+compendium to a verified L3 one. Automated re-checking is
+distinct from that act. Continuous integration reruns the
+verification on every change and certifies that the L3
+state still holds, but it adds no rung of its own;
+removing it does not lower the level, it only stops the
+automated confirmation. The verification act reaches L3;
+the automation around it keeps the claim current. Keeping
+these registers distinct is what lets a project report,
 honestly and mechanically, exactly where it stands.
 
 Third, the unit of reproducible work is the research

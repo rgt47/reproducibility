@@ -316,9 +316,11 @@ analyst's recipe begins from a solid and shared
 foundation rather than reconstructing one. The images
 form a small hierarchy. At the bottom sits
 `rocker/r-ver`, R on Ubuntu and little else. Above it,
-`rocker/tidyverse` adds the tidyverse packages and the
-`pandoc` document converter; `rocker/rstudio` adds the
-RStudio Server development environment; and
+`rocker/rstudio` adds the RStudio Server development
+environment; `rocker/tidyverse` builds on
+`rocker/rstudio`, adding the tidyverse packages and the
+`pandoc` document converter, so it carries RStudio
+Server as well and is the larger of the two; and
 `rocker/verse` adds a LaTeX toolchain for rendering
 manuscripts to PDF. Each higher image is built on the
 one below, so they share layers, and each fixes a
@@ -396,8 +398,9 @@ ENV LANG=en_US.UTF-8 \
 RUN echo 'options(repos = c(CRAN = "https://packagemanager.posit.co/cran/__linux__/noble/2026-06-27"))' \
         >> /usr/local/lib/R/etc/Rprofile.site
 
-# Restore the exact package set from the lockfile.
+# Bootstrap renv, then restore the exact package set.
 COPY renv.lock renv.lock
+RUN R -e "install.packages('renv')"
 RUN R -e "renv::init(bare = TRUE); renv::restore()"
 ```
 
@@ -426,9 +429,20 @@ from the recipe alone. Reaching L2 requires the digest
 pin, the dated snapshot, and a restored lockfile
 together. Match the claim to what the recipe actually
 fixes. A useful discipline is to build the image twice
-and confirm the two builds carry the same digest; if
-they do not, the recipe is not yet pinned, and the
-honest level is still L1.
+and confirm the two builds carry the same content, that
+is, the same operating system and the same R and package
+versions, for example by comparing `renv::status()` and
+the installed apt and R package versions across the two
+builds; if the content differs, the recipe is not yet
+pinned, and the honest level is still L1. Do not test
+this by comparing the two image digests: Docker digests
+are not reproducible across rebuilds by default, because
+per-layer timestamps and file modification times differ,
+so two builds of a correctly pinned recipe carry
+different digests. Bit-identical digests require
+reproducible-build tooling, such as `SOURCE_DATE_EPOCH`
+and the BuildKit rewrite-timestamp option, which is a
+separate concern from whether the content is pinned.
 :::
 
 ## Environment-variable determinism
@@ -506,9 +520,17 @@ not exactly associative, the order in which partial sums
 are combined can change the last bits of a result. Two
 runs of the same bootstrap or the same mixed model, one
 on four threads and one on eight, may therefore differ
-in the final digits. Setting `OMP_NUM_THREADS=1` forces
-a single, deterministic order of summation, trading a
-little speed for bitwise reproducibility. Whether that
+in the final digits. Which variable actually governs the
+summation order depends on the BLAS implementation the
+image carries: `OPENBLAS_NUM_THREADS` for OpenBLAS,
+`MKL_NUM_THREADS` for the Intel MKL, and `OMP_NUM_THREADS`
+for the OpenMP-parallel sections, so the rocker default
+reference BLAS is already single-threaded and needs no
+such variable to be deterministic. Setting the OpenMP and
+the BLAS thread counts to one together, rather than any
+one of them alone, is what forces a single, deterministic
+order of summation, trading a little speed for bitwise
+reproducibility. Whether that
 trade is worth making is a judgement, and it is the
 analyst's; the point is that a container lets the
 judgement be recorded and enforced rather than left to
@@ -735,8 +757,14 @@ result runs today and is not L2.
 installer points at a dated snapshot rather than a live
 repository; and that `LANG`, `LC_ALL`, and `TZ` are set.
 Then build the image twice and confirm the two builds
-produce the same digest. If they do not, the recipe is
-not pinned, whatever the model asserted.
+carry the same content, comparing the installed operating
+system and the R and package versions, for instance
+through `renv::status()` and the apt and R package
+version lists, rather than comparing image digests, which
+differ across rebuilds even for a correctly pinned recipe
+because per-layer timestamps vary. If the content
+differs, the recipe is not pinned, whatever the model
+asserted.
 
 **Prompt.** 'My container gives different numbers than my
 laptop. Why?'
@@ -850,7 +878,8 @@ the subject of @marwick2018, whose `rrtools` first
 combined a lockfile and a Dockerfile in a packaged
 analysis. The alternatives to Docker as a runtime, from
 the high-performance-computing runtime Apptainer
-[@kurtzer2017] to the browser-based Binder
+(formerly Singularity) [@kurtzer2017] to the
+browser-based Binder
 [@jupyter2018] and the container-free Nix, are taken up
 in @sec-backends, and the team-image model sketched here
 is developed in full in @sec-archiving.
