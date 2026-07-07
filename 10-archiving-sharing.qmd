@@ -265,9 +265,16 @@ was the pushed image cannot.
 The framework's vignette makes the same point in a note
 that is worth restating in our terms: pushing the image
 to a registry is optional, and if the image is not
-available, building from the Dockerfile produces an
-identical environment. The image is the fast path; the
-recipe is the guarantee. A team that treats the pushed
+available, building from the Dockerfile reproduces the
+environment. We should qualify that claim, in keeping
+with this chapter's own discipline: a rebuild is
+byte-for-byte identical only when the base image is
+pinned by content digest and the package snapshot is
+dated, as @sec-containers urged; a recipe pinned by a
+mutable tag, or drawing on a rolling snapshot,
+reconstructs a functionally equivalent environment
+rather than a bit-identical one. The image is the fast
+path; the recipe is the guarantee. A team that treats the pushed
 image as authoritative, and lets the Dockerfile drift
 out of step with it, has quietly converted its
 compendium from something reconstructable into something

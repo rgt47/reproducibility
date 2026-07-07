@@ -379,11 +379,16 @@ operative invariant for a compendium is therefore the
 weaker $\mathrm{Code} \subseteq \mathrm{renv.lock}$, so
 the strict `DESCRIPTION` inclusion is exact for the
 package archetype but archetype-conditional in general.
-The framework still records analysis-script dependencies
-in `DESCRIPTION`, under `Suggests`, so that one uniform
-check serves every archetype, but for a compendium the
-binding guarantee is simply that nothing the code uses
-goes unpinned.
+As a matter of placement an analysis-script dependency
+may still be listed in `DESCRIPTION` under `Suggests`, but
+the framework does not enforce the strict `DESCRIPTION`
+inclusion as a gate on a compendium, precisely because
+that inclusion does not hold for one. The gate it enforces
+on a compendium is the single inclusion $\mathrm{Code}
+\subseteq \mathrm{renv.lock}$, that nothing the code uses
+goes unpinned; the strict double inclusion is applied only
+in the package archetype, where `DESCRIPTION` is the
+authoritative dependency interface.
 
 The invariant matters because it is checkable by
 machine. The framework's `check-renv` gate, backed by
@@ -449,11 +454,12 @@ reads it. The triad is therefore especially natural
 there, since the declared set already exists for
 reasons independent of reproducibility. A data-analysis
 project, a manuscript compendium, a simulation study,
-and a blog each also carry a `DESCRIPTION` in this
-framework precisely so that the same invariant applies
-uniformly, but the R-package case is the one where the
-middle term would exist even if reproducibility were
-not a concern. A subtlety follows for the R-package
+and a blog also carry a `DESCRIPTION`, but there it
+declares only the API of the reusable code in `R/`, and
+their binding invariant is the single $\mathrm{Code}
+\subseteq \mathrm{renv.lock}$; the R-package case is the
+one where the declared middle term would exist even if
+reproducibility were not a concern. A subtlety follows for the R-package
 archetype: a package used only by an analysis script or
 report belongs in `Suggests` rather than `Imports`, so
 that `R CMD check` does not hard-require a package the
@@ -462,11 +468,11 @@ package's own exported functions never call.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: locating a drift
 
-Continuous integration fails with the message that
-`survival` is referenced in `analysis/model.R` but is
-absent from `renv.lock`. Which inclusion of the triad
-has been violated, and what single command would most
-likely repair it?
+Continuous integration on an R-package archetype fails
+with the message that `survival` is used in `R/model.R`
+but is not declared in `DESCRIPTION`. Which inclusion of
+the triad has been violated, and what single command
+would most likely repair it?
 
 The invariant is the composition of two atomic
 inclusions, and the one violated here is the first,

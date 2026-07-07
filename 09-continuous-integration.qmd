@@ -169,9 +169,15 @@ compendium's report (an R Markdown or Quarto document)
 from source and fails the build if the render errors.
 
 **Dependency-manifest gate.** A CI check that enforces
-the triad invariant of @sec-dependencies: every package
-the code uses is declared in `DESCRIPTION` and pinned in
-`renv.lock`.
+the dependency invariant of @sec-dependencies. In its
+strict, R-package form it requires every package the code
+uses to be declared in `DESCRIPTION` and pinned in
+`renv.lock`. For a research compendium, whose
+`DESCRIPTION` declares only the API exported from `R/`
+while analysis scripts legitimately draw on packages
+present in `renv.lock` but not in `DESCRIPTION`, it
+enforces the weaker inclusion that every package the code
+uses is pinned in `renv.lock`.
 
 **Verification.** The act of rebuilding the compendium,
 re-running the analysis, and comparing the regenerated
@@ -270,15 +276,24 @@ the code, and the render gate confirms, on a clean
 machine, that the seal holds.
 
 The third is the **dependency-manifest gate**, the
-automated form of the triad invariant developed in
-@sec-dependencies. The invariant is an inclusion: the
-set of packages the code actually uses must be a subset
-of the set declared in `DESCRIPTION`, which must in turn
-be a subset of the set pinned in `renv.lock`. A companion
-tool, `zzrenvcheck`, scans the source for `library()`,
-`require()`, and `pkg::fun()` calls, parses `DESCRIPTION`
-and `renv.lock`, and fails the build if the inclusion is
-violated. This gate catches the most common and most
+automated form of the dependency invariant developed in
+@sec-dependencies. In its strict form, appropriate to the
+R-package archetype, the invariant is a double inclusion:
+the set of packages the code actually uses must be a
+subset of the set declared in `DESCRIPTION`, which must in
+turn be a subset of the set pinned in `renv.lock`. A
+research compendium is looser, because its `DESCRIPTION`
+declares only the API exported from `R/` while its
+analysis scripts legitimately use packages that appear in
+`renv.lock` but never in `DESCRIPTION`; for a compendium
+the operative invariant is therefore the single inclusion
+that every package the code uses is pinned in `renv.lock`,
+and the strict `DESCRIPTION`-inclusion gate does not apply.
+A companion tool, `zzrenvcheck`, scans the source for
+`library()`, `require()`, and `pkg::fun()` calls, parses
+`DESCRIPTION` and `renv.lock`, and fails the build if the
+applicable inclusion is violated. This gate catches the
+most common and most
 insidious drift of all: a package installed interactively
 during analysis, used in the code, and never snapshotted,
 so that the lockfile is silently incomplete.
@@ -300,9 +315,22 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
-    container: rocker/tidyverse:4.4.0
+    container: rocker/tidyverse:4.6.0
+    env:
+      CI_TOOLS_LIB: /tmp/ci-tools
+      R_LIBS_USER: /tmp/ci-tools
     steps:
       - uses: actions/checkout@v4
+
+      # Create the CI-tools library and install the tools
+      # the gates themselves need into it. R_LIBS_USER
+      # puts that folder on every later step's path.
+      - name: Prepare the CI-tools library
+        run: |
+          mkdir -p "$CI_TOOLS_LIB"
+          Rscript -e 'install.packages(
+            c("renv", "rcmdcheck"),
+            lib = Sys.getenv("CI_TOOLS_LIB"))'
 
       # Restore the pinned library into a fixed, known
       # folder, so later steps can put it on the path.
@@ -360,12 +388,13 @@ because each of them imported only packages that the
 generic container base image already provided; the
 restored library was never actually needed. The defect
 surfaced only when a repository imported a specialised
-modelling package absent from the base image. Nust and
-colleagues, and the broader literature on why deposited
-analyses fail to re-run [@trisovic2022], point at exactly
-this class of fault: cross-boundary state, the state that
-must pass from one step, shell, or process to the next
-and silently does not. It is where CI bugs hide, and a
+modelling package absent from the base image. The broader
+literature on why deposited analyses fail to re-run
+[@trisovic2022] documents how often re-execution simply
+fails; the particular fault here is cross-boundary state,
+the state that must pass from one step, shell, or process
+to the next and silently does not. It is where CI bugs
+hide, and a
 dormant defect of this kind needs an adversarial input,
 a dependency outside the comfortable base image, to bring
 it to light. The general moral is one this book returns
@@ -441,18 +470,30 @@ stages:
 
 r-package-check:
   stage: check
-  image: rocker/tidyverse:4.4.0
+  image: rocker/tidyverse:4.6.0
+  variables:
+    CI_TOOLS_LIB: /tmp/ci-tools
+    R_LIBS_USER: /tmp/ci-tools
   script:
-    - Rscript -e 'renv::restore(prompt = FALSE)'
+    - mkdir -p "$CI_TOOLS_LIB"
+    - Rscript -e 'install.packages(c("renv", "rcmdcheck"),
+        lib = Sys.getenv("CI_TOOLS_LIB"))'
+    - Rscript -e 'renv::restore(prompt = FALSE,
+        library = Sys.getenv("CI_TOOLS_LIB"))'
     - Rscript -e 'rcmdcheck::rcmdcheck(
-        args = "--no-manual", error_on = "error")'
+        args = "--no-manual", error_on = "error",
+        libpath = c(Sys.getenv("CI_TOOLS_LIB"),
+                    .libPaths()))'
     - Rscript -e 'zzrenvcheck::check_packages(
         strict = TRUE)'
 ```
 
 The two files say the same thing in different words: run
-in a pinned R container, restore the library, then run the
-three gates. On the plus side, maintaining a repository on
+in a pinned R container, install the CI tools and restore
+the pinned library into a known folder, then run the three
+gates, handing that folder to the check subprocess
+explicitly so the cross-boundary bug of the previous
+section cannot recur. On the plus side, maintaining a repository on
 whichever forge an institution mandates is then a matter of
 translating the dialect rather than abandoning the checks.
 On the minus side, a workflow written twice, once per
@@ -701,10 +742,21 @@ We have stressed throughout the book that a research
 compendium is not only a manuscript. It comes in several
 archetypes, and continuous integration adapts to each,
 because the gates that make sense depend on what the
-compendium is for. The universal gate is `R CMD check`,
-which every archetype inherits by virtue of the R-package
-skin they all share. On top of it, the render and
-verification gates are added where they apply.
+compendium is for. Of the three gates of this chapter, two
+are universal and one is archetype-conditional. `R CMD
+check` is universal, inherited by every archetype by virtue
+of the R-package skin they all share. The
+dependency-manifest gate is likewise run everywhere, though
+in its archetype-conditional form: the strict
+`DESCRIPTION`-inclusion check applies to the R-package
+archetype, while a compendium enforces only the weaker
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$ inclusion, as
+the first section established. The render gate is the
+conditional one, added wherever the compendium carries a
+report and omitted where it does not. Verification, the L3
+step of the previous section, is not one of the three
+build-time gates but a further act layered on top wherever
+a recorded numeric baseline exists.
 
 An **R-package archetype**, a reusable set of functions
 destined perhaps for CRAN, has no report to render. Its CI
@@ -758,7 +810,7 @@ The complement is verification from outside the project
 entirely, by someone with no stake in its passing.
 
 The most developed such scheme is CODECHECK, described by
-Nust and Eckartz [@nust2021codecheck], in which an
+Nust and Eglen [@nust2021codecheck], in which an
 independent codechecker re-executes an analysis during peer
 review, on their own machine, and issues a certificate
 recording what was run and what was reproduced. The value
@@ -944,7 +996,7 @@ the analyst must verify and cannot delegate.
    reduced run a genuine reproducibility test.
 
 6. **Independent verification.** Read the CODECHECK
-   description of Nust and Eckartz [@nust2021codecheck].
+   description of Nust and Eglen [@nust2021codecheck].
    Explain in what respect an independent codechecker plays
    the same role, for a submitted analysis, that a CI runner
    plays for a committed change. Then identify one class of
@@ -961,7 +1013,7 @@ on the general framing of computational reproducibility as
 a spectrum in @peng2011.
 
 On independent, external verification, the CODECHECK
-initiative described by Nust and Eckartz
+initiative described by Nust and Eglen
 [@nust2021codecheck] is the most concrete model of
 re-execution during peer review, and repays reading for its
 account of what a codechecker does and does not certify.

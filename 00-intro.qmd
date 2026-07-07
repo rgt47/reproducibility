@@ -466,9 +466,10 @@ tempering. Frameworks that compose the whole stack,
 `zzcollab` among them, are young. By its own accounting,
 `zzcollab` robustly pins roughly four of the ten
 determinants named above (the environment, the packages,
-the source, and much of the session configuration) and
-leaves others (the numerical libraries, the graphics
-device and fonts, intrinsic non-determinism) to convention
+the source, and the locale and time zone) and
+leaves others (the numerical libraries, the random-number
+discipline, the graphics device and fonts, intrinsic
+non-determinism) to convention
 or to the base image; its authors describe it candidly as
 a strong scaffolding tool rather than a finished guarantor
 of reproducibility. We adopt this candour as a feature of
