@@ -205,9 +205,10 @@ every prior state, so the question 'which version is
 current' cannot arise. It loses the *content of each
 change*. Two snapshot files differ in ways that can be
 recovered only by comparing them line by line by hand;
-a git history records each change as a *diff*, a precise
-statement of the lines added and removed, that git will
-display on demand. And it loses the *reason for each
+a git history presents each change as a *diff*, a precise
+statement of the lines added and removed, that git
+computes on demand from the snapshots it stores, since
+git keeps full snapshots, not diffs. And it loses the *reason for each
 change*, the single most valuable and most perishable
 piece of information about an analysis. Why was the
 outlier-exclusion threshold changed from three standard
@@ -256,17 +257,23 @@ git init
 The second idea, and the central one, is the **commit**.
 A commit is a snapshot of the tracked files at one
 moment, recorded together with four things: who made it,
-when, a message describing it, and a cryptographic hash,
-a forty-character identifier such as `a1b2c3d`, that is
-computed from the snapshot's contents and so is unique
-to it and immutable. Because the hash is derived from
-the content, and because each commit also records the
-hash of the commit before it, the history is a chain in
-which no entry can be altered without changing its hash
-and the hash of everything after it. This is what makes
-a git history *tamper-evident*, a property of some
+when, a message describing it, and a hash that names it.
+That hash, a forty-character SHA-1 string usually shown
+in an abbreviated form such as `a1b2c3d`, is computed not
+from the snapshot alone but over the whole commit object,
+which references the snapshot, folds in the metadata,
+and, crucially, records the hash of the commit before it.
+(Git also supports repositories that use the longer
+SHA-256 hash of sixty-four characters, though SHA-1
+remains the default.) Because each commit's hash
+incorporates its parent's, the history is a chain in
+which no past entry can be altered without changing its
+hash and the hash of every commit after it. This is what
+makes a git history *tamper-evident*, a property of some
 consequence for a regulated analysis: the record cannot
-be quietly rewritten.
+be quietly rewritten. The hashes are, for practical
+purposes, unique, and git guards against the known SHA-1
+collision attacks with built-in collision detection.
 
 The third idea is the **history** itself, the chain of
 commits, each pointing back to its parent, running from
@@ -352,7 +359,7 @@ git log
 # a compact one-line-per-commit view
 git log --oneline
 
-# what changed in the files under analysis/scripts/
+# which commits touched analysis/scripts/
 git log --oneline -- analysis/scripts/
 ```
 

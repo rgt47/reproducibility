@@ -97,7 +97,7 @@ pipeline, and this chapter is about two tools that build
 one, the venerable and language-agnostic GNU Make and the
 R-native `targets`. The manual-steps critique that
 motivates them is stated crisply in the practices
-literature: @sandve2013, in their fourth rule, urge that
+literature: @sandve2013, in their second rule, urge that
 one 'avoid manual data manipulation steps' and automate
 the path from raw data to result, precisely because a
 manual path cannot be trusted to have been followed the
@@ -214,7 +214,6 @@ builds internally, whether or not it draws it for you.
 #| fig-height: 2.2
 
 library(tibble)
-library(dplyr)
 library(ggplot2)
 
 nodes <- tibble(
@@ -277,8 +276,9 @@ leaves nothing behind.
 ## GNU Make: targets, prerequisites, and rules
 
 The oldest and most widely used pipeline tool is GNU
-Make, written to compile programs in 1976 and pressed
-into service for data analysis ever since. Make is worth
+Make, a reimplementation of the `make` utility first
+written in 1976 to compile programs and pressed into
+service for data analysis ever since. Make is worth
 learning first, before any R-specific tool, for two
 reasons: its model is the simplest possible expression of
 the pipeline idea, so that understanding it is
@@ -467,11 +467,16 @@ function invalidates exactly the targets that use it,
 directly or transitively, and no others; a change to
 `make_figures()` invalidates `figures` and `report` but
 leaves `model` untouched, and the expensive fit is
-preserved. `targets` also records, through
-`tar_option_set(packages = ...)`, which packages a target
-loads, so that, in combination with the lockfile of
-@sec-dependencies, the pipeline is sensitive to the
-versions of the tools it runs on.
+preserved. Sensitivity to the *versions* of the packages
+a target loads is a separate matter, and one that
+`targets` does not provide: `tar_option_set(packages =
+...)` merely attaches those packages to each target's
+evaluation environment, as a call to `library()` would,
+and by default `targets` does not track a package's
+version or invalidate a target when that version changes.
+Version-sensitivity comes from the lockfile of
+@sec-dependencies, which is why Landau recommends `renv`
+alongside `targets` rather than in place of it.
 
 Two commands drive the pipeline. To see the graph,
 `tar_visnetwork()` draws it as an interactive network,
@@ -579,9 +584,10 @@ remembered sequence into one command whose completeness is
 structural rather than remembered, and in doing so it
 removes the 'did I re-run everything?' doubt that is the
 quiet enemy of every validation step. A pipeline is thus
-to re-execution what a container is to the environment:
-not a new determinant, but the mechanism that makes the
-determinant reliably reproducible.
+to re-execution what continuous integration is to
+checking: it captures no determinant and adds no rung,
+but it makes the re-execution that verification
+(@sec-verification) confirms reliable and repeatable.
 
 The relation to continuous integration is especially
 close, and worth making explicit, because the two are
@@ -714,7 +720,7 @@ analysis, but a reader whose work reaches beyond R, or beyond a
 single machine, should know the tools that dominate the wider
 computational-science world, because pipelines are one of the
 areas where the R ecosystem is a small part of a much larger
-landscape.
+world.
 
 The two dominant language-agnostic pipeline managers come from
 bioinformatics, where analyses routinely chain dozens of
@@ -789,9 +795,14 @@ data, the cleaned data, the model, the figures, and the report,
 and lets `targets` infer the graph from the way each target's
 expression names the targets before it. With the file in place,
 `tar_visnetwork()` draws the graph, and the analyst confirms it
-matches the intended structure of @fig-pipeline-dag, with every
+carries the intended structure of @fig-pipeline-dag, with every
 node initially coloured 'outdated' because nothing has been
-built yet.
+built yet. The figure is a simplified linear schematic of the
+chain from raw data to report; the actual dependency graph is
+more connected, because the `_targets.R` declares that `figures`
+depends on both `model` and `cleaned` and that `report` depends
+on both `model` and `figures`, so `tar_visnetwork()` draws those
+extra cross-edges that the schematic omits.
 
 The third step is to build the pipeline once, with `tar_make()`,
 which runs all six targets in dependency order in a fresh
