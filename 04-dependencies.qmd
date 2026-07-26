@@ -426,6 +426,57 @@ verify that the version floors in `DESCRIPTION` agree
 with the exact pins in the lockfile, which is a separate
 concern.
 
+### Scanning the documentation, not only the code
+
+A dependency check is only as good as its reach, and the
+most common way for one to fail is subtle. It scans the
+analysis code, pronounces the project consistent, and
+overlooks a package that is used only in a vignette or in
+the rendered manuscript. `zzrenvcheck` is deliberately
+more expansive than a plain code scan on this point, and
+the reason is worth understanding, because it is exactly
+where a documentation build quietly breaks on a fresh
+machine.
+
+The scan does not look at `.R` scripts alone. It parses
+the literate and dynamic documents as well, R Markdown
+(`.Rmd`), Quarto (`.qmd`), and Sweave (`.Rnw`), so that a
+package loaded inside a report chunk or a vignette is seen
+just as one loaded in `R/` is. Within every such file it
+recognises each of the forms by which R code reaches for a
+package: the explicit `library(pkg)` and `require(pkg)`,
+the namespaced `pkg::function()`, and the roxygen2
+directives `@import` and `@importFrom` from which a
+package's `.Rd` help files are generated. In its strict
+mode it widens the search further, into the `tests/`,
+`vignettes/`, and `inst/` directories rather than the
+analysis directories alone. It is correspondingly careful
+about what it ignores: `README` files and the example
+directories (`man/examples`, `inst/examples`) are skipped,
+since the install-and-demonstrate code they usually carry
+would otherwise raise false alarms. A separate pass reads
+the reproducibility files themselves, the `Dockerfile`,
+the `Makefile`, `install.sh`, and `.Rprofile`, for
+version-pinned installs such as `pak('survival@3.5-8')`,
+catching a version fixed in the container recipe that has
+drifted from the lockfile.
+
+The payoff is precisely the failure a code-only audit
+misses. Consider a manuscript compendium whose analysis in
+`R/` restores cleanly from the lockfile, but whose report
+draws a forest plot with a plotting package that appears
+nowhere except the `.qmd` itself. A scanner that read only
+the code would certify the project as consistent, and the
+report would then fail to render on the reviewer's machine
+for want of an unpinned package. Because `zzrenvcheck`
+reads the document, the missing dependency is caught and
+pinned before it can break the build. This reach matters
+most for the archetypes whose dependencies live in their
+documents rather than their code, the scholarly manuscript
+and the blog, whose rendered outputs are the point and
+whose package needs are therefore concentrated where a
+naive check does not look.
+
 ::: {.callout-important}
 ## The honest level
 

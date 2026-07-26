@@ -36,6 +36,7 @@ book:
       chapters:
         - 01-reproducibility-crisis.qmd
         - 02-levels-of-reproducibility.qmd
+        - version-control.qmd
         - 03-research-compendium.qmd
 
     - part: 'Capturing the Environment'
@@ -47,6 +48,7 @@ book:
     - part: 'Validation'
       chapters:
         - 07-literate-programming.qmd
+        - pipelines.qmd
         - 08-testing-quality.qmd
         - 09-continuous-integration.qmd
 

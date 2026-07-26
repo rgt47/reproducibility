@@ -1,0 +1,996 @@
+# Version Control with Git and GitHub {#sec-version-control}
+
+::: {.bookepigraph}
+```{=latex}
+\begin{flushright}\small
+```
+*Maintaining a high degree of transparency in scientific
+reporting is essential not just for gaining trust and
+credibility within the scientific community but also for
+facilitating the development of new ideas.*
+
+[Karthik Ram]{.smallcaps}, *Git Can Facilitate Greater
+Reproducibility and Increased Transparency in Science*
+(2013)
+```{=latex}
+\end{flushright}
+```
+:::
+
+## Learning objectives
+
+By the end of this chapter the reader should be able
+to:
+
+- Describe the failure mode that version control
+  cures, the proliferation of files named
+  `analysis_final_v2_FINAL.R` and the loss of any
+  record of what changed and why.
+- Explain the core git model: the repository, the
+  commit as an atomic, message-bearing unit of change,
+  and the commit history as an auditable record of how
+  a result came to be.
+- Perform the everyday git operations at the shell:
+  staging and committing, reading the log and the
+  diff, and using a `.gitignore` to keep files out of
+  the history.
+- Exercise the health-specific judgement of what must
+  never be committed, above all protected health
+  information and identifiable data, and understand why
+  deleting such a file in a later commit does not
+  remove it from the history.
+- Write an archetype-appropriate `.gitignore`, and say
+  why a data-analysis compendium and an R-package
+  compendium ignore different files.
+- Use a remote (GitHub or GitLab) for backup,
+  distribution, and collaboration, including the
+  fork-and-pull-request model for multi-site teams and
+  tags and releases for marking the exact state of an
+  analysis at submission or publication.
+- Place version control on the reproducibility ladder,
+  as the artifact that first makes an analysis L0
+  locatable and the substrate on which continuous
+  integration and collaboration are later built, and
+  state plainly the layers of the determinant stack
+  that git does not pin.
+
+## Orientation
+
+Open the folder of almost any analysis that has run
+for more than a month without version control and the
+same artefact greets you. There is `analysis.R`, and
+beside it `analysis_v2.R`, `analysis_final.R`,
+`analysis_final_v2.R`, and, inevitably,
+`analysis_final_v2_FINAL.R`. A dated copy or two,
+`analysis_2025-03-14.R`, sits among them, and a
+`analysis_reviewer.R` from the week the referee
+reports came back. Every file is a manual snapshot,
+taken because the analyst feared to overwrite a
+version that worked. The scheme fails in three ways at
+once. It does not say which file produced the figure
+in the submitted manuscript. It does not say what
+differs between any two of them, so recovering a change
+means reading both side by side. And it does not say
+*why* any change was made, because the reason lived in
+the analyst's head and is now gone.
+
+This is the failure that version control exists to
+cure, and the cure is not a tidier naming scheme but a
+different object. A version-control system keeps a
+single working copy of each file and records, as a
+separate and complete history, every state that copy
+has passed through, together with a note on each change
+saying what it was and why it was made. The five
+`FINAL` files collapse back into one `analysis.R`, and
+the four snapshots become four entries in a history
+that can be read, searched, and, if need be, restored.
+The tool that has won this role, across the sciences
+and across software of every kind, is git, and the
+service that most often hosts a git history on the
+network is GitHub, with GitLab its principal
+institutional sibling. This chapter teaches both from
+first principles, because version control is the single
+most universally taught element of a modern
+reproducibility course and the foundation on which the
+rest of this book stands.
+
+It is also the foundation in a precise, technical
+sense. @sec-compendium made the compendium the unit of
+reproducible work, and @sec-levels placed the bare
+compendium at the bottom rung of the ladder, L0
+locatable. The artifact that marks L0 is exactly a
+version-controlled repository: an analysis is locatable
+when, and only when, it is under version control and
+can therefore be found, read, and referred to by a
+second person. Everything the later chapters add, the
+lockfile of @sec-dependencies, the container of
+@sec-containers, the continuous integration of
+@sec-verification, is installed on top of a
+version-controlled history. Version control is thus not
+one tool among many but the substrate the others
+require.
+
+## The analyst's contribution
+
+Version control automates the mechanics of history
+perfectly and automates none of the judgement that
+makes a history useful and safe. Three decisions belong
+to the analyst and are the subject of this chapter as
+much as the commands are.
+
+1. **Deciding what must never be committed.** A commit
+   is, by design, permanent and copied to every clone
+   of the repository. The judgement of what may safely
+   be made permanent and public, and what must be kept
+   out of the history entirely, is the analyst's, and
+   in health research it is a judgement with legal and
+   ethical force. Protected health information,
+   identifiable data, and credentials must never enter
+   the history, because, as we shall see, deleting them
+   in a later commit does not remove them from it. This
+   is the first and gravest of the three judgements.
+
+2. **Choosing the granularity and the message of a
+   commit.** A commit is a unit of change, and how much
+   change it should contain, and what its message
+   should say, are matters of craft that no tool
+   decides. A history of one enormous commit reading
+   'did the analysis' is almost as useless as no
+   history at all. A history of small, coherent commits
+   whose messages say why each change was made is an
+   audit trail. The difference is entirely the
+   analyst's discipline.
+
+3. **Deciding when to branch and when to tag.** Whether
+   a piece of work warrants a branch of its own, and
+   whether a particular state of the analysis warrants a
+   permanent tag, are design decisions about the shape
+   of the history. They are cheap to make and expensive
+   to omit: the state of the code at the moment a
+   manuscript was submitted is worth a tag, and no tool
+   will place it for you.
+
+::: {.callout-note}
+## The vocabulary of this chapter
+
+New terms are defined again on first use; they are
+collected here for reference.
+
+- **Repository (repo).** A directory whose contents
+  and full history git tracks, held in a hidden
+  `.git` subdirectory. A *clone* is a complete copy of
+  a repository, history and all.
+- **Working tree.** The ordinary files in the
+  repository directory as they currently exist on
+  disk, as opposed to the versions recorded in the
+  history.
+- **Commit.** A recorded snapshot of the tracked files
+  at one moment, carrying an author, a timestamp, a
+  message, and an immutable identifier (a *hash*). The
+  atomic unit of history.
+- **Staging area (index).** The set of changes marked,
+  with `git add`, to go into the next commit. Staging
+  lets a commit hold a chosen subset of the current
+  changes.
+- **`.gitignore`.** A file listing path patterns that
+  git should not track, used to keep derived outputs,
+  large data, and, critically, sensitive files out of
+  the history.
+- **Branch.** A movable name for a line of
+  development. The default branch is conventionally
+  called `main`.
+- **Remote.** A copy of the repository hosted
+  elsewhere, typically on GitHub or GitLab, used for
+  backup, distribution, and collaboration. `origin` is
+  the conventional name of the primary remote.
+- **Tag.** A permanent, human-readable name for one
+  specific commit, used to mark a milestone such as a
+  manuscript submission.
+- **Pull request (merge request).** A proposal, made on
+  the remote, to merge one branch or fork into another,
+  reviewed before it is accepted.
+:::
+
+## What version control records, and what it cures
+
+The value of a version-control system is easiest to
+state as the negation of the `FINAL`-file failure. That
+failure loses three things, and version control
+restores each.
+
+It loses the *identity of the working version*. With a
+drawer of dated copies, no file is authoritative; with
+git, there is one `analysis.R`, and its history holds
+every prior state, so the question 'which version is
+current' cannot arise. It loses the *content of each
+change*. Two snapshot files differ in ways that can be
+recovered only by comparing them line by line by hand;
+a git history records each change as a *diff*, a precise
+statement of the lines added and removed, that git will
+display on demand. And it loses the *reason for each
+change*, the single most valuable and most perishable
+piece of information about an analysis. Why was the
+outlier-exclusion threshold changed from three standard
+deviations to two? A dated file cannot say. A commit
+whose message reads 'Tighten outlier threshold to 2 SD
+per reviewer 2's comment' says exactly, and says it
+forever.
+
+This last point is worth dwelling on, because it is the
+one that turns version control from a convenience into
+an instrument of scientific accountability. A
+computational result is not only a number; it is the
+end of a chain of decisions, each of which could have
+gone otherwise. In a regulated analysis, a clinical
+trial subject to audit, a study destined for a
+guideline, the chain of decisions is itself an object
+of scrutiny, and 'why did the estimate change between
+the interim and the final analysis' is a question an
+auditor is entitled to ask and the analyst is obliged
+to answer. A commit history in which each change carries
+its reason is the answer, already written, timestamped,
+and attributable. The history is the audit trail.
+
+## The git model: repository, commit, history
+
+Git is often taught as a list of commands to memorise,
+which is why it is so often found bewildering. It is far
+better understood as a small and coherent data model,
+after which the commands are obvious. There are three
+ideas.
+
+The first is the **repository**. A git repository is an
+ordinary directory, your project, that git has been
+told to track, whereupon it maintains, in a hidden
+`.git` subdirectory, the complete history of everything
+under that directory. The ordinary files you edit are
+the *working tree*; the `.git` directory is the history.
+Creating a repository is a single command run once in
+the project directory.
+
+```bash
+cd diabetes-cohort
+git init
+```
+
+The second idea, and the central one, is the **commit**.
+A commit is a snapshot of the tracked files at one
+moment, recorded together with four things: who made it,
+when, a message describing it, and a cryptographic hash,
+a forty-character identifier such as `a1b2c3d`, that is
+computed from the snapshot's contents and so is unique
+to it and immutable. Because the hash is derived from
+the content, and because each commit also records the
+hash of the commit before it, the history is a chain in
+which no entry can be altered without changing its hash
+and the hash of everything after it. This is what makes
+a git history *tamper-evident*, a property of some
+consequence for a regulated analysis: the record cannot
+be quietly rewritten.
+
+The third idea is the **history** itself, the chain of
+commits, each pointing back to its parent, running from
+the first commit to the most recent. Reading that chain
+is reading the story of how the analysis came to its
+current state. A branch, which we treat below, is
+nothing more than a movable name pointing at one commit
+in this structure.
+
+The everyday cycle of work has just two steps against
+this model, and they exist because git deliberately
+separates *choosing* what goes into a commit from
+*making* the commit. First one *stages* the changes to
+be recorded, with `git add`; then one *commits* the
+staged changes, with `git commit`, attaching the
+message. The staging step is not ceremony: it lets a
+single commit hold a coherent subset of the work in
+progress, so that an afternoon's editing across several
+concerns can be recorded as several focused commits
+rather than one indiscriminate lump.
+
+```bash
+# edit analysis.R, then see what has changed
+git status
+
+# stage the file for the next commit
+git add analysis.R
+
+# record the staged change with a message
+git commit -m "Add Cox model for 30-day readmission"
+```
+
+A note on the message, since it is the part that carries
+the scientific value. The convention, and it is worth
+adopting from the first day, is a short imperative
+summary line of about fifty characters, optionally
+followed by a blank line and a paragraph giving the
+*why*. 'Fix bug' is a wasted message. 'Correct
+person-time denominator to exclude pre-enrolment
+follow-up' is a message that will still be intelligible,
+and still exculpatory, at an audit three years later.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why stage at all?
+
+A colleague argues that the staging area is needless
+friction: since one almost always wants to commit
+everything one has changed, git should simply commit the
+whole working tree and spare the analyst a `git add`.
+What does the staging step buy that a commit-everything
+model would lose?
+
+It buys the ability to make a commit an *atomic unit of
+one idea* rather than a snapshot of whatever happened to
+be on disk. In an afternoon an analyst may fix a bug in
+the cleaning script, add an unrelated figure, and jot a
+half-finished note in a third file. Committing all three
+together produces a history entry that cannot be
+described in one honest message and cannot be reverted
+without disturbing unrelated work. Staging lets the
+analyst record the bug fix as one commit, with its own
+message and reason, and the figure as another, leaving
+the unfinished note uncommitted. The audit trail is only
+as good as the coherence of its individual commits, and
+staging is the mechanism that coherence requires. (For
+the genuine everyday case where one *does* want
+everything, `git commit -a` stages all tracked changes
+in one step, so the friction is opt-out, not mandatory.)
+:::
+
+## Reading the history: the log and the diff
+
+A history that cannot be read is of little use, and git
+provides two complementary views of it. The **log** is
+the list of commits, most recent first, each with its
+hash, author, date, and message. It is the table of
+contents of the analysis's development.
+
+```bash
+# the full log
+git log
+
+# a compact one-line-per-commit view
+git log --oneline
+
+# what changed in the files under analysis/scripts/
+git log --oneline -- analysis/scripts/
+```
+
+The **diff** is the complementary view: not the list of
+changes but the content of one. `git diff` shows the
+changes in the working tree that have not yet been
+staged; `git show` displays the full diff of any single
+commit named by its hash; and `git diff` between two
+commit hashes shows everything that changed between them.
+
+```bash
+# what have I changed but not yet staged?
+git diff
+
+# show one commit's changes in full
+git show a1b2c3d
+
+# what changed between two points in the history?
+git diff a1b2c3d f4e5d6c
+```
+
+Together the log and the diff answer the two questions
+the `FINAL`-file drawer could not: *when and why* did a
+thing change (from the log) and *what exactly* did the
+change consist of (from the diff). To make this concrete,
+consider the commit history of the first weeks of an
+incident-diabetes cohort study, rendered below as it
+might appear to an auditor reviewing how the reported
+hazard ratio came to be. The table is generated from
+synthetic data, so that we may display a realistic audit
+trail without any real project's contents.
+
+```{r}
+#| label: tbl-audit-trail
+#| tbl-cap: 'A synthetic commit history for the first weeks of a cohort analysis, read as an audit trail. Each row is one atomic, message-bearing commit; together they record not only what changed but, in the message, why. Note the reviewer-driven change to the outlier threshold, the kind of decision an auditor is entitled to trace.'
+
+library(tibble)
+library(dplyr)
+library(knitr)
+
+commit_history <- tibble::tibble(
+  hash = c('a1b2c3d', 'e4f5a6b', 'c7d8e9f',
+           'b0a1c2d', 'd3e4f5a', 'f6a7b8c',
+           'a9b0c1d'),
+  date = as.Date(c('2026-02-03', '2026-02-05',
+                   '2026-02-09', '2026-02-12',
+                   '2026-02-18', '2026-02-24',
+                   '2026-03-02')),
+  author = c('r.thomas', 'r.thomas', 'r.thomas',
+             'a.okafor', 'r.thomas', 'a.okafor',
+             'r.thomas'),
+  message = c(
+    'Initialise compendium and .gitignore',
+    'Add cleaning script for registry extract',
+    'Build analysis-ready cohort table',
+    'Fit Cox model for 30-day readmission',
+    'Tighten outlier threshold to 2 SD per reviewer 2',
+    'Add Kaplan-Meier figure to report',
+    'Correct person-time denominator'),
+  files_changed = c(2L, 1L, 3L, 1L, 1L, 2L, 1L)
+)
+
+commit_history |>
+  dplyr::mutate(date = format(date, '%Y-%m-%d')) |>
+  knitr::kable(
+    col.names = c('Hash', 'Date', 'Author',
+                  'Message', 'Files'),
+    align = c('l', 'l', 'l', 'l', 'r'))
+```
+
+The reader will note two features that a bare list of
+files could never carry. The fifth commit records not
+only that the outlier threshold changed but that it
+changed *in response to a reviewer*, and the final
+commit records a correction to the person-time
+denominator, the sort of methodological fix whose
+provenance an auditor will want to establish. The commit
+history has turned a sequence of edits into a
+defensible account of how the result was reached.
+
+## What must never be committed: `.gitignore` and PHI
+
+A commit records the files git is tracking, and by
+default git offers to track every file in the working
+tree. Two categories of file must be kept out of that
+net, and the mechanism for keeping them out is the
+`.gitignore` file, a plain-text list of path patterns
+that git will refuse to track.
+
+The first category is the merely unwanted: files that
+*can* be committed but *should not* be, because they are
+regenerable or bulky and would only clutter the history.
+Rendered outputs (a compiled PDF, an `.html` report, the
+figures a script regenerates on every run) are the
+clearest case, because committing them couples the
+history to products that the code already determines.
+Large raw data files bloat every clone. Editor and
+operating-system cruft (`.Rhistory`, `.DS_Store`,
+`.Rproj.user/`) is pure noise. None of these is
+dangerous; all of them are better ignored.
+
+The second category is the category that makes this
+section a matter of ethics and law rather than tidiness:
+files that must *never* enter the history because making
+them permanent and shareable would be a breach. In
+health research three kinds dominate.
+
+- **Protected health information and identifiable
+  data.** A file containing patient identifiers, dates
+  of birth, medical-record numbers, free-text clinical
+  notes, or any data from which an individual could be
+  re-identified must never be committed. This is the
+  first rule of version control in a health setting, and
+  it admits no exception.
+- **Credentials.** Database passwords, API tokens, the
+  contents of a `.Renviron` holding a secret, private
+  keys: a credential committed to a repository, and
+  worse pushed to a remote, is a credential to be
+  treated as compromised.
+- **Restricted or embargoed data** more generally, under
+  a data-use agreement that forbids redistribution, even
+  when not directly identifying.
+
+::: {.callout-important}
+## Deleting a file does not remove it from the history
+
+The gravest and least intuitive fact about git is that
+its history is *append-only by design*. If a file
+containing protected health information is committed,
+and the mistake is noticed and the file deleted in a
+later commit, the file is gone from the working tree but
+*remains in full in the history*, recoverable by anyone
+with a clone from the commit that introduced it. The
+deletion is itself just another commit layered on top;
+it conceals nothing. Removing the file from the history
+requires rewriting the history, with tools such as `git
+filter-repo`, which changes every subsequent commit
+hash, must be forced onto every clone and the remote,
+and is error-prone precisely when it matters most.
+Worse, if the offending commit was ever pushed to a
+remote, one must assume it has been cloned and cached
+beyond recall, and the only sound response is to treat
+the exposed data as breached and follow the applicable
+incident procedure. The remedy is therefore prevention:
+a correct `.gitignore` written *before* the first
+commit, and the habit of reading `git status` before
+every commit to confirm that nothing sensitive has been
+staged. Never commit PHI, because git is built so that
+you cannot cleanly take it back.
+:::
+
+A `.gitignore` is a small file, and its content depends
+on the archetype of the compendium, which is the
+concrete point at which the archetypes of @sec-compendium
+touch this chapter. The reproducibility machinery is
+identical across archetypes; the list of files to ignore
+is not. A **data-analysis compendium** ignores its
+*derived outputs and its raw data*: the regenerable
+tables and figures, and the large or sensitive registry
+extract that must stay out of the history entirely. An
+**R-package compendium** has no `analysis/` outputs to
+ignore but must ignore its *build artefacts*: the
+`.Rcheck` directory, the built `.tar.gz` and binary
+archives, and the `src/` object files a compiled package
+leaves behind. The two `.gitignore` files barely
+overlap, and writing the right one is part of naming the
+archetype.
+
+```bash
+# .gitignore for a data-analysis compendium
+# --- sensitive: never commit ---
+analysis/data/raw_data/*
+.Renviron
+*.pem
+
+# --- regenerable outputs ---
+analysis/figures/*
+analysis/tables/*
+analysis/report/*.pdf
+analysis/report/*.html
+
+# --- editor and OS cruft ---
+.Rhistory
+.RData
+.Rproj.user/
+.DS_Store
+```
+
+```bash
+# .gitignore for an R-package compendium
+# --- build artefacts ---
+*.tar.gz
+*.Rcheck/
+src/*.o
+src/*.so
+docs/            # generated pkgdown site
+
+# --- editor and OS cruft ---
+.Rhistory
+.RData
+.DS_Store
+```
+
+Two refinements deserve mention. A leading `!` re-includes
+a pattern otherwise ignored, which is how one ignores a
+whole data directory but keeps a small, non-sensitive
+example file or a data dictionary under version control
+(`analysis/data/raw_data/*` followed by
+`!analysis/data/raw_data/data_dictionary.csv`). And a
+committed-by-accident file, once added to `.gitignore`,
+is still tracked until explicitly untracked with `git rm
+--cached`; ignoring a file does not retroactively remove
+an already-committed copy, which returns us to the
+warning above.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the same file, two archetypes
+
+A `report.pdf` sits at the top of one analyst's ignore
+list and is deliberately committed by another. A
+`data_dictionary.csv` describing a restricted registry
+is committed, while the registry extract it describes is
+ignored. Explain both choices.
+
+The rendered `report.pdf` is a regenerable output: in a
+data-analysis or manuscript compendium it is a product
+the code reproduces on render, so committing it couples
+the history to a derivative and is usually avoided. An
+analyst who nonetheless commits it, perhaps to preserve
+the exact submitted PDF as a fixed reference, is making a
+defensible different judgement about what the artifact is
+*for*; the point is that it is a judgement, not a rule.
+The `data_dictionary.csv` and the registry extract sit on
+opposite sides of the one line that is not a matter of
+taste. The dictionary carries variable names and codings,
+which are metadata and safe to share, and belongs in the
+history so a reader can interpret the analysis. The
+extract carries the protected health information itself
+and must never be committed, whatever its convenience.
+The `!` re-inclusion pattern exists precisely to keep the
+safe metadata while ignoring the unsafe data beside it.
+:::
+
+## Branches, lightly
+
+For a solo analyst working linearly, a single line of
+commits on the `main` branch is often the whole story,
+and it is honest to say so rather than to impose ceremony.
+But two situations make branches worth the small
+investment of learning them. The first is *speculative
+work*: trying an alternative model specification, or a
+reviewer's proposed reanalysis, without disturbing the
+`main` line that produced the current results. The second
+is *collaboration*, treated in the next section, where
+each contributor works on a branch of their own and the
+branches are merged only when ready.
+
+A branch is created and switched to in one command, and
+merged back with another.
+
+```bash
+# create and switch to a branch for a reanalysis
+git switch -c sensitivity-analysis
+
+# ... make commits on the branch ...
+
+# return to main and merge the branch in
+git switch main
+git merge sensitivity-analysis
+```
+
+The mental model is the one given above: a branch is a
+movable name for a line of development, and `main` is
+merely the branch git creates by default. Nothing about
+branching changes the commit model; it only lets two
+lines of commits coexist and later rejoin. We keep the
+treatment light here and return to the collaborative use
+of branches, which is where they earn their keep, when we
+reach pull requests.
+
+## The remote: GitHub, GitLab, and collaboration
+
+Everything so far is *local*: the repository, its
+history, its branches all live in the `.git` directory on
+one machine, and if that machine is lost, so is the work.
+A **remote** is a copy of the repository hosted elsewhere,
+on GitHub, on GitLab, or on an institution's own server,
+and connecting a local repository to a remote serves three
+distinct purposes that are worth separating.
+
+The first is **backup**. A remote holds a complete copy of
+the history, so that a lost laptop costs at most the
+commits made since the last push. The second is
+**distribution**. A public remote is the mechanism by
+which a compendium becomes locatable to the world: a URL
+a reviewer can be given, a repository a reader can clone,
+the concrete form of the L0 rung of the ladder. The third
+is **collaboration**, the purpose that shapes the rest of
+this section.
+
+The commands that connect to and synchronise with a
+remote are few. One names the remote once, then pushes
+local commits to it and pulls others' commits from it.
+
+```bash
+# connect the local repo to a remote named origin
+git remote add origin https://github.com/lab/diabetes-cohort.git
+
+# push the main branch and remember the link
+git push -u origin main
+
+# later: send new local commits up
+git push
+
+# and bring collaborators' commits down
+git pull
+```
+
+For a team working across sites, a clinical trial with
+several participating centres, a multi-institution
+consortium, the dominant model on GitHub and GitLab is
+**fork-and-pull-request** (GitLab calls the latter a
+*merge request*, the same thing under another name). A
+contributor *forks* the canonical repository, making a
+personal copy on the remote, works on a branch of that
+fork, and then opens a **pull request** proposing that
+their branch be merged into the canonical repository. The
+pull request is a unit of review: the maintainers see
+exactly the diff being proposed, discuss it inline,
+request changes, and merge it only when satisfied. For a
+regulated multi-site analysis this is more than
+convenience. The pull request is a documented,
+attributable, reviewable gate through which every change
+to the shared analysis passes, and its record, who
+proposed what, who reviewed it, what was said, and when it
+was merged, is itself part of the audit trail, complementing
+the commit history with a record of the *review* of each
+change.
+
+The last piece of the remote's vocabulary is the pair
+**tags and releases**, and they matter to reproducibility
+specifically. A tag is a permanent, human-readable name
+for one commit: `git tag -a v1.0-submission -m "State at
+journal submission"` marks, forever and unambiguously, the
+exact state of the analysis at the moment a manuscript was
+submitted. A *release* on GitHub or GitLab is a tag dressed
+with notes and downloadable archives. The reproducibility
+payoff is that a reviewer, or the analyst a year later, can
+recover the precise state that produced the submitted
+numbers by naming the tag, rather than guessing which
+commit was current on the submission date. In @sec-archiving
+we shall see the same tagged state deposited to a public
+archive with a citable identifier; the tag is the local
+anchor to which that archival identity attaches.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what does the pull request add?
+
+A single analyst, working alone, keeps a clean commit
+history with careful messages. A reviewer asks why, if the
+history is already an audit trail, a multi-site trial
+should bother with the additional machinery of forks and
+pull requests. What does the pull request record that the
+commit history does not?
+
+The commit history records what changed and, in its
+messages, why; it does not record who *reviewed* the change
+before it entered the shared analysis, or what they said.
+In a solo project there is no reviewer, so nothing is lost.
+In a multi-site trial, where a change to the shared
+analysis by one centre affects every centre's results, the
+review is itself a controlled step, and the pull request is
+the artifact that records it: the proposed diff, the
+discussion, the requested changes, the approval, and the
+merge, each attributable and timestamped. The commit
+history answers 'what was changed and why'; the pull
+request answers 'who checked it, and did they agree'. For a
+regulated analysis both questions have auditors, and the
+two records together are stronger than either alone.
+:::
+
+## What git does not do
+
+Having made version control the foundation, we must be
+exact about the boundary of what it provides, because the
+whole discipline of this book is matching a claim to what
+has actually been secured. Git versions *text and tracks
+its history*. It records, faithfully and tamper-evidently,
+every state of the files under it and the reason for each
+change. That is the entirety of what it does, and it is
+the L0 rung of the ladder: an analysis under version
+control is locatable, findable and readable by a second
+person, and no more.
+
+In particular, git does not pin the *package versions* an
+analysis uses. A repository cloned a year later contains
+the same `analysis.R`, but running it installs whatever
+package versions are current, which may not be the versions
+the analyst used, so the code that ran may no longer run,
+or may run and return a different number. Git also does not
+pin the *computational environment*: the R version, the
+operating system, the system libraries a package links
+against are nowhere in the history, and a clone is at the
+mercy of whatever the next machine provides. These are
+exactly the layers of the determinant stack that
+@sec-levels enumerated as unpinned at L0, and closing them
+is the work of the two chapters that follow: the lockfile
+of @sec-dependencies pins the package layer to reach L1,
+and the container of @sec-containers pins the environment
+layer to reach L2. Version control is necessary for all of
+this, since the lockfile and the Dockerfile are themselves
+files whose history git tracks, and sufficient for none of
+it. It puts the analysis on the ladder; it does not climb
+it.
+
+::: {.callout-important}
+## The honest level
+
+Placing an analysis under version control and pushing it
+to GitHub achieves exactly L0, locatable, and a claim
+should say no more. A repository is not 'reproducible'
+because it is on GitHub; it is *findable*, which is the
+necessary first rung and not the summit. A methods
+section that writes 'code is available at github.com/...'
+has stated an L0 fact accurately, and should not dress it
+as an L1 or L2 claim. The honest sentence names the rung:
+'The analysis code is version-controlled and available at
+[URL]; package versions are pinned with renv (L1) and the
+environment with a container (L2)' claims each rung only
+if the corresponding artifact is actually present. Version
+control is where the honesty of a reproducibility claim
+begins, because it is the rung every higher claim is built
+upon.
+:::
+
+## Worked example
+
+To make the chapter concrete, we take the
+incident-diabetes cohort of the running example from an
+untracked folder to a tagged, remotely hosted repository,
+staying at the level of the commands and the judgement
+behind them. The shell sessions below are illustrative and
+are not executed.
+
+The analyst begins with a folder of scripts and a registry
+extract, and the very first act, before a single commit,
+is to write the `.gitignore`, because the extract contains
+protected health information that must never enter the
+history.
+
+```bash
+cd diabetes-cohort
+git init
+# write .gitignore FIRST, ignoring raw_data and credentials
+git status   # confirm the extract is NOT listed as trackable
+```
+
+Only once `git status` confirms that the sensitive extract
+is ignored does the analyst make the first commit, the one
+that lifts the folder to L0, locatable.
+
+```bash
+git add .gitignore analysis/scripts/ DESCRIPTION
+git commit -m "Initialise compendium and .gitignore"
+```
+
+Work proceeds as a sequence of small, message-bearing
+commits: the cleaning script, the derived cohort table, the
+Cox model, each its own commit with its own reason, exactly
+the history tabulated in @tbl-audit-trail. When a reviewer
+later asks why the outlier threshold changed, the answer is
+one `git log` away.
+
+To try a reviewer's proposed reanalysis without disturbing
+the results already reported, the analyst branches.
+
+```bash
+git switch -c reviewer-sensitivity
+# ... reanalysis commits ...
+git switch main            # main is untouched and still runs
+```
+
+The work is backed up and made locatable by connecting a
+remote and pushing.
+
+```bash
+git remote add origin https://github.com/lab/diabetes-cohort.git
+git push -u origin main
+```
+
+A collaborator at a second site forks the repository, adds
+a site-specific adjustment on a branch of their fork, and
+opens a pull request; the analyst reviews the diff inline,
+requests one change, and merges it, leaving a reviewable
+record of the exchange. Finally, at journal submission, the
+analyst marks the exact state.
+
+```bash
+git tag -a v1.0-submission -m "State at journal submission"
+git push origin v1.0-submission
+```
+
+The folder is now a version-controlled, remotely hosted,
+tagged repository: firmly at L0, with a clean audit trail,
+a reviewed collaboration record, and a permanent anchor to
+the submitted state. It is *not* yet L1 or L2, because
+nothing has pinned the packages or the environment, and the
+honest reproducibility statement says exactly that. The
+lockfile of @sec-dependencies is the next commit.
+
+## Collaborating with an LLM
+
+A language model is a fluent assistant for git, which is a
+domain rich in memorised command recipes, and precisely
+that fluency is the hazard: the model will confidently
+produce a command that does what was asked and more,
+including irreversible operations, and it cannot see the
+sensitivity of your files. The three triples below mark the
+division of labour.
+
+**Prompt.** 'I accidentally committed a file of patient
+data three commits ago. Give me the git commands to remove
+it.'
+
+*Watch for.* The model will supply a history-rewriting
+recipe (`git filter-repo`, or the older `filter-branch`, or
+a `reset`) and present it as a clean fix. It cannot know
+whether the offending commit was ever pushed to a remote,
+which is the fact that determines whether removal is even
+possible, and it will not, on its own, raise the breach
+question.
+
+*Verification.* Treat the exposure, not the git command, as
+the primary problem. Establish first whether the commit was
+pushed; if it was, assume the data has been cloned and
+cached and follow your institution's incident procedure,
+because no git command can recall it. Only then, and for a
+purely local history, apply a rewriting tool, verifying on a
+copy of the repository first. The model's recipe addresses
+the mechanics and is blind to the obligation.
+
+**Prompt.** 'Write a `.gitignore` for my R health-data
+analysis project.'
+
+*Watch for.* A generic R `.gitignore` (the standard
+`.Rhistory`, `.RData`, `.Rproj.user/` list) that omits the
+one category that matters most, the raw data and credentials
+specific to *your* project, because the model cannot see
+your directory and does not know where your PHI lives.
+
+*Verification.* Take the generic list as a starting point,
+then add, by hand, the explicit paths of every raw-data
+directory, every `.Renviron` or credential file, and every
+restricted dataset, and confirm with `git status` that each
+is untracked before the first commit. The generic patterns
+are safe to accept; the project-specific sensitive paths are
+yours to supply.
+
+**Prompt.** 'Write good commit messages for these changes.'
+
+*Watch for.* Messages that fluently describe *what* changed,
+which the model can read from the diff, but invent or omit
+the *why*, which is the scientifically load-bearing part and
+which the model cannot know. A plausible-sounding 'Update
+outlier threshold' hides the reviewer request that a real
+audit trail must record.
+
+*Verification.* Supply the reason yourself. Let the model
+draft the imperative summary line from the diff, then edit
+in the motivation, the reviewer comment, the corrected
+denominator, the protocol amendment, that turns a
+description into an accountable record. The model can
+summarise the change; only the analyst knows why it was
+made.
+
+## Exercises
+
+1. Take a folder of your own currently versioned by the
+   `FINAL`-file method, count the manual snapshot files it
+   contains, and for two of them state what changed between
+   them and why. Note which of those two questions you can
+   still answer, and use the difficulty as a measure of what
+   a commit history would have preserved.
+
+2. Initialise a git repository in a scratch directory, make
+   three commits that each change one file, and then use
+   `git log --oneline` and `git show` to recover, for the
+   middle commit, both what changed and the message you
+   wrote. Confirm that the commit hashes are unchanged by a
+   later commit.
+
+3. Write a `.gitignore` for a data-analysis compendium and a
+   second for an R-package compendium, and list the patterns
+   that appear in one but not the other. Explain each
+   difference in terms of what the archetype produces.
+
+4. Explain, to a colleague who has just deleted a
+   PHI-containing file in a new commit and believes the
+   problem solved, why the file is still in the history, what
+   determines whether it can be removed, and what to do if
+   the offending commit was already pushed to GitHub.
+
+5. Construct the sequence of commands by which a collaborator
+   at a second trial site would contribute a change through a
+   fork and a pull request, and state, for each step, what
+   part of the audit trail it records that a direct push to
+   `main` would not.
+
+6. An analyst pushes a version-controlled compendium to
+   GitHub and writes in the methods section that the analysis
+   is 'fully reproducible'. State the rung the analysis has
+   actually reached, name the two layers of the determinant
+   stack that remain unpinned, and rewrite the sentence so
+   that it claims exactly what version control secures and no
+   more.
+
+## Further reading
+
+- @ram2013 is the direct argument for git as an instrument
+  of reproducibility and transparency in science, and is the
+  natural first reading for a researcher who has met git only
+  as a software tool; it makes the case for the commit
+  history as a record of scientific provenance.
+- @bryan2018 is the standard orientation to version control
+  written for data scientists rather than software engineers,
+  and it motivates GitHub as the collaboration substrate with
+  the working analyst's concerns foremost; her longer online
+  work *Happy Git and GitHub for the useR* is the companion
+  practical manual.
+- @wilson2017 and @sandve2013 place version control among the
+  good practices of reproducible computational research, the
+  former as one of a set of habits for scientific computing
+  and the latter among its rules for reproducible analysis;
+  read them to see version control situated alongside the
+  other pillars this book develops.
+- The layers that version control does not pin are the
+  subject of @sec-dependencies and @sec-containers, and the
+  continuous integration and collaboration built upon a git
+  history are developed in @sec-verification and
+  @sec-archiving; this chapter is best read as the foundation
+  those four presuppose.

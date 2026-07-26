@@ -484,7 +484,7 @@ exposed.
 
 ## The plan of this book
 
-The book is a ten-week course in four parts, and three
+The book is a twelve-week course in four parts, and three
 ideas recur in every chapter. The first is the ladder of
 reproducibility levels (L0 locatable, L1 pinned packages,
 L2 pinned environment, L3 verified), introduced in
@@ -498,15 +498,18 @@ introduced in @sec-compendium.
 - **Part I, Foundations.** The reproducibility crisis and
   its computational character (@sec-crisis); the levels of
   reproducibility and the determinants that set them
-  (@sec-levels); and the research compendium (@sec-compendium).
+  (@sec-levels); version control with git as the foundation
+  of a locatable analysis (@sec-version-control); and the
+  research compendium (@sec-compendium).
 - **Part II, Capturing the environment.** Pinning packages
   with a lockfile (@sec-dependencies); pinning the operating
   system and runtime with a container (@sec-containers); and
   the alternatives, from Nix to Podman to Apptainer
   (@sec-backends).
 - **Part III, Validation.** Literate programming and the
-  rendered report (@sec-literate); testing and code quality
-  (@sec-testing); and continuous integration and
+  rendered report (@sec-literate); automating the analysis
+  with make and targets (@sec-pipelines); testing and code
+  quality (@sec-testing); and continuous integration and
   verification (@sec-verification).
 - **Part IV, Collaboration and stewardship.** Sharing a
   compendium with a team and with the world (@sec-archiving).

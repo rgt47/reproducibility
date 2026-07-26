@@ -70,21 +70,23 @@ problem, not of any one program.
 
 ## What this book covers
 
-The ten chapters proceed in four parts.
+The twelve chapters proceed in four parts.
 
 1. **Foundations.** The reproducibility crisis and its
    specifically computational character; a framework of
    reproducibility levels and the determinants that set
-   them; and the research compendium as the unit of
-   reproducible work.
+   them; version control with git as the foundation of a
+   locatable analysis; and the research compendium as the
+   unit of reproducible work.
 2. **Capturing the environment.** Pinning packages with a
    lockfile; pinning the operating system and runtime with
    a container; and the alternatives, from Nix to Podman to
    the high-performance-computing runtime Apptainer.
 3. **Validation.** Literate programming and the rendered
-   report; testing and code quality; and continuous
-   integration and computational verification, the acts
-   that turn a claimed level into a confirmed one.
+   report; automating the analysis with make and targets;
+   testing and code quality; and continuous integration and
+   computational verification, the acts that turn a claimed
+   level into a confirmed one.
 4. **Collaboration and stewardship.** Sharing a compendium
    with a team and with the world: the team environment
    model, package registries, archival deposition, and the
