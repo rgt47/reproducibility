@@ -72,7 +72,7 @@ valid PNG file that opens and displays without complaint.
 
 This is the failure this chapter exists to prevent, and
 it has three faces. The first is **order**: the steps
-have a required sequence, cleaning before modelling
+have a required sequence, cleaning before modeling
 before plotting, and running them out of order produces
 either an error or, more dangerously, a result computed
 from the wrong inputs. The second is **staleness**: a
@@ -105,7 +105,7 @@ same way twice.
 
 ## The analyst's contribution
 
-Three judgements in this chapter are the analyst's own,
+Three judgments in this chapter are the analyst's own,
 and no pipeline tool makes them.
 
 1. **Deciding where the steps divide.** A pipeline is a
@@ -361,7 +361,7 @@ file unless that file is listed as a prerequisite; an
 undeclared input is invisible, and its change will not
 trigger the rebuild it should. And Make tracks files and
 only files: it cannot cache an in-memory R object, so
-every step must serialise its result to disk, and the
+every step must serialize its result to disk, and the
 graph is a graph of files. These limitations are the
 opening that the R-native tools were built to close.
 
@@ -369,7 +369,7 @@ opening that the R-native tools were built to close.
 ## Check your understanding: what Make rebuilds
 
 A project uses the four-rule Makefile above. The analyst
-edits `make_figures.R` to change a colour palette and
+edits `make_figures.R` to change a color palette and
 runs `make`. Which of the four targets does Make rebuild,
 and which does it skip? Explain your answer in terms of
 the timestamp rule.
@@ -393,7 +393,7 @@ Make treats an analysis as a graph of files built by
 shell commands. For an R analysis this is a slightly
 awkward fit: every step must be a script that reads files
 and writes files, the intermediate objects must all be
-serialised to disk by hand, and Make's timestamp check is
+serialized to disk by hand, and Make's timestamp check is
 blind to the thing an R analyst most wants tracked, the R
 functions that do the work. The `targets` package,
 written by William Landau as the successor to his earlier
@@ -480,7 +480,7 @@ alongside `targets` rather than in place of it.
 
 Two commands drive the pipeline. To see the graph,
 `tar_visnetwork()` draws it as an interactive network,
-colouring each target by whether it is up to date or out
+coloring each target by whether it is up to date or out
 of date, which is @fig-pipeline-dag made live and
 queryable:
 
@@ -569,7 +569,7 @@ pipeline changes nothing.
 
 Yet it would be wrong to conclude that the pipeline is
 reproducibility-neutral, and the reason returns us to the
-distinction that organises the book. What a pipeline does
+distinction that organizes the book. What a pipeline does
 is **mechanise the re-execution** that validation depends
 on. Verification, in @sec-verification, checks that
 rebuilding the analysis from its captured inputs
@@ -741,7 +741,7 @@ correct choice when an analysis spans many languages and many
 machines. For a first-year health-sciences analysis run on a
 laptop or a single server in R, they are heavier than the
 problem requires, but a reader moving into genomics or
-large-scale imaging will meet them quickly and should recognise
+large-scale imaging will meet them quickly and should recognize
 them as the same pipeline idea scaled up.
 
 Closer to home, **`workflowr`**, by Blischak and colleagues, serves
@@ -796,7 +796,7 @@ and lets `targets` infer the graph from the way each target's
 expression names the targets before it. With the file in place,
 `tar_visnetwork()` draws the graph, and the analyst confirms it
 carries the intended structure of @fig-pipeline-dag, with every
-node initially coloured 'outdated' because nothing has been
+node initially colored 'outdated' because nothing has been
 built yet. The figure is a simplified linear schematic of the
 chain from raw data to report; the actual dependency graph is
 more connected, because the `_targets.R` declares that `figures`
@@ -841,11 +841,11 @@ this chapter rests on, the honesty of the dependency
 declarations.
 
 **Prompt.** 'Write a Makefile for my analysis: I have a cleaning
-script, a modelling script, and a report.'
+script, a modeling script, and a report.'
 
 *Watch for.* A model will readily produce plausible rules, but
 it cannot know your true dependencies, and it will guess. It may
-omit a prerequisite, a configuration file the modelling script
+omit a prerequisite, a configuration file the modeling script
 reads, a helper script the cleaning script sources, so that the
 Makefile looks complete but will fail to rebuild when the
 undeclared input changes. It may also use spaces where Make

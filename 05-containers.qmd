@@ -90,7 +90,7 @@ and a first look at how a team shares one.
 
 A container is a tool, and like every tool in this
 book it automates the mechanical part of the work and
-leaves the judgement to the analyst. Three decisions
+leaves the judgment to the analyst. Three decisions
 belong to the analyst and to no script.
 
 1. **The choice of base environment must match the
@@ -192,7 +192,7 @@ introduction, a change between R releases can alter a
 result silently: the random-number default that changed
 in R 3.6.0, the `stringsAsFactors` default that flipped
 in R 4.0.0. Restore the same lockfile under a different
-R, and the packages match while their behaviour does
+R, and the packages match while their behavior does
 not.
 
 The lesson is that `renv` is necessary and, by itself,
@@ -248,7 +248,7 @@ fast, and why, later, we shall be careful about which
 layer a given change invalidates.
 
 The property that earns the container its place in this
-book is often summarised as 'it runs the same
+book is often summarized as 'it runs the same
 everywhere it runs'. The claim is precise, and the
 repetition of 'runs' is deliberate. Wherever a
 container runtime is present, the same image starts a
@@ -263,7 +263,7 @@ to it, and to the runtimes that widen it, in
 @sec-backends. For present purposes the container gives
 us what the lockfile could not: a fixed operating
 system, fixed system libraries, and a fixed R,
-travelling together as one artifact.
+traveling together as one artifact.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: image or container
@@ -405,7 +405,7 @@ RUN R -e "renv::init(bare = TRUE); renv::restore()"
 ```
 
 The reader will note how the container and the lockfile
-divide the labour. The `FROM` line and the snapshot fix
+divide the labor. The `FROM` line and the snapshot fix
 the environment, the operating system, the R, and what
 may be installed; the `COPY renv.lock` and
 `renv::restore()` fix the exact package versions inside
@@ -531,9 +531,9 @@ the BLAS thread counts to one together, rather than any
 one of them alone, is what forces a single, deterministic
 order of summation, trading a little speed for bitwise
 reproducibility. Whether that
-trade is worth making is a judgement, and it is the
+trade is worth making is a judgment, and it is the
 analyst's; the point is that a container lets the
-judgement be recorded and enforced rather than left to
+judgment be recorded and enforced rather than left to
 whatever the host defaults to.
 
 ::: {.callout-note icon=false collapse=true}
@@ -600,7 +600,7 @@ installed on top; and the two remain cleanly separated.
 
 The archetypes of @sec-compendium map onto the profiles
 naturally, and the mapping is the concrete form of the
-first analyst judgement above. The same machinery, a
+first analyst judgment above. The same machinery, a
 digest-pinned base, a dated snapshot, a restored
 lockfile, and the determinism variables, serves every
 archetype; only the base changes.
@@ -669,7 +669,7 @@ natural unit of a shared, reproducible environment.
 Let us follow a concrete case through, in the manner of
 the framework this book uses, which generates the
 Dockerfile rather than asking the analyst to write one
-by hand. A biostatistician is analysing a registry
+by hand. A biostatistician is analyzing a registry
 cohort. The deliverable is a set of tables and figures,
 not a typeset manuscript, so the appropriate archetype
 is data analysis and the appropriate profile is minimal:
@@ -803,7 +803,7 @@ confirm the base carries a LaTeX toolchain, for instance
 by checking that the LaTeX tools are present in the built
 image; if it is an R package, confirm that R and the
 check tools suffice and resist any heavier base. The
-judgement is the first of this chapter's analyst
+judgment is the first of this chapter's analyst
 contributions, and it is not one to delegate.
 
 ## Exercises
@@ -870,7 +870,7 @@ the digest pin, the dated snapshot, and much else this
 chapter has drawn from. Read it as a checklist against
 any Dockerfile one is asked to trust.
 
-For the division of labour between the container and the
+For the division of labor between the container and the
 package layer, return to @ushey2020 on `renv`, keeping in
 mind that its remit stops exactly where this chapter's
 begins. The compendium structure into which both fit is

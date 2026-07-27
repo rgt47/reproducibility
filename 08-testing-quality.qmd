@@ -29,7 +29,7 @@ able to:
   wants, using `tinytest` bare expectations:
   unit, integration, data-validation, and
   reproducibility tests.
-- Test behaviour rather than implementation, so
+- Test behavior rather than implementation, so
   that a test survives an honest refactor.
 - Apply `lintr`, `styler`, and a pre-commit hook
   to keep code legible and consistent, and say
@@ -102,7 +102,7 @@ particular kind we shall meet below as the
 reproducibility test. Testing is therefore not
 merely adjacent to the levels; the topmost level
 is defined by a test. We begin with the human
-judgements that no testing tool can make, then
+judgments that no testing tool can make, then
 develop the four kinds of test in turn, then take
 up code quality as a second validation feature,
 and close with the way the emphasis shifts across
@@ -112,8 +112,8 @@ archetypes.
 
 Testing tooling runs the checks, tallies the
 passes and failures, and reports them. It does not
-originate a single one of the judgements that give
-a test its value. Three of these judgements are
+originate a single one of the judgments that give
+a test its value. Three of these judgments are
 worth naming at the outset, because they are the
 human core of everything that follows.
 
@@ -130,15 +130,15 @@ human core of everything that follows.
    it, and a test is only as trustworthy as the
    oracle behind it.
 
-2. **The analyst chooses which behaviours to pin.**
+2. **The analyst chooses which behaviors to pin.**
    A function has an infinity of properties, most of
    them incidental to its purpose. The analyst
    decides which few constitute the function's
-   contract, the behaviours a future change must not
+   contract, the behaviors a future change must not
    break, and writes tests for those. This is the
    distinction, developed below, between testing
-   behaviour and testing implementation, and it is a
-   design judgement, not a mechanical one.
+   behavior and testing implementation, and it is a
+   design judgment, not a mechanical one.
 
 3. **The analyst encodes the domain constraints.**
    The rule that an age lies between zero and one
@@ -308,7 +308,7 @@ expect_equal(calculate_mean(c(1, NA, 3),
                             na.rm = TRUE), 2)
 ```
 
-The first two lines pin the ordinary behaviour
+The first two lines pin the ordinary behavior
 against hand-computed answers; the third and fourth
 pin the edge cases, the empty vector and the
 missing value, which are exactly the inputs on which
@@ -321,7 +321,7 @@ analyst believes each function promises.
 A unit test exercises a function in isolation, but a
 health analysis is rarely one function; it is a
 pipeline, in which raw data is loaded, cleaned,
-modelled, and summarised, and the components can be
+modeled, and summarized, and the components can be
 individually correct yet compose incorrectly. An
 integration test runs the pipeline end to end and
 checks the result:
@@ -464,12 +464,12 @@ reproduction alone would happily propagate: this is
 the paradox in operation.
 :::
 
-## Test behaviour, not implementation
+## Test behavior, not implementation
 
 A test is worth writing only if it survives changes
 that ought not to break it and fails on changes that
 ought to. The way to secure this is to test what a
-function does, its observable behaviour, rather than
+function does, its observable behavior, rather than
 how it does it, its internal implementation. The
 distinction is easiest to see in a pair of tests for
 the same function:
@@ -486,20 +486,20 @@ expect_false(anyNA(result))
 The first test asserts that `my_clean` uses a
 function called `filter` internally. If the analyst
 later rewrites `my_clean` in base R, removing the
-`filter` call while leaving its behaviour
+`filter` call while leaving its behavior
 unchanged, the first test fails, and it fails for no
 good reason: the function still does exactly what it
 promised. Such a test punishes honest refactoring
 and trains the analyst to distrust the suite. The
 second test asserts only that the cleaned data
-carries no missing values, which is the behaviour
+carries no missing values, which is the behavior
 that actually matters, and it passes under any
 correct implementation. As a general rule, a test
 should fail when, and only when, the function's
 contract is broken. Tests that fail for other
 reasons are a tax on maintenance, and Wilson and
 colleagues, in their best-practices and
-good-enough-practices guidance, make behavioural
+good-enough-practices guidance, make behavioral
 testing a recurring recommendation [@wilson2014;
 @wilson2017].
 
@@ -508,7 +508,7 @@ merely confirms a result is a data frame, without
 checking any value in it, tests too little and gives
 false comfort; a test that pins every incidental
 property tests too much and breaks on every
-revision. The judgement of what to pin, named above
+revision. The judgment of what to pin, named above
 as the second of the analyst's contributions, is the
 skill the tooling cannot supply.
 
@@ -807,7 +807,7 @@ values by running the function it was given, rather
 than by independent computation. If the function is
 buggy, the model may generate an oracle that
 matches the bug, producing tests that pass against
-wrong behaviour and thereby certifying the error.
+wrong behavior and thereby certifying the error.
 It may also test only the paths the code obviously
 takes and miss the empty vector or the missing
 value.

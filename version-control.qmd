@@ -34,7 +34,7 @@ to:
   staging and committing, reading the log and the
   diff, and using a `.gitignore` to keep files out of
   the history.
-- Exercise the health-specific judgement of what must
+- Exercise the health-specific judgment of what must
   never be committed, above all protected health
   information and identifiable data, and understand why
   deleting such a file in a later commit does not
@@ -58,7 +58,7 @@ to:
 
 Open the folder of almost any analysis that has run
 for more than a month without version control and the
-same artefact greets you. There is `analysis.R`, and
+same artifact greets you. There is `analysis.R`, and
 beside it `analysis_v2.R`, `analysis_final.R`,
 `analysis_final_v2.R`, and, inevitably,
 `analysis_final_v2_FINAL.R`. A dated copy or two,
@@ -113,22 +113,22 @@ require.
 ## The analyst's contribution
 
 Version control automates the mechanics of history
-perfectly and automates none of the judgement that
+perfectly and automates none of the judgment that
 makes a history useful and safe. Three decisions belong
 to the analyst and are the subject of this chapter as
 much as the commands are.
 
 1. **Deciding what must never be committed.** A commit
    is, by design, permanent and copied to every clone
-   of the repository. The judgement of what may safely
+   of the repository. The judgment of what may safely
    be made permanent and public, and what must be kept
    out of the history entirely, is the analyst's, and
-   in health research it is a judgement with legal and
+   in health research it is a judgment with legal and
    ethical force. Protected health information,
    identifiable data, and credentials must never enter
    the history, because, as we shall see, deleting them
    in a later commit does not remove them from it. This
-   is the first and gravest of the three judgements.
+   is the first and gravest of the three judgments.
 
 2. **Choosing the granularity and the message of a
    commit.** A commit is a unit of change, and how much
@@ -234,7 +234,7 @@ and attributable. The history is the audit trail.
 
 ## The git model: repository, commit, history
 
-Git is often taught as a list of commands to memorise,
+Git is often taught as a list of commands to memorize,
 which is why it is so often found bewildering. It is far
 better understood as a small and coherent data model,
 after which the commands are obvious. There are three
@@ -312,7 +312,7 @@ adopting from the first day, is a short imperative
 summary line of about fifty characters, optionally
 followed by a blank line and a paragraph giving the
 *why*. 'Fix bug' is a wasted message. 'Correct
-person-time denominator to exclude pre-enrolment
+person-time denominator to exclude pre-enrollment
 follow-up' is a message that will still be intelligible,
 and still exculpatory, at an audit three years later.
 
@@ -521,7 +521,7 @@ is not. A **data-analysis compendium** ignores its
 tables and figures, and the large or sensitive registry
 extract that must stay out of the history entirely. An
 **R-package compendium** has no `analysis/` outputs to
-ignore but must ignore its *build artefacts*: the
+ignore but must ignore its *build artifacts*: the
 `.Rcheck` directory, the built `.tar.gz` and binary
 archives, and the `src/` object files a compiled package
 leaves behind. The two `.gitignore` files barely
@@ -590,8 +590,8 @@ the code reproduces on render, so committing it couples
 the history to a derivative and is usually avoided. An
 analyst who nonetheless commits it, perhaps to preserve
 the exact submitted PDF as a fixed reference, is making a
-defensible different judgement about what the artifact is
-*for*; the point is that it is a judgement, not a rule.
+defensible different judgment about what the artifact is
+*for*; the point is that it is a judgment, not a rule.
 The `data_dictionary.csv` and the registry extract sit on
 opposite sides of the one line that is not a matter of
 taste. The dictionary carries variable names and codings,
@@ -660,7 +660,7 @@ the concrete form of the L0 rung of the ladder. The third
 is **collaboration**, the purpose that shapes the rest of
 this section.
 
-The commands that connect to and synchronise with a
+The commands that connect to and synchronize with a
 remote are few. One names the remote once, then pushes
 local commits to it and pulls others' commits from it.
 
@@ -679,7 +679,7 @@ git pull
 ```
 
 For a team working across sites, a clinical trial with
-several participating centres, a multi-institution
+several participating centers, a multi-institution
 consortium, the dominant model on GitHub and GitLab is
 **fork-and-pull-request** (GitLab calls the latter a
 *merge request*, the same thing under another name). A
@@ -730,7 +730,7 @@ messages, why; it does not record who *reviewed* the change
 before it entered the shared analysis, or what they said.
 In a solo project there is no reviewer, so nothing is lost.
 In a multi-site trial, where a change to the shared
-analysis by one centre affects every centre's results, the
+analysis by one center affects every center's results, the
 review is itself a controlled step, and the pull request is
 the artifact that records it: the proposed diff, the
 discussion, the requested changes, the approval, and the
@@ -800,7 +800,7 @@ upon.
 To make the chapter concrete, we take the
 incident-diabetes cohort of the running example from an
 untracked folder to a tagged, remotely hosted repository,
-staying at the level of the commands and the judgement
+staying at the level of the commands and the judgment
 behind them. The shell sessions below are illustrative and
 are not executed.
 
@@ -873,12 +873,12 @@ lockfile of @sec-dependencies is the next commit.
 ## Collaborating with an LLM
 
 A language model is a fluent assistant for git, which is a
-domain rich in memorised command recipes, and precisely
+domain rich in memorized command recipes, and precisely
 that fluency is the hazard: the model will confidently
 produce a command that does what was asked and more,
 including irreversible operations, and it cannot see the
 sensitivity of your files. The three triples below mark the
-division of labour.
+division of labor.
 
 **Prompt.** 'I accidentally committed a file of patient
 data three commits ago. Give me the git commands to remove
@@ -932,7 +932,7 @@ draft the imperative summary line from the diff, then edit
 in the motivation, the reviewer comment, the corrected
 denominator, the protocol amendment, that turns a
 description into an accountable record. The model can
-summarise the change; only the analyst knows why it was
+summarize the change; only the analyst knows why it was
 made.
 
 ## Exercises
@@ -944,7 +944,7 @@ made.
    still answer, and use the difficulty as a measure of what
    a commit history would have preserved.
 
-2. Initialise a git repository in a scratch directory, make
+2. Initialize a git repository in a scratch directory, make
    three commits that each change one file, and then use
    `git log --oneline` and `git show` to recover, for the
    middle commit, both what changed and the message you

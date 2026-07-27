@@ -35,7 +35,7 @@ to:
 - Distinguish a result that is reproduced from one
   that is replicated, and navigate the shifting use of
   those two words across the literature.
-- Recognise that the ladder grades every archetype of
+- Recognize that the ladder grades every archetype of
   research compendium, a manuscript, an analysis
   project, an R package, a simulation study, and a
   blog, by the same means.
@@ -53,7 +53,7 @@ renders, the paper is accepted. Two years later a
 reader requests the code, downloads it, and runs it on
 a fresh laptop. The model will not fit: a package that
 the analysis relied upon has changed its default
-optimiser, and the estimate now returned is 1.19. Which
+optimizer, and the estimate now returned is 1.19. Which
 number is the finding? The question is not statistical.
 The statistics were the same on both machines. What
 differed was everything underneath the statistics, and
@@ -84,7 +84,7 @@ flinching, the rung one has actually reached.
 
 ## The analyst's contribution
 
-Three judgements at the centre of this chapter belong
+Three judgments at the center of this chapter belong
 to the analyst and are automated by no tool. It is
 worth stating them at the outset, because the machinery
 of later chapters serves them rather than replaces
@@ -93,11 +93,11 @@ them.
 1. **Choosing, and declaring, the honest level.** A
    framework can compute which rung a repository has
    reached and print it; it cannot decide what the
-   author will claim. The judgement that a paper's
+   author will claim. The judgment that a paper's
    reproducibility statement will match the level
    actually secured, and never assert above it, is the
    analyst's alone, and it is the single habit this book
-   most wishes to instil.
+   most wishes to instill.
 
 2. **Matching the investment to the stakes.** Climbing
    the ladder costs effort, and not every analysis
@@ -114,9 +114,9 @@ them.
    the numerical libraries, the random-number
    discipline, the integrity of an external data source,
    matter for this particular analysis, and must close
-   those that do by hand. Recognising a live exposure
+   those that do by hand. Recognizing a live exposure
    from an inert one is a matter of subject-matter
-   judgement.
+   judgment.
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -170,7 +170,7 @@ on how finely one splits them, nine or ten layers.
 
 At the base sits the **hardware**: the processor
 architecture, its instruction-set extensions, and the
-behaviour of its floating-point unit. Above it lie the
+behavior of its floating-point unit. Above it lie the
 **numerical libraries**, the BLAS and LAPACK
 implementations that perform the linear algebra beneath
 every regression and every matrix decomposition. These
@@ -181,7 +181,7 @@ change a result in its low-order digits. Above these
 sit the **operating system and its system libraries**,
 the kernel, the C library, the locale data, the fonts,
 and the document toolchain of `pandoc` and LaTeX; then
-the **R runtime** itself, whose default behaviours shift
+the **R runtime** itself, whose default behaviors shift
 between releases, as the random-number change of R 3.6.0
 and the `stringsAsFactors` change of R 4.0.0 both
 illustrate.
@@ -221,7 +221,7 @@ secured by no rung of the capture ladder at all.
 
 ```{r}
 #| label: fig-determinant-stack
-#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, coloured by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
+#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, colored by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
 #| fig-width: 7
 #| fig-height: 4.4
 library(ggplot2)

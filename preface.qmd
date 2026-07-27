@@ -60,7 +60,7 @@ apparatus. The choice is deliberate and, we hope, honestly
 motivated. Reproducibility is not learned in the abstract;
 it is learned by building something that reproduces, and
 that requires a real toolchain. `zzcollab` composes the
-established R tools into one workflow organised by the
+established R tools into one workflow organized by the
 levels ladder, which lets the book teach the concepts and
 demonstrate them in the same breath. A reader who prefers a
 different toolchain will find that the concepts transfer

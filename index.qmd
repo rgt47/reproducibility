@@ -5,7 +5,7 @@ the Health Sciences** by Ronald 'Ryy' G. Thomas, a graduate
 course textbook.
 
 The book takes a position that a health scientist will
-recognise from their own methodological training:
+recognize from their own methodological training:
 computational reproducibility is not a property of any
 single file but a property of the relationships among the
 operating system, the language runtime, the package set,
@@ -18,7 +18,7 @@ relationships; the unsolved problem, and the subject of
 this book, is composing them into a single workflow that a
 working analyst can actually adopt.
 
-The book is organised around three ideas that recur in
+The book is organized around three ideas that recur in
 every chapter. The first is a ladder of reproducibility
 levels, from a merely locatable analysis (L0) through
 pinned packages (L1) and a pinned environment (L2) to a
@@ -36,7 +36,7 @@ open-source R framework that composes the standard tools
 (`renv` or Nix for packages, Docker or a runtime
 alternative for the environment, a research-compendium
 package structure, continuous integration, testing, and
-data-integrity checking) into one system organised by the
+data-integrity checking) into one system organized by the
 levels ladder. The book teaches the concepts first and the
 tool second: a reader who finishes it should be able to
 reason about reproducibility with any toolchain, and to

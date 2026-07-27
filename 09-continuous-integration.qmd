@@ -101,7 +101,7 @@ review.
 Continuous integration is highly automated, and it is
 tempting to regard it as a matter of copying a workflow
 file into a repository and forgetting it. That view
-mistakes the machinery for the judgement. Three
+mistakes the machinery for the judgment. Three
 decisions remain the analyst's, and no tool makes them.
 
 1. **The analyst decides what counts as a correct
@@ -250,7 +250,7 @@ checked, and becomes trusted rather than tested.
 
 A CI run on a research compendium executes, in the
 general case, three gates. We take them in turn, because
-the division of labour among them is exact.
+the division of labor among them is exact.
 
 The first is **`R CMD check`**. Because a research
 compendium is structured as an R package (@sec-compendium),
@@ -361,7 +361,7 @@ The reader will have noticed, in the workflow above, an
 apparently pedantic insistence on handing a named library
 folder to the check step by hand. This is not pedantry;
 it repairs a subtle and instructive bug, and the lesson
-generalises well beyond the particular case.
+generalizes well beyond the particular case.
 
 The trouble is that a CI run is not one continuous
 process but a sequence of separate steps, each a fresh
@@ -387,8 +387,8 @@ hidden. The workflow had passed for several repositories,
 because each of them imported only packages that the
 generic container base image already provided; the
 restored library was never actually needed. The defect
-surfaced only when a repository imported a specialised
-modelling package absent from the base image. The broader
+surfaced only when a repository imported a specialized
+modeling package absent from the base image. The broader
 literature on why deposited analyses fail to re-run
 [@trisovic2022] documents how often re-execution simply
 fails; the particular fault here is cross-boundary state,
@@ -457,8 +457,8 @@ intended audience.
 
 The two dialects differ structurally. GitHub Actions uses
 one or more workflow files under `.github/workflows/`, each
-organised into jobs and, within a job, a sequence of named
-steps. GitLab CI uses a single `.gitlab-ci.yml` organised
+organized into jobs and, within a job, a sequence of named
+steps. GitLab CI uses a single `.gitlab-ci.yml` organized
 into stages, each stage running a script. The same three
 gates, expressed in the GitLab dialect, look like this,
 again shown as a static file that GitLab executes and this
@@ -505,9 +505,9 @@ neutral place, a `Makefile` with `make ci-check` and
 `make ci-render` targets, so that each forge's CI file
 shrinks to a thin shim that checks out the code and calls
 `make`. The dialect then differs only in its outermost ten
-lines, and the checking behaviour is defined once.
+lines, and the checking behavior is defined once.
 
-A further design point, developed as the organising
+A further design point, developed as the organizing
 mechanism of this chapter, is that the workflow adapts
 itself to what the repository contains rather than being
 configured by hand. A feature is treated as present
@@ -566,7 +566,7 @@ report a difference on every render and catch nothing real.
 Hashing the derived dataset or the coefficient table, by
 contrast, reports a difference exactly when a number
 changed, which is what we want to detect. There exist
-techniques to normalise a document's embedded timestamps,
+techniques to normalize a document's embedded timestamps,
 by setting a fixed `SOURCE_DATE_EPOCH`, and to freeze its
 fonts, and with enough care a byte-identical PDF is
 attainable; but the robust and general practice is to
@@ -687,7 +687,7 @@ datasets, the fitted model objects, the results tables,
 each of which changes its checksum exactly when a number
 changes. The render gate, separately, confirms that the
 document still builds from those outputs. Byte-identical
-PDFs are attainable with timestamp normalisation and font
+PDFs are attainable with timestamp normalization and font
 freezing, but that is a fragile route to a result the
 output hashes give directly.
 :::
@@ -765,7 +765,7 @@ and that is the whole of it; imposing a render gate on it
 would be imposing a gate on a document that does not exist.
 
 A **manuscript archetype** and a **blog archetype** both
-add the render gate, because both centre on a rendered
+add the render gate, because both center on a rendered
 document, a `report.Rmd` for the manuscript, a set of
 posts for the blog. The blog case merely renders many
 documents rather than one; the render gate iterates over
@@ -775,7 +775,7 @@ that the reader-facing artifact still regenerates from its
 source.
 
 A **data-analysis archetype** sits between them: it may
-carry a report or may organise its work as scripts and
+carry a report or may organize its work as scripts and
 figures with no single manuscript, and its CI is
 configured accordingly. A **simulation archetype** raises
 a distinct concern of cost. A simulation study whose full
@@ -819,7 +819,7 @@ codechecker carries none of the author's undeclared state,
 which is the same property that makes a CI runner effective,
 now embodied in a person rather than a virtual machine. In
 a parallel development, major computing venues have
-formalised artifact review and badging, under which a
+formalized artifact review and badging, under which a
 submission's computational artifacts are evaluated and, if
 they reproduce, marked with a badge on the published paper
 [@acm2020]. Stodden and colleagues have documented both the
@@ -906,7 +906,7 @@ dependency happens to be in the base image.
 
 *Verification.* Do not trust the workflow because it is
 syntactically valid. Confirm it fails correctly by
-introducing a deliberate gap, importing a specialised
+introducing a deliberate gap, importing a specialized
 package absent from the base image and not restoring it,
 and checking that the build goes red. A CI check that has
 never been seen to fail has not been shown to work.
@@ -1007,7 +1007,7 @@ the analyst must verify and cannot delegate.
 ## Further reading
 
 The distinction between capturing reproducibility and
-validating it, which organises this chapter, is drawn out
+validating it, which organizes this chapter, is drawn out
 across the introduction of this book (@sec-intro) and rests
 on the general framing of computational reproducibility as
 a spectrum in @peng2011.
@@ -1021,7 +1021,7 @@ The ACM's artifact review and badging policy [@acm2020]
 documents the badge scheme now common at computing venues.
 
 On the persistence of the problem that all this machinery
-addresses, Stodden and colleagues [@stodden2018] analyse
+addresses, Stodden and colleagues [@stodden2018] analyze
 the effectiveness of journal reproducibility policies and
 find, soberingly, that a policy on paper is not a
 reproduction in practice, and Trisovic and colleagues

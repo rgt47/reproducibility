@@ -24,7 +24,7 @@ to:
 - Explain why Docker is one route to the
   pinned-environment level and not the only one.
 - Distinguish the three axes along which the framework
-  organises the alternatives: a different runtime over
+  organizes the alternatives: a different runtime over
   the same image, a different environment model without a
   container, and remote execution that moves the
   container off the analyst's machine.
@@ -67,10 +67,10 @@ the pinned environment that L2 names; none of them can
 obtain it in the ordinary Docker way. The purpose of this
 chapter is to show that the ladder does not depend on any
 one tool, and to equip the reader to choose among the
-alternatives with judgement rather than habit.
+alternatives with judgment rather than habit.
 
-The framework this book uses organises those
-alternatives along three axes, and the organisation is
+The framework this book uses organizes those
+alternatives along three axes, and the organization is
 worth internalising before any command is typed, because
 it prevents the common error of treating every unfamiliar
 tool as a special case. The first axis changes only the
@@ -90,7 +90,7 @@ what it does and does not change.
 
 ## The analyst's contribution
 
-No tool in this chapter chooses itself. Three judgements
+No tool in this chapter chooses itself. Three judgments
 remain the analyst's, and they are the substance of the
 chapter.
 
@@ -197,7 +197,7 @@ stating plainly because it catches many university users
 unawares. Docker Desktop, the packaged Docker distribution
 for macOS and Windows, is under its current terms not free
 for use by larger commercial and institutional
-organisations, and many universities fall within those
+organizations, and many universities fall within those
 terms. The terms do carve out an exception for education,
 but institutions differ on whether a given use qualifies,
 and the point is contested, which is why many institutions
@@ -306,7 +306,7 @@ cannot silently come to mean something else, the
 mutable-tag failure we guarded against in @sec-containers
 by pinning digests. Dolstra, in the
 work that introduced Nix, made deterministic build the
-organising principle rather than an afterthought, and it
+organizing principle rather than an afterthought, and it
 is that property that recommends Nix here.
 
 The decisive fact for our purposes is that a single Nix
@@ -342,7 +342,7 @@ rix(
 
 That call produces a `default.nix` file, the declaration
 that pins the environment. A reader need not master the
-Nix language to recognise its shape; a minimal
+Nix language to recognize its shape; a minimal
 `default.nix` reads, in outline, as follows:
 
 ```nix
@@ -396,7 +396,7 @@ real, and it is not free either way.
 
 ### Guix and the conda family
 
-Two neighbours of Nix deserve mention, because a reader
+Two neighbors of Nix deserve mention, because a reader
 will meet them and should know where they sit. GNU Guix is
 Nix's close sibling, sharing the purely functional,
 input-addressed model, with a smaller R ecosystem; for

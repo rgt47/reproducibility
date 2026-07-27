@@ -117,7 +117,7 @@ release, with no error and no warning. In R 4.0.0 the
 `stringsAsFactors` default flipped from `TRUE` to `FALSE`,
 so that code reading a data frame silently produced
 character columns where it once produced factors, changing
-the behaviour of every model that treated those columns as
+the behavior of every model that treated those columns as
 categorical. Neither change was a bug; both were
 improvements. Both would nonetheless break the exact
 reproduction of an analysis written under the old default,
@@ -138,7 +138,7 @@ remaining layers to whatever the next machine happens to
 provide. Reproducibility fails in the gap between what the
 script fixes and what the result depends on. The task of a
 reproducibility toolchain is to close that gap, layer by
-layer, and the organising question of this book is how far
+layer, and the organizing question of this book is how far
 down the stack a given effort has actually reached.
 
 ## A survey of the tools
@@ -151,7 +151,7 @@ their maturity, the problem persists.
 At the top of the stack, **literate programming** binds
 prose to the code that produces the numbers, so that a
 document cannot drift out of step with its analysis. The
-idea is Knuth's [@knuth1984]; its modern R realisations are
+idea is Knuth's [@knuth1984]; its modern R realizations are
 `knitr`, R Markdown, and now Quarto [@allaire2024], and
 they are the reason a figure in a well-built compendium is
 never pasted in by hand but regenerated on every render.
@@ -184,7 +184,7 @@ For the **compendium** itself, the container that holds all
 of the above, the lineage runs from @gentleman2007, who
 argued that a statistical analysis should travel as a
 single self-describing bundle of code, data, and text, to
-@marwick2018, whose `rrtools` operationalised that idea by
+@marwick2018, whose `rrtools` operationalized that idea by
 packaging an analysis as an R package with a conventional
 directory layout. The R-package structure is not incidental:
 it makes `R CMD check` a universal gate on the compendium's
@@ -210,7 +210,7 @@ Three of the tools just surveyed have come, in the R
 world, to form the canonical apparatus for enforcing
 computational reproducibility, and it is worth stating
 precisely what each enforces, because the division of
-labour among them is the conceptual heart of this book.
+labor among them is the conceptual heart of this book.
 
 **`renv` enforces the package layer.** When an analysis is
 developed, `renv` records in a lockfile, `renv.lock`, the
@@ -248,7 +248,7 @@ same recipe are the same image. This is the L1-to-L2
 transition. Docker's own limit mirrors `renv`'s: an image
 fixes the environment but says nothing about which package
 versions are installed inside it, nor about the session
-configuration that governs their behaviour. The two tools
+configuration that governs their behavior. The two tools
 are complements, not substitutes, and a genuinely
 pinned-environment analysis uses both, or uses one of the
 alternatives below that subsumes both.
@@ -338,7 +338,7 @@ packages but not the R version, the operating system, or
 the system libraries. Docker pins the environment but says
 nothing about which package versions are installed inside
 it, nor about the session configuration that shapes their
-behaviour. `rrtools` fixes the structure but not the
+behavior. `rrtools` fixes the structure but not the
 environment. A literate document seals the prose to the
 code but not the code to its dependencies. Each is
 necessary; none is sufficient; and, crucially, composing
@@ -365,7 +365,7 @@ lockfile and a Dockerfile, `zzcollab` adds the automated
 environment generation, the dependency-consistency
 checking, the continuous integration, the testing, the
 data-integrity hashing, and the team-collaboration model,
-and it organises the result on the reproducibility-levels
+and it organizes the result on the reproducibility-levels
 ladder that structures the chapters ahead.
 
 ## How zzcollab manages renv, Docker, and CI
@@ -373,7 +373,7 @@ ladder that structures the chapters ahead.
 Because the triad and its alternatives recur throughout the
 book, it helps to see, at the outset, how the framework
 composes them, so that later chapters can develop each part
-against a picture already in view. The organising principle
+against a picture already in view. The organizing principle
 is the one named above: `renv` and Docker capture, and
 continuous integration validates. `zzcollab` manages all
 three so that a biostatistician obtains the composition
@@ -472,7 +472,7 @@ discipline, the graphics device and fonts, intrinsic
 non-determinism) to convention
 or to the base image; its authors describe it candidly as
 a strong scaffolding tool rather than a finished guarantor
-of reproducibility. We adopt this candour as a feature of
+of reproducibility. We adopt this candor as a feature of
 the book, not a caveat to be hidden. A central lesson of
 what follows is that a reproducibility claim must be
 matched to the level actually reached and never asserted
@@ -520,7 +520,7 @@ The book is meant to be worked, not only read. Each chapter
 develops a concept and then builds it, in R and at the
 shell, inside a running example compendium. The reader who
 follows along will finish with a reproducible project of
-their own and, more durably, with the judgement to reason
+their own and, more durably, with the judgment to reason
 about reproducibility with any toolchain and to state,
 without flinching, the level a given analysis has actually
 reached.

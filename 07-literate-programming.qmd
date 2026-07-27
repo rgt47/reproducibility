@@ -32,7 +32,7 @@ to:
   what each contributed.
 - Build a sealed render, a document whose every number
   and figure is regenerated from the code that produces
-  it, and recognise the landmines that quietly break the
+  it, and recognize the landmines that quietly break the
   seal.
 - Choose between HTML and PDF output and name the
   toolchain each requires, including why a LaTeX
@@ -78,7 +78,7 @@ the document cannot silently disagree with its own
 analysis.
 
 The reader will recall the ladder of reproducibility
-levels that organises this book: L0 locatable, L1
+levels that organizes this book: L0 locatable, L1
 pinned packages, L2 pinned environment, L3 verified. It
 is worth stating at the outset where a sealed render
 sits on that ladder, because the answer is not what a
@@ -107,7 +107,7 @@ suffices.
 
 ## The analyst's contribution
 
-Three judgements in this chapter are the analyst's own,
+Three judgments in this chapter are the analyst's own,
 and no tool makes them.
 
 1. **Deciding what the document computes at build time
@@ -127,7 +127,7 @@ and no tool makes them.
 2. **Keeping the render sealed by refusing to reach
    outside it.** A sealed render must draw only on what
    is captured and committed. The temptations to reach
-   outside are many and quiet, and we catalogue them
+   outside are many and quiet, and we catalog them
    below as landmines: installing a package at render
    time, loading with `pacman::p_load`, reading a file
    by its absolute path on the author's machine,
@@ -175,7 +175,7 @@ and no tool makes them.
   rendered PDF is usually not deterministic in this
   strict sense, for reasons developed below.
 - **`SOURCE_DATE_EPOCH`.** A conventional environment
-  variable, honoured by many document tools, that fixes
+  variable, honored by many document tools, that fixes
   the timestamp a build embeds, so that two builds do
   not differ merely because they ran at different
   moments.
@@ -235,8 +235,8 @@ rest of this chapter is in service of it.
 
 ## From Sweave to Quarto
 
-The R ecosystem has realised Knuth's idea four times
-over, each realisation improving on the last, and a
+The R ecosystem has realized Knuth's idea four times
+over, each realization improving on the last, and a
 reader will meet all four in existing code, so it is
 worth knowing the lineage.
 
@@ -251,7 +251,7 @@ output were formatted.
 
 The second, and the decisive advance, was `knitr`,
 written by Yihui Xie and released in 2012
-[@xie2015]. `knitr` generalised Sweave in two directions
+[@xie2015]. `knitr` generalized Sweave in two directions
 at once. It decoupled the computation from the output
 format, so that the same code chunks could be woven into
 LaTeX, into HTML, or into Markdown; and it gave the
@@ -275,11 +275,11 @@ of current health-sciences analysis is written.
 The fourth and most recent is Quarto, released by Posit
 in 2022 and documented by Allaire and colleagues
 [@allaire2024]. Quarto is best understood not as a
-replacement for R Markdown but as its generalisation
+replacement for R Markdown but as its generalization
 beyond R. It keeps the `knitr` engine as one option,
 adds a Jupyter engine for Python and Julia, unifies the
 chunk-option syntax across languages into the `#|`
-comment form used in this book, and standardises the
+comment form used in this book, and standardizes the
 production of books, websites, and journal articles from
 the same source. This very book is a Quarto book. For an
 R analyst the migration from R Markdown to Quarto is
@@ -396,7 +396,7 @@ it loads only packages that the build environment is
 known to provide, and installs nothing. A chunk that
 violated either property might still render on the
 author's machine and would fail on anyone else's. The
-next section is a catalogue of exactly these violations.
+next section is a catalog of exactly these violations.
 
 ## The landmines that break the seal
 
@@ -557,7 +557,7 @@ profile exists. The publishing profile builds on the
 distribution baked in, so that a PDF render works inside
 the container with no runtime install. A project that
 renders to PDF chooses the publishing profile at
-initialisation; a project that renders only to HTML does
+initialization; a project that renders only to HTML does
 not need it, and pays neither the build time nor the
 image size that the LaTeX toolchain costs. The playbook
 that migrates a compendium to the publishing profile
@@ -598,13 +598,13 @@ number and figure in them is identical. The difference is
 real at the level of the file and spurious at the level
 of the science.
 
-Part of this non-determinism can be normalised away. Many
-document tools, including LaTeX and `pandoc`, honour a
+Part of this non-determinism can be normalized away. Many
+document tools, including LaTeX and `pandoc`, honor a
 conventional environment variable, `SOURCE_DATE_EPOCH`,
 which fixes the timestamp the build embeds to a specified
 value rather than reading the wall clock. Setting it
 removes the timestamp difference, and a determined
-practitioner can normalise further, stripping identifiers
+practitioner can normalize further, stripping identifiers
 and canonicalising font-subset names, until two renders
 do hash alike. This is worthwhile work in some settings,
 notably in the reproducible-builds movement for operating
@@ -662,7 +662,7 @@ whose mental image of a compendium is fixed on the
 manuscript will over-apply this chapter.
 
 For the **scholarly manuscript** archetype, the sealed
-render is the centre of gravity. The manuscript is the
+render is the center of gravity. The manuscript is the
 product, the `report.Rmd` is created on the first day and
 grows with the analysis, and every table and figure in
 the eventual submission is regenerated from the code
@@ -688,7 +688,7 @@ for submission. A sealed render is still the right way to
 produce that summary, and the landmines still apply, but
 the elaborate PDF toolchain is usually unnecessary and the
 document is one artifact among several rather than the
-organising product.
+organizing product.
 
 For the **R-package** archetype the sealed report is
 largely absent, and this is the sharpest contrast. An R
@@ -709,7 +709,7 @@ For the **simulation-study** archetype the balance tips
 the other way again. A simulation's output is a body of
 stored results, the many runs of a Monte Carlo experiment
 saved to `derived_data/`, together with a short report
-that summarises them. The heavy computation cannot live in
+that summarizes them. The heavy computation cannot live in
 the sealed document, because it takes hours or days; it
 lives in `analysis/scripts/`, is run once, seeded with
 care as @sec-levels stressed, and saves its results, and
@@ -754,7 +754,7 @@ in chunks, as the work proceeds, so that from the first
 day the numbers in the document are computed rather than
 copied. As patterns emerge, code that is used more than
 once is extracted from the document into a function in
-`R/`, and as those functions stabilise they acquire tests
+`R/`, and as those functions stabilize they acquire tests
 in `inst/tinytest/`, the subject of @sec-testing. When a
 computation grows too slow to run on every render, it
 moves to `analysis/scripts/`, is run once, and saves its
@@ -779,7 +779,7 @@ enter.
 
 Let us assemble the pieces into a concrete `report.Rmd`,
 as a health scientist beginning a cohort analysis would.
-On the first day, before any data are analysed, the author
+On the first day, before any data are analyzed, the author
 creates the report and writes its header. A representative
 YAML header, shown here as a static block rather than
 rendered, declares the title, the authorship, the output
@@ -835,7 +835,7 @@ library(ggplot2)
 
 From here the write-as-you-go doctrine takes over. The
 author writes the introduction as prose, adds a
-data-summary chunk, then the modelling chunk that produces
+data-summary chunk, then the modeling chunk that produces
 the analysis, then the figure, exactly the sealed
 `fig-simpson` chunk demonstrated earlier in this chapter,
 which computes its result at build time and carries its
@@ -984,7 +984,7 @@ memory. The earlier formulation in @claerbout1992 and the
 signal-processing lineage surveyed by @vandewalle2009 give
 the argument its original setting.
 
-On the R realisations, @xie2015 is the definitive treatment
+On the R realizations, @xie2015 is the definitive treatment
 of `knitr` by its author, and @xie2018 documents R Markdown
 and its `pandoc`-based toolchain; @allaire2024 introduces
 Quarto and is the natural starting point for a reader
@@ -992,7 +992,7 @@ beginning today. The compendium framing that binds the
 literate document to the rest of the project is
 @gentleman2007, who first proposed the compendium as an
 executable document, and @marwick2018, whose `rrtools`
-operationalises it around a `report.Rmd`. For the practical
+operationalizes it around a `report.Rmd`. For the practical
 habits, @sandve2013 and @wilson2017 both stress recording
 exactly how each figure was produced, which is the sealed
 render stated as a rule of conduct. The determinism

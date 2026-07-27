@@ -1,6 +1,6 @@
 # Credits {.unnumbered}
 
-The framework at the centre of this book, `zzcollab`, and
+The framework at the center of this book, `zzcollab`, and
 the argument that motivates it are developed in the
 accompanying methodological paper, *zzcollab: A Flexible
 Extension of rrtools for Reproducible, Collaborative

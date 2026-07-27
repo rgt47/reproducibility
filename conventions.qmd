@@ -1,6 +1,6 @@
 # Conventions {.unnumbered}
 
-This page summarises the visual and structural conventions
+This page summarizes the visual and structural conventions
 used throughout the book.
 
 ## Code

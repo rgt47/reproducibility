@@ -67,7 +67,7 @@ ecosystem is healthy precisely because it changes:
 maintainers fix bugs, sharpen defaults, and deprecate
 awkward interfaces. Every such improvement is,
 however, a potential threat to the exact reproduction
-of an analysis written against the older behaviour. A
+of an analysis written against the older behavior. A
 script names the packages it loads but almost never
 the versions it loaded them at, and so it inherits
 whatever versions the next machine happens to provide.
@@ -90,7 +90,7 @@ container of @sec-containers.
 ## The analyst's contribution
 
 The tooling in this chapter automates a great deal, but
-three judgements remain irreducibly the analyst's.
+three judgments remain irreducibly the analyst's.
 
 1. **Deciding when to snapshot, and what a snapshot
    claims.** A lockfile is a dated assertion that these
@@ -159,7 +159,7 @@ introduced in 2013, was the first widely adopted
 attempt to give each project its own isolated set of
 packages recorded in a manifest. Its mechanics were
 sound but its ergonomics were not, and it acquired a
-reputation for surprising behaviour that discouraged
+reputation for surprising behavior that discouraged
 routine use. The `renv` package, introduced by
 @ushey2020 and now the community standard, superseded
 it in 2019. It kept the essential idea, a
@@ -248,7 +248,7 @@ none of them can execute while this book renders, we
 show them as static R blocks; the reader runs them at
 an interactive prompt inside the project.
 
-Initialisation creates the project-local library and a
+Initialization creates the project-local library and a
 first lockfile.
 
 ```r
@@ -273,7 +273,7 @@ packages the code actually references, through
 records those together with their transitive
 dependencies. A package sitting in the library but
 called nowhere in the code is, by default, left out, a
-behaviour that keeps the lockfile a record of what the
+behavior that keeps the lockfile a record of what the
 analysis uses rather than of everything that happens to
 be installed.
 
@@ -336,7 +336,7 @@ left in the project's `DESCRIPTION`, so the declared
 dependencies name something the code no longer touches.
 Either drift silently degrades the pin.
 
-The framework this book uses formalises the correct
+The framework this book uses formalizes the correct
 relationship as the dependency triad. Three sources of
 information describe the packages an analysis uses, and
 in a healthy compendium they satisfy a nesting relation.
@@ -443,7 +443,7 @@ the literate and dynamic documents as well, R Markdown
 (`.Rmd`), Quarto (`.qmd`), and Sweave (`.Rnw`), so that a
 package loaded inside a report chunk or a vignette is seen
 just as one loaded in `R/` is. Within every such file it
-recognises each of the forms by which R code reaches for a
+recognizes each of the forms by which R code reaches for a
 package: the explicit `library(pkg)` and `require(pkg)`,
 the namespaced `pkg::function()`, and the roxygen2
 directives `@import` and `@importFrom` from which a
@@ -570,11 +570,11 @@ options(repos = c(
 
 With repositories pointed at a dated snapshot, an
 install run today and the same install run next year
-draw from an identical, frozen catalogue, and the
+draw from an identical, frozen catalog, and the
 lockfile above records exactly this URL in its
 `Repositories` block, so that a restore reproduces not
 only the versions but the source they came from. The
-gain is twofold: fixity, because the catalogue cannot
+gain is twofold: fixity, because the catalog cannot
 drift, and speed, because binaries install in seconds
 where source builds take minutes. On Linux the binary
 path is more specific: pre-compiled binaries are served
@@ -659,7 +659,7 @@ Finally, `capsule` [@capsule] is best understood as a
 lazier discipline layered over `renv` itself. It defers
 building the project library until it is actually needed,
 letting the analyst develop against their ordinary
-user library and materialise the pinned library only
+user library and materialize the pinned library only
 when reproducing or checking the work. For analysts who
 find `renv`'s always-on project library intrusive during
 exploratory work, it lowers the friction of adoption
@@ -682,7 +682,7 @@ generate a computed artifact at build time, we
 construct a small synthetic lockfile diff: a comparison
 of two snapshots of the same project taken some months
 apart. This is the kind of table a version-control diff
-of `renv.lock` would summarise, and reading it is the
+of `renv.lock` would summarize, and reading it is the
 routine skill of noticing which pins moved. The data
 are synthetic and no packages are installed; the
 computation uses only `tibble`, `dplyr`, and `knitr`.
@@ -712,7 +712,7 @@ knitr::kable(lock_diff)
 Four of the six pins moved between the two snapshots.
 Three of the moves are patch-level (`tidyr`, `survival`,
 and `rlang`), the kind that ordinarily preserve
-behaviour but occasionally do not; one is a minor
+behavior but occasionally do not; one is a minor
 version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
 that can refine a default. The `rlang` move, from 1.1.2
 to 1.1.4, is likewise patch-level, and it is singled out
@@ -760,7 +760,7 @@ them, and whether I should remove them.'
 package should be purged, missing the deliberate
 convention by which test infrastructure is pinned while
 pure development tooling is not. The distinction is a
-judgement, not a rule the model can read off the file.
+judgment, not a rule the model can read off the file.
 
 *Verification.* Decide the placement yourself against
 the two-test procedure: does the package's version
@@ -788,7 +788,7 @@ recorded URL should then appear in the lockfile's
 
 ## Exercises
 
-1. Initialise `renv` in a throwaway project, install two
+1. Initialize `renv` in a throwaway project, install two
    packages, and snapshot. Open `renv.lock` in a text
    editor and locate, for one package, its version,
    source, and hash. Explain in a sentence what each of
@@ -850,7 +850,7 @@ demands on foresight.
 On the discipline of where a package belongs, the
 placement whitepaper accompanying the framework develops
 the two-test decision procedure and the two-layer model
-that this chapter summarises, and is the place to turn
+that this chapter summarizes, and is the place to turn
 when a package sits awkwardly between the lockfile and
 the Dockerfile. Finally, the boundary this chapter
 insists on, that the lockfile pins the packages and

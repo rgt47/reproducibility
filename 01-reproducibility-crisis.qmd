@@ -20,7 +20,7 @@ on Reproducibility* (2016)
 By the end of this chapter the reader should be able
 to:
 
-- Summarise the empirical evidence that a large
+- Summarize the empirical evidence that a large
   fraction of published health-sciences research
   cannot be regenerated, and distinguish the
   studies that measure replication from those that
@@ -95,7 +95,7 @@ to name what was missing.
 
 ## The analyst's contribution
 
-Three judgements at the centre of this chapter belong
+Three judgments at the center of this chapter belong
 to the analyst and are automated by no tool.
 
 1. **Naming the failure mode.** When a result will
@@ -105,7 +105,7 @@ to the analyst and are automated by no tool.
    inference was misdrawn) or computational (the code
    is sound but its environment has shifted). The
    remedy differs entirely by case, and the diagnosis
-   is a human act of judgement, not a mechanical one.
+   is a human act of judgment, not a mechanical one.
 
 2. **Matching the claim to the level reached.** A
    reproducibility claim is a scientific claim and
@@ -145,7 +145,7 @@ use.
   numerical libraries, the language runtime, and the
   package versions, up to the session configuration
   and the code itself.
-- **Silent default**: a behaviour that software
+- **Silent default**: a behavior that software
   applies unless told otherwise, and that can change
   between software versions without any error or
   warning to the analyst.
@@ -338,8 +338,8 @@ Then, in R 4.0.0, released in 2020, the
 `stringsAsFactors` default flipped from `TRUE` to
 `FALSE`, so that reading a data frame silently produced
 character columns where it once produced factors,
-changing the behaviour of any code that depended on
-factor-specific behaviour, such as the ordering of
+changing the behavior of any code that depended on
+factor-specific behavior, such as the ordering of
 levels or a function that requires a factor
 [@rcoreteam2020]. Neither
 change was a bug; both were deliberate improvements.
@@ -374,13 +374,13 @@ reader is fortunate, the data, and leaves the
 remaining layers to whatever the next machine happens
 to provide. Reproducibility fails in the gap between
 what the script fixes and what the result depends on,
-and the organising question of this book is how far
+and the organizing question of this book is how far
 down that stack a given effort has actually reached.
 
 This diagnosis, that the failures are computational
 rather than statistical, is what makes the problem
 tractable. A statistical error requires a scientific
-judgement to correct; a computational failure requires
+judgment to correct; a computational failure requires
 only that the determinant stack be captured, layer by
 layer, so that the same computation can be run again.
 The crisis is not, at bottom, a shortage of
@@ -567,7 +567,7 @@ plausible-sounding but mislabelled.
 
 *Verification.* Check the definitions against the
 National Academies framing [@nas2019] adopted in this
-chapter, and confirm that the example labelled
+chapter, and confirm that the example labeled
 'reproducibility' concerns re-executing the same code
 on the same data, not re-collecting data. Do not
 accept the term assignment without this check.
