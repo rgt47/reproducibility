@@ -199,8 +199,7 @@ digest, and fixes it for every collaborator. This is
 the slow-moving half. It corresponds to pillar one, the
 computational environment, and it is where the L1-to-L2
 transition of the ladder is secured. The lead builds
-this environment once, and the whole team reuses it;
-the vignette that describes the pattern calls this
+this environment once, and the whole team reuses it. the vignette that describes the pattern calls this
 'build once, use everywhere', and reports that reusing
 a pre-built team image reduces the setup of a new
 project from the fifteen or twenty minutes of a full
@@ -396,7 +395,7 @@ community has crystallized under the acronym FAIR.
 Wilkinson and colleagues proposed that a research object
 should be Findable, Accessible, Interoperable, and
 Reusable, and framed the principles for research data
-[@wilkinson2016]; Barker and colleagues subsequently
+[@wilkinson2016]. Barker and colleagues subsequently
 adapted them for research software, whose reuse involves
 execution and not only reading [@barker2022]. A DOI
 serves findability; an open repository serves
@@ -417,7 +416,7 @@ compendium-plus-archived-image pattern approaches by
 other means. And the Turing Way, a community-authored
 handbook, collects the collaborative and stewardship
 practices of reproducible research into one continually
-updated reference [@turingway2022]; a reader who wants
+updated reference [@turingway2022]. A reader who wants
 the social side of collaboration, from code review to
 project governance to credit, in more depth than a
 single chapter allows, should begin there.
@@ -525,7 +524,7 @@ useful recorded fact is the *date the analysis was run*,
 from which `rang` resolves the historical package set.
 It is a stewardship failure rather than a capture
 failure because the pins were captured correctly at the
-time (the compendium was genuinely L1); what lapsed was
+time (the compendium was genuinely L1). What lapsed was
 the preservation of a runnable environment over time,
 which an archived image or a recorded run date would have
 protected. Capturing the level and stewarding it are
@@ -846,7 +845,7 @@ We have reached the end of the book, and it is fitting
 to gather its argument into a few points, in the manner
 of a closing summary. Reproducibility, we have
 maintained throughout, is not a badge a project either
-holds or lacks; it is a level a project reaches, and the
+holds or lacks. It is a level a project reaches, and the
 discipline is to reach as high as the work warrants and
 to say plainly how high that was.
 
@@ -884,7 +883,7 @@ Third, the unit of reproducible work is the research
 compendium, and it is not only a manuscript. The same
 machinery, the same pillars, and the same ladder serve a
 data analysis, a simulation study, an R package, a blog,
-and a scholarly manuscript alike; the archetypes differ
+and a scholarly manuscript alike. the archetypes differ
 only in their directory layout, in whether a report is
 rendered, and in the last mile of publication, a package
 submission, a deployed website, or a deposit beside an

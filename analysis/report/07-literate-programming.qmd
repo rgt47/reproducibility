@@ -253,7 +253,7 @@ written by Yihui Xie and released in 2012
 [@xie2015]. `knitr` generalized Sweave in two directions
 at once. It decoupled the computation from the output
 format, so that the same code chunks could be woven into
-LaTeX, into HTML, or into Markdown; and it gave the
+LaTeX, into HTML, or into Markdown. And it gave the
 author fine control over each chunk through chunk
 options, the `echo`, `eval`, `warning`, and `fig.cap`
 settings that recur throughout this book. `knitr` is
@@ -282,7 +282,7 @@ comment form used in this book, and standardizes the
 production of books, websites, and journal articles from
 the same source. This very book is a Quarto book. For an
 R analyst the migration from R Markdown to Quarto is
-small, and the two will coexist for years; the important
+small, and the two will coexist for years. The important
 point is that all four tools implement the same idea, and
 that the idea, not the tool, is what secures the seal.
 
@@ -300,7 +300,7 @@ the complete set of instructions that generated the
 figures, not the printed figures themselves. A literate
 document collapses the two because the figure a reader
 sees is produced, at build time, by the code embedded in
-the same document; the advertisement is therefore the
+the same document. The advertisement is therefore the
 output of the scholarship rather than a hand-copied
 picture of it, and cannot misrepresent a result the code
 does not produce.
@@ -462,7 +462,7 @@ renders correctly from top to bottom and fails when a
 reader runs the chunk in isolation, or when a chunk is
 reordered, or when caching skips the chunk that created
 the state. A related anti-pattern is a chunk that calls
-`rm(list = ls())` to force a clean slate; it does not
+`rm(list = ls())` to force a clean slate. It does not
 actually deliver one, since attached packages and changed
 options survive it, and it can delete objects the
 rendering harness itself relies on. The remedy is a
@@ -691,13 +691,13 @@ organizing product.
 
 For the **R-package** archetype the sealed report is
 largely absent, and this is the sharpest contrast. An R
-package's 'document' is not a rendered report at all; it
+package's 'document' is not a rendered report at all. It
 is its help pages, generated from the roxygen comments
 above each function, and its vignettes, which are
 themselves literate documents but serve to demonstrate the
 package rather than to report an analysis. A package has
 no `report.Rmd` to seal because it has no single analysis
-to report; its literate surface is the vignette and the
+to report. Its literate surface is the vignette and the
 example, and its correctness is established by the tests
 and checks of @sec-testing rather than by a rendered
 result. A reader building an R package should not go
@@ -709,7 +709,7 @@ the other way again. A simulation's output is a body of
 stored results, the many runs of a Monte Carlo experiment
 saved to `derived_data/`, together with a short report
 that summarizes them. The heavy computation cannot live in
-the sealed document, because it takes hours or days; it
+the sealed document, because it takes hours or days. It
 lives in `analysis/scripts/`, is run once, seeded with
 care as @sec-levels stressed, and saves its results, and
 the literate report then loads those results and presents
@@ -803,7 +803,7 @@ bibliography: references.bib
 
 Two features of this header repay attention. The `output`
 field names two formats, a PDF built through LaTeX for
-submission and an HTML version for reading on a screen; the
+submission and an HTML version for reading on a screen. The
 project that renders the former needs the publishing
 profile and its baked-in LaTeX distribution, while the
 latter needs neither. The `date` field is itself a small

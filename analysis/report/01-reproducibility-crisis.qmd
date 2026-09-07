@@ -426,7 +426,7 @@ equivalent but not bit-identical, and a sign flip or
 reordering of components can make the difference
 visible in a plot. A lockfile pins the R packages but
 says nothing about the system libraries the packages
-link against; those live below the package layer, at
+link against. Those live below the package layer, at
 L2 rather than L1, and are fixed only by controlling
 the environment itself, the subject of @sec-containers.
 Setting a seed does not help because the difference is

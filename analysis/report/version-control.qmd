@@ -591,7 +591,7 @@ the history to a derivative and is usually avoided. An
 analyst who nonetheless commits it, perhaps to preserve
 the exact submitted PDF as a fixed reference, is making a
 defensible different judgment about what the artifact is
-*for*; the point is that it is a judgment, not a rule.
+*for*. The point is that it is a judgment, not a rule.
 The `data_dictionary.csv` and the registry extract sit on
 opposite sides of the one line that is not a matter of
 taste. The dictionary carries variable names and codings,
@@ -852,7 +852,7 @@ git push -u origin main
 
 A collaborator at a second site forks the repository, adds
 a site-specific adjustment on a branch of their fork, and
-opens a pull request; the analyst reviews the diff inline,
+opens a pull request. The analyst reviews the diff inline,
 requests one change, and merges it, leaving a reviewable
 record of the exchange. Finally, at journal submission, the
 analyst marks the exact state.

@@ -854,7 +854,7 @@ programming, from which the idea descends [@knuth1984]. The
 operationalization that this chapter builds on is Marwick,
 Boettiger, and Mullen's proposal that an R package is the
 natural compendium container, together with their `rrtools`
-tool [@marwick2018]; the reader who wants the R-package
+tool [@marwick2018]. The reader who wants the R-package
 mechanics in full should consult Wickham's book on R
 packages, which is the standard reference for the skin that
 makes `R CMD check` apply [@wickham2015]. For the

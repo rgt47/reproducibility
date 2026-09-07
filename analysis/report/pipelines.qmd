@@ -193,7 +193,7 @@ run and to start thinking of it as a graph of
 dependencies to satisfy. The two descriptions contain the
 same steps, but they license different machinery. A list
 of commands can only be replayed, from the top, every
-time; a graph of dependencies can be interrogated, so that
+time. A graph of dependencies can be interrogated, so that
 a tool can answer the question a list cannot, which steps
 actually need to run now, given what has changed?
 
@@ -317,7 +317,7 @@ graph is plain: `cleaned.rds` depends on the cleaning
 script and the raw data; `model.rds` depends on the
 fitting script and the cleaned data; and so on up to the
 report. Make never has to be told the order, because the
-order is implied by the prerequisites; it reads the whole
+order is implied by the prerequisites. It reads the whole
 Makefile, builds the graph, sorts it, and knows that
 `cleaned.rds` must be built before `model.rds` because
 the latter names the former as a prerequisite. To rebuild
@@ -353,7 +353,7 @@ with nothing more than the file system's clock.
 The timestamp rule is also Make's principal limitation,
 and an honest account must state it. Make knows only
 whether a file is newer, not whether its contents have
-changed; touching a file without editing it will trigger
+changed. Touching a file without editing it will trigger
 a needless rebuild, and, more subtly, a change that does
 not alter a file's modification time will be missed.
 Make also tracks only what the analyst declares. It has
@@ -408,7 +408,7 @@ meaningful step, and then declares, in a special script
 named `_targets.R` at the project root, a list of targets
 that connect those functions into a graph. Each target is
 created by `tar_target()`, which names the target and
-gives the R expression that produces it; `targets` reads
+gives the R expression that produces it. `Targets` reads
 those expressions, notices that one target's expression
 mentions another target's name, and infers the dependency
 graph automatically, with no colons and no prerequisites
@@ -445,7 +445,7 @@ each is the point. The intermediate results, `raw_data`,
 `cleaned`, `model`, `figures`, are **R objects, not
 files**. `targets` stores each in a hidden `_targets/`
 store, keyed and versioned, and hands it to the next
-target as a plain R value; the analyst never writes a
+target as a plain R value. The analyst never writes a
 `saveRDS` or a `readRDS`, because the storage is the
 tool's job. Where a real file must be tracked, the raw
 CSV at the top and the rendered report at the bottom, the
@@ -682,7 +682,7 @@ render becomes its final target.
 For the **R-package** archetype there is, characteristically,
 no analysis pipeline at all, and the contrast is instructive.
 A package is not a chain of data transforms producing a
-report; it is a library of functions, and its 're-execution'
+report. It is a library of functions, and its 're-execution'
 is not `tar_make()` but `R CMD check`, the standard gate that
 builds the package, runs its examples, and executes its tests,
 which we take up in @sec-testing. The package archetype
@@ -799,7 +799,7 @@ expression names the targets before it. With the file in place,
 carries the intended structure of @fig-pipeline-dag, with every
 node initially colored 'outdated' because nothing has been
 built yet. The figure is a simplified linear schematic of the
-chain from raw data to report; the actual dependency graph is
+chain from raw data to report. The actual dependency graph is
 more connected, because the `_targets.R` declares that `figures`
 depends on both `model` and `cleaned` and that `report` depends
 on both `model` and `figures`, so `tar_visnetwork()` draws those
@@ -956,7 +956,7 @@ on the ladder.
 The definitive source on `targets` is its documentation and the
 short paper that introduces it, @landau2021, which states the
 'function-oriented, Make-like' design directly and is the natural
-starting point for an R analyst; its predecessor @landau2018
+starting point for an R analyst. Its predecessor @landau2018
 documents `drake`, which a reader will still meet in existing
 projects and which shares the same conceptual model. The
 manual-steps critique that motivates the whole chapter is put
@@ -970,7 +970,7 @@ binding rendered results to version-control commits is described
 in @blischak2019. GNU Make itself is documented in its own
 extensive manual, which a reader will consult for the pattern
 rules and automatic variables that this chapter's minimal
-treatment omitted; for data-analysis uses specifically, the
+treatment omitted. For data-analysis uses specifically, the
 broader software-carpentry literature on reproducible workflows,
 of a piece with @wilson2014 and @wilson2017, situates Make in the
 analyst's toolkit rather than the programmer's.

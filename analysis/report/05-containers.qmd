@@ -660,7 +660,7 @@ member pulls byte-identical bytes, so 'works on my
 machine' cannot arise: there is, in the relevant sense,
 only one machine. The mechanics of building, pushing,
 digest-recording, and updating the team image are the
-business of @sec-archiving; for now it is enough to see
+business of @sec-archiving. For now it is enough to see
 that the image is not only a solo instrument but the
 natural unit of a shared, reproducible environment.
 
@@ -801,7 +801,7 @@ fails only when the manuscript is rendered.
 the maximum. If the deliverable is a PDF manuscript,
 confirm the base carries a LaTeX toolchain, for instance
 by checking that the LaTeX tools are present in the built
-image; if it is an R package, confirm that R and the
+image. If it is an R package, confirm that R and the
 check tools suffice and resist any heavier base. The
 judgment is the first of this chapter's analyst
 contributions, and it is not one to delegate.

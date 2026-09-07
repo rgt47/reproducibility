@@ -285,7 +285,7 @@ turn be a subset of the set pinned in `renv.lock`. A
 research compendium is looser, because its `DESCRIPTION`
 declares only the API exported from `R/` while its
 analysis scripts legitimately use packages that appear in
-`renv.lock` but never in `DESCRIPTION`; for a compendium
+`renv.lock` but never in `DESCRIPTION`. For a compendium
 the operative invariant is therefore the single inclusion
 that every package the code uses is pinned in `renv.lock`,
 and the strict `DESCRIPTION`-inclusion gate does not apply.
@@ -391,7 +391,7 @@ surfaced only when a repository imported a specialized
 modeling package absent from the base image. The broader
 literature on why deposited analyses fail to re-run
 [@trisovic2022] documents how often re-execution simply
-fails; the particular fault here is cross-boundary state,
+fails. The particular fault here is cross-boundary state,
 the state that must pass from one step, shell, or process
 to the next and silently does not. It is where CI bugs
 hide, and a
@@ -559,7 +559,7 @@ HTML. The reason is that a rendered document is not a
 deterministic function of the analysis. As @sec-literate
 discussed, a PDF embeds the time of its creation and the
 identifiers of the fonts the rendering machine happened to
-have; two renders of an unchanged analysis, minutes apart,
+have. Two renders of an unchanged analysis, minutes apart,
 produce PDFs whose bytes differ, even though every number
 in them is identical. Hashing the PDF would therefore
 report a difference on every render and catch nothing real.
@@ -569,7 +569,7 @@ changed, which is what we want to detect. There exist
 techniques to normalize a document's embedded timestamps,
 by setting a fixed `SOURCE_DATE_EPOCH`, and to freeze its
 fonts, and with enough care a byte-identical PDF is
-attainable; but the robust and general practice is to
+attainable. But the robust and general practice is to
 verify the computational outputs directly and leave the
 document to the render gate.
 

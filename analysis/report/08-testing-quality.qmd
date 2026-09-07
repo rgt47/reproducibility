@@ -309,7 +309,7 @@ expect_equal(calculate_mean(c(1, NA, 3),
 ```
 
 The first two lines pin the ordinary behavior
-against hand-computed answers; the third and fourth
+against hand-computed answers. the third and fourth
 pin the edge cases, the empty vector and the
 missing value, which are exactly the inputs on which
 an untested function tends to misbehave. A unit test
@@ -319,7 +319,7 @@ analyst believes each function promises.
 ### Integration tests of the pipeline
 
 A unit test exercises a function in isolation, but a
-health analysis is rarely one function; it is a
+health analysis is rarely one function. It is a
 pipeline, in which raw data is loaded, cleaned,
 modeled, and summarized, and the components can be
 individually correct yet compose incorrectly. An
@@ -506,7 +506,7 @@ testing a recurring recommendation [@wilson2014;
 A corollary concerns how much to test. A test that
 merely confirms a result is a data frame, without
 checking any value in it, tests too little and gives
-false comfort; a test that pins every incidental
+false comfort. A test that pins every incidental
 property tests too much and breaks on every
 revision. The judgment of what to pin, named above
 as the second of the analyst's contributions, is the

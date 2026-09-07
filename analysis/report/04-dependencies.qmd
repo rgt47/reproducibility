@@ -386,7 +386,7 @@ inclusion as a gate on a compendium, precisely because
 that inclusion does not hold for one. The gate it enforces
 on a compendium is the single inclusion $\mathrm{Code}
 \subseteq \mathrm{renv.lock}$, that nothing the code uses
-goes unpinned; the strict double inclusion is applied only
+goes unpinned. The strict double inclusion is applied only
 in the package archetype, where `DESCRIPTION` is the
 authoritative dependency interface.
 
@@ -714,7 +714,7 @@ knitr::kable(lock_diff)
 Four of the six pins moved between the two snapshots.
 Three of the moves are patch-level (`tidyr`, `survival`,
 and `rlang`), the kind that ordinarily preserve
-behavior but occasionally do not; one is a minor
+behavior but occasionally do not. One is a minor
 version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
 that can refine a default. The `rlang` move, from 1.1.2
 to 1.1.4, is likewise patch-level. It is singled out

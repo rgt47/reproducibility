@@ -548,9 +548,9 @@ preceding sections, L0 through L3, and it grades something
 different: *how far down the determinant stack a result has
 been locked, and whether the lock has been verified*. The
 two axes are related but not identical. Adopting `renv`
-(the tool scheme's Level 2) is what lifts a project to L1;
-adopting a container (the tool scheme's Level 3) is what
-lifts it to L2; and the tool scheme's testing and
+(the tool scheme's Level 2) is what lifts a project to L1.
+Adopting a container (the tool scheme's Level 3) is what
+lifts it to L2. The tool scheme's testing and
 continuous-integration levels belong to the validation
 layer that reaches L3. But one can imagine a project that
 has adopted every tool and still verified nothing, and the
@@ -716,9 +716,9 @@ been run green.
 
 *Verification.* Confirm each rung against the artifact
 itself, not its filename. For L1, check that the lockfile is
-in step with the code; for L2, check that the base image
+in step with the code. For L2, check that the base image
 carries a digest and that the library is not shadowed by a
-bind mount; for L3, find an actual passing verification run.
+bind mount. For L3, find an actual passing verification run.
 The presence of a file is capture asserted; a green run is
 validation observed.
 
