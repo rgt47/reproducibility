@@ -858,7 +858,7 @@ research is @boettiger2015, which introduces Docker to a
 scientific-computing audience and is the natural first
 read for anyone new to the tool. The Rocker images
 themselves are documented by @boettiger2017, and the
-wider ecosystem of R containerisation tooling is
+wider ecosystem of R containerization tooling is
 surveyed thoroughly by @nust2020rockerverse; both are
 worth consulting before building a base image of one's
 own.

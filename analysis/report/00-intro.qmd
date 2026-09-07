@@ -39,10 +39,11 @@ property that a computational result can be regenerated,
 byte for byte or number for number, by another person on
 another machine at a later time. That is a narrower claim
 than scientific replication, and we shall be careful to
-keep the two apart throughout; but it is a claim that a
-great deal of published health-sciences research cannot
-currently support, and it is one that, unlike replication,
-can be secured by technical means available today.
+keep the two apart throughout. It is nonetheless a claim
+that a great deal of published health-sciences research
+cannot currently support. Unlike replication, it is also a
+claim that can be secured by technical means available
+today.
 
 ## What reproducibility means
 
@@ -59,9 +60,9 @@ question, each with its own data: it is a statement about
 the robustness of a scientific finding. The two are
 independent. A result can be perfectly reproducible and
 entirely wrong, if the code faithfully regenerates a
-mistaken number every time, and a finding can replicate
-across laboratories while no single analysis in the set is
-computationally reproducible. The point that a
+mistaken number every time. Conversely, a finding can
+replicate across laboratories while no single analysis in
+the set is computationally reproducible. The point that a
 reproducible analysis can still be wrong, and that
 reproducibility is therefore a floor rather than a ceiling,
 is pressed by Leek and Peng [@leek2015]. This book concerns
@@ -72,7 +73,7 @@ Reproducibility so defined is not a single threshold but a
 spectrum. @peng2011 arranged computational work along a
 scale from the merely published, through code available,
 code and data available, and linked and executable, to
-fully replicable, and argued that reproducibility is 'a
+fully replicable. He argued that reproducibility is 'a
 minimum standard for judging scientific claims when full
 independent replication is impractical'. The lesson we take
 from Peng, and develop into the levels ladder of
@@ -116,9 +117,9 @@ a sample obtained different draws before and after the
 release, with no error and no warning. In R 4.0.0 the
 `stringsAsFactors` default flipped from `TRUE` to `FALSE`,
 so that code reading a data frame silently produced
-character columns where it once produced factors, changing
-the behavior of every model that treated those columns as
-categorical. Neither change was a bug; both were
+character columns where it once produced factors. This
+change in turn altered the behavior of every model that
+treated those columns as categorical. Neither change was a bug; both were
 improvements. Both would nonetheless break the exact
 reproduction of an analysis written under the old default,
 and neither would announce itself.
@@ -128,10 +129,11 @@ computational result depends not only on the code and the
 data but on a stack of determinants beneath them: the
 operating system and its system libraries, the numerical
 libraries that implement linear algebra, the language
-runtime, the exact versions of every package, the session
-configuration (the random-number kind, the contrasts, the
-number of printed digits, the locale and time zone), and,
-underneath all of it, the hardware. A published script
+runtime, the exact versions of every package, and the
+session configuration. That configuration includes the
+random-number kind, the contrasts, the number of printed
+digits, and the locale and time zone. Underneath all of it
+sits the hardware. A published script
 pins almost none of these. It records the analysis logic
 and, if the reader is fortunate, the data, and leaves the
 remaining layers to whatever the next machine happens to
@@ -151,7 +153,7 @@ their maturity, the problem persists.
 At the top of the stack, **literate programming** binds
 prose to the code that produces the numbers, so that a
 document cannot drift out of step with its analysis. The
-idea is Knuth's [@knuth1984]; its modern R realizations are
+idea is Knuth's [@knuth1984]. Its modern R realizations are
 `knitr`, R Markdown, and now Quarto [@allaire2024], and
 they are the reason a figure in a well-built compendium is
 never pasted in by hand but regenerated on every render.
@@ -165,12 +167,13 @@ the artifact that lifts an analysis from merely locatable
 to version-pinned.
 
 For the **computational environment**, the operating
-system, the system libraries, the R version itself, none of
-which `renv` touches, the answer has been containerisation.
-Docker packages an entire environment into an image that
-runs identically wherever Docker runs, and the Rocker
-project supplies R-specific base images that have become the
-community standard [@boettiger2015; @nust2020rockerverse].
+system, the system libraries, and the R version itself,
+none of which `renv` touches, the answer has been
+containerization. Docker packages an entire environment
+into an image that runs identically wherever Docker runs.
+The Rocker project supplies R-specific base images that
+have become the community standard [@boettiger2015;
+@nust2020rockerverse].
 Where Docker's learning curve is the obstacle, Binder runs a
 compendium's container in the browser with nothing to
 install [@jupyter2018]; where a container model is unwanted,
@@ -316,7 +319,7 @@ harness.** GitHub Actions is one continuous-integration
 dialect; GitLab CI is another, and matters because research
 compendia are disproportionately authored on institutional,
 often self-hosted, GitLab. Beyond the hosted services, two
-further families mechanise re-execution. Pipeline tools
+further families mechanize re-execution. Pipeline tools
 build a dependency graph over the analysis steps and re-run
 only what has gone stale: `make`, and in R the
 function-oriented `targets` [@landau2021], with `workflowr`

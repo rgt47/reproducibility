@@ -382,7 +382,7 @@ knitr::kable(ladder)
 The rungs are cumulative. An L2 analysis is also
 locatable and package-pinned; the label names the
 highest rung reached. The transition that matters most
-for a first-year student to internalise is the one
+for a first-year student to internalize is the one
 between L1 and L2. A lockfile alone, the L1 artifact,
 pins the packages but not the R version, the operating
 system, or the system libraries a package links against;

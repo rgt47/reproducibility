@@ -458,7 +458,7 @@ inference, that reproducibility does not touch. We
 insist on the floor precisely so that the harder
 questions become answerable: an analysis that can be
 re-run is an analysis whose statistical choices can be
-inspected, criticised, and, where necessary, corrected.
+inspected, criticized, and, where necessary, corrected.
 
 ::: {.callout-important}
 ## The honest level

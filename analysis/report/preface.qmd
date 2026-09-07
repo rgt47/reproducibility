@@ -16,8 +16,9 @@ The health sciences have absorbed the lesson that a
 result must be reproducible in principle, and journals now
 ask for the code. What the field has not yet absorbed is
 that making a computational result reproducible in
-practice is a technical discipline with its own tools,
-its own failure modes, and its own standards of evidence.
+practice is a technical discipline in its own right. It
+has its own tools, its own failure modes, and its own
+standards of evidence.
 This book teaches that discipline to an audience that
 already has the quantitative training to appreciate why it
 matters.
@@ -100,10 +101,10 @@ with making that analysis reproducible. It is not a
 comprehensive manual for any single tool; where a tool's
 own documentation is the right reference, we point to it.
 Nor is it a treatise on replicability in the scientific
-sense of an independent study reaching the same conclusion
-on new data; that is a vital matter, but a different one,
-and we are careful throughout to keep the computational
-question of re-execution distinct from it.
+sense, the question of an independent study reaching the
+same conclusion on new data. That is a vital matter, but a
+different one. We are careful throughout to keep the
+computational question of re-execution distinct from it.
 
 ## Chapter template
 

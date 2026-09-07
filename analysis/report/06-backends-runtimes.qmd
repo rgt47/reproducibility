@@ -34,7 +34,7 @@ to:
 - Choose a backend or runtime to fit a concrete setting:
   a high-performance cluster, a Windows-only laboratory,
   a reviewer who must install nothing, a project
-  demanding maximum rigour, or an institution with a
+  demanding maximum rigor, or an institution with a
   licensing constraint.
 - State honestly which reproducibility level each option
   reaches, and match the claim to the level.
@@ -71,7 +71,7 @@ alternatives with judgment rather than habit.
 
 The framework this book uses organizes those
 alternatives along three axes, and the organization is
-worth internalising before any command is typed, because
+worth internalizing before any command is typed, because
 it prevents the common error of treating every unfamiliar
 tool as a special case. The first axis changes only the
 runner: a different program runs the very same image, and
@@ -100,7 +100,7 @@ chapter.
    an absence of administrative rights on a cluster, an
    operating system, a mixed-language pipeline, a
    licensing term, a reviewer's patience, a demand for
-   maximum rigour. The analyst identifies the binding
+   maximum rigor. The analyst identifies the binding
    constraint first, and the constraint usually selects
    the axis, and often the tool.
 
@@ -390,7 +390,7 @@ prerequisite comparable to Docker, requiring Linux, macOS,
 or the Windows Subsystem for Linux; and `rix` is young
 enough that its own version must be pinned. These caveats
 are the reason Nix is carried as an opt-in backend for the
-analyst who wants maximum rigour, while `renv` with a
+analyst who wants maximum rigor, while `renv` with a
 container remains the accessible default. The choice is
 real, and it is not free either way.
 
@@ -413,7 +413,7 @@ spans R and Python in a single environment rather than
 forcing the mixed-language analyst to bridge two toolchains.
 For a Windows-only laboratory running a pipeline that mixes
 the two languages, this is a decisive practical advantage.
-The cost is rigour: conda draws its packages from
+The cost is rigor: conda draws its packages from
 conda-forge rather than from CRAN or the Posit Package
 Manager, and it pins less strictly than Nix. It is, in the
 honest accounting, a middle-ground option, more reproducible
@@ -564,7 +564,7 @@ natively on Windows and spans both languages at the cost of
 strict pinning. When a **reviewer must install nothing**,
 the choice is Binder, which serves the running environment
 in a browser for the life of a session. When the project
-demands **maximum rigour** and the team can absorb the
+demands **maximum rigor** and the team can absorb the
 learning curve, the choice is Nix through `rix`, which
 gives deterministic, reproducible builds and reaches L2
 without a container. And when the obstacle is a **licensing
@@ -688,7 +688,7 @@ following triples show where each stands.
   Windows. Should I use Nix, Podman, or conda?'
 - *Watch for.* A model may recommend the most fashionable
   tool rather than the one that fits the constraint, and
-  may overstate a tool's rigour, presenting conda as
+  may overstate a tool's rigor, presenting conda as
   reaching the same level as Nix.
 - *Verification.* Check the recommendation against the
   binding constraint: mixed languages on Windows point to

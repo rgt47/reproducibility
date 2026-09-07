@@ -536,7 +536,7 @@ make the companion point that the provenance and the
 recorded results of an analysis must themselves be
 preserved [@sandve2013].
 
-Two tools mechanise this, and a third enforces them.
+Two tools mechanize this, and a third enforces them.
 
 **Linting** is static analysis: `lintr` reads the
 source without running it and flags stylistic

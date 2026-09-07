@@ -605,7 +605,7 @@ which fixes the timestamp the build embeds to a specified
 value rather than reading the wall clock. Setting it
 removes the timestamp difference, and a determined
 practitioner can normalize further, stripping identifiers
-and canonicalising font-subset names, until two renders
+and canonicalizing font-subset names, until two renders
 do hash alike. This is worthwhile work in some settings,
 notably in the reproducible-builds movement for operating
 systems. For a research compendium it is usually effort

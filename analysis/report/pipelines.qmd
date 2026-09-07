@@ -570,7 +570,7 @@ pipeline changes nothing.
 Yet it would be wrong to conclude that the pipeline is
 reproducibility-neutral, and the reason returns us to the
 distinction that organizes the book. What a pipeline does
-is **mechanise the re-execution** that validation depends
+is **mechanize the re-execution** that validation depends
 on. Verification, in @sec-verification, checks that
 rebuilding the analysis from its captured inputs
 reproduces the recorded outputs; continuous integration
@@ -734,7 +734,7 @@ thousands of jobs [@koster2012]. **Nextflow**, by Di Tommaso and
 colleagues, takes a different, dataflow approach, connecting
 processes through channels, and is built from the ground up for
 portability across high-performance-computing clusters and cloud
-platforms, with containerisation of each step as a first-class
+platforms, with containerization of each step as a first-class
 feature [@ditommaso2017]. Both far exceed Make and `targets` in
 their handling of scale and heterogeneity, and both are the
 correct choice when an analysis spans many languages and many
