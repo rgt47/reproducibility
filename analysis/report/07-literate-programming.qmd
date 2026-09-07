@@ -51,9 +51,9 @@ to:
 
 Consider a familiar scene from a clinical-trial
 analysis. The statistician has a results table in the
-manuscript, produced months ago, and a script that,
-re-run today, produces a subtly different table: a mean
-that has moved in the third decimal, a confidence
+manuscript, produced months ago. She also has a script
+that, re-run today, produces a subtly different table: a
+mean that has moved in the third decimal, a confidence
 interval that no longer matches the sentence that
 interprets it. Neither the prose nor the code is
 obviously wrong. What has failed is the correspondence
@@ -69,13 +69,12 @@ gap between the prose a reader sees and the code that
 produced the numbers in it. The instrument is literate
 programming, by which we mean the practice of writing
 the narrative and the computation in a single source
-document, so that the figures and numbers a reader sees
-are not pasted in but regenerated every time the
-document is built. We shall call a document with this
-property a sealed render: prose bound to the code that
-produces every number and figure it reports, so that
-the document cannot silently disagree with its own
-analysis.
+document. The figures and numbers a reader sees are then
+not pasted in but regenerated every time the document is
+built. We shall call a document with this property a
+sealed render: prose bound to the code that produces
+every number and figure it reports, so that the document
+cannot silently disagree with its own analysis.
 
 The reader will recall the ladder of reproducibility
 levels that organizes this book: L0 locatable, L1
@@ -88,8 +87,8 @@ that the document agrees with the code, but it says
 nothing about whether the packages are pinned, whether
 the environment is fixed, or whether the outputs have
 been verified. One can have a beautifully sealed
-document that runs only on its author's laptop, at L0,
-and one can have a fully pinned L2 environment whose
+document that runs only on its author's laptop, at L0.
+One can equally have a fully pinned L2 environment whose
 report pastes its numbers in by hand. The seal and the
 pins are different virtues, and much of the discipline
 of this chapter lies in not confusing them.
@@ -747,33 +746,33 @@ separate artifacts from the start.
 
 The write-as-you-go doctrine inverts the order. One
 creates the `report.Rmd` on the first day of the project,
-before there is any analysis to report, and writes into it
-the research question, the background, and the planned
-methods as prose. The analysis code is then added inline,
-in chunks, as the work proceeds, so that from the first
-day the numbers in the document are computed rather than
-copied. As patterns emerge, code that is used more than
-once is extracted from the document into a function in
-`R/`, and as those functions stabilize they acquire tests
-in `inst/tinytest/`, the subject of @sec-testing. When a
-computation grows too slow to run on every render, it
-moves to `analysis/scripts/`, is run once, and saves its
-result for the document to load, which is the
+before there is any analysis to report. Into it one
+writes the research question, the background, and the
+planned methods as prose. The analysis code is then added
+inline, in chunks, as the work proceeds, so that from the
+first day the numbers in the document are computed rather
+than copied. As patterns emerge, code that is used more
+than once is extracted from the document into a function
+in `R/`, and as those functions stabilize they acquire
+tests in `inst/tinytest/`, the subject of @sec-testing.
+When a computation grows too slow to run on every render,
+it moves to `analysis/scripts/`, is run once, and saves
+its result for the document to load. This is the
 build-time-versus-load-time boundary named among the
 analyst's contributions above. The compendium's directory
 structure, in this view, emerges from the writing rather
-than preceding it: the manuscript drives the analysis, and
-the `R/`, `tests/`, and `scripts/` directories fill in as
-the code in the document matures.
+than preceding it: the manuscript drives the analysis,
+and the `R/`, `tests/`, and `scripts/` directories fill
+in as the code in the document matures.
 
 The doctrine is not merely tidy. Its reproducibility
 payoff is that the document is sealed from the first day
 and stays sealed, because there is never a phase in which
-results live in the prose by having been copied there. The
-number in the paragraph was computed by the chunk above it
-on the very first render and on every render since, and the
-drift that opened this chapter has no moment at which to
-enter.
+results live in the prose by having been copied there.
+The number in the paragraph was computed by the chunk
+above it on the very first render, and on every render
+since. The drift that opened this chapter has no moment
+at which to enter.
 
 ## Worked example
 

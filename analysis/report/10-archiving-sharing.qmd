@@ -52,8 +52,8 @@ fix the environment (@sec-containers), render the
 report (@sec-literate), and validate the whole with
 tests and continuous integration (@sec-verification).
 The present chapter concerns what happens when the
-analysis must leave that machine, first to reach a
-collaborator down the hall, and eventually to reach a
+analysis must leave that machine. It must first reach
+a collaborator down the hall, and eventually reach a
 stranger, a reviewer, or the analyst's own future self,
 years after the original laptop has been recycled.
 

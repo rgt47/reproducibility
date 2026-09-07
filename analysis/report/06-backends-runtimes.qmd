@@ -70,7 +70,7 @@ one tool, and to equip the reader to choose among the
 alternatives with judgment rather than habit.
 
 The framework this book uses organizes those
-alternatives along three axes, and the organization is
+alternatives along three axes. The organization is
 worth internalizing before any command is typed, because
 it prevents the common error of treating every unfamiliar
 tool as a special case. The first axis changes only the
@@ -199,8 +199,8 @@ for macOS and Windows, is under its current terms not free
 for use by larger commercial and institutional
 organizations, and many universities fall within those
 terms. The terms do carve out an exception for education,
-but institutions differ on whether a given use qualifies,
-and the point is contested, which is why many institutions
+but institutions differ on whether a given use qualifies.
+The point is contested, which is why many institutions
 either license Docker Desktop or avoid it. Podman carries
 no such restriction. For an analyst
 whose institution has declined to license Docker Desktop,
@@ -213,11 +213,11 @@ Apptainer, known until its move to the Linux Foundation as
 Singularity, is the runtime built for high-performance
 computing [@kurtzer2017]. Kurtzer and colleagues designed
 it for precisely the setting that defeats Docker on a
-cluster: it runs unprivileged, integrating with the batch
+cluster. It runs unprivileged, integrating with the batch
 schedulers, message-passing libraries, and graphics
-processors that scientific clusters provide, so that a
+processors that scientific clusters provide. A
 user with no administrative rights can nonetheless run a
-containerised analysis under the cluster's job system.
+containerized analysis under the cluster's job system.
 
 Two rules govern its use, and observing them keeps the
 image pinning of @sec-containers intact. The first is that
@@ -377,17 +377,18 @@ form, and the reader will encounter both in the wild.
 
 We should be candid about the trade-offs, in the two-sided
 manner this book prefers. On the plus side, Nix delivers
-the entire environment pillar in one mechanism, reaches L2
-without the container machinery, and gives deterministic,
-reproducible environments that Docker, whose reproducibility
-depends on careful digest and snapshot discipline,
-approaches but does not guarantee by construction. On the minus side, the Nix
+the entire environment pillar in one mechanism and
+reaches L2 without the container machinery. It gives
+deterministic, reproducible environments that Docker,
+whose reproducibility depends on careful digest and
+snapshot discipline, approaches but does not guarantee
+by construction. On the minus side, the Nix
 model is genuinely alien to the audience, and although
 `rix` hides much of the language, diagnosing a build that
-has failed still calls for some Nix knowledge; the first
-build is slow and consumes substantial disk; Nix is a host
+has failed still calls for some Nix knowledge. The first
+build is slow and consumes substantial disk. Nix is a host
 prerequisite comparable to Docker, requiring Linux, macOS,
-or the Windows Subsystem for Linux; and `rix` is young
+or the Windows Subsystem for Linux. And `rix` is young
 enough that its own version must be pinned. These caveats
 are the reason Nix is carried as an opt-in backend for the
 analyst who wants maximum rigor, while `renv` with a
@@ -408,16 +409,17 @@ ground, and it answers two constraints the container route
 handles awkwardly. Conda [@anaconda2023], with the faster
 resolver `mamba` and the lockfile-oriented `pixi`
 [@pixi2024], reproduces natively on Windows, without the
-Linux-emulation layer a Docker image requires there, and it
-spans R and Python in a single environment rather than
-forcing the mixed-language analyst to bridge two toolchains.
+Linux-emulation layer a Docker image requires there. It
+also spans R and Python in a single environment, rather
+than forcing the mixed-language analyst to bridge two
+toolchains.
 For a Windows-only laboratory running a pipeline that mixes
 the two languages, this is a decisive practical advantage.
 The cost is rigor: conda draws its packages from
 conda-forge rather than from CRAN or the Posit Package
 Manager, and it pins less strictly than Nix. It is, in the
 honest accounting, a middle-ground option, more reproducible
-than an unpinned install and less exacting than Nix, and it
+than an unpinned install and less exacting than Nix. It
 is the right choice precisely when its two native strengths,
 Windows and mixed languages, are the binding constraint.
 
@@ -457,9 +459,9 @@ environment, with no Docker, no Nix, and no local
 installation of any kind. The corresponding limitation is
 equally exact, and it returns us to the honest-level
 theme: the Binder session reaches L2 for the life of the
-session, on a server that pins the environment, but it
-pins nothing on the reviewer's own machine and does not
-persist. It is superb for demonstration and review, and it
+session, on a server that pins the environment. But it
+pins nothing on the reviewer's own machine, and it does
+not persist. It is superb for demonstration and review, and it
 is not an archival guarantee.
 
 Development containers, and the hosted Codespaces service
@@ -476,7 +478,7 @@ drives the automated build.
 Here again the archetype guides the choice. A **blog** or a
 **manuscript** archetype, whose whole purpose is to be read
 and its results inspected by others, benefits most from
-browser execution: a reader of a teaching post, or a
+browser execution. A reader of a teaching post, or a
 reviewer of a manuscript, re-runs the analysis in Binder
 with nothing to install, which is exactly the low-friction
 path such archetypes want. A blog that renders many posts
@@ -642,8 +644,8 @@ in @sec-containers; this chapter merely ran it in three
 places. Had the group instead chosen Nix from the outset,
 the image would have been replaced by a `default.nix`, and
 the laptop and cluster runs would have entered the
-environment through `nix-shell` rather than a runtime, but
-the discipline, one pinned declaration exercised in several
+environment through `nix-shell` rather than a runtime.
+The discipline, one pinned declaration exercised in several
 places, would have been identical.
 
 ## Collaborating with an LLM

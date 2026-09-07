@@ -42,7 +42,7 @@ able to:
 
 Consider a registry study in which an analyst
 has written a small function to compute a mean
-biomarker value for each treatment arm, and the
+biomarker value for each treatment arm. The
 function carries a quiet bug: it sums the values
 but forgets to divide by their count. The
 analysis runs without error. It produces a
@@ -478,7 +478,7 @@ the same function:
 # fragile: pins an implementation detail
 expect_true('filter' %in% all.names(body(my_clean)))
 
-# robust: pins the behaviour
+# robust: pins the behavior
 result <- my_clean(data.frame(x = c(1, NA, 3)))
 expect_false(anyNA(result))
 ```
@@ -563,7 +563,7 @@ runs the identical checks:
 
 ```bash
 $ make style   # reformat R code with styler
-$ make lint    # analyse R code with lintr
+$ make lint    # analyze R code with lintr
 ```
 
 **A pre-commit hook** enforces them. A hook is a

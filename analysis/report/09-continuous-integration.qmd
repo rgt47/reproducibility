@@ -56,8 +56,8 @@ actually rebuilds, on a machine that is not the one
 where the work was done? The honest answer, until
 something tests it, is that the author does not know.
 A lockfile can reference a package version that has
-been pulled from its repository; a Dockerfile can
-depend on a base image whose digest has drifted; a
+been pulled from its repository. A Dockerfile can
+depend on a base image whose digest has drifted. A
 script can quietly rely on a file that lives only in
 the author's home directory and was never committed.
 None of these announce themselves on the machine where
@@ -68,10 +68,10 @@ This chapter is about the instrument that closes the
 gap between a reproducibility claim and its
 demonstration. Continuous integration, which we shall
 abbreviate CI, is a service that rebuilds the
-compendium from its committed inputs on every change,
-in a fresh environment that carries none of the
-developer's accumulated and undeclared state, and runs
-a battery of checks against the result. We shall see
+compendium from its committed inputs on every change.
+It works in a fresh environment that carries none of
+the developer's accumulated and undeclared state, and
+runs a battery of checks against the result. We shall see
 that CI captures no new layer of the determinant stack.
 Its whole contribution is to *validate* that the layers
 already captured actually suffice, which is a different

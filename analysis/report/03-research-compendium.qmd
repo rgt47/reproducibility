@@ -74,8 +74,8 @@ The compendium also sets the starting rung on the
 ladder. Merely by being a version-controlled directory
 whose parts can be located, a compendium reaches L0,
 locatable. It is not yet L1, because nothing has pinned
-the package versions; it is not yet L2, because nothing
-has pinned the environment; and it is certainly not yet
+the package versions. It is not yet L2, because nothing
+has pinned the environment. And it is certainly not yet
 L3, because nothing has re-run it and shown the numbers
 to match. What the compendium provides is the container
 into which the later chapters install those higher
@@ -164,7 +164,7 @@ describes an analysis performed elsewhere
 notion of literate programming, in which prose and code
 are woven into one source [@knuth1984]. For some years
 the compendium remained an aspiration without a
-conventional implementation, and Peng, arguing that
+conventional implementation. Peng, arguing that
 reproducibility should be treated as a minimum standard
 for computational science, sharpened the motivation
 without settling the container [@peng2011].
@@ -305,7 +305,7 @@ Assembling the five artifacts into a tidy compendium is a
 capture activity, and it is easy to mistake the tidiness
 for a reproducibility guarantee. A compendium that
 contains a `Dockerfile`, a `renv.lock`, and a clean
-`analysis/` tree looks reproducible, but until the image
+`analysis/` tree looks reproducible. But until the image
 has been rebuilt from the recipe, the lockfile restored,
 and the outputs regenerated and compared, the compendium
 sits at L0 or L1, not at L2 or L3. Match the claim to the
@@ -378,8 +378,8 @@ computational environment [@thomas2026zzcollab]. Where the base
 image fixes the environment, the archetype determines the
 starting scaffolding: the directory emphasis, whether a
 primary report exists, and which validation gates apply on
-top of the universal one. Five archetypes are advertised,
-and because every one of them carries the minimal
+top of the universal one. Five archetypes are advertised.
+Because every one of them carries the minimal
 R-package skin, `R CMD check` remains the universal gate
 across all five, as the framework's own whitepaper stresses
 in its account of the archetype axis. What varies is not
@@ -422,8 +422,8 @@ The second archetype makes the manuscript the organizing
 principle. A `report.Rmd` or `index.qmd` file in
 `analysis/report/` is created on day one and written in
 parallel with the analysis, so that the prose and the
-numbers never drift apart, and every figure in the paper is
-regenerated on each render rather than pasted in by hand. A
+numbers never drift apart. Every figure in the paper is
+regenerated on each render, rather than pasted in by hand. A
 representative deployment is a study of the comorbidity of
 PTSD, depression, and diabetes among Black women drawn from
 a trauma-study cohort, using variable selection, multiple
@@ -493,7 +493,7 @@ reproducible. Consider a power simulation for a
 longitudinal trial: the driver builds a grid over sample
 size and effect size, assigns each row an integer seed,
 simulates a dataset for each row, fits the planned model,
-and records whether the null was rejected; the empirical
+and records whether the null was rejected. The empirical
 power is then the rejection rate within each cell. The
 gates are `R CMD check`, the unit tests, and, as an
 emphasis particular to this archetype, a test that the
@@ -508,10 +508,10 @@ the compendium renders, in the general case, not one report
 but many documents. A
 teaching blog carrying a series of methods posts, or a
 running lab notebook of analyses, is a single compendium
-whose `analysis/` tree may hold many `index.qmd` files, each
-rendered to a static site by the same machinery that renders
-a manuscript; the framework's representative deployment is
-the limiting case of a single post. Integration with Quarto
+whose `analysis/` tree may hold many `index.qmd` files,
+each rendered to a static site by the same machinery that
+renders a manuscript. The framework's representative
+deployment is the limiting case of a single post. Integration with Quarto
 [@allaire2024]
 enables publication to the site from the same compendium
 that produced the underlying analyses, so that the full
@@ -664,8 +664,8 @@ property is that the same layout supports the whole
 trajectory without reorganization. This is what the
 framework calls *progressive disclosure*: the same
 directory layout, the same `Makefile`, and the same Five
-Pillars carry a project from one archetype to the next, so
-that no transition demands that the analyst tear the
+Pillars carry a project from one archetype to the next.
+No transition demands that the analyst tear the
 project apart and rebuild it in a new shape.
 
 The trajectory is easy to picture, and it is the one our
@@ -677,7 +677,7 @@ compendium, with the render gate now active, but nothing
 already written needs to move. In the course of the
 analysis a cleaning routine and a modeling helper prove
 useful enough to document and test, so they migrate from
-`analysis/scripts/` into `R/`, and the package archetype's
+`analysis/scripts/` into `R/`. The package archetype's
 gates begin to bite on them without any change to the
 layout. Should one of those functions reach general
 interest, the compendium can be shared as a package, its
@@ -691,8 +691,8 @@ The lesson we draw, and it is the organizing lesson of the
 chapter, is that the archetype is a description of a
 project's current emphasis rather than a permanent
 category. The reproducibility machinery is invariant across
-the archetypes and across the transitions between them, and
-it is precisely this invariance that lets a project evolve
+the archetypes and across the transitions between them. It
+is precisely this invariance that lets a project evolve
 without ever leaving the reproducible state it started in.
 
 ## Worked example

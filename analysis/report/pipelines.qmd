@@ -48,20 +48,21 @@ to:
 
 Consider an analysis that has grown, as most do, one
 step at a time. There is a script that reads the raw
-export and writes a cleaned dataset; a second that fits
-a model to the cleaned data and saves the fitted object;
-a third that draws the figures from the model; and a
-report that assembles the figures and the tables into a
+export and writes a cleaned dataset. A second fits
+a model to the cleaned data and saves the fitted object.
+A third draws the figures from the model, and a
+report assembles the figures and the tables into a
 manuscript. Each script runs, and the analyst runs them
 in order, by hand, at the console. For a while this
 works.
 
 The trouble begins when the raw data are corrected. The
 analyst re-runs the cleaning script, and now must
-remember that the model depends on the cleaned data and
-re-run the model, that the figures depend on the model
-and re-run the figures, and that the report depends on
-the figures and re-render the report. Each of these is a
+remember three further things: that the model depends on
+the cleaned data and must be re-run, that the figures
+depend on the model and must be re-run, and that the
+report depends on the figures and must be re-rendered.
+Each of these is a
 separate act of memory. Miss one, and the report now
 shows a figure drawn from the old model, fitted to the
 old data, and nothing in the document announces the
@@ -79,10 +80,10 @@ from the wrong inputs. The second is **staleness**: a
 change to an upstream file leaves every downstream output
 obsolete, and re-propagating the change by hand is
 exactly the kind of bookkeeping a human does poorly. The
-third is the **end-to-end doubt**: after a session of
+third is the **end-to-end doubt**. After a session of
 editing scripts and re-running some of them, the analyst
 cannot honestly say whether the whole analysis still runs
-from raw data to finished report, because it has been
+from raw data to finished report. It has been
 weeks since anyone ran it all, in order, in one act. The
 project works, in the sense that its outputs exist, but
 no one can be sure it would work if rebuilt from nothing.

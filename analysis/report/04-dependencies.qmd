@@ -163,7 +163,7 @@ reputation for surprising behavior that discouraged
 routine use. The `renv` package, introduced by
 @ushey2020 and now the community standard, superseded
 it in 2019. It kept the essential idea, a
-project-local library plus a lockfile, and rebuilt the
+project-local library plus a lockfile. But it rebuilt the
 surface around a small, predictable set of verbs, a
 human-readable JSON lockfile, and a shared package
 cache that lets many projects share one physical copy
@@ -226,12 +226,12 @@ no latitude for a later install to drift upward.
 Second, the source is named. A package that came from
 CRAN, from a Posit Package Manager mirror, from
 Bioconductor, or from a specific GitHub commit is
-restored from that same source, which matters because
+restored from that same source. This matters because
 the same version number can denote different code on
 different repositories. The `Repository` value is the
 registered name of the repository the package was drawn
 from, matching one of the names in the `Repositories`
-block above, which is why the excerpt records `CRAN`
+block above. This is why the excerpt records `CRAN`
 even though that entry points at a Posit mirror. Third, the content
 hash lets `renv` confirm that a restored package is
 byte-identical to the one recorded, catching the rare
@@ -297,8 +297,8 @@ partly automated so that an analyst does not forget the
 snapshot. The project's generated `.Rprofile` installs
 an exit hook that snapshots the library when an
 interactive session ends, and restores missing packages
-when a session begins, so a package installed during
-analysis is captured rather than lost. The automation
+when a session begins. A package installed during
+analysis is thus captured rather than lost. The automation
 does not change the model; it merely removes the two
 most common ways the library and the lockfile drift
 apart.
@@ -380,7 +380,7 @@ weaker $\mathrm{Code} \subseteq \mathrm{renv.lock}$, so
 the strict `DESCRIPTION` inclusion is exact for the
 package archetype but archetype-conditional in general.
 As a matter of placement an analysis-script dependency
-may still be listed in `DESCRIPTION` under `Suggests`, but
+may still be listed in `DESCRIPTION` under `Suggests`. But
 the framework does not enforce the strict `DESCRIPTION`
 inclusion as a gate on a compendium, precisely because
 that inclusion does not hold for one. The gate it enforces
@@ -414,11 +414,11 @@ $ make check-renv
 This runs the check with automatic repair before a
 commit. The same check runs again under continuous
 integration, but there in a report-only mode: it runs
-strict and with repair disabled, so a drift that escaped
-the developer's machine fails the build rather than
-being silently repaired, forcing the contributor to
-commit the fix instead of letting the clean build paper
-over it. It is worth being
+strict and with repair disabled. A drift that escaped
+the developer's machine therefore fails the build rather
+than being silently repaired. This forces the contributor
+to commit the fix, instead of letting the clean build
+paper over it. It is worth being
 precise about what the gate does and does not verify.
 It is a presence check: it guarantees that the three
 sets nest, that nothing used is unpinned. It does not
@@ -473,8 +473,8 @@ reads the document, the missing dependency is caught and
 pinned before it can break the build. This reach matters
 most for the archetypes whose dependencies live in their
 documents rather than their code, the scholarly manuscript
-and the blog, whose rendered outputs are the point and
-whose package needs are therefore concentrated where a
+and the blog. Their rendered outputs are the point, and
+their package needs are therefore concentrated where a
 naive check does not look.
 
 ::: {.callout-important}
@@ -506,11 +506,12 @@ there, since the declared set already exists for
 reasons independent of reproducibility. A data-analysis
 project, a manuscript compendium, a simulation study,
 and a blog also carry a `DESCRIPTION`, but there it
-declares only the API of the reusable code in `R/`, and
-their binding invariant is the single $\mathrm{Code}
-\subseteq \mathrm{renv.lock}$; the R-package case is the
-one where the declared middle term would exist even if
-reproducibility were not a concern. A subtlety follows for the R-package
+declares only the API of the reusable code in `R/`.
+Their binding invariant is instead the single
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$. The
+R-package case is the one where the declared middle
+term would exist even if reproducibility were not a
+concern. A subtlety follows for the R-package
 archetype: a package used only by an analysis script or
 report belongs in `Suggests` rather than `Imports`, so
 that `R CMD check` does not hard-require a package the
@@ -548,7 +549,7 @@ then be committed so the clean CI build sees it.
 
 ## Dated snapshots of a package repository
 
-A lockfile records which versions to install, but a
+A lockfile records which versions to install. But a
 plain CRAN mirror will happily serve only whatever is
 current, and older source packages must often be
 recompiled, which is slow and can fail when a system
@@ -570,7 +571,7 @@ options(repos = c(
 
 With repositories pointed at a dated snapshot, an
 install run today and the same install run next year
-draw from an identical, frozen catalog, and the
+draw from an identical, frozen catalog. The
 lockfile above records exactly this URL in its
 `Repositories` block, so that a restore reproduces not
 only the versions but the source they came from. The
@@ -605,9 +606,10 @@ system, so a lockfile assembled on macOS carries no
 guarantee on Linux. And it does not pin the system
 libraries that many packages link against, the GDAL
 behind a spatial package or the `libxml2` behind an XML
-parser, so a restore on a machine lacking a required
-system library may fail to compile a package or, more
-insidiously, may install a differently behaving one.
+parser. A restore on a machine lacking a required
+system library may therefore fail to compile a package
+or, more insidiously, may install a differently
+behaving one.
 
 The point is not a criticism of `renv`, which does its
 one job well. It is that the package layer is one layer
@@ -631,9 +633,9 @@ what `renv` is doing.
 The most important shift of idiom is from preserving a
 lockfile to reconstructing an environment from a date.
 The `rang` package of @chan2023 takes a set of packages
-and a target date and resolves the versions that were
-current then, reaching back through CRAN's archive to
-reconstruct a historical environment even for a project
+and a target date, and resolves the versions that were
+current then. It reaches back through CRAN's archive to
+reconstruct a historical environment, even for a project
 that never recorded a lockfile at all. Where `renv`
 requires foresight, a committed lockfile written while
 the analysis was live, `rang` offers hindsight,
@@ -715,10 +717,10 @@ and `rlang`), the kind that ordinarily preserve
 behavior but occasionally do not; one is a minor
 version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
 that can refine a default. The `rlang` move, from 1.1.2
-to 1.1.4, is likewise patch-level, and it is singled out
-here not for the distance it travelled but for its
+to 1.1.4, is likewise patch-level. It is singled out
+here not for the distance it traveled but for its
 transitive position: a package almost nothing calls
-directly yet almost everything depends on, so it moved
+directly, yet almost everything depends on. It thus moved
 beneath the whole stack. The lesson is that a diff
 of the lockfile is a reviewable record of exactly this
 churn. Without a committed lockfile, none of these

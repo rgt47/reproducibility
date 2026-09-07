@@ -49,7 +49,7 @@ fixed to an exact version in a lockfile. She has
 reached L1, pinned packages, and she is entitled to
 some confidence. She sends the project to a
 collaborator, who runs `renv::restore()` and watches
-it fail: one of her packages links against the
+it fail. One of her packages links against the
 geospatial library GDAL, which is present on her
 machine and absent on his, and the package will not
 install without it. On a third machine the restore
@@ -300,7 +300,7 @@ base images that have become the standard starting
 point. This is the Rocker project. Boettiger introduced
 Docker to the reproducible-research audience and argued
 that a container is the natural unit for shipping a
-computational environment [@boettiger2015]; Boettiger
+computational environment [@boettiger2015]. Boettiger
 and Eddelbuettel then built and documented the Rocker
 images themselves, a family of R-specific base images
 maintained in step with R releases [@boettiger2017].
@@ -311,16 +311,16 @@ their survey of what they call the Rockerverse
 
 The practical value of Rocker is that it supplies, for
 each R version, a tested base image with R already
-installed on a known operating system, so that the
-analyst's recipe begins from a solid and shared
-foundation rather than reconstructing one. The images
+installed on a known operating system. The analyst's
+recipe can then begin from a solid and shared
+foundation, rather than reconstructing one. The images
 form a small hierarchy. At the bottom sits
 `rocker/r-ver`, R on Ubuntu and little else. Above it,
 `rocker/rstudio` adds the RStudio Server development
-environment; `rocker/tidyverse` builds on
+environment. `rocker/tidyverse` builds on
 `rocker/rstudio`, adding the tidyverse packages and the
 `pandoc` document converter, so it carries RStudio
-Server as well and is the larger of the two; and
+Server as well and is the larger of the two. And
 `rocker/verse` adds a LaTeX toolchain for rendering
 manuscripts to PDF. Each higher image is built on the
 one below, so they share layers, and each fixes a
@@ -344,8 +344,8 @@ The first refinement pins the base image by its
 `rocker/tidyverse:4.4.0` is a mutable pointer. It names
 an image today, but the maintainers may rebuild and
 repoint it tomorrow, for instance to patch a security
-flaw in the operating system, and a recipe that named
-the tag would then build on different bytes without any
+flaw in the operating system. A recipe that named
+the tag would then build on different bytes, without any
 change to the recipe itself. A digest is an immutable
 hash of the exact image content, so that
 
@@ -515,7 +515,7 @@ calculation independent of where the container runs.
 The third is the **thread count**, carried in variables
 such as `OMP_NUM_THREADS`. Numerical libraries that
 implement linear algebra may split a computation across
-several threads, and because floating-point addition is
+several threads. And because floating-point addition is
 not exactly associative, the order in which partial sums
 are combined can change the last bits of a result. Two
 runs of the same bootstrap or the same mixed model, one
@@ -524,9 +524,9 @@ in the final digits. Which variable actually governs the
 summation order depends on the BLAS implementation the
 image carries: `OPENBLAS_NUM_THREADS` for OpenBLAS,
 `MKL_NUM_THREADS` for the Intel MKL, and `OMP_NUM_THREADS`
-for the OpenMP-parallel sections, so the rocker default
-reference BLAS is already single-threaded and needs no
-such variable to be deterministic. Setting the OpenMP and
+for the OpenMP-parallel sections. The rocker default
+reference BLAS is already single-threaded, though, and
+needs no such variable to be deterministic. Setting the OpenMP and
 the BLAS thread counts to one together, rather than any
 one of them alone, is what forces a single, deterministic
 order of summation, trading a little speed for bitwise
@@ -637,7 +637,7 @@ assume it is. One set of machinery, varied by a single
 
 ## A first look at the two-layer team model
 
-A container fixes an environment for one analyst; a team
+A container fixes an environment for one analyst. A team
 needs every member to share the same environment, and
 this introduces a wrinkle we shall only sketch here and
 develop fully in @sec-archiving. Building an image from
@@ -648,9 +648,9 @@ from scratch.
 
 The remedy is a two-layer model. A team lead builds a
 comprehensive **team image** once, carrying the lab's
-preferred packages, and pushes it to a shared registry;
-each project then builds a thin second layer on top of
-that team image rather than on the raw Rocker base. The
+preferred packages, and pushes it to a shared registry.
+Each project then builds a thin second layer on top of
+that team image, rather than on the raw Rocker base. The
 first layer, the team image, is built once and reused
 everywhere; the second layer, the per-project image,
 adds only what the project needs and builds in seconds

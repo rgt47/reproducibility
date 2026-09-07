@@ -51,11 +51,11 @@ regulatory submission, and files the script. Two
 years later, during an audit, an inspector asks that
 the analysis be regenerated from the archived code
 and data. On a fresh machine the script errors on
-the first `library()` call; once the missing package
-is located and installed, the analysis runs, but the
-point estimate has moved in the third decimal place
-and one confidence interval no longer excludes the
-null. Nothing in the statistical reasoning was wrong.
+the first `library()` call. Once the missing package
+is located and installed, the analysis runs. The
+point estimate has moved in the third decimal place,
+however, and one confidence interval no longer excludes
+the null. Nothing in the statistical reasoning was wrong.
 What failed was everything around the statistics: a
 package that changed beneath the code, a default that
 shifted between releases of R, a system library
@@ -66,9 +66,9 @@ This book exists to prevent that failure, and this
 chapter establishes that the failure is real, common,
 and specifically computational. The stakes in a
 health science are not abstract. A result that cannot
-be regenerated cannot be audited; an analysis that a
+be regenerated cannot be audited. An analysis that a
 regulator cannot reproduce is an analysis a regulator
-may decline to trust; and a clinical recommendation
+may decline to trust. And a clinical recommendation
 built on a number that no one can recompute is a
 recommendation resting on faith rather than evidence.
 Reproducibility is, in the end, a precondition for
@@ -180,18 +180,17 @@ oncology, Begley and Ellis, working from within
 industry, reported that only six of fifty-three
 landmark findings could be reproduced, a success rate
 close to one in ten [@begley2012]. These figures were
-not, at first, universally believed, but the
-suspicion that the published literature was less
-solid than it appeared had already been given a
-theoretical footing by Ioannidis, whose much-cited
-argument held that, given the prevailing rates of
+not, at first, universally believed.
+But the suspicion that the published literature was less
+solid than it appeared already had a theoretical footing.
+Ioannidis had argued, given the prevailing rates of
 low statistical power, analytical flexibility, and
-publication bias, most published research findings
+publication bias, that most published research findings
 are false [@ioannidis2005]. When Baker later surveyed
 more than fifteen hundred researchers for Nature, a
 majority agreed that science was facing a
-reproducibility crisis, and more than seventy per
-cent reported that they had tried and failed to
+reproducibility crisis. More than seventy percent
+reported that they had tried and failed to
 reproduce another scientist's experiments
 [@baker2016].
 
@@ -199,31 +198,31 @@ These are, for the most part, failures of
 replication, at the scientific end of a spectrum we
 shall shortly define, and their causes are many. But
 a growing body of work isolates the specifically
-computational failures, in which the question is not
-whether a finding holds up in a new sample but merely
+computational failures. Here the question is not
+whether a finding holds up in a new sample, but merely
 whether the original analysis can be made to run a
 second time. Here the evidence is starker, because the
 failures are more avoidable. Trisovic and colleagues
 re-ran more than nine thousand R files deposited
-alongside published articles in the Harvard Dataverse
-and found that roughly one in four executed without
+alongside published articles in the Harvard Dataverse.
+Roughly one in four executed without
 error, before any question of whether the output
 matched the published result [@trisovic2022]. Saju and
-colleagues, examining R code supplements archived on
-the Open Science Framework, found that only about a
+colleagues examined R code supplements archived on
+the Open Science Framework. They found that only about a
 quarter of the projects ran to completion, and that
-the great majority, close to ninety-nine per cent,
+the great majority, close to ninety-nine percent,
 carried no formal description of their dependencies at
 all [@saju2025].
 
 The distinction between the two bodies of evidence
 matters. The replication studies tell us that
-scientific findings are fragile; the re-execution
+scientific findings are fragile. The re-execution
 studies tell us something more specific and more
 remediable, namely that a large fraction of published
-analyses cannot be regenerated even in principle,
-because the computational scaffolding needed to run
-them was never captured. It is the second failure,
+analyses cannot be regenerated even in principle. The
+reason is that the computational scaffolding needed to
+run them was never captured. It is the second failure,
 and not the first, that the tooling in this book
 addresses.
 
@@ -282,19 +281,19 @@ range a competent analyst would defend. The three are
 independent. An analysis can be perfectly
 reproducible and entirely wrong, faithfully
 regenerating the same mistaken number on every
-machine; a finding can replicate across laboratories
+machine. A finding can replicate across laboratories
 while no single analysis in the set is computationally
-reproducible; and a result can be reproducible yet
+reproducible. And a result can be reproducible yet
 fragile to a defensible change in model specification.
 
 The idea that computational work should be
 reproducible in the narrow, re-execution sense is
 older than the current crisis. It is usually traced
-to Claerbout and his colleagues in geophysics, who,
-in the early 1990s, built their published papers so
+to Claerbout and his colleagues in geophysics. In the
+early 1990s they built their published papers so
 that every figure could be regenerated from the
 archived code and data by a single command
-[@claerbout1992]. Their standard was demanding, and the
+[@claerbout1992]. Their standard was demanding. The
 phrasing that has become the field's motto is Buckheit
 and Donoho's paraphrase of it [@buckheit1995;
 @claerbout1992]: the published article is merely the
@@ -306,13 +305,13 @@ Reproducibility so understood is not a single
 threshold but a spectrum. Peng arranged computational
 work along a scale, from the merely published, through
 code available, code and data available, and linked
-and executable, to fully replicable, and argued that
+and executable, to fully replicable. He argued that
 reproducibility is a minimum standard for judging a
 scientific claim when full independent replication is
 impractical [@peng2011; @peng2006]. The lesson we take
 from Peng, and develop into the levels ladder of
-@sec-levels, is that reproducibility comes in degrees,
-and that honesty about which degree one has reached is
+@sec-levels, is that reproducibility comes in degrees.
+Honesty about which degree one has reached is
 itself a scientific virtue.
 
 ## Why the failures are computational, not statistical
@@ -327,7 +326,7 @@ In R 3.6.0, released in 2019, the default algorithm
 that turns a seed into a random sample was corrected.
 The old sampler introduced a slight bias in
 `sample()`; the new one removed it. The consequence
-for reproducibility is that code which set a seed and
+for reproducibility is direct. Code that set a seed and
 drew a sample obtained one sequence of draws before
 the release and a different sequence after it, with
 identical code and an identical seed [@rcoreteam2019].
@@ -336,9 +335,9 @@ permutation test, and every simulation written under
 the old default draws differently under the new one.
 Then, in R 4.0.0, released in 2020, the
 `stringsAsFactors` default flipped from `TRUE` to
-`FALSE`, so that reading a data frame silently produced
-character columns where it once produced factors,
-changing the behavior of any code that depended on
+`FALSE`. Reading a data frame now silently produced
+character columns where it once produced factors. This
+changed the behavior of any code that depended on
 factor-specific behavior, such as the ordering of
 levels or a function that requires a factor
 [@rcoreteam2020]. Neither
@@ -352,7 +351,7 @@ steadier erosion of package churn, the phenomenon by
 which working code rots as the packages beneath it are
 updated. A modern analysis may depend on dozens or
 hundreds of packages, each with its own release history
-and its own breaking changes, and it is this churn that
+and its own breaking changes. It is this churn that
 Trisovic and colleagues measured when they found that
 most deposited R scripts ceased to run within a few
 years [@trisovic2022]. The code did not change; its
@@ -373,8 +372,8 @@ these. It records the analysis logic and, if the
 reader is fortunate, the data, and leaves the
 remaining layers to whatever the next machine happens
 to provide. Reproducibility fails in the gap between
-what the script fixes and what the result depends on,
-and the organizing question of this book is how far
+what the script fixes and what the result depends on.
+The organizing question of this book is how far
 down that stack a given effort has actually reached.
 
 This diagnosis, that the failures are computational
@@ -396,12 +395,12 @@ project, a scholarly manuscript, an R package, a
 simulation study, and a blog of many rendered posts.
 Each varies the directory layout, whether a rendered
 report exists at all, and which validation gates
-apply, but all share the same determinant stack and
+apply. But all share the same determinant stack, and
 so are exposed to the same silent shifts. An R package
 with no report to render can still be broken by a
-changed `sample.kind`; a simulation study, whose whole
+changed `sample.kind`. A simulation study, whose whole
 output is a set of random draws, is more exposed to
-the RNG change than any manuscript; and a teaching
+the RNG change than any manuscript. And a teaching
 blog that renders forty posts inherits the churn of
 every package any post loads. The discipline that
 follows applies across all of them.
@@ -468,7 +467,7 @@ be matched to the level actually reached, never
 asserted above it. To say that an analysis is
 reproducible when the code merely exists in a
 repository (L0) is to claim L3 while having secured
-L0, and the gap will be discovered at exactly the
+L0 only. The gap will be discovered at exactly the
 moment, an audit, a revision, a replication attempt,
 when it is most costly. State the rung you have
 reached, and no higher.
@@ -486,9 +485,9 @@ the seed fixed at a single value, vary only the
 sampler, and observe directly that the same seed does
 not give the same draws when the RNG kind differs. The
 function below sets the sampler, sets the seed, and
-shuffles the integers one through ten; we call it under
+shuffles the integers one through ten. We call it under
 each sampler and restore the session's original
-generator afterwards, so that nothing downstream is
+generator afterward, so that nothing downstream is
 disturbed.
 
 ```{r}
@@ -542,10 +541,10 @@ kind is. This is the determinant stack in miniature:
 the code fixed one layer, the seed, and left another,
 the sampler, to whatever the running version of R
 supplied. Pinning the R version, which we reach at L2
-with a container, is what closes this particular gap,
-and recording the RNG kind in the session
-configuration is what makes the gap visible in the
-meantime.
+with a container, is what closes this particular gap.
+Recording the RNG kind in the session
+configuration, meanwhile, is what makes the gap
+visible in the interim.
 
 ## Collaborating with an LLM
 
