@@ -7,6 +7,16 @@ _book/
 .quarto/
 /.quarto/
 **/*.quarto_ipynb
+# LaTeX intermediates from a PDF render.
+*.aux
+*.toc
+*.log
+*.out
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
 *.html
 *.pdf
 .netlify

@@ -1,13 +1,28 @@
 # Glossary {#sec-glossary .unnumbered}
 
-Terms are collected here from the 'vocabulary of this
-chapter' sections, which remain in place: this appendix is a
-single alphabetical view of them, not a replacement. Each
-entry names the chapter that develops the term, and a term
-developed in more than one chapter names each.
+This appendix collects, in one alphabetical list, the concepts
+defined in each chapter's 'vocabulary of this chapter' section
+together with the commands, functions, tools, and services the
+book relies on. The per-chapter vocabulary sections remain in
+place; this is a second view of them and not a replacement.
 
+Each entry names the chapter that introduces or develops it, and
+a term developed in more than one chapter names each. Entries
+are alphabetized by the term itself, so a function is filed
+under its own name rather than under the package that supplies
+it: look for `tar_make()` under T and `renv::restore()` under R.
 
-## A {.unnumbered}
+## A {.unnumbered .unlisted}
+
+**`apptainer build`.** Converts an OCI image into a single SIF
+file that runs without root, which is what makes it acceptable
+on a shared cluster and depositable as an archival artifact.
+(@sec-backends)
+
+**Apptainer (formerly Singularity).** A container runtime built
+for shared high-performance computing, where users are not
+administrators. Its SIF format is a single checksummable file.
+(@sec-backends)
 
 **Archetype.** The kind of research object a compendium is (data
 analysis, manuscript, package, simulation study, or blog), which
@@ -15,7 +30,7 @@ varies the layout and the gates but not the underlying
 machinery. (@sec-compendium)
 
 
-## B {.unnumbered}
+## B {.unnumbered .unlisted}
 
 **Backend.** The mechanism that supplies the environment. Docker
 is the container backend; Nix is a container-free backend that
@@ -25,12 +40,16 @@ declares the environment directly. (@sec-backends)
 the `FROM` line. Here, a Rocker image providing a fixed R
 version on a fixed operating system. (@sec-containers)
 
+**Binder.** A service that builds an environment from a public
+repository and serves it in a browser, so a reviewer can run an
+analysis with nothing installed locally. (@sec-backends)
+
 **Branch.** A movable name for a line of development. The
 default branch is conventionally called `main`.
 (@sec-version-control)
 
 
-## C {.unnumbered}
+## C {.unnumbered .unlisted}
 
 **Capture.** Fixing an input so that it cannot drift: writing a
 lockfile, building a container image. Capture sets the
@@ -47,6 +66,15 @@ literate document, delimited from the prose, whose output is
 inserted into the rendered document at the chunk's position.
 (@sec-literate)
 
+**CODECHECK.** A scheme in which an independent person re-runs a
+submitted analysis and certifies the result, catching the class
+of failure where the author's own checks encode the author's own
+assumptions. (@sec-verification)
+
+**Codespaces and devcontainers.** A specification, and a hosted
+implementation of it, for describing the development environment
+an editor should open a project inside. (@sec-backends)
+
 **Commit.** A recorded snapshot of the tracked files at one
 moment, carrying an author, a timestamp, a message, and an
 immutable identifier (a *hash*). The atomic unit of history.
@@ -55,6 +83,10 @@ immutable identifier (a *hash*). The atomic unit of history.
 **Computational reproducibility.** Obtaining the same numerical
 results from the same data and the same code, on another machine
 or at a later time. (@sec-crisis)
+
+**conda and pixi.** Cross-language environment managers that pin
+R and Python packages without a container. `pixi` is the option
+that reproduces natively on Windows. (@sec-backends)
 
 **Container.** A running instance of an image. One image can
 start many containers; each begins from the same frozen
@@ -76,7 +108,7 @@ set of checks, reporting success or failure automatically.
 (@sec-verification)
 
 
-## D {.unnumbered}
+## D {.unnumbered .unlisted}
 
 **Daemon.** A background system service that runs continuously
 with elevated privilege. Docker relies on one; Podman and
@@ -126,15 +158,42 @@ identical output file. A rendered PDF is usually not
 deterministic in this strict sense, for reasons developed below.
 (@sec-literate)
 
+**`digest()`.** Computes a content hash of an R object. Used to
+verify that a regenerated computational output matches a
+recorded one, on objects rather than on rendered documents.
+(@sec-verification)
 
-## E {.unnumbered}
+**Docker.** The most widely used container platform, and one
+instrument for reaching a pinned environment rather than a
+synonym for reproducibility. (@sec-containers)
+
+**`docker build` and `docker run`.** Build an image from a
+recipe and start a container from an image. The image is
+durable; the container is ephemeral. (@sec-containers)
+
+**Docker Hub and GHCR.** Container registries. A pushed image is
+a cache and not the record: the committed recipe is the record,
+because a registry can delete, rate-limit, or repoint what it
+holds. (@sec-archiving)
+
+**`docker pull` and `docker inspect`.** Fetch an image and read
+its metadata, including the content digest that a reproducible
+recipe pins instead of a tag. (@sec-containers)
+
+
+## E {.unnumbered .unlisted}
 
 **Expectation.** A single assertion, such as
 `expect_equal(actual, expected)`, that passes or fails.
 (@sec-testing)
 
+**`expect_equal()` and the other expectations.** The assertions
+of `tinytest`. A file of bare, top-level expectation calls is a
+complete test file, and `expect_inherits()`, `expect_true()`,
+and `expect_error()` cover most of the rest. (@sec-testing)
 
-## F {.unnumbered}
+
+## F {.unnumbered .unlisted}
 
 **FAIR.** A set of principles holding that a research object
 should be Findable, Accessible, Interoperable, and Reusable,
@@ -147,15 +206,67 @@ two principal forges; GitLab is frequently self-hosted by
 universities. (@sec-verification, @sec-archiving)
 
 
-## G {.unnumbered}
+## G {.unnumbered .unlisted}
+
+**`git add`.** Stages changes for the next commit. Staging is
+what lets a commit be one idea rather than a snapshot of
+whatever is on disk. (@sec-version-control)
+
+**`git clone`, `push`, `pull`, `fetch`.** Move history between a
+local repository and a remote. A remote serves backup,
+distribution, and collaboration, which are three purposes worth
+keeping separate. (@sec-version-control)
+
+**`git commit`.** Records the staged changes with a message and
+an immutable identifier. The atomic unit of the history.
+(@sec-version-control)
+
+**`git diff`.** Shows what changed, between the working tree and
+the index, or between any two commits. (@sec-version-control)
+
+**`git filter-repo`.** Rewrites history to remove content,
+producing new hashes for every commit from the offending one
+forward. The tool of last resort after protected data has been
+committed, and no substitute for notifying whoever is
+responsible for the data. (@sec-version-control)
+
+**`git init`.** Creates a repository in a directory. The
+`.gitignore` should be written before the first commit, not
+after. (@sec-version-control)
+
+**`git log` and `git show`.** Read the history: `log` lists
+commits, `show` prints one commit's message and its diff
+together. (@sec-version-control)
+
+**`git switch` and `git merge`.** Move between branches and
+rejoin them. A merge commit is the only commit with two parents,
+which is what records that two lines of work came back together.
+(@sec-version-control)
+
+**`git tag`.** Marks a particular commit permanently, such as
+the state of an analysis at submission. Cheap to place and
+expensive to omit. (@sec-version-control)
+
+**GitHub Actions.** GitHub's continuous-integration service,
+configured by YAML workflow files under `.github/workflows/`.
+(@sec-verification)
+
+**GitHub and GitLab.** The two principal forges. GitLab is
+frequently self-hosted by institutions that forbid pushing to a
+public forge, and a compendium's reproducibility machinery
+should be portable between them. (@sec-archiving)
 
 **`.gitignore`.** A file listing path patterns that git should
 not track, used to keep derived outputs, large data, and,
 critically, sensitive files out of the history.
 (@sec-version-control)
 
+**`groundhog.library()`.** Loads a package as it stood on a
+given date, a lighter alternative to a lockfile that
+reconstructs by date rather than by record. (@sec-dependencies)
 
-## I {.unnumbered}
+
+## I {.unnumbered .unlisted}
 
 **Image.** A frozen, read-only filesystem together with
 metadata, bundling an operating system, R, a set of packages,
@@ -167,6 +278,12 @@ installed computer, packaged so it can be shipped.
 rather than by a mutable name, so that a reference cannot
 silently point at different content later. (@sec-backends)
 
+**`install.packages()`.** Base R's installer. Pointed at a live
+repository it resolves 'the current version' to whatever is
+current on the day it runs, which is why a reproducible recipe
+points it at a dated snapshot or replaces it with a lockfile
+restore. (@sec-dependencies)
+
 **Integration test.** A check that several components behave
 correctly when composed into a pipeline, from raw input to final
 result. (@sec-testing)
@@ -176,20 +293,41 @@ because something it depends on, a file, an upstream target, a
 function, or a package, has changed. (@sec-pipelines)
 
 
-## L {.unnumbered}
+## K {.unnumbered .unlisted}
+
+**`knitr` and Sweave.** The engines that execute code inside a
+literate document. Sweave came first; `knitr` superseded it and
+underlies both R Markdown and Quarto's R support.
+(@sec-literate)
+
+
+## L {.unnumbered .unlisted}
 
 **Landmine.** A pattern in a document that makes the render
 succeed for its author and fail for a later reader, by reaching
 outside the captured and committed material. (@sec-literate)
+
+**LaTeX and TinyTeX.** The typesetting system a PDF render
+requires, and a small R-managed distribution of it. Belongs in
+the image rather than assumed on the host. (@sec-literate)
 
 **Layer.** Each instruction in an image's recipe produces one
 filesystem layer. An image is the stack of its layers, and
 identical layers are shared and cached across images.
 (@sec-containers)
 
+**`library()` and `require()`.** The two calls that attach a
+package to the current session. Both are scanned when a
+dependency check derives what the code uses, so a package loaded
+this way must be declared and pinned. (@sec-dependencies)
+
 **Linting.** Static analysis of source code for stylistic and
 likely-error patterns, performed by `lintr`, without running the
 code. (@sec-testing)
+
+**`lintr` and `styler`.** Static analysis and automatic
+reformatting for R source. Legibility is a validation feature:
+code nobody can read is code nobody can check. (@sec-testing)
 
 **Literate programming.** Writing narrative prose and executable
 code together in one source document, so the document is at once
@@ -201,7 +339,24 @@ the exact version, source repository, and content hash of every
 package in a project's library. (@sec-levels, @sec-dependencies)
 
 
-## O {.unnumbered}
+## M {.unnumbered .unlisted}
+
+**`make`.** Rebuilds targets whose modification time is older
+than a prerequisite's. Conservative in one direction and
+unreliable in the other: it will rebuild what did not need it,
+and miss a change that leaves timestamps untouched.
+(@sec-pipelines)
+
+
+## N {.unnumbered .unlisted}
+
+**Nix and Guix.** Declarative package managers that pin an
+entire dependency graph, from the system libraries upward, to a
+single revision. They reach a pinned environment from a recipe
+rather than from a built artifact. (@sec-backends)
+
+
+## O {.unnumbered .unlisted}
 
 **OCI image.** An image built to the Open Container Initiative
 specification, the common format that Docker, Podman, and
@@ -218,7 +373,7 @@ runtime. (@sec-archiving)
 against; the known correct answer. (@sec-testing)
 
 
-## P {.unnumbered}
+## P {.unnumbered .unlisted}
 
 **Package churn (code rot).** The gradual breakage of
 once-working code as the packages beneath it are updated over
@@ -233,6 +388,15 @@ than being shared across all of a user's work.
 Package Manager, from which packages are installed.
 (@sec-dependencies)
 
+**`pacman::p_load()`.** Loads packages and installs any that are
+missing. Convenient and a landmine in a sealed document: it
+reaches the network at render time and pins nothing.
+(@sec-literate)
+
+**pandoc.** The document converter a render invokes after the
+code has run, turning the executed markdown into the requested
+output format. (@sec-literate)
+
 **Persistent identifier (DOI).** A durable, resolvable name for
 a deposited artifact, such as a Digital Object Identifier, that
 continues to resolve even if the artifact moves.
@@ -242,6 +406,30 @@ continues to resolve even if the artifact moves.
 declaring its inputs and outputs, so that the whole can be
 re-executed by a single command that runs the steps in
 dependency order. (@sec-pipelines)
+
+**`pkg::fun()`.** A namespaced call, which uses a function
+without attaching its package. It still creates a dependency,
+and a scanner that looked only for `library()` would miss it.
+(@sec-dependencies)
+
+**Podman.** A daemonless, rootless container runtime that runs
+the same images as Docker. The usual answer where Docker Desktop
+licensing is a constraint. (@sec-backends)
+
+**`podman run`.** Starts a container without a root daemon,
+consuming the same image format Docker produces. Swapping the
+runtime changes the launcher and not the reproducibility level.
+(@sec-backends)
+
+**Posit Package Manager.** A package repository that serves
+dated snapshots and prebuilt binaries, so that an install run
+today and one run next year fetch the same versions.
+(@sec-dependencies)
+
+**`precommit`.** Runs checks before a commit is recorded,
+keeping trivia out of the history. It can be skipped, which is
+why it complements rather than replaces continuous integration.
+(@sec-testing)
 
 **Pre-commit hook.** A script that git runs automatically before
 a commit is recorded, used here to run the linter and the styler
@@ -270,12 +458,29 @@ yields a deterministic, reproducible environment.
 (@sec-backends)
 
 
-## R {.unnumbered}
+## Q {.unnumbered .unlisted}
+
+**Quarto and R Markdown.** The literate-document systems this
+book uses: prose and executable code in one source, rendered to
+HTML, PDF, and other formats. (@sec-literate)
+
+**`quarto render`.** Executes a document's code and produces its
+output formats. With `freeze` configured it may replay a cache
+instead of executing, which is why a gate that must exercise the
+code has to clear the cache first. (@sec-literate)
+
+
+## R {.unnumbered .unlisted}
 
 **`R CMD check`.** The standard R command that builds a package,
 runs its tests, and applies dozens of standardized checks; here
 it serves as a universal integrity gate on the whole compendium.
 (@sec-compendium, @sec-verification)
+
+**`rang`, `groundhog`, and `capsule`.** Lighter alternatives to
+a lockfile that reconstruct a package set from a date. Useful
+when no lockfile survives, and an approximation rather than a
+record. (@sec-dependencies)
 
 **Raw versus derived data.** Immutable original inputs versus
 the processed datasets regenerated from them by code.
@@ -294,6 +499,10 @@ on GitHub or GitLab, used for backup, distribution, and
 collaboration. `origin` is the conventional name of the primary
 remote. (@sec-version-control)
 
+**`remotes::install_github()`.** Installs a package from a git
+repository rather than a package repository. Reproducible only
+if pinned to a commit or a tag. (@sec-archiving)
+
 **Render gate.** A CI check that re-renders the compendium's
 report (an R Markdown or Quarto document) from source and fails
 the build if the render errors. (@sec-compendium,
@@ -307,6 +516,27 @@ and the resulting file itself. (@sec-literate)
 the scenes: `knitr` or the Quarto engine to run the code,
 `pandoc` to convert the result, and, for PDF, a LaTeX
 distribution to typeset it. (@sec-literate)
+
+**`renv` and `packrat`.** The current and superseded R
+dependency managers. Both pair a project-local library with a
+lockfile; `renv` rebuilt the interface around a small set of
+verbs and a shared cache. (@sec-dependencies)
+
+**`renv::init()`.** Creates a project-local library and
+lockfile, taking a project from unpinned to pinned packages.
+(@sec-dependencies)
+
+**`renv::restore()`.** Reads the lockfile and installs the
+recorded versions into the library. The command a collaborator
+runs on a fresh clone. (@sec-dependencies)
+
+**`renv::snapshot()`.** Reads the library and writes what it
+finds into the lockfile. Snapshot writes; restore reads.
+(@sec-dependencies)
+
+**`renv::status()`.** Reports disagreement between the library
+and the lockfile, and is the first diagnostic when a restore
+appears not to have worked. (@sec-dependencies)
 
 **Replicability.** Obtaining consistent findings from a new
 study, with new data, aimed at the same question. (@sec-crisis)
@@ -334,9 +564,18 @@ re-run. (@sec-crisis, @sec-compendium)
 reinstalling exactly the packages it records.
 (@sec-dependencies)
 
+**`rix::rix()`.** Generates a `default.nix` pinning an R
+version, a package set, and the `nixpkgs` revision that
+determines everything beneath them. (@sec-backends)
+
 **RNG kind.** The random-number algorithm in force, set by
 `RNGkind()`. Two runs with the same seed but a different kind
 draw different numbers. (@sec-levels)
+
+**`RNGkind()`.** Selects the random-number generator algorithm.
+Its `sample.kind` default changed in R 3.6.0, so the same seed
+draws different numbers under different R versions unless the
+kind is recorded. (@sec-crisis)
 
 **Robustness.** Reaching the same qualitative conclusion from
 the same data under different but defensible analytical choices.
@@ -365,7 +604,11 @@ Podman, or Apptainer. The runtime is interchangeable when the
 image is a standard OCI image. (@sec-backends)
 
 
-## S {.unnumbered}
+## S {.unnumbered .unlisted}
+
+**`saveRDS()` and `readRDS()`.** Write and read a single R
+object to a file. The ordinary way to record the baseline that a
+reproducibility test compares against. (@sec-testing)
 
 **Sealed render.** A document in which every reported number and
 figure is regenerated from the code that produces it on each
@@ -377,6 +620,15 @@ starting point that makes a random draw repeatable; the RNG kind
 is the generator algorithm that turns that seed into numbers,
 and its default has changed across R versions. (@sec-crisis)
 
+**`sessionInfo()`.** Reports the R version, platform, and
+attached packages of the current session. A record of what ran,
+not a mechanism for making it run again. (@sec-levels)
+
+**`set.seed()`.** Fixes the starting point of the random-number
+stream so that a stochastic result repeats. Necessary but not
+sufficient: the generator algorithm must be fixed as well.
+(@sec-crisis)
+
 **SIF.** The Singularity Image Format, a single-file archive
 that Apptainer produces from an image, suitable for depositing
 alongside a compendium. (@sec-backends)
@@ -384,6 +636,10 @@ alongside a compendium. (@sec-backends)
 **Silent default.** A behavior that software applies unless told
 otherwise, and that can change between software versions without
 any error or warning to the analyst. (@sec-crisis)
+
+**Snakemake and Nextflow.** Pipeline tools from the
+bioinformatics community, language-agnostic and built for
+cluster execution. (@sec-pipelines)
 
 **Snapshot.** The act of scanning a project, resolving the
 versions currently installed, and writing them into the
@@ -406,7 +662,7 @@ output no longer reflects its inputs. (@sec-pipelines)
 consistent layout, performed by `styler`. (@sec-testing)
 
 
-## T {.unnumbered}
+## T {.unnumbered .unlisted}
 
 **Tag.** A permanent, human-readable name for one specific
 commit, used to mark a milestone such as a manuscript
@@ -423,6 +679,28 @@ output it produces. The word is shared by Make and `targets`,
 with a shift of emphasis: for Make a target is a file, for
 `targets` it is more often an R object. (@sec-pipelines)
 
+**`targets`.** A function-oriented pipeline tool for R that
+hashes function bodies and R objects rather than file
+timestamps, so it detects changes a Makefile can miss.
+(@sec-pipelines)
+
+**`tar_make()`.** Runs a `targets` pipeline, rebuilding only the
+targets that are out of date and everything downstream of them.
+(@sec-pipelines)
+
+**`tar_outdated()`.** Reports which targets `tar_make()` would
+rebuild, without rebuilding them. The way to check a prediction
+about the dependency graph before paying for it.
+(@sec-pipelines)
+
+**`tar_target()`.** Declares one node of a `targets` pipeline: a
+name, the expression that computes it, and optionally a format
+such as `file`. (@sec-pipelines)
+
+**`tar_visnetwork()`.** Draws the pipeline's dependency graph,
+derived from the code rather than from a hand-maintained
+declaration. (@sec-pipelines)
+
 **The Five Pillars.** The five artifacts a compendium manages,
 one per capture point: the `Dockerfile`, `renv.lock`,
 `.Rprofile`, the source code, and the data. (@sec-compendium)
@@ -436,13 +714,17 @@ stack an analysis has been secured. (@sec-levels)
 framework in which a test file is a plain script of bare,
 top-level expectation calls [@vanderloo2020]. (@sec-testing)
 
+**`tinytest` and `testthat`.** R testing frameworks. `tinytest`
+has no dependencies and its test files are plain scripts of bare
+expectations, which is why this book uses it. (@sec-testing)
+
 **Two-layer team model.** A division of a project into a
 slow-moving environment layer, fixed once by a team lead, and a
 fast-moving package layer, extended by every contributor.
 (@sec-archiving)
 
 
-## U {.unnumbered}
+## U {.unnumbered .unlisted}
 
 **Union model.** The rule that the project lockfile records the
 union of every package any contributor has installed, so that a
@@ -459,7 +741,7 @@ rebuilding it would reproduce the stored output and can be
 skipped. (@sec-pipelines)
 
 
-## V {.unnumbered}
+## V {.unnumbered .unlisted}
 
 **Validation.** Confirming that the captured inputs actually
 suffice, by rebuilding and re-running. Validation does not pin
@@ -471,7 +753,7 @@ computational outputs against a recorded baseline; passing it is
 what the ladder calls level L3. (@sec-verification)
 
 
-## W {.unnumbered}
+## W {.unnumbered .unlisted}
 
 **Workflow.** The file, written in YAML, that tells the CI
 service what to do: which events trigger it, what environment to
@@ -484,9 +766,18 @@ as they currently exist on disk, as opposed to the versions
 recorded in the history. (@sec-version-control)
 
 
-## Z {.unnumbered}
+## Z {.unnumbered .unlisted}
 
 **Zenodo.** A general-purpose research repository, operated at
 CERN, that mints a DOI for any deposited file set.
 (@sec-archiving)
+
+**zzcollab.** The framework this book uses to compose the
+reproducibility tools into one system, organized around the
+levels ladder. (@sec-compendium)
+
+**`zzrenvcheck::check_packages()`.** Checks the dependency triad
+and can repair it, writing a missing package into `DESCRIPTION`
+and injecting a resolved entry into the lockfile.
+(@sec-dependencies)
 
