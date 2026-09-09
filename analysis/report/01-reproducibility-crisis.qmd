@@ -130,34 +130,34 @@ to the analyst and are automated by no tool.
 New to these terms? Each is defined again on first
 use.
 
-- **Computational reproducibility**: obtaining the
+- **Computational reproducibility.** Obtaining the
   same numerical results from the same data and the
   same code, on another machine or at a later time.
-- **Replicability**: obtaining consistent findings
+- **Replicability.** Obtaining consistent findings
   from a new study, with new data, aimed at the same
   question.
-- **Robustness**: reaching the same qualitative
+- **Robustness.** Reaching the same qualitative
   conclusion from the same data under different but
   defensible analytical choices.
-- **Determinant stack**: the layered set of things a
+- **Determinant stack.** The layered set of things a
   computational result depends on, from the hardware
   and operating system, through the system and
   numerical libraries, the language runtime, and the
   package versions, up to the session configuration
   and the code itself.
-- **Silent default**: a behavior that software
+- **Silent default.** A behavior that software
   applies unless told otherwise, and that can change
   between software versions without any error or
   warning to the analyst.
-- **Seed and RNG kind**: the seed (`set.seed`) is the
+- **Seed and RNG kind.** The seed (`set.seed`) is the
   fixed starting point that makes a random draw
   repeatable; the RNG kind is the generator algorithm
   that turns that seed into numbers, and its default
   has changed across R versions.
-- **Package churn (code rot)**: the gradual breakage
+- **Package churn (code rot).** The gradual breakage
   of once-working code as the packages beneath it are
   updated over time.
-- **Research compendium**: the self-describing bundle
+- **Research compendium.** The self-describing bundle
   of code, data, and text that travels as the unit of
   a reproducible analysis, developed in
   @sec-compendium.
@@ -236,6 +236,9 @@ finding does not replicate. Why is that conclusion
 premature, and which of the studies cited above speaks
 most directly to the colleague's situation?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The colleague has demonstrated, at most, a failure of
 computational reproducibility: the same code and data
 did not regenerate the same number, most likely
@@ -249,6 +252,7 @@ at scale. Until the environment is reconstructed and
 the code is shown either to regenerate the original
 number or to contain a genuine error, no claim about
 replication is warranted.
+:::
 :::
 
 ## Three words that are not synonyms
@@ -285,6 +289,60 @@ machine. A finding can replicate across laboratories
 while no single analysis in the set is computationally
 reproducible. And a result can be reproducible yet
 fragile to a defensible change in model specification.
+
+The three terms sort cleanly once one notices that they
+answer the same question about two different things: what
+was held fixed, the data or the analysis. @fig-three-words
+lays the possibilities out as a grid, a presentation the
+Turing Way has made the common one [@turingway2022]. The
+fourth cell, in which both the data and the analysis
+change, is generalizability, which this book names here for
+completeness and does not treat.
+
+```{r}
+#| label: fig-three-words
+#| fig-cap: 'Reproducibility, replicability, and robustness distinguished by what is held fixed. The columns vary the data and the rows vary the analysis, so each cell names the claim supported when a consistent result survives that particular change. Only the shaded cell, in which both the data and the analysis are held fixed, is the subject of this book. The grid presentation follows the Turing Way [@turingway2022]; the definitions are those of the National Academies [@nas2019] adopted above.'
+#| fig-alt: 'A two-by-two grid. The columns are same data and new data; the rows are same analysis and varied analysis. The cell where the data and the analysis are both the same is shaded and labeled reproducibility, re-execution, which is described as the subject of this book. Same data with a varied analysis is labeled robustness. New data with the same analysis is labeled replicability. New data with a varied analysis is labeled generalizability and marked as not treated in this book.'
+#| fig-width: 6.4
+#| fig-height: 3.6
+
+library(ggplot2)
+library(tibble)
+
+grid <- tibble(
+  data     = rep(c('Same data', 'New data'), each = 2),
+  analysis = rep(c('Same analysis', 'Varied analysis'), 2),
+  term = c('Reproducibility',
+           'Robustness',
+           'Replicability',
+           'Generalizability'),
+  gloss = c('the same code re-run',
+            'defensible analytic\nchoices varied',
+            'a new study of the\nsame question',
+            'not treated in\nthis book'),
+  focus = c(TRUE, FALSE, FALSE, FALSE)
+)
+
+grid$data <- factor(grid$data, levels = c('Same data', 'New data'))
+grid$analysis <- factor(grid$analysis,
+                        levels = c('Varied analysis', 'Same analysis'))
+
+ggplot(grid, aes(x = data, y = analysis)) +
+  geom_tile(aes(fill = focus), color = 'white', linewidth = 2) +
+  geom_text(aes(label = term), vjust = -0.6,
+            fontface = 'bold', size = 3.9) +
+  geom_text(aes(label = gloss), vjust = 1.25, size = 3,
+            lineheight = 0.95, color = 'grey25') +
+  scale_fill_manual(values = c('TRUE' = '#cfe6e3',
+                               'FALSE' = '#f2f2f2'),
+                    guide = 'none') +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 10) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_text(face = 'bold', size = 9.5)
+  )
+```
 
 The idea that computational work should be
 reproducible in the narrow, re-execution sense is
@@ -416,6 +474,9 @@ lockfile. Setting a seed changes nothing. Which layer
 of the determinant stack is the most likely culprit,
 and why does the lockfile not protect against it?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The most likely culprit is the numerical-library
 layer, specifically the BLAS and LAPACK
 implementation that performs the eigendecomposition
@@ -431,6 +492,7 @@ L2 rather than L1, and are fixed only by controlling
 the environment itself, the subject of @sec-containers.
 Setting a seed does not help because the difference is
 not stochastic.
+:::
 :::
 
 ## A reproducible analysis can still be wrong
@@ -647,6 +709,214 @@ responsibility, not the model's.
    sentences, explain why the two papers measure
    different things, and which one is the more relevant
    evidence for the argument of this book.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. Several
+exercises in this chapter ask the reader to work with an
+article or a study of their own choosing, so they have no
+single correct answer. For those the box says what a good
+answer establishes, and names the failure modes worth
+looking for.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+No single correct answer, since it depends on the article
+chosen. What a good answer establishes is a classification
+and a placement, both defended.
+
+On the classification, the discipline is to ask what kind
+of thing went wrong. A missing package, a package that
+installs but at a newer version, a hard-coded path, a file
+that was never deposited, a script that assumes a working
+directory: these are computational failures, and they are
+the ones this book addresses. A number that regenerates
+exactly but that you believe was the wrong number to
+compute is a statistical disagreement, and no amount of
+environment capture touches it. Most readers find that
+their failures are overwhelmingly of the first kind, which
+is the point of the exercise and matches what Trisovic and
+colleagues measured at scale [@trisovic2022].
+
+On the placement, the honest default for a deposited
+analysis is L0. Code and data that can be located and
+downloaded are locatable, and that is what most deposits
+supply. A deposit that also carries a lockfile is L1; one
+carrying a container recipe is L2; one carrying evidence
+that the outputs were regenerated is L3. Note that the
+rung is set by what the authors deposited, not by whether
+the code happened to run on your machine. An analysis can
+be L0 and still run, because you were lucky, and it can be
+L1 and still fail, because the lockfile pinned packages
+and something below them moved.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+No single correct answer, since it depends on the study.
+What a good answer establishes is that the three
+dimensions are independent, which is easiest to see by
+writing three sentences that could each be true while the
+other two are false.
+
+A serviceable template. *Reproducibility fails* if a
+reader with the authors' own data and code cannot
+regenerate the published numbers. *Replicability fails*
+if a new cohort, collecting its own data to answer the
+same question, does not find the effect. *Robustness
+fails* if the effect disappears when a competent analyst
+makes a different but defensible modeling choice, a
+different adjustment set, a different handling of missing
+data, a different cut point.
+
+On which failure is most damaging to the clinical
+conclusion, the defensible answer is replication, and the
+reasoning matters more than the answer. A reproducibility
+failure impugns the record but leaves open whether the
+finding is true. A robustness failure shows the finding
+depends on a choice, which weakens it without refuting
+it. A replication failure is evidence that the effect is
+not there. A reader who argues instead that
+reproducibility is most damaging, on the grounds that it
+undermines the ability to evaluate the other two at all,
+has made a reasonable case and should say so explicitly.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+Yes, the choice of sampler still changes the result, and
+for the same reason as in the worked example. Both
+`sample(1:10)` and a bootstrap resample,
+`sample(x, replace = TRUE)`, obtain their randomness by
+drawing from the same underlying generator, so a change
+of `sample.kind` changes the index sequence and therefore
+the resample. Substituting `sample(x, length(x),
+replace = TRUE)` for the shuffle in `draw_sample()` and
+calling it under `Rounding` and `Rejection` at seed 123
+produces two different resamples.
+
+The implication for a bootstrap confidence interval is
+the substantive part of the exercise. The interval is a
+function of the resamples, so two R versions straddling
+3.6.0 produce different intervals from the same seed, the
+same data, and the same code. The difference is small
+when the number of replicates is large, since both
+intervals estimate the same quantity and the Monte Carlo
+error shrinks, but it is not zero, and it is enough to
+move a reported bound in its last printed digits. If a
+published interval is quoted as excluding the null by a
+narrow margin, a rerun under the other sampler can move
+it across that boundary.
+
+The lesson to draw is that a seed is not a sufficient
+record of a stochastic analysis. The seed pins the
+starting point, but the RNG kind determines what the
+generator does with it, and the RNG kind is a session
+configuration that neither a lockfile nor a container
+necessarily fixes. An analysis that depends on a
+bootstrap should record `RNGkind()` alongside the seed,
+or set it explicitly.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+Answers will vary in their justification, and more than
+one choice is defensible for each archetype. What a good
+answer establishes is that the archetypes stress
+different layers, so a single reproducibility recipe
+serves them unevenly.
+
+A defensible set. For a **data-analysis project**, the
+data itself, since the analysis is worthless without the
+extract it ran on and that extract is often the artifact
+least likely to travel. For a **manuscript**, the
+rendering toolchain, since the deliverable is a document
+and the numbers in it must be regenerated rather than
+retyped. For an **R package**, the declared dependency
+set, since the package is consumed by other code and its
+correctness is a claim about behavior under a stated
+environment. For a **simulation study**, the random-number
+discipline, since the entire output is a function of the
+seed and the generator, as this chapter's worked example
+shows. For a **blog**, the pinned package versions, since
+posts are written once and read for years while the
+packages beneath them move.
+
+A reader who answers 'the data' for every archetype has
+not made an error so much as missed the exercise, which
+is to notice that the binding constraint moves.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+Answers will vary. What a good answer establishes is that
+reproducibility is a property of re-execution and
+carries no claim about correctness.
+
+A clean construction: a cohort analysis computes
+thirty-day readmission but the cohort was defined with an
+off-by-one error in the date window, so patients
+readmitted on day thirty are excluded. The analysis is
+containerized, its packages pinned, its outputs verified
+against recorded hashes, and it regenerates the same
+number on every machine and every rerun. It is L3. It is
+also wrong, and it will remain wrong, identically, for as
+long as anyone runs it. Other serviceable examples are a
+sign error in a contrast, a covariate adjusted for that
+sits on the causal pathway, and a survival analysis that
+treats censoring as an event.
+
+What a reader needs beyond reproducibility to detect the
+error is subject-matter review of the code and the design:
+someone who knows what thirty-day readmission means
+reading the cohort definition, or a unit test asserting
+the boundary case against a hand-computed answer. This is
+the point at which @sec-testing takes over from
+environment capture, and it is why the book treats
+validation as a separate register from capture. Note the
+uncomfortable corollary: reproducibility makes an error
+easier to find once someone suspects it, and does nothing
+to make anyone suspect it.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+The two papers measure different things because they
+address two of the three words this chapter separates.
+
+The Open Science Collaboration ran new studies collecting
+new data, and asked whether the original findings held
+[@opensciencecollaboration2015]. That is *replication*: a
+statement about the durability of the science. Trisovic
+and colleagues took deposited code and data and asked
+whether it would execute at all [@trisovic2022]. That is
+*reproducibility* in the narrow sense: a statement about
+re-execution, in which the science is not in question
+because it never got as far as being evaluated.
+
+For the argument of this book, Trisovic is the more
+relevant evidence, and it is worth being explicit about
+why, since the replication literature is the more famous.
+This book is about the computational floor. It has
+nothing to say about whether an effect is real, and its
+whole claim is that a large fraction of deposited
+analyses cannot be re-executed, which is a problem
+soluble by engineering rather than by more studies. The
+Open Science Collaboration measures a problem this book
+does not address and cannot fix.
+
+The stronger version of the answer notes that the two are
+not independent in practice: a field that cannot
+re-execute its own analyses cannot easily diagnose why a
+replication failed, because it cannot establish what the
+original analysis actually did.
+:::
 
 ## Further reading
 

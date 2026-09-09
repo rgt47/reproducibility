@@ -39,7 +39,17 @@ A small practical recommendation.
 ## Check your understanding: example
 
 A short question testing comprehension of the just-read
-material. Click to expand the answer.
+material. Expand this box to read the question, attempt an
+answer, and only then expand the answer nested inside it.
+The two are separated deliberately: the attempt is what
+makes the check worth doing.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The worked answer, with the reasoning that leads to it
+rather than the conclusion alone.
+:::
 :::
 
 ::: {.callout-warning}
@@ -69,6 +79,48 @@ ladder, and the reader is trained to name the rung:
   usually in a container.
 - **L3, verified.** The recorded computational outputs have
   been regenerated and shown to match.
+
+## The two datasets
+
+The book works two datasets, and they have different jobs.
+Which one a chapter uses is not arbitrary, so it is worth
+setting out the division once.
+
+**`survival::diabetic`** is real. It holds 394 records from
+a randomized trial of laser photocoagulation for diabetic
+retinopathy, with one row per eye and two eyes per patient.
+It ships with every R installation, because `survival` is a
+recommended package, so no chapter that uses it adds a
+dependency the reader must install or the lockfile must
+pin. It carries the computation: where the book fits a
+model, draws a figure, or reports a number, that number
+comes from real data and the reader can regenerate it.
+
+**The incident-diabetes cohort is synthetic**, and is
+written by `analysis/scripts/simulate_cohort.R` from a
+fixed seed. It carries two threads the real data cannot.
+The first is confidentiality: the extract holds record
+numbers, names, and dates of birth, so the chapter on
+version control can show a file that must never enter a
+repository's history. No public dataset contains protected
+information, by construction, so that lesson requires an
+invented one. The second is data validation: the extract
+carries deliberate defects, two date formats in one column,
+a duplicated record, an implausible age, an inconsistently
+coded sex, and missing outcomes, so that the tests in
+@sec-testing have something to catch. Clean data would have
+to be broken on purpose in any case.
+
+The synthetic choice is not a compromise, and the book
+would make it again with real data available. A committed
+generator with a fixed seed is *more* reproducible than a
+downloaded extract: it has no external dependency, no link
+rot, and no access control, and a reader can regenerate it
+byte for byte in a second. What it gives up is friction.
+Invented messiness is tidier and stranger than the
+messiness of an actual registry export, and a reader who
+has only ever met generated data will be surprised by their
+first real one.
 
 ## Cross-references
 

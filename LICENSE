@@ -1,2 +1,40 @@
-YEAR: 2026
-COPYRIGHT HOLDER: Ronald G. Thomas
+Reproducible Research for the Health Sciences
+Copyright (c) 2026 Ronald G. Thomas
+
+This repository carries two licenses, because it holds two
+kinds of material.
+
+PROSE, FIGURES, AND TABLES
+--------------------------
+The text of the book, together with its figures and tables,
+is licensed under the Creative Commons
+Attribution-NonCommercial-ShareAlike 4.0 International
+License (CC BY-NC-SA 4.0).
+
+You are free to share and adapt this material, including
+excerpting chapters for a course, provided you give
+appropriate attribution, do not use the material for
+commercial purposes, and distribute any adaptation under
+this same license.
+
+Full license text:
+  https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+Human-readable summary:
+  https://creativecommons.org/licenses/by-nc-sa/4.0/
+
+CODE
+----
+All code in this repository, including the code samples
+printed in the book, the R package sources, and the build
+and container configuration, is dedicated to the public
+domain under Creative Commons CC0 1.0 Universal (CC0 1.0).
+
+You may copy code from this book into your own work,
+including commercial work, without attribution and without
+inheriting the ShareAlike condition that applies to the
+prose.
+
+Full license text:
+  https://creativecommons.org/publicdomain/zero/1.0/legalcode
+Human-readable summary:
+  https://creativecommons.org/publicdomain/zero/1.0/

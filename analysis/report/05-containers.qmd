@@ -273,7 +273,7 @@ container by accident, so I restarted it and the file
 was back. Docker must have a recovery feature.' What is
 actually happening, in the vocabulary of this section?
 
-::: {.callout-note collapse=true}
+::: {.callout-note icon=false collapse=true}
 ## Answer
 
 There is no recovery feature. A container is a running
@@ -357,6 +357,74 @@ names not 'whatever `4.4.0` points to' but one specific,
 byte-identical image that the digest will denote
 forever. Pinning the digest is the difference between a
 `FROM` line that is a promise and one that is a hope.
+
+@fig-tag-digest follows one unchanged recipe across a
+year to show what the difference costs. The recipe is not
+edited at any point in either row; the only thing that
+varies is whether its `FROM` line names the tag or the
+digest. Note that nothing in the upper row is an error or
+a misconfiguration on the maintainer's part. Repointing a
+tag to patch a security flaw is the correct thing for
+them to do, which is exactly why a tag cannot carry a
+reproducibility claim.
+
+```{r}
+#| label: fig-tag-digest
+#| fig-cap: 'One unchanged recipe built repeatedly over a year, under a tag and under a digest. The upper row builds on whatever the tag currently points at, so a maintainer rebuild in April and another in September silently change the ground the analysis stands on, giving three different environments from identical text. The lower row names a digest and receives the same bytes at every build. The maintainer rebuilds are ordinary maintenance, not mistakes: the point is that a mutable pointer cannot carry an immutable claim.'
+#| fig-alt: 'Two horizontal timelines running from January to December. The upper timeline, labeled FROM rocker/r-ver colon 4.4.0, is divided into three differently colored segments broken at April and September, marked as maintainer rebuilds, and annotated three environments from one recipe. The lower timeline, labeled FROM rocker/r-ver at sha256, is a single unbroken segment of one color across the whole year, annotated one environment, always.'
+#| fig-width: 7
+#| fig-height: 2.6
+
+library(ggplot2)
+library(tibble)
+
+spans <- tibble(
+  row = c('FROM rocker/r-ver:4.4.0',
+          'FROM rocker/r-ver:4.4.0',
+          'FROM rocker/r-ver:4.4.0',
+          'FROM rocker/r-ver@sha256:6f05...'),
+  xmin = c(0, 3.5, 8.5, 0),
+  xmax = c(3.5, 8.5, 12, 12),
+  build = c('build 1', 'build 2', 'build 3', 'build 1')
+)
+spans$row <- factor(spans$row,
+                    levels = c('FROM rocker/r-ver@sha256:6f05...',
+                               'FROM rocker/r-ver:4.4.0'))
+
+ggplot(spans) +
+  geom_rect(aes(xmin = xmin, xmax = xmax,
+                ymin = as.numeric(row) - 0.26,
+                ymax = as.numeric(row) + 0.26,
+                fill = build),
+            color = 'white', linewidth = 1.4) +
+  scale_fill_manual(values = c('build 1' = '#14746f',
+                               'build 2' = '#7fb1ad',
+                               'build 3' = '#c9e2df'),
+                    guide = 'none') +
+  scale_y_continuous(breaks = 1:2,
+                     labels = levels(spans$row),
+                     limits = c(0.45, 2.95)) +
+  scale_x_continuous(breaks = c(0, 3.5, 8.5, 12),
+                     labels = c('Jan', 'Apr', 'Sep', 'Dec')) +
+  annotate('text', x = 3.5, y = 2.42, label = 'maintainer\nrebuild',
+           size = 2.6, lineheight = 0.95, color = 'grey25') +
+  annotate('text', x = 8.5, y = 2.42, label = 'maintainer\nrebuild',
+           size = 2.6, lineheight = 0.95, color = 'grey25') +
+  annotate('text', x = 12.15, y = 2, hjust = 0,
+           label = 'three environments\nfrom one recipe',
+           size = 2.7, lineheight = 0.95, color = '#a33') +
+  annotate('text', x = 12.15, y = 1, hjust = 0,
+           label = 'one environment,\nalways',
+           size = 2.7, lineheight = 0.95, color = 'grey25') +
+  coord_cartesian(xlim = c(0, 16.6), clip = 'off') +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 9.5) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.text.y = element_text(family = 'mono', size = 8, hjust = 1)
+  )
+```
 
 The second refinement concerns what happens inside the
 image when it installs packages. An installer pointed at
@@ -547,7 +615,7 @@ days, always at the boundaries between days. Which
 environment variable is the likely culprit, and why
 does pinning it in the image resolve the disagreement?
 
-::: {.callout-note collapse=true}
+::: {.callout-note icon=false collapse=true}
 ## Answer
 
 The likely culprit is `TZ`, the time zone. If the image
@@ -850,6 +918,252 @@ contributions, and it is not one to delegate.
    most likely cause, and explain why a container alone,
    without the lockfile restored inside it, does not
    guarantee identical packages.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. The first
+asks the reader to inspect an image on their own machine, so
+the values will vary; the reasoning is what the box records.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+The tag and the digest are found together:
+
+```bash
+docker pull rocker/r-ver:4.4.0
+docker inspect --format='{{index .RepoDigests 0}}' rocker/r-ver:4.4.0
+```
+
+The tag is `rocker/r-ver:4.4.0`; the digest is the
+`sha256:...` string, and it will differ from any value
+printed here.
+
+**What can change under the tag.** A tag is a mutable
+label, a name someone chose to point at an image. The
+maintainer can rebuild `4.4.0` to patch a system library,
+pick up a security update to the base Ubuntu layer, or
+correct a packaging mistake, and republish it under the
+same tag. Everything about the image can change: its
+system libraries, its preinstalled packages, its locale
+data, even its R patch level. What cannot change is the
+image named by the digest, because the digest is a content
+hash: an altered image hashes differently and is therefore
+a different image by construction, not by convention.
+
+A reproducible recipe pins the digest because it wants the
+second guarantee rather than the first. Pinning the tag
+records an *intention* about which image to use; pinning
+the digest records the image. The cost is that a
+digest-pinned recipe does not receive security updates
+silently, which is usually the right trade for an
+analysis and the wrong one for a production service.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+**Every reason the recipe fails to reach L2.**
+
+1. `:latest` is the most mutable tag there is. The image
+   the recipe resolves to changes without notice, so two
+   builds of the identical Dockerfile can produce
+   different environments.
+2. A plain `install.packages()` draws from the live
+   repository, so it installs whatever is current on the
+   day of the build. The package versions are not pinned
+   at all, which means the recipe does not even reach L1.
+3. No lockfile is restored, so there is no record of what
+   was installed even after the fact.
+4. The determinism variables are absent: no `LANG`, no
+   `TZ`, no thread count. The locale and time zone are
+   inherited from the base and can shift with it.
+
+The first two are the ones to rewrite:
+
+```docker
+FROM rocker/tidyverse:4.4.0@sha256:6f05...8eac
+
+RUN Rscript -e "install.packages('renv'); renv::restore()"
+```
+
+The first line pins the image by digest, so the base
+cannot move. The second restores from the committed
+lockfile rather than resolving against the live
+repository, so the package set is the recorded one. A
+fuller repair would add the locale, time-zone, and
+thread-count variables, but the exercise asks for the two
+lines that most need fixing, and these are the two that
+carry the recipe from unpinned to pinned.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+**Data analysis:** tidyverse, because the analysis draws
+most of its stack from the base rather than the lockfile
+and the base saves the install. **Manuscript:**
+publishing, because rendering to PDF needs the LaTeX
+toolchain that `rocker/verse` carries and the lighter
+bases do not. **R package:** minimal, because a package
+must be checked against a clean environment carrying only
+its declared dependencies, and a rich base can mask a
+missing declaration. **Simulation:** minimal, because a
+simulation typically needs a small numeric stack and image
+size matters when the image is pulled onto many cluster
+nodes. **Blog:** tidyverse or publishing, depending on
+whether posts render to HTML alone.
+
+**The two genuinely arguable cases.**
+
+*Data analysis.* Tidyverse buys a fast build and a base
+whose contents are already tested together. Minimal buys a
+smaller image and, more importantly, honesty: everything
+the analysis uses comes through the lockfile, so the
+lockfile is a complete record rather than a supplement to
+an opaque base. The trade is build convenience against
+completeness of the record.
+
+*Blog.* Publishing carries LaTeX, which a blog rendering
+only to HTML never uses, and it is a large image to pull
+and store for that. Tidyverse is lighter but leaves the
+blog unable to render a PDF version of a post without a
+rebuild. The trade is image size against format
+optionality, and it turns on whether any post will ever
+need PDF.
+
+The general shape: a heavier base is faster to start with
+and less honest about what the analysis actually depends
+on.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+```r
+library(tibble)
+dates <- c('01/02/2026', '03/04/2026', '05/06/2026')
+tibble(
+  written     = dates,
+  as_us       = format(as.Date(dates, '%m/%d/%Y'), '%d %B %Y'),
+  as_european = format(as.Date(dates, '%d/%m/%Y'), '%d %B %Y')
+)
+```
+
+Every one of the three parses successfully under both
+conventions and means something different under each:
+`01/02/2026` is 2 January under the day-first reading and
+1 February under the month-first reading. No error is
+raised, because both readings are valid dates. This is the
+same failure mode as the decimal-mark table earlier in the
+chapter, and it is worse in one respect: the decimal-mark
+case produces visibly implausible magnitudes, whereas a
+swapped date is simply a different plausible date.
+
+The dates that are *silently* swapped are exactly those
+where both components are twelve or under, which is
+roughly a third of a calendar year. A date such as
+`25/12/2026` fails to parse under the month-first
+convention and so announces itself; `01/02/2026` does not.
+The dangerous cases are the ones that do not error.
+
+**The relation to `TZ` and locale.** Neither variable
+changes how an explicit format string parses, so a script
+that writes `%d/%m/%Y` is safe under any locale. They bite
+where the format is *inferred*: a locale-dependent parser,
+a spreadsheet export, or a `read_csv()` guessing a column
+type will resolve the ambiguity differently under
+different locale settings. Fixing `LANG` and `TZ` in the
+image removes that variability, which is why the chapter
+sets them. The stronger discipline is to state the format
+explicitly and never rely on inference, and to prefer ISO
+8601 in any file the analysis writes, since `2026-02-01`
+is unambiguous under every convention.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+**Why the digits move.** Floating-point addition is not
+associative: adding a long column of numbers left to right
+can give a slightly different answer from adding it in
+pairs and combining, because each intermediate result is
+rounded. A multithreaded numerical library splits the sum
+across threads and combines the partial results, and the
+order in which the partials arrive depends on the thread
+count and on scheduling. So the same data can produce
+answers differing in the last few digits between a
+one-thread and an eight-thread run, and sometimes between
+two eight-thread runs. A bootstrap interval or a
+mixed-model estimate is built on many such reductions, so
+the difference propagates to the reported bounds.
+
+Setting `OMP_NUM_THREADS=1` removes the variability by
+removing the parallelism: there is one summation order and
+it is the same every time.
+
+**What is traded away.** Speed, and potentially a great
+deal of it. A mixed model on a large dataset, or a
+bootstrap with many replicates, can run several times
+faster across eight threads. Fixing the thread count to
+one converts a determinism problem into a wall-clock
+problem.
+
+**Where the trade is worth making.** Any analysis whose
+outputs will be verified against recorded values, which is
+to say anything reaching for L3, since the verification
+compares numbers and the numbers must be stable. The
+concrete case is a regulatory submission: a fixed thread
+count for the final analysis makes the reported estimates
+reproducible bit for bit, and the extra hours are
+irrelevant against the cost of a discrepancy an auditor
+cannot explain. For exploratory work during development,
+the trade is usually not worth making.
+
+A refinement worth mentioning: one can develop with
+threads and fix the count only for the final verified run,
+which recovers most of the speed and all of the
+determinism where it matters.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**The most likely cause** is that `renv::restore()` did
+not restore into the library the session is actually
+using, or did not run against the lockfile you think it
+did. In practice this resolves to one of a few things: the
+project was opened from a directory where the lockfile is
+absent, so `restore()` had nothing to read; the container
+mounts a host `renv` cache or library that shadows the
+project library; `RENV_PATHS_LIBRARY` points somewhere
+unexpected inside the image; or the lockfile itself was
+not committed, so the collaborator restored an older
+version of it.
+
+The diagnostic sequence is `renv::status()` to see whether
+the library and the lockfile agree, then `.libPaths()` to
+see which library is in force, then `renv::project()` to
+confirm which project `renv` believes it is in. Between
+them these locate all four causes.
+
+**Why the container alone does not guarantee identical
+packages.** A container pins the environment: the
+operating system, the system libraries, and the R runtime.
+The packages installed into the image at build time are
+pinned by the image, but any package the analysis installs
+or restores *afterward* is not, because it is resolved at
+run time against whatever the lockfile or the repository
+then says. The image and the lockfile do different jobs,
+and the chapter's framing is exactly this: the image is
+the L1-to-L2 step and the lockfile is the L0-to-L1 step.
+Skipping the lower rung does not become safe because you
+climbed the higher one.
+
+The compact statement: the container guarantees the same
+*floor*, the lockfile guarantees the same *packages*, and
+an analysis needs both.
+:::
 
 ## Further reading
 

@@ -61,6 +61,7 @@ book:
     - references.qmd
 
   appendices:
+    - glossary.qmd
     - credits.qmd
     - colophon.qmd
 

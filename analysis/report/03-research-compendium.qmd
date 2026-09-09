@@ -119,34 +119,34 @@ nonetheless the wrong shape for the work.
 ::: {.callout-note}
 ## The vocabulary of this chapter
 
-- **Research compendium**: a single self-describing
+- **Research compendium.** A single self-describing
   directory bundling the code, data, prose, and
   environment record of an analysis, organized by
   convention so that it can be located and re-run.
-- **R-package skin**: the minimal set of files
+- **R-package skin.** The minimal set of files
   (`DESCRIPTION`, `NAMESPACE`, an `R/` directory) that
   makes a directory a valid R package, and therefore
   checkable by the R build tools.
-- **`R CMD check`**: the standard R command that builds
+- **`R CMD check`.** The standard R command that builds
   a package, runs its tests, and applies dozens of
   standardized checks; here it serves as a universal
   integrity gate on the whole compendium.
-- **The Five Pillars**: the five artifacts a compendium
+- **The Five Pillars.** The five artifacts a compendium
   manages, one per capture point: the `Dockerfile`,
   `renv.lock`, `.Rprofile`, the source code, and the
   data.
-- **Archetype**: the kind of research object a
+- **Archetype.** The kind of research object a
   compendium is (data analysis, manuscript, package,
   simulation study, or blog), which varies the layout
   and the gates but not the underlying machinery.
-- **Render gate**: a validation check that a report or
+- **Render gate.** A validation check that a report or
   document rebuilds cleanly from source; it applies to
   archetypes that carry a report and not to those that
   do not.
-- **Raw versus derived data**: immutable original
+- **Raw versus derived data.** Immutable original
   inputs versus the processed datasets regenerated from
   them by code.
-- **Progressive disclosure**: the property that one
+- **Progressive disclosure.** The property that one
   layout supports a project's evolution from one
   archetype to another with no reorganization.
 :::
@@ -237,6 +237,9 @@ R-package files (`DESCRIPTION`, `NAMESPACE`) are empty
 ceremony for an analysis that is not a package anyone will
 install. What is lost by this choice?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The plain folder can still be locatable and can still
 hold all five artifacts, so it can in principle reach the
 higher levels of the ladder. What is lost is the universal
@@ -247,6 +250,7 @@ dependencies resolve, and the tests pass. The analyst
 must then assemble an equivalent set of checks by hand for
 every project. The ceremony is precisely the interface
 that makes an existing verification apparatus apply.
+:::
 :::
 
 ## The Five Pillars
@@ -584,6 +588,7 @@ knitr::kable(
 ```{r}
 #| label: fig-gates
 #| fig-cap: 'Validation gates by archetype. The R-package check and the unit tests apply universally; the render and seeding gates apply selectively. The underlying reproducibility machinery, the Five Pillars, is identical across every row.'
+#| fig-alt: 'A grid of five archetype rows, data analysis, scholarly manuscript, R package, simulation study, and blog, against four gate columns, R CMD check, unit tests, render report, and seed determinism. Every cell in the R CMD check and unit tests columns is marked as applying. The render report column is marked for the archetypes that produce a rendered document, and the seed determinism column is marked for those that draw random numbers, so those two columns are only partly filled.'
 
 library(ggplot2)
 
@@ -643,6 +648,9 @@ document cannot be a reproducible research object, since
 there is no result to reproduce. Which archetype answers
 this objection, and how?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The R-package archetype answers it. A package that exports
 a summary-table function has no report to render, yet it is
 fully reproducible: its result is the behavior of the
@@ -653,6 +661,7 @@ gate does not weaken reproducibility; it simply reflects
 that the deliverable is a tested procedure rather than a
 document. Reproducibility is a property of re-execution,
 not of rendering.
+:::
 :::
 
 ## Progressive disclosure
@@ -843,6 +852,236 @@ protect and the one a model is most likely to omit.
    for the opposing view, that every serious research
    compendium should ultimately produce a rendered document,
    and then state where the argument fails.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. The first
+two work on an analysis of the reader's own, so what they
+produce will vary; the boxes say what a good answer
+establishes.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+No single correct answer. What a good answer establishes is
+that the classification follows from the **deliverable**,
+not from the subject matter or the size of the project.
+
+The discriminating question is what the project is *for*.
+If the answer is a paper, it is a scholarly manuscript and
+the render gate applies. If it is a set of results with no
+document, it is a data analysis and the render gate may or
+may not apply. If it is a function other people will call,
+it is an R package and the render gate does not apply at
+all. If it is an estimate of an operating characteristic
+obtained by repeated sampling, it is a simulation study and
+the seed-determinism gate applies. If it is a post, it is a
+blog.
+
+The gates on top of the universal `R CMD check` are drawn
+from a short list: unit tests, which apply universally; the
+render gate, which applies where a document is the
+deliverable; and seed determinism, which applies where the
+result is stochastic. Naming a gate that does not apply is
+as much the point of the exercise as naming one that does,
+since the chapter's claim is that the machinery is
+identical and only the gates differ.
+
+A reader who finds their analysis is genuinely two
+archetypes, a manuscript that also ships a reusable
+function, has found the ordinary case rather than an
+anomaly, and should apply the union of the gates.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+No single correct answer. What a good answer establishes is
+the operative test, which is not 'is this file original'
+but **'if I deleted this file, could the code regenerate
+it?'**
+
+If yes, it is derived. If no, it is raw, and it needs a
+provenance record and a checksum, because nothing in the
+compendium can reconstruct it.
+
+Two ambiguous cases arise often enough to expect them. The
+first is a **cleaned extract received from a data
+coordinating center**. It is derived from someone's raw
+data, but not from anything in this compendium, so it is
+raw here: your code cannot regenerate it. The rule is that
+the boundary is drawn at the edge of *this* compendium, not
+at the edge of the world. The second is a **manually
+corrected file**, where an analyst fixed a handful of
+values by hand. It is not regenerable, because the
+corrections live nowhere but in the file, so it must be
+treated as raw. The better resolution is to make it derived
+by recording the corrections as code, a lookup table of
+overrides applied by a script, which restores
+regenerability and makes the corrections reviewable.
+
+A third case worth naming is a **cached expensive
+computation**, a model that took a day to fit. It is
+derived by the test, since the code can regenerate it, but
+storing it is sensible. It belongs in `derived_data/` and
+should be regenerable on demand rather than trusted
+indefinitely.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+`R CMD check` is universal because it is the one gate that
+applies to every archetype regardless of deliverable. A
+manuscript, a simulation, a blog, and a package all consist
+of code that must load, dependencies that must resolve, and
+tests that must pass, and `R CMD check` verifies exactly
+those three things without knowing or caring what the
+project produces. The archetype-specific gates, rendering a
+document and checking seed determinism, apply to some
+archetypes and not others; this one applies to all of them.
+
+What the R-package skin buys over a well-named folder is
+**an existing verification apparatus that the project
+becomes eligible for**. A plain folder can hold all five
+artifacts and can in principle reach any rung of the
+ladder, so the skin buys nothing in terms of capture. What
+it buys is that `DESCRIPTION` and `NAMESPACE` are the
+interface `R CMD check` expects, and supplying that
+interface makes a large, mature, externally maintained body
+of checks apply to your analysis for free. Without it there
+is no single standard command that verifies the code loads
+and the dependencies resolve, and the analyst must assemble
+an equivalent by hand, differently, for every project.
+
+The ceremony is the price of the interface, and the
+interface is what makes the tooling apply. This is the
+same bargain as any other standard format: the structure is
+arbitrary in itself and valuable because other things
+already understand it.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+A serviceable trajectory has three transitions.
+
+**Simulation study.** The seed-determinism gate is active,
+since the results are draws and their reproducibility
+depends on the generator. `R CMD check` and unit tests are
+active, as always. The render gate is inactive: there is no
+document yet.
+
+**Simulation study plus a report on its findings.** The
+render gate becomes active. Seeding stays active, since the
+simulation still runs. Nothing else changes.
+
+**R package, the simulation logic extracted into exported
+functions.** The render gate becomes inactive again if the
+report is dropped, or stays active if a vignette replaces
+it, which is the usual outcome. Seed determinism becomes
+inactive as a *project* gate and reappears inside the unit
+tests, as an assertion that a seeded function returns a
+recorded value. `R CMD check` becomes more demanding rather
+than newly applicable: it now checks documentation
+completeness and export consistency, which were vacuous
+when nothing was exported.
+
+No directory needs reorganizing at any transition, and this
+is the point of the exercise. `R/` held the functions
+throughout; it merely gains `@export` tags. `analysis/`
+held the driver and the report; it empties or becomes
+`vignettes/`. `tests/` gains cases. The Five Pillars are
+untouched, because the reproducibility machinery does not
+depend on the archetype. What changes is which gates fire,
+and gates are configuration rather than structure.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+**At best L2.** The compendium can pin its packages with a
+lockfile and its environment with a container, so nothing
+stops it reaching the second rung. What it cannot do is
+reach L3.
+
+**Why not, even in principle.** L3 means the recorded
+outputs have been shown to regenerate. Without a seed, the
+generator is initialized from a source that varies between
+sessions, so every run draws a different sample and
+produces different numbers. There is nothing stable to
+compare a rerun against. The failure is not that the
+verification is hard or expensive; it is that the property
+being verified does not exist. An unseeded simulation has
+no recorded output that a rerun could match, so the L3
+check is undefined rather than merely unperformed.
+
+Note that the analysis may be perfectly good statistics.
+With enough replicates the Monte Carlo error is small and
+two runs agree to within it. But 'agrees to within Monte
+Carlo error' is a different and weaker claim than 'produces
+the recorded outputs', and it is the latter that L3 names.
+
+**A one-line gate.** The cheapest form asserts that the
+driver sets a seed at all:
+
+```r
+expect_true(
+  any(grepl('set\\.seed\\(', readLines('analysis/scripts/run_sim.R'))),
+  info = 'the simulation driver sets a seed'
+)
+```
+
+That is a structural check and it is worth saying so: it
+confirms the call is present, not that the results are
+stable. The stronger gate runs the simulation twice under
+the recorded seed and asserts the results are identical,
+which is the actual L3 property and costs a great deal
+more to run.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**The strongest version of the opposing argument.** A
+rendered document is the only artifact that forces the
+analyst to state what the analysis *found*. Code and tests
+establish that the computation runs and is internally
+consistent; neither compels an interpretation. A document
+binds a claim to the numbers that support it, and because
+it is rendered rather than typed, the binding cannot
+silently decay. Requiring one of every compendium would
+therefore catch a whole class of failure that gates cannot
+see: an analysis that runs perfectly and that nobody has
+ever had to summarize, in which an implausible number sits
+unremarked because no sentence was ever written next to it.
+The render gate would become universal, which is
+simplifying, and every project would carry a
+human-readable entry point, which is exactly what an
+adopter of someone else's compendium most wants.
+
+**Where the argument fails.** It conflates the deliverable
+with the interpretation. For an R package, the deliverable
+*is* the behavior of the exported functions, and that
+behavior is bound to its claims by unit tests, which assert
+what the function should return in a form that is checked
+on every build. The tests are the binding artifact, and
+they are a stronger binding than prose because they are
+executable. Requiring a rendered document in addition would
+add an artifact that no consumer of the package reads and
+that must be maintained in parallel with the tests, which
+is how documents drift out of date. The argument also
+proves too much: taken seriously it makes reproducibility a
+property of documents rather than of re-execution, and a
+package with no document but a complete, passing test
+suite is plainly more reproducible than a beautifully
+rendered report with no tests.
+
+The synthesis the chapter would offer is that every
+compendium needs an artifact binding claims to
+computation, and that a rendered document is one such
+artifact rather than the only one.
+:::
 
 ## Further reading
 

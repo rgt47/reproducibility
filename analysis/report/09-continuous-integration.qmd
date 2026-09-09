@@ -135,67 +135,57 @@ decisions remain the analyst's, and no tool makes them.
    nuisance to be suppressed, and to fix the captured
    inputs rather than the check.
 
-## The vocabulary of this chapter
-
 ::: {.callout-note}
 ## The vocabulary of this chapter
 
-**Continuous integration (CI).** A hosted service that,
-on every committed change to a repository, checks out
-the code onto a fresh virtual machine, rebuilds the
-project, and runs a defined set of checks, reporting
-success or failure automatically.
-
-**Workflow.** The file, written in YAML, that tells the
-CI service what to do: which events trigger it, what
-environment to run in, and what commands to execute. On
-GitHub these files live under `.github/workflows/`; on
-GitLab the single file is `.gitlab-ci.yml`.
-
-**Runner.** The fresh, ephemeral machine (usually a
-virtual machine or a container) on which the CI service
-executes the workflow. It is discarded after the run,
-so nothing persists between runs except what the
-workflow explicitly restores.
-
-**`R CMD check`.** R's own quality gate for a package,
-which among many checks verifies that every dependency
-declared in `DESCRIPTION` is installed and findable. A
-research compendium built as an R package inherits this
-gate for free.
-
-**Render gate.** A CI check that re-renders the
-compendium's report (an R Markdown or Quarto document)
-from source and fails the build if the render errors.
-
-**Dependency-manifest gate.** A CI check that enforces
-the dependency invariant of @sec-dependencies. In its
-strict, R-package form it requires every package the code
-uses to be declared in `DESCRIPTION` and pinned in
-`renv.lock`. For a research compendium, whose
-`DESCRIPTION` declares only the API exported from `R/`
-while analysis scripts legitimately draw on packages
-present in `renv.lock` but not in `DESCRIPTION`, it
-enforces the weaker inclusion that every package the code
-uses is pinned in `renv.lock`.
-
-**Verification.** The act of rebuilding the compendium,
-re-running the analysis, and comparing the regenerated
-computational outputs against a recorded baseline;
-passing it is what the ladder calls level L3.
-
-**Checksum.** A short fingerprint, computed from a
-file's or an object's bytes by a hash function such as
-SHA-256, with the property that any change to the input,
-however small, changes the fingerprint. A stored
-checksum lets a later run detect that an input has been
-altered.
-
-**Forge.** The platform that hosts the repository and
-runs its CI, such as GitHub or GitLab. The forge governs
-where the code lives and which CI dialect the workflow
-is written in; it pins nothing about the computational
-environment.
+- **Continuous integration (CI).** A hosted service that,
+  on every committed change to a repository, checks out
+  the code onto a fresh virtual machine, rebuilds the
+  project, and runs a defined set of checks, reporting
+  success or failure automatically.
+- **Workflow.** The file, written in YAML, that tells the
+  CI service what to do: which events trigger it, what
+  environment to run in, and what commands to execute. On
+  GitHub these files live under `.github/workflows/`; on
+  GitLab the single file is `.gitlab-ci.yml`.
+- **Runner.** The fresh, ephemeral machine (usually a
+  virtual machine or a container) on which the CI service
+  executes the workflow. It is discarded after the run,
+  so nothing persists between runs except what the
+  workflow explicitly restores.
+- **`R CMD check`.** R's own quality gate for a package,
+  which among many checks verifies that every dependency
+  declared in `DESCRIPTION` is installed and findable. A
+  research compendium built as an R package inherits this
+  gate for free.
+- **Render gate.** A CI check that re-renders the
+  compendium's report (an R Markdown or Quarto document)
+  from source and fails the build if the render errors.
+- **Dependency-manifest gate.** A CI check that enforces
+  the dependency invariant of @sec-dependencies. In its
+  strict, R-package form it requires every package the code
+  uses to be declared in `DESCRIPTION` and pinned in
+  `renv.lock`. For a research compendium, whose
+  `DESCRIPTION` declares only the API exported from `R/`
+  while analysis scripts legitimately draw on packages
+  present in `renv.lock` but not in `DESCRIPTION`, it
+  enforces the weaker inclusion that every package the code
+  uses is pinned in `renv.lock`.
+- **Verification.** The act of rebuilding the compendium,
+  re-running the analysis, and comparing the regenerated
+  computational outputs against a recorded baseline;
+  passing it is what the ladder calls level L3.
+- **Checksum.** A short fingerprint, computed from a
+  file's or an object's bytes by a hash function such as
+  SHA-256, with the property that any change to the input,
+  however small, changes the fingerprint. A stored
+  checksum lets a later run detect that an input has been
+  altered.
+- **Forge.** The platform that hosts the repository and
+  runs its CI, such as GitHub or GitLab. The forge governs
+  where the code lives and which CI dialect the workflow
+  is written in; it pins nothing about the computational
+  environment.
 :::
 
 ## The machine that is not yours
@@ -412,7 +402,9 @@ They argue that since the lockfile and the container
 the compendium's reproducibility level. Are they correct
 about the level? Are they correct that nothing is lost?
 
-::: {.callout-note appearance="minimal"}
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 They are correct about the level and wrong about the
 loss. The reproducibility level is set by what is
 captured: the lockfile pins the packages (L1) and the
@@ -673,7 +665,9 @@ reason that if the PDF is byte-identical, the whole
 analysis must have reproduced. Identify the flaw, and say
 what they should hash instead.
 
-::: {.callout-note appearance="minimal"}
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The flaw is that a rendered PDF is not a deterministic
 function of the analysis. It embeds the time of rendering
 and the identifiers of the fonts on the rendering machine,
@@ -1003,6 +997,258 @@ the analyst must verify and cannot delegate.
    reproducibility failure that an independent human
    codechecker would catch and that the author's own CI,
    however well configured, cannot.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. Exercises
+3 and 4 are hands-on and their outputs will vary; the boxes
+record the expected result and the reasoning.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+The ladder grades **capture**: how far down the determinant
+stack a result is locked. CI locks nothing. It installs no
+package into the lockfile and no library into the image, so
+removing it leaves every pinned layer exactly as pinned as
+before. A compendium at L2 with CI and the same compendium
+at L2 without it sit on the same rung.
+
+**What is lost is assurance rather than level.** Without CI
+nobody rebuilds the captured environment on a clean machine
+and re-runs the analysis in it. The compendium becomes
+trusted rather than tested, and the distance between 'this
+should rebuild' and 'this does rebuild' stops being
+measured.
+
+**A concrete failure.** A base image is repointed by its
+maintainer and the Dockerfile pins it by tag rather than
+digest, so the environment quietly changes underneath the
+project. With CI, the next push rebuilds and the check
+fails, naming the day it broke. Without CI, the compendium
+looks healthy on the author's machine, where an old image
+is cached locally, and fails for the first reader who
+builds it from scratch, possibly years later, with no
+indication of when or why it broke. Equally good answers:
+a package pulled from CRAN and no longer restorable, a
+system library the analysis silently depended on and never
+declared, or a chunk that only ever ran because of state
+left in the author's session.
+
+The general shape of the loss is that decay is silent and
+CI is what makes it loud.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+**`R CMD check`** catches a defect in the code as code: a
+function calling a package that is used but not declared in
+`DESCRIPTION`, a syntax error in a file nothing currently
+sources, a documented argument that no longer exists. The
+render gate would not see it if the report does not touch
+that function, and the manifest gate checks declarations
+rather than whether the code loads.
+
+**The render gate** catches a defect that appears only when
+the document is built: a chunk that fails on a clean
+machine because it read an uncommitted file, a figure whose
+code errors, a cross-reference to a label that no longer
+exists. `R CMD check` never renders, so it sees none of
+this.
+
+**The dependency-manifest gate** catches drift between the
+three manifests: a package used in the code and absent
+from `DESCRIPTION`, or declared in `DESCRIPTION` and
+missing from `renv.lock`. The code may load and the
+document may render perfectly on a machine where the
+package happens to be installed, so neither other gate
+fires.
+
+**A failure none of the three catches:** a change in the
+*data*. A raw extract silently replaced with a corrected
+version leaves the code valid, the document renderable,
+and the manifests consistent, while every number in the
+report changes. All three gates pass. The **data-integrity
+gate** addresses it, by hashing the inputs and derived
+outputs and comparing against a recorded manifest.
+
+The **verification gate** addresses the adjacent case in
+which the code changes a result without any of the three
+noticing, by comparing computed outputs against recorded
+baselines.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+```r
+library(digest)
+m1 <- lm(outcome ~ arm, data = cohort)
+d1 <- digest(coef(m1), algo = 'sha256')
+
+m2 <- lm(outcome ~ arm, data = cohort)
+digest(coef(m2), algo = 'sha256') == d1     # TRUE
+
+cohort$outcome[1] <- cohort$outcome[1] + 1
+m3 <- lm(outcome ~ arm, data = cohort)
+digest(coef(m3), algo = 'sha256') == d1     # FALSE
+```
+
+Refitting the identical model to identical data gives an
+identical digest; altering one outcome value changes it.
+
+**Why the model object is a sound target.** The
+coefficients are a deterministic function of the data and
+the model specification. Nothing about the time of
+fitting, the machine's fonts, or the session's history
+enters them. So the digest changes exactly when a number
+changes and not otherwise, which is what makes a failure
+informative.
+
+One practical refinement the exercise invites. Digesting
+the whole `lm` object rather than `coef()` is fragile,
+because the object stores the call and a `terms`
+environment, which can carry incidental references. Hashing
+the coefficient vector, or a named list of the quantities
+actually reported, is the more robust choice.
+
+**Why hashing a plot would not be sound.** A rendered plot
+is an image file, and image files embed creation
+timestamps, are affected by device version and font
+availability, and can differ in their compression between
+runs. Two plots of the identical model can differ byte for
+byte while depicting exactly the same thing, so the check
+would fail on every rebuild and carry no information. The
+rule this generalizes to is that verification hashes
+computational outputs, not rendered artifacts, and it is
+the same rule that governs the PDF in @sec-literate.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+```yaml
+# .gitlab-ci.yml
+stages: [check]
+
+check:
+  stage: check
+  image: rocker/verse:4.4.0
+  script:
+    - make check
+    - make render
+    - make check-renv
+```
+
+**The two structural differences.**
+
+*Jobs and steps versus stages and scripts.* GitHub Actions
+composes a job from reusable `uses:` steps, each a
+versioned action maintained elsewhere, so the workflow
+reads as an assembly of components. GitLab CI defines
+stages containing jobs whose bodies are shell scripts, so
+the pipeline reads as commands in an image. The GitHub
+form is more declarative and depends on an ecosystem of
+actions; the GitLab form is more direct and depends on
+nothing but the image.
+
+*Per-file versus single-file configuration.* GitHub reads
+every file under `.github/workflows/`, so a project
+naturally accumulates several workflows with separate
+triggers. GitLab reads a single `.gitlab-ci.yml` at the
+root, so everything is expressed in one file with rules
+selecting what runs when.
+
+**Why a Makefile shrinks both.** The differences above are
+entirely about *orchestration*: what runs, in what order,
+on what trigger. The check logic itself, run `R CMD check`,
+render the report, verify the manifests, is identical in
+both and belongs in neither file. Putting it behind
+`make check`, `make render`, and `make check-renv` leaves
+each CI file a thin shim naming the image and calling
+three targets. The logic is then single-sourced, testable
+locally with the same command CI runs, and portable to a
+third forge for the cost of one more shim.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+**Data analysis:** `R CMD check` and the manifest gate
+always; the render gate if a report is produced.
+**Manuscript:** all three, since the rendered document is
+the deliverable. **R package:** `R CMD check` and the
+manifest gate; the render gate only if a vignette exists.
+**Simulation:** `R CMD check` and the manifest gate; the
+render gate if a report is produced, plus a
+seed-determinism check. **Blog:** the render gate above
+all, since the deliverable is the site, with `R CMD check`
+and the manifest gate applying to any code the posts run.
+
+**Arranging the simulation.** CI runs a reduced pipeline:
+the same driver, the same functions, the same seed, with
+the replicate count set by a parameter to something small,
+perhaps a hundred replicates in place of a hundred
+thousand. The full pipeline runs elsewhere, on a cluster,
+and its outputs are recorded and deposited.
+
+**What the fixed seed contributes.** It is what makes the
+reduced run a genuine reproducibility test rather than a
+smoke test. With the seed fixed, the first hundred
+replicates of the reduced run are *the same hundred
+replicates* the full run begins with, so their summary is
+a deterministic value that can be recorded and compared
+exactly. Without the seed, the reduced run could only be
+checked against a tolerance derived from Monte Carlo
+error, which is a much weaker statement and one that
+passes even when the generator has changed.
+
+The honest limit: the reduced run verifies that the
+machinery reproduces, not that the full study's estimates
+are correct, since a hundred replicates estimate the
+target quantity poorly. It tests the pipeline, not the
+science.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**The shared role.** Both are an independent re-execution
+of the analysis in an environment the author does not
+control, performed by a party who has no stake in it
+succeeding. A CI runner does this for every committed
+change, cheaply and mechanically; a codechecker does it
+once for a submitted manuscript, expensively and with
+judgment. In both cases the value comes from the same
+property: the analysis runs somewhere that carries none of
+the author's undeclared state, so anything the author
+depended on without knowing it is exposed.
+
+**What a human codechecker catches that the author's own
+CI cannot.** The class of failure in which the CI
+configuration itself encodes the author's assumptions. CI
+is written by the author, so it tests what the author
+thought to test, in an environment the author specified,
+against outputs the author chose to compare. A workflow
+that installs a system library the Dockerfile omits, or
+that quietly skips the expensive analysis and checks only
+the cheap one, or that compares against a baseline the
+author generated after the bug was introduced, passes
+indefinitely while the compendium is not reproducible at
+all.
+
+A codechecker reads the paper, forms an independent view
+of what the analysis is supposed to produce, and checks
+that the artifacts produce it. That is a judgment about
+whether the right thing was verified, and no amount of
+automation supplies it, because the automation is the
+thing in question.
+
+The compact statement: CI answers 'does the analysis still
+do what it did', and a codechecker answers 'does the
+analysis do what the paper says'.
+:::
 
 ## Further reading
 

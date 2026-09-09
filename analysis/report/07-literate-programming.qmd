@@ -295,6 +295,9 @@ identify as the scholarship itself, and explain how a
 literate document makes the advertisement and the
 scholarship the same object.
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The scholarship is the complete software environment and
 the complete set of instructions that generated the
 figures, not the printed figures themselves. A literate
@@ -304,6 +307,7 @@ the same document. The advertisement is therefore the
 output of the scholarship rather than a hand-copied
 picture of it, and cannot misrepresent a result the code
 does not produce.
+:::
 :::
 
 ## The sealed render
@@ -323,6 +327,7 @@ therefore disagree with the sentences around it.
 ```{r}
 #| label: fig-simpson
 #| fig-cap: 'The reversal of an association upon pooling. Within each synthetic species bill depth rises with bill length (solid lines); across the pooled sample the fitted line falls (dashed). Because the figure is computed when the book is built, the described reversal cannot drift from the code that produces it.'
+#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species, each drawn in its own color. Within every species the points trend upward and carry a solid fitted line of positive slope. A single dashed line fitted to all the points pooled together runs downward across the whole plot, in the opposite direction to all three within-species lines, because the species clusters sit at descending heights as bill length increases.'
 #| echo: true
 #| message: false
 #| warning: false
@@ -396,6 +401,49 @@ known to provide, and installs nothing. A chunk that
 violated either property might still render on the
 author's machine and would fail on anyone else's. The
 next section is a catalog of exactly these violations.
+
+### The seal applies to numbers in sentences, not only to figures
+
+A figure is the conspicuous case, and the inconspicuous
+one does more damage. Numbers reported in prose are
+where drift is hardest to see, because a wrong number in
+a sentence looks exactly like a right one.
+
+```{r}
+#| label: seal-inline
+#| echo: true
+
+d <- survival::diabetic
+laser <- d[d$trt == 1, ]
+n_eyes <- nrow(laser)
+n_events <- sum(laser$status)
+pct <- round(100 * n_events / n_eyes, 1)
+```
+
+Having computed those, the sentence that reports them
+can be written with the values substituted rather than
+typed. In the laser-treated arm of the retinopathy
+trial there are `r n_eyes` eyes, of which `r n_events`
+progressed to visual loss, a rate of `r pct` percent.
+
+Read the source of that sentence and there are no
+numerals in it. Each is an inline expression evaluated
+at build time, so if the trial data were corrected, or
+the arm redefined, the sentence would change with it.
+This is the same seal the figure has, applied to the
+unit of text where a reader is least able to detect a
+lie. It is also the cheapest reproducibility discipline
+in this book: it costs a few characters per number, and
+it removes an entire class of error that no test, no
+lockfile, and no container can reach.
+
+The habit generalizes. Any number a reader might check
+against the analysis, a sample size, a count of
+exclusions, a rate, a p-value, belongs in an inline
+expression. Numbers that are genuinely constants of the
+study design, an enrollment target or a protocol
+threshold, are properly typed, because they are inputs
+rather than results.
 
 ## The landmines that break the seal
 
@@ -507,6 +555,9 @@ open file: data/interim.csv'. Name two distinct landmines
 that could produce this symptom, and give the one-line
 check that would distinguish them.
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The two candidates are an absolute or author-specific
 path, and an uncommitted file. They are distinguished by
 inspecting version control: if `data/interim.csv` is
@@ -518,6 +569,7 @@ committed (or the chunk that generates it must be
 included in the render) before the render can seal.
 Rendering from a fresh clone of the repository reproduces
 the CI failure locally and settles the matter.
+:::
 :::
 
 ## HTML or PDF, and the toolchain each needs
@@ -967,6 +1019,238 @@ the level actually reached and no more.
    that archetype, if anything, and how heavily the
    reproducibility weight rests on the render as opposed to
    elsewhere.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. Most of
+this chapter's exercises are performed on a document of the
+reader's own, so their outputs vary; the boxes record what
+should happen and why.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+The substitution replaces a literal with an expression, so
+that a sentence reading 'The mean age was 61.4 years'
+becomes, in the source,
+`r knitr::inline_expr('round(mean(cohort$age), 1)')`
+written inline where the number used to be.
+
+On the first render the printed value is unchanged,
+which is the confirmation that the expression computes
+what the hand-typed number claimed. After a small edit to
+the data, the prose updates on re-render.
+
+**What would have happened to the hand-typed number.**
+Nothing at all. It would have sat in the paragraph,
+unchanged and now wrong, with no error raised anywhere and
+nothing in the document to indicate a problem. That
+silence is the whole difficulty: the failure produces no
+symptom, so it is found only when someone independently
+recomputes the number, which for most published analyses
+is never.
+
+This is the drift the chapter opens with, in its smallest
+form. The inline expression does not make the number
+correct; it makes the number *bound*, so that it cannot
+disagree with the analysis without the disagreement being
+visible on the next render.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+With `set.seed()` present, the two renders produce
+identical figures, because the synthetic data is a
+deterministic function of the seed and the code.
+
+With the call removed, the generator is initialized from
+varying session state, so each render draws a different
+sample and the figure differs between renders.
+
+**Why this matters for the seal, and what the seal is
+not.** The seal binds prose to code: it guarantees that
+the figure a reader sees was produced by the code shown
+beside it. That guarantee still holds without the seed.
+What fails is something adjacent and easily confused with
+it, which is that the document is no longer a
+deterministic function of its source. Two people rendering
+the same committed document get different figures, so any
+sentence in the prose describing the figure, 'the
+association reverses within each group', 'three points lie
+outside the interval', can become false without the code
+changing.
+
+The precise statement is that a seal makes the document
+agree with its code, and a seed makes the code agree with
+itself across runs. An unseeded literate document is
+sealed and not reproducible, which is a good illustration
+of the chapter's warning that the seal and the pins are
+different virtues.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+The predictions worth making before testing, and what
+actually happens.
+
+**`install.packages()`.** Renders on your machine, and
+probably on the fresh clone too, since it installs what it
+needs. That is what makes it insidious: it does not fail,
+it silently installs whatever version is current, so the
+document renders against a different package set than the
+one it was written for. The landmine here is not a broken
+render but an unpinned one.
+
+**`pacman::p_load()`.** The same, with an additional
+failure mode: it installs `pacman` itself if absent, so
+the document reaches out to the network on a machine where
+nothing was declared.
+
+**An absolute host path.** Renders on your machine and
+fails immediately on the fresh clone, with a
+'cannot open file' error. This is the friendliest landmine,
+because it announces itself.
+
+**A chunk depending on hidden state from an earlier
+chunk.** Usually renders in both places, since a full
+render executes chunks in order in one session. It fails
+when someone runs the chunk in isolation, or when the
+chunk order changes, or when caching or `freeze` skips the
+chunk that established the state. Intermittent and hard to
+diagnose.
+
+**A read of an uncommitted file.** Renders on your machine
+and fails on the fresh clone, the same symptom as the
+absolute path, which is exactly why the chapter pairs them
+and asks for a distinguishing check: inspect version
+control to see whether the file is tracked.
+
+The general lesson from the prediction exercise: two of
+the five fail loudly, and the three that render anyway are
+the dangerous ones. Rendering from a fresh clone catches
+the loud two reliably and the quiet three only sometimes,
+which is the argument for continuous integration in
+@sec-verification.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+No single correct answer, since it depends on the
+document. The determination is usually quick: if the
+project contains no Dockerfile and no environment
+specification naming a TeX distribution, the toolchain is
+assumed present on the host, which is the common case.
+
+**The steps to move it in.** Select the publishing profile,
+so the base image becomes `rocker/verse`, which carries the
+LaTeX toolchain. Pin that base by digest. Confirm that the
+document's specific LaTeX dependencies are present, since
+`verse` carries a substantial but not unlimited TeX
+installation, and add any missing packages explicitly to
+the Dockerfile rather than letting a run-time installer
+fetch them. Then render inside the container and confirm
+the PDF is produced.
+
+**Which level the move raises the project to.** L2, from
+wherever it was before, provided a lockfile is also in
+place. The precise claim is worth stating carefully,
+because the exercise invites an overclaim: moving the
+toolchain into the image is the L1-to-L2 step for the
+*rendering* dependency specifically. If the packages were
+never pinned, the project moves to L2 only once the
+lockfile is restored inside the image too, since L2
+presupposes L1. And it does not reach L3, because nothing
+has yet verified that the render regenerates its recorded
+outputs.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+The two PDFs differ, and their checksums differ.
+
+**What differs.** Inspecting the metadata, with
+`pdfinfo` or by examining the raw file, shows a
+`CreationDate` and a `ModDate` recording the moment of the
+render. Depending on the engine, the file may also embed a
+document identifier derived from the time, font subset
+tags that vary with the subsetting order, and absolute
+paths from the build directory. None of this is the
+analysis; all of it changes between renders.
+
+**Why hashing the rendered document is the wrong basis for
+verification.** The check would fail on every rebuild,
+including rebuilds in which nothing whatever changed. A
+check that always fails carries no information, and its
+practical effect is worse than no check at all, because it
+trains whoever sees it to ignore the failure. A
+verification gate is useful in proportion to how reliably
+its failures mean something.
+
+**What should be hashed instead.** The deterministic
+computational outputs that feed the report: the derived
+datasets, the fitted model objects, the results tables.
+Each of these changes its checksum exactly when a number
+changes, and not otherwise, so a failure is informative.
+The render gate then sits alongside as a separate check
+confirming that the document still builds from those
+outputs.
+
+It is worth noting that byte-identical PDFs are
+attainable, by setting `SOURCE_DATE_EPOCH` and freezing
+font subsetting, and that this is a fragile route to a
+result the output hashes give directly. The chapter's
+position is that one should hash what is deterministic
+rather than work to make the non-deterministic thing
+deterministic.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**Manuscript.** The literate document renders the paper
+itself, and the reproducibility weight rests almost
+entirely on the render: the deliverable *is* the rendered
+artifact, and every number in it must be computed rather
+than typed. This is the archetype the machinery was
+designed for.
+
+**Blog.** Renders each post. The weight is substantial but
+lighter than the manuscript's, because the stakes of a
+drifted number are lower and posts are usually
+self-contained. The distinctive pressure is longevity:
+posts are written once and read for years, so the pinned
+packages matter more than the render does.
+
+**Data analysis.** Renders a report, if there is one, and
+the weight is moderate. Much of the analysis lives in
+scripts producing derived data, and the report summarizes
+rather than performs. The seal matters for the summary;
+the reproducibility of the analysis rests mainly on the
+scripts and the pinned environment.
+
+**R package.** Renders nothing, or at most a vignette. The
+weight rests almost entirely elsewhere, on `R CMD check`
+and the unit tests, which bind behavior to claims more
+strongly than prose can. A vignette that renders is a
+convenience and a demonstration rather than the
+deliverable.
+
+**Simulation study.** Renders a report on the results, if
+one exists. The weight rests overwhelmingly on the seed
+and the generator rather than on the render: a sealed
+document reporting an unseeded simulation is bound to its
+code and still not reproducible, as exercise 2 shows.
+
+The pattern across the five is that the render carries the
+most weight exactly where the document is the deliverable,
+and that in the two archetypes where it carries least, the
+package and the simulation, a different mechanism, tests
+and seeds respectively, does the binding instead.
+:::
 
 ## Further reading
 

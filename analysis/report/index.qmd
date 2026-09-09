@@ -62,7 +62,10 @@ that others will need to trust, audit, and rebuild.
 
 This book is licensed under
 [Creative Commons
-Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+You may share and adapt it, including for teaching, provided
+you give attribution, do not use it commercially, and license
+your adaptation under the same terms.
 
 Code samples are licensed under
 [Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/),

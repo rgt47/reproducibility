@@ -210,6 +210,7 @@ builds internally, whether or not it draws it for you.
 ```{r}
 #| label: fig-pipeline-dag
 #| fig-cap: 'The analysis of the orientation as a directed acyclic graph. Each node is a step that produces an output; each arrow records that the step it points to consumes what the previous step produced. A change to the raw data invalidates every node downstream of it (all four to its right); a change to the plotting code invalidates only the figures and the report. A pipeline tool reads this graph to rebuild exactly the stale nodes and skip the rest.'
+#| fig-alt: 'Five labeled nodes in a single horizontal row, connected left to right by arrows: raw data, then cleaned data, then model, then figures, then report. Each arrow points from a step to the step that consumes its output, so the chain runs in one direction with no branches and no cycles.'
 #| echo: true
 #| fig-width: 7
 #| fig-height: 2.2
@@ -273,6 +274,79 @@ with one reliable act, and the end-to-end doubt of the
 orientation is dissolved, because the one act, by
 construction, runs everything that is out of date and
 leaves nothing behind.
+
+### The graph of an actual analysis
+
+@fig-pipeline-dag draws the shape in the abstract. It is
+worth seeing the same shape over an analysis that runs,
+because a real graph is less tidy than a diagram and the
+untidiness is where the argument lives.
+
+```{r}
+#| label: tbl-pipeline-steps
+#| tbl-cap: 'The retinopathy analysis expressed as a dependency graph, with the cost of each step measured rather than asserted. The timings are from one run on one machine and will differ on another; their ratios are the durable part. Note that the two expensive steps sit at the end, so an edit to the plotting code that forced a full rebuild would waste almost all of the total.'
+
+library(tibble)
+library(knitr)
+
+time_it <- function(expr) {
+  t <- system.time(force(expr))[['elapsed']]
+  round(1000 * t, 1)
+}
+
+d <- survival::diabetic
+t_load <- time_it(d <- survival::diabetic)
+t_clean <- time_it({
+  d$arm <- factor(d$trt, levels = c(0, 1),
+                  labels = c('Untreated', 'Laser'))
+  d <- d[!is.na(d$time), ]
+})
+t_fit <- time_it(
+  fit <- survival::coxph(survival::Surv(time, status) ~ arm + age,
+                         data = d)
+)
+t_boot <- time_it({
+  set.seed(1)
+  replicate(200, {
+    i <- sample(nrow(d), replace = TRUE)
+    unname(coef(survival::coxph(
+      survival::Surv(time, status) ~ arm + age, data = d[i, ]))[1])
+  })
+})
+
+steps <- tibble(
+  Step = c('read raw data', 'derive arm labels',
+           'fit proportional-hazards model',
+           'bootstrap the treatment effect'),
+  `Consumes` = c('--', 'raw data', 'cleaned data',
+                 'cleaned data'),
+  `Elapsed (ms)` = c(t_load, t_clean, t_fit, t_boot)
+)
+
+kable(steps, align = 'llr')
+```
+
+The measured ratios make the argument that prose cannot.
+On this build the bootstrap costs about
+`r round(t_boot / max(t_fit, 1))` times the model fit,
+and the two steps above it are too fast to measure at
+all, so the value of selective rebuild is not a matter
+of taste: an analyst who re-runs everything after
+changing a label pays for the bootstrap to learn
+nothing. That ratio is itself an inline expression, for
+the reason @sec-literate gives; had it been typed, the
+next machine to build the book would have made it
+false.
+
+It is also the case for a cache with a caveat, and the
+caveat is this table itself. These timings are computed
+when the book is built, so they describe the build
+machine and not the reader's, and a slower machine would
+show different absolute values. The ratio between the
+last row and the others is what survives, which is the
+same distinction the verification chapter draws between
+a result worth recording and a measurement worth
+repeating.
 
 ## GNU Make: targets, prerequisites, and rules
 
@@ -375,6 +449,9 @@ runs `make`. Which of the four targets does Make rebuild,
 and which does it skip? Explain your answer in terms of
 the timestamp rule.
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 Editing `make_figures.R` advances its modification time
 past that of `figures.rds`, so `figures.rds` is now older
 than one of its prerequisites and Make rebuilds it.
@@ -386,6 +463,7 @@ data changed, so each of those targets remains newer than
 all of its prerequisites and is up to date. The expensive
 model fit is not repeated, which is the payoff of
 expressing the analysis as a graph.
+:::
 :::
 
 ## targets: a function-oriented pipeline for R
@@ -519,6 +597,9 @@ declaration might not trigger a rebuild of the downstream
 targets. Explain why `targets` does trigger it, and name
 the two things `targets` hashes that Make does not.
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 Make decides staleness by comparing file modification
 times against declared prerequisites, so a change that is
 not reflected in a listed prerequisite's timestamp is
@@ -533,6 +614,7 @@ function definitions and the in-memory R objects (rather
 than only on-disk files), which together let it track code
 changes and object changes that a timestamp comparison
 cannot see.
+:::
 :::
 
 ## What a pipeline does, and does not, add
@@ -950,6 +1032,221 @@ on the ladder.
    is central, modest, or absent, and why. For the archetype in
    which it is absent, name the mechanism that plays the
    corresponding role instead.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. Every
+exercise in this chapter is performed on an analysis of the
+reader's own, so the outputs vary; the boxes record what
+should happen and the reasoning that makes it expected.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+No single correct answer. What a good answer establishes is
+the gap between the downstream set and the remembered set.
+
+On acyclicity: the graph must be acyclic because a cycle
+would mean a step consumes, directly or indirectly, its own
+output, and there would be no order in which to run the
+steps. Readers occasionally draw what looks like a cycle
+and find on inspection that they have drawn two different
+versions of one file as a single node. Splitting the node
+resolves it, and the resolution is itself informative,
+since it names an artifact that is overwritten in place.
+
+The instructive part is the comparison. The downstream set
+of a change to a raw input is, in most analyses, everything:
+cleaning, modeling, every figure, every table, the report.
+The set most analysts re-run by hand is smaller, and it is
+smaller in a characteristic way. People reliably re-run the
+step they just edited and the thing they are looking at,
+and reliably forget the intermediate results that nothing
+on screen depends on, along with any figure that is not in
+the document currently open.
+
+The conclusion to draw is not that analysts are careless.
+It is that the downstream set is a property of the graph,
+and a person holding the graph in their head computes it
+correctly only for small graphs and recent memory. A
+pipeline tool computes it from the graph every time, which
+is the entire value proposition.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+Editing an intermediate script rebuilds that script's
+target and everything downstream of it, and skips
+everything upstream and everything on a parallel branch.
+The timestamp rule explains it directly: Make rebuilds a
+target whose modification time is older than any of its
+declared prerequisites, and rebuilding a target advances
+its own timestamp, so staleness propagates forward one
+link at a time.
+
+**Why `touch` triggers a rebuild.** Because Make does not
+compare contents at all. It compares modification times,
+and `touch` advances the modification time of the input
+without changing a byte of it. Every target depending on
+that input is now older than one of its prerequisites, so
+Make rebuilds it, and the rebuild propagates downstream
+exactly as a real edit would.
+
+This is worth dwelling on, because it is the honest
+characterization of what Make guarantees. Make is
+conservative in one direction and unreliable in the other:
+it will happily rebuild things that did not need
+rebuilding, which costs time and nothing else, and it will
+miss a change that leaves timestamps as it found them,
+which costs correctness. The first behavior is the one
+this exercise demonstrates; the second is the subject of
+exercise 4.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+The refactoring is the substance of the exercise. Each
+Make rule becomes a function in `R/`, and `_targets.R`
+declares the targets that call them:
+
+```r
+list(
+  tar_target(raw, read_raw('data/raw_data/cohort.csv'),
+             format = 'file'),
+  tar_target(cleaned, clean_cohort(raw)),
+  tar_target(model, fit_model(cleaned)),
+  tar_target(figures, make_figures(model))
+)
+```
+
+`tar_visnetwork()` should show the same nodes and arrows
+as the hand drawing. A mismatch is informative and usually
+means the hand drawing missed a dependency, since
+`targets` derives the graph from the code rather than from
+memory.
+
+On the prediction: after editing a function body,
+`tar_outdated()` names that function's target and
+everything downstream, and `tar_make()` rebuilds exactly
+that set. Readers who predicted correctly have understood
+the propagation rule; readers who predicted too small a
+set usually forgot that invalidation is transitive.
+
+One observation worth making. The prediction is easy here
+and was hard in exercise 1, and the difference is not that
+the analysis got simpler. It is that `targets` made the
+graph visible, so the reader is reading a dependency
+structure rather than recalling one.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+Editing a function body in `R/` changes no file that a
+Makefile would ordinarily list as a prerequisite of the
+model target, since the Makefile lists the *script* that
+fits the model, not the helper file the script sources.
+`targets` invalidates the dependent targets anyway, and
+`tar_outdated()` names them before the rebuild.
+
+**Why a Makefile could miss the equivalent edit.** Because
+it tracks the timestamps of the files it was told to
+track, and nothing told it about the helper. If
+`fit_model.R` sources `R/helpers.R` and the rule declares
+only `fit_model.R` as a prerequisite, then editing
+`helpers.R` advances a timestamp Make never looks at, and
+every downstream target remains, in Make's view, up to
+date. The analysis then reports results computed by the
+old function body, with no error and no indication that
+anything is stale.
+
+`targets` avoids this because it hashes the *bodies of the
+functions each target calls*, and the R objects those
+targets produce, rather than the modification times of a
+declared file list. The dependency is discovered from the
+code rather than declared by the analyst, so it cannot be
+declared incompletely.
+
+The fair statement of the comparison is that a correctly
+and completely written Makefile would catch this too. The
+difference is that `targets` makes completeness the
+default and Make makes it the analyst's responsibility,
+and the failure mode of an incomplete Makefile is silence.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+**What the pipeline added.** In the book's terms, almost
+nothing on the capture side and a good deal on the
+validation side. The pipeline pins no layer of the
+determinant stack: not the packages, not the environment,
+not the R version. What it adds is a guarantee that the
+outputs are *current with respect to the inputs*, which is
+a form of internal consistency the analysis did not
+previously have. It also adds an explicit, machine-readable
+statement of the analysis structure, which is
+documentation of a kind that cannot drift.
+
+**The level.** The pipeline alone leaves the project where
+it was, which for most readers is L0. This is the part of
+the exercise most likely to be answered wrong, because a
+`targets` pipeline feels like a large step forward and is,
+on an axis the ladder does not grade.
+
+**What would still be needed.** A lockfile to reach L1, a
+container to reach L2, and verification against a recorded
+baseline to reach L3. None of the three is supplied by the
+pipeline, and it is worth being explicit that the pipeline
+does not make any of them easier or harder; they are
+orthogonal.
+
+The one honest qualification in the pipeline's favor:
+because it computes rather than remembers the downstream
+set, it removes a class of error, stale outputs, that
+would otherwise defeat an L3 verification for reasons
+having nothing to do with the environment. It does not
+raise the level, and it makes the level easier to keep.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**Data analysis: central.** The archetype is a chain of
+steps producing derived data and results, which is exactly
+what a dependency graph describes. This is the pipeline's
+home.
+
+**Simulation study: central.** Replicates are expensive
+and independent, so recomputing only what is stale matters
+more here than anywhere, and `targets` branching maps onto
+the replicate structure directly.
+
+**Manuscript: modest.** There is usually a pipeline behind
+the manuscript, but the render itself is a single terminal
+step and the literate document does much of the
+orchestration. The pipeline earns its place when the
+analysis feeding the document is expensive enough that
+re-running it on every render is intolerable, which is the
+same judgment the previous chapter framed as deciding what
+the document computes at build time.
+
+**Blog: modest to absent.** Each post is typically small
+and self-contained, and the site generator already
+rebuilds changed posts. A pipeline adds machinery for
+little gain.
+
+**R package: absent.** There is no chain of data
+transformations to schedule; the deliverable is a set of
+functions. **The mechanism that plays the corresponding
+role is `R CMD check` together with the test suite**, which
+performs the analogous job of determining what must be
+re-verified and doing it. The analogy is closer than it
+looks: both answer 'given what changed, what must be
+recomputed', and both refuse to accept a stale result.
+:::
 
 ## Further reading
 

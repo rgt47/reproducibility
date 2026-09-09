@@ -327,10 +327,10 @@ integration test runs the pipeline end to end and
 checks the result:
 
 ```r
-# inst/tinytest/test-pipeline.R
-raw <- load_cohort('inst/tinytest/data/sample.csv')
-clean <- clean_cohort(raw)
-fit <- fit_model(clean)
+# inst/tinytest/test-cohort.R
+raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
+fit <- fit_model(cohort)
 summary_tbl <- summarise_fit(fit)
 
 expect_inherits(fit, 'lm')
@@ -338,6 +338,16 @@ expect_true(all(c('term', 'estimate') %in%
                 names(summary_tbl)))
 expect_equal(nrow(summary_tbl), 3L)
 ```
+
+The first expectation looks like a mistake and is not.
+`fit_model()` returns a `glm`, because the outcome is
+binary, and a `glm` object inherits from `lm`, so the
+assertion holds. It is written that way deliberately:
+`expect_inherits(fit, 'lm')` pins the contract that the
+function returns something the modeling generics will
+accept, whereas `expect_equal(class(fit), 'glm')` would
+pin the implementation and break the first time the
+function was changed to fit a Cox model instead.
 
 The integration test does not re-check what the unit
 tests already cover; it checks the seams, that the
@@ -357,26 +367,75 @@ laboratory value, a treatment label misspelled, a
 column silently dropped by an upstream export. A
 data-validation test encodes the analyst's domain
 knowledge as executable constraints and fails when
-the data violates them:
+the data violates them.
+
+Before writing constraints it is worth looking at
+what one is constraining. @tbl-diabetic-arms
+tabulates the retinopathy trial introduced in the
+conventions, and it is included here for a reason
+beyond illustration: every cell in it can be counted
+by hand from the data, which is precisely the
+property an oracle needs. A test asserting that the
+untreated arm contains 197 eyes is checkable by
+someone who does not trust the function that
+produced it. A test asserting that it contains
+`nrow(subset(d, trt == 0))` eyes is not a test at
+all; it is the function agreeing with itself.
+
+```{r}
+#| label: tbl-diabetic-arms
+#| tbl-cap: 'Eyes and events by treatment arm in the diabetic retinopathy trial (`survival::diabetic`), the real dataset this book computes on. Each count is verifiable by hand from the 394 records, which is what makes the table usable as a test oracle rather than merely as a description.'
+
+library(tibble)
+library(knitr)
+
+d <- survival::diabetic
+d$arm <- factor(d$trt, levels = c(0, 1),
+                labels = c('Untreated', 'Laser'))
+
+arms <- tibble(
+  Arm = levels(d$arm),
+  Eyes = as.integer(table(d$arm)),
+  Events = as.integer(tapply(d$status, d$arm, sum)),
+  `Event rate` = sprintf(
+    '%.3f', as.numeric(tapply(d$status, d$arm, mean))
+  )
+)
+
+kable(arms, align = 'lrrr')
+```
+
+The difference between the arms is large and in the
+expected direction, which is a reason to be careful
+rather than pleased: a validation test should assert
+what the protocol requires, not what this particular
+extract happens to show. An assertion that the event
+rate in the laser arm is below one third would pass
+today and would fail on a different trial, or on a
+corrected export, for reasons having nothing to do
+with a defect. Constraints belong to the protocol,
+not to the data in front of you.
 
 ```r
-# inst/tinytest/test-data-validation.R
-dat <- load_cohort('inst/tinytest/data/sample.csv')
+# inst/tinytest/test-cohort.R
+raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
 
 # the expected columns are present
-expect_true(all(c('id', 'age', 'arm', 'outcome')
-                %in% names(dat)))
+expect_true(all(c('mrn', 'age_at_enroll', 'sex', 'incident_dm')
+                %in% names(raw)))
 
-# ages are humanly possible
-expect_true(all(dat$age >= 0 & dat$age <= 120))
+# ages lie within the enrollment criteria, not merely
+# within the observed range
+expect_true(all(cohort$age_at_enroll >= 18 &
+                cohort$age_at_enroll <= 105, na.rm = TRUE))
 
-# the treatment arm is one of the known labels
-expect_true(all(dat$arm %in%
-                c('placebo', 'active')))
+# sex takes only its two coded levels once cleaned
+expect_true(all(cohort$sex %in% c('F', 'M')))
 
-# the outcome probability is a probability
-expect_true(all(dat$outcome >= 0 &
-                dat$outcome <= 1))
+# outcome missingness stays within what the analysis
+# can tolerate
+expect_true(mean(is.na(cohort$incident_dm)) < 0.15)
 ```
 
 These are the tests that most directly repay a
@@ -400,15 +459,23 @@ against the silent RNG-default changes discussed in
 @sec-intro:
 
 ```r
-# inst/tinytest/test-reproducibility.R
-set.seed(2024)
-a <- bootstrap_ci(sample_data, n = 1000)
+# inst/tinytest/test-cohort.R
+cohort <- clean_cohort(
+  load_cohort('analysis/data/raw_data/cohort_raw.csv')
+)
 
-set.seed(2024)
-b <- bootstrap_ci(sample_data, n = 1000)
-
-expect_equal(a, b)
+expect_equal(bootstrap_ci(cohort, n = 50),
+             bootstrap_ci(cohort, n = 50))
 ```
+
+Note where the seed lives. `bootstrap_ci()` takes it as
+an argument and sets it internally, so the test does not
+set one, and two calls agree because the function is
+deterministic given its arguments rather than because
+the caller remembered. A procedure that depends on the
+caller setting a seed first is one `set.seed` away from
+irreproducible, and moving the seed into the signature
+makes forgetting it impossible.
 
 The second form is stronger and is the single-result
 analogue of the L3 check: it compares a freshly
@@ -418,13 +485,18 @@ small file alongside the tests.
 
 ```r
 # inst/tinytest/test-baseline.R
-baseline <- readRDS(
-  'inst/tinytest/data/known-result.rds')
+baseline <- readRDS('inst/tinytest/baseline-estimate.rds')
 current <- run_primary_analysis()
-expect_equal(current$estimate,
-             baseline$estimate,
+expect_equal(current$estimate, baseline,
              tolerance = 1e-6)
 ```
+
+The tolerance is not decoration. An exact comparison
+would fail whenever a different BLAS or a different
+thread count reorders the floating-point summations
+inside the fit, as @sec-containers describes, and a
+check that fails for reasons unrelated to the analysis
+trains its reader to ignore it.
 
 A suite that includes this last test is doing, at
 the scale of a single result, what `zzc verify --full`
@@ -435,6 +507,62 @@ full-compendium check, which rebuilds the environment
 and re-runs the whole analysis; the baseline test is
 its single-result counterpart, not a substitute that
 places a project at the verified rung on its own.
+
+The four kinds are not four ways of doing one thing.
+Each catches defects the others do not see, and
+@fig-test-coverage sets four representative defects
+against them. Read the bottom row first. Re-execution
+alone, with no test of any kind, catches none of the
+four, because every one of these defects is
+deterministic and will reproduce perfectly. That row is
+the reproducibility paradox in tabular form, and it is
+the reason this chapter exists.
+
+```{r}
+#| label: fig-test-coverage
+#| fig-cap: 'Four representative defects against the four kinds of test, with a fifth row for re-execution alone. A filled cell marks the kind of test most likely to catch that defect. The matrix is close to diagonal, which is the point: the kinds are complements rather than alternatives, and a suite missing one kind is blind to a whole class of defect. The bottom row is empty because every defect shown is deterministic, so re-running the analysis reproduces it faithfully.'
+#| fig-alt: 'A grid with four defect columns and five test-kind rows. The columns are: dropped rows change the sample size; ages encoded in months; a function returns variance instead of standard deviation; a seeded bootstrap changes after an R upgrade. The rows are unit test, integration test, data-validation test, reproducibility test, and re-execution alone. Filled cells run roughly diagonally: the unit test catches the variance error; the integration test and the data-validation test both catch the dropped rows; the data-validation test catches the ages in months; the reproducibility test catches the changed bootstrap. The re-execution row is entirely empty.'
+#| fig-width: 7
+#| fig-height: 3.4
+
+library(ggplot2)
+library(tibble)
+
+defects <- c('dropped rows change\nthe sample size',
+             'ages encoded\nin months',
+             'variance returned\nfor a standard deviation',
+             'seeded bootstrap moves\nafter an R upgrade')
+kinds <- c('Re-execution alone',
+           'Reproducibility test',
+           'Data-validation test',
+           'Integration test',
+           'Unit test')
+
+cover <- expand.grid(defect = defects, kind = kinds,
+                     stringsAsFactors = FALSE)
+cover$defect <- factor(cover$defect, levels = defects)
+cover$kind <- factor(cover$kind, levels = kinds)
+
+hits <- c('Unit test|variance returned\nfor a standard deviation',
+          'Integration test|dropped rows change\nthe sample size',
+          'Data-validation test|dropped rows change\nthe sample size',
+          'Data-validation test|ages encoded\nin months',
+          'Reproducibility test|seeded bootstrap moves\nafter an R upgrade')
+cover$catches <- paste(cover$kind, cover$defect, sep = '|') %in% hits
+
+ggplot(cover, aes(x = defect, y = kind)) +
+  geom_tile(aes(fill = catches), color = 'white', linewidth = 2) +
+  scale_fill_manual(values = c('TRUE' = '#14746f',
+                               'FALSE' = '#eef2f2'),
+                    guide = 'none') +
+  labs(x = NULL, y = NULL) +
+  theme_minimal(base_size = 9) +
+  theme(
+    panel.grid = element_blank(),
+    axis.text.x = element_text(size = 7.6, lineheight = 0.95),
+    axis.text.y = element_text(face = 'bold', size = 8.4)
+  )
+```
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: which test catches it?
@@ -450,7 +578,10 @@ returns a variance. (d) After an R upgrade, a
 seeded bootstrap returns different draws than the
 manuscript reported.
 
-*Answer.* (a) An integration test on the pipeline,
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+(a) An integration test on the pipeline,
 which would see the changed row count, or a
 data-validation test asserting the expected sample
 size. (b) A data-validation test on the age range.
@@ -462,6 +593,7 @@ the unit and
 data-validation tests catch defects that
 reproduction alone would happily propagate: this is
 the paradox in operation.
+:::
 :::
 
 ## Test behavior, not implementation
@@ -611,7 +743,10 @@ say what would be lost by removing it. (a) The
 `calculate_mean`. (c) The `.pre-commit-config.yaml`
 hook. (d) The Dockerfile.
 
-*Answer.* (a) Capture: it fixes the package
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+(a) Capture: it fixes the package
 versions; removing it drops the analysis from L1 to
 L0. (b) Validation: it checks that a captured
 function is correct; removing it leaves the analysis
@@ -624,6 +759,7 @@ analysis from L2. The rule of thumb is that
 removing a capture feature lowers the level, while
 removing a validation feature leaves the level
 unchanged and only stops the checking.
+:::
 :::
 
 ## Testing across the archetypes
@@ -894,6 +1030,251 @@ converts a test into a tautology.
    misformatted R code. Report what the hook does, and
    contrast it with what continuous integration would
    do in @sec-verification if the hook were absent.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. These
+exercises are performed on the reader's own functions and
+data, so the code will vary; the boxes record the form the
+answer should take and the reasoning behind it.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+The form of the answer matters more than the function
+chosen. For a hypothetical `summarize_visits()`:
+
+```r
+# inst/tinytest/test-summarize_visits.R
+expect_equal(summarize_visits(c(2, 4, 6)), 4)
+expect_true(is.nan(summarize_visits(numeric(0))))
+expect_error(summarize_visits('a'))
+```
+
+**Where each expected value came from** is the substance of
+the exercise, and the three answers should be different.
+
+The ordinary case comes from **arithmetic done by hand**,
+independently of the function. This is what makes it an
+oracle: if the expected value were computed by running the
+function, the test would assert only that the function
+agrees with itself, which is the commonest way a test
+suite becomes worthless.
+
+The empty-input case comes from **a decision about the
+contract**. There is no arithmetic to do; the analyst must
+decide what the function should do with no data and then
+encode the decision. The test is as much a specification
+as a check.
+
+The wrong-type case comes from **the same contract**,
+asserting that the function refuses input it cannot
+handle rather than returning something misleading.
+
+A reader who finds they cannot state where an expected
+value came from has usually written a change-detector
+rather than a test.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+The bug is the dropped division, so the function returns a
+sum where a mean is intended:
+
+```r
+summarize_visits <- function(x) sum(x)   # bug
+```
+
+The analysis still runs, produces a number, and produces
+the *same* number on every machine and every rerun. If the
+project is containerized and its packages pinned, that
+number is perfectly reproducible.
+
+The catching test is the ordinary case from exercise 1:
+
+```r
+expect_equal(summarize_visits(c(2, 4, 6)), 4)
+```
+
+It fails immediately, returning 12 against an expected 4.
+
+**Why reproduction did not catch it.** Because reproduction
+asks whether the same inputs give the same outputs, and
+they do. The buggy function is deterministic; nothing about
+it varies between machines or over time. Reproducibility
+machinery captures determinants and propagates whatever
+the code computes with mechanical fidelity, including the
+wrong thing. The only way to detect the error is to compare
+the output against a value obtained *independently of the
+code*, which is what the hand-computed oracle supplies and
+what no amount of environment capture can.
+
+This is the reproducibility paradox in one line: capture
+fixes the inputs, and validation checks that the fixed
+inputs produce the intended answer.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+The four constraints, in the form the chapter uses:
+
+```r
+# inst/tinytest/test-data-cohort.R
+cohort <- readRDS('analysis/data/derived_data/cohort.rds')
+
+expect_true(
+  all(c('id', 'age', 'sex', 'outcome') %in% names(cohort)),
+  info = 'the expected columns are present'
+)
+expect_true(
+  all(cohort$age >= 18 & cohort$age <= 105, na.rm = TRUE),
+  info = 'age lies within the enrolled range'
+)
+expect_true(
+  all(cohort$sex %in% c('F', 'M', 'Other')),
+  info = 'sex takes only coded levels'
+)
+expect_true(
+  mean(is.na(cohort$outcome)) < 0.05,
+  info = 'outcome missingness stays under five percent'
+)
+```
+
+**The justifications** are the point, and each should come
+from outside the data.
+
+The **column set** comes from the data dictionary: these
+are the variables the analysis consumes, and a missing one
+means an upstream export changed. The **age range** comes
+from the protocol's eligibility criteria, not from the
+observed minimum and maximum; deriving the bound from the
+data would make the test unable to detect the very
+excursion it exists to catch. The **label set** comes from
+the coding sheet. The **missingness bound** comes from
+what the analysis can tolerate before its conclusions
+become unsafe, which is a judgment the analyst must make
+and record.
+
+The recurring discipline: a range read off the current
+data is a description, and a range read off the protocol
+is a test.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+**All of them belong to the validation register.** Unit
+tests and data-validation tests alike pin no determinant:
+they add no package to the lockfile and no library to the
+image. They confirm that what was captured behaves as
+intended.
+
+**What removing them would change.** Nothing about the
+position on the L0 to L3 ladder. An analysis at L2 with a
+full test suite and the same analysis at L2 with no tests
+sit on the same rung, because the rung grades how far down
+the determinant stack the result is locked, and tests lock
+nothing.
+
+**What removing them would change instead** is whether
+anyone has reason to believe the result is right. The
+analysis becomes trusted rather than checked, and the
+class of error the tests were catching, a wrong function
+and an out-of-range dataset, returns to being invisible.
+
+The one qualification worth making, because it is a real
+subtlety rather than a hedge: removing tests does bear on
+L3 indirectly. L3 requires evidence that recorded outputs
+regenerate, and a test suite is one of the mechanisms that
+produces such evidence. A project relying on its tests as
+its L3 evidence would fall to L2 on their removal. It is
+the *verification role* that matters there, not the
+testing role, and a reader who makes this distinction has
+understood the chapter's central division.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+```r
+# once, to record the baseline
+set.seed(42)
+result <- fit_model(cohort)
+saveRDS(coef(result), 'inst/tinytest/baseline-coefs.rds')
+```
+
+```r
+# inst/tinytest/test-reproducibility.R
+baseline <- readRDS('baseline-coefs.rds')
+set.seed(42)
+current <- coef(fit_model(cohort))
+expect_equal(current, baseline, tolerance = 1e-8,
+             info = 'model coefficients match the baseline')
+```
+
+Changing one line of the analysis makes the test fail,
+reporting the coefficients that moved.
+
+**On the tolerance**, which is the part of this exercise
+that repays thought. An exact comparison is the strongest
+check and will produce failures that mean nothing:
+floating-point summation reorders under a different BLAS
+or a different thread count, as @sec-containers discusses,
+and the last digits move without the analysis changing. A
+tolerance of `1e-8` accepts that noise and still catches
+any change large enough to alter a reported figure. A
+tolerance set too loosely stops detecting real changes,
+and there is no universally correct value; it should be
+chosen against the precision at which results are
+reported.
+
+**What this test is and is not.** It is the single-result
+form of the L3 check, and it is a *change detector*: it
+asserts that today's answer matches the recorded one, not
+that either is correct. It is worth being clear about
+this, because the baseline was produced by the same code
+it now guards. If the code was wrong when the baseline was
+recorded, this test will faithfully defend the wrong
+answer, which is the paradox reappearing one level up.
+The unit tests of exercise 1 are what establish
+correctness; this test establishes stability.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**What the hook does.** The commit is refused. The
+formatting hook rewrites the offending files in place and
+aborts, so the commit does not complete and the working
+tree now contains the reformatted code, which must be
+staged and committed again. The effect is that
+misformatted code cannot enter the history at all.
+
+**The contrast with continuous integration.** CI would let
+the commit through. The code enters the history, the push
+succeeds, and the check runs afterward on the server,
+reporting a failure against a commit that already exists.
+Fixing it requires a second commit, so the history now
+records both the violation and its repair.
+
+The differences worth naming are three. **Timing:** the
+hook acts before the record is written, CI after.
+**Locality:** the hook runs on the analyst's machine and
+can therefore be skipped, with `--no-verify` or by a
+collaborator who never installed it, whereas CI runs on
+the server and cannot. **Scope:** the hook must be fast
+enough to sit inside a commit, so it does cheap things
+like formatting and linting, whereas CI can rebuild the
+container and run the full suite.
+
+The two are complements rather than alternatives, and the
+chapter's framing explains why: the hook is a convenience
+that keeps trivia out of the history, and CI is the gate
+that actually guarantees anything, because it is the one
+nobody can skip.
+:::
 
 ## Further reading
 

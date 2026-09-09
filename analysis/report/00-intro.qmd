@@ -106,6 +106,60 @@ conclusion; they are analyses that could not be made to run
 a second time. The scholarship, in Claerbout's phrase, was
 advertised but never delivered.
 
+Setting the four studies beside one another, as in
+@fig-failure-rates, makes the shape of the problem visible.
+The replication studies and the re-execution studies are
+measuring different things, and the figure keeps them in
+separate panels for that reason, but the rates are
+comparably low in both. The difference that matters for
+this book is that the right-hand panel counts failures that
+no amount of additional data collection would fix, and that
+better engineering would.
+
+```{r}
+#| label: fig-failure-rates
+#| fig-cap: 'Reported success rates in four studies, separated by what each measured. The left panel reports replication studies, in which new data was collected to test a prior finding. The right panel reports re-execution studies, in which deposited code was run again without any attempt to evaluate the science. The re-execution figures are those stated in the text of the studies as cited in this chapter, and are approximate where the source reports a bound rather than a point estimate.'
+#| fig-alt: 'A two-panel bar chart of four studies. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent and Begley and Ellis at 11 percent. The right panel, labeled re-execution, shows Trisovic and colleagues at about 24 percent and Saju and colleagues at about 25 percent. All four bars sit well below half, and the two panels reach comparably low values by different routes.'
+#| fig-width: 7
+#| fig-height: 3.2
+
+library(ggplot2)
+library(tibble)
+
+studies <- tibble(
+  study = c('Open Science\nCollaboration (2015)',
+            'Begley and\nEllis (2012)',
+            'Trisovic et al.\n(2022)',
+            'Saju et al.\n(2025)'),
+  rate = c(39, 11, 24, 25),
+  kind = factor(
+    c('Replication: new data collected',
+      'Replication: new data collected',
+      'Re-execution: deposited code re-run',
+      'Re-execution: deposited code re-run'),
+    levels = c('Replication: new data collected',
+               'Re-execution: deposited code re-run')
+  )
+)
+
+ggplot(studies, aes(x = reorder(study, rate), y = rate)) +
+  geom_col(aes(fill = kind), width = 0.62, show.legend = FALSE) +
+  geom_text(aes(label = paste0(rate, '%')),
+            hjust = -0.18, size = 3.4) +
+  coord_flip(ylim = c(0, 48)) +
+  facet_wrap(~kind, scales = 'free_y', ncol = 2) +
+  scale_fill_manual(values = c(
+    'Replication: new data collected' = '#4c72b0',
+    'Re-execution: deposited code re-run' = '#14746f'
+  )) +
+  labs(x = NULL, y = 'Reported success rate (percent)') +
+  theme_minimal(base_size = 10) +
+  theme(
+    panel.grid.major.y = element_blank(),
+    strip.text = element_text(face = 'bold', size = 8.5)
+  )
+```
+
 ## Why the failures are computational, not statistical
 
 It is worth dwelling on why re-execution fails, because the
