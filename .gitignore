@@ -1,5 +1,9 @@
 # Quarto
 _book/
+# Chunk output directories Quarto writes beside each source file.
+# Regenerable from the sources and the freeze cache, so they are
+# ignored for the same reason _book/ is.
+**/*_files/
 .quarto/
 /.quarto/
 **/*.quarto_ipynb
