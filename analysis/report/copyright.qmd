@@ -2,9 +2,13 @@
 
 *Reproducible Research for the Health Sciences* by Ronald
 'Ryy' G. Thomas is licensed under a
-[Creative Commons Attribution-NonCommercial-NoDerivatives
+[Creative Commons Attribution-NonCommercial-ShareAlike
 4.0 International
-License](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+You may share and adapt this work, including excerpting
+chapters for a course, provided you give attribution, do not
+use it commercially, and license your adaptation under the
+same terms.
 
 The code samples in this book are licensed under
 [Creative Commons CC0 1.0 Universal (CC0

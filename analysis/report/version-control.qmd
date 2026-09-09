@@ -326,6 +326,9 @@ whole working tree and spare the analyst a `git add`.
 What does the staging step buy that a commit-everything
 model would lose?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 It buys the ability to make a commit an *atomic unit of
 one idea* rather than a snapshot of whatever happened to
 be on disk. In an afternoon an analyst may fix a bug in
@@ -342,6 +345,7 @@ staging is the mechanism that coherence requires. (For
 the genuine everyday case where one *does* want
 everything, `git commit -a` stages all tracked changes
 in one step, so the friction is opt-out, not mandatory.)
+:::
 :::
 
 ## Reading the history: the log and the diff
@@ -584,6 +588,9 @@ list and is deliberately committed by another. A
 is committed, while the registry extract it describes is
 ignored. Explain both choices.
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The rendered `report.pdf` is a regenerable output: in a
 data-analysis or manuscript compendium it is a product
 the code reproduces on render, so committing it couples
@@ -591,7 +598,7 @@ the history to a derivative and is usually avoided. An
 analyst who nonetheless commits it, perhaps to preserve
 the exact submitted PDF as a fixed reference, is making a
 defensible different judgment about what the artifact is
-*for*; the point is that it is a judgment, not a rule.
+*for*. The point is that it is a judgment, not a rule.
 The `data_dictionary.csv` and the registry extract sit on
 opposite sides of the one line that is not a matter of
 taste. The dictionary carries variable names and codings,
@@ -601,6 +608,7 @@ extract carries the protected health information itself
 and must never be committed, whatever its convenience.
 The `!` re-inclusion pattern exists precisely to keep the
 safe metadata while ignoring the unsafe data beside it.
+:::
 :::
 
 ## Branches, lightly
@@ -639,6 +647,62 @@ lines of commits coexist and later rejoin. We keep the
 treatment light here and return to the collaborative use
 of branches, which is where they earn their keep, when we
 reach pull requests.
+
+@fig-branch draws the shape. The point worth taking from
+it is that the branch does not copy the history: it names
+a new commit whose parent is a commit on `main`, and the
+merge names a commit with two parents. Everything before
+the branch point is shared, and no hash anywhere in the
+diagram changes when the branch is created or merged.
+
+```{r}
+#| label: fig-branch
+#| fig-cap: 'A branch and its merge, drawn as the commit graph git actually stores. The lower line is `main`; the upper line is a sensitivity-analysis branch created at commit B and merged back at M. Commits A through C exist once and are shared by both lines: the branch adds commits rather than copying them. The merge commit M is the only commit in the diagram with two parents, which is what records that the two lines rejoined and when.'
+#| fig-alt: 'A commit graph with two horizontal rows of circles joined by lines, with time running left to right. The lower row, labeled main, runs A, B, C, then the merge commit M, then D. The upper row, labeled a sensitivity-analysis branch, holds two commits S1 and S2. A line rises from B to S1, marking the branch point, and a line descends from S2 to M, the merge. M is annotated as the only commit with two parents. Commits A, B, and C lie on the shared portion of the graph rather than being copied onto the branch.'
+#| fig-width: 7
+#| fig-height: 2.5
+
+library(ggplot2)
+library(tibble)
+
+nodes <- tibble(
+  id    = c('A', 'B', 'C', 'M', 'D', 'S1', 'S2'),
+  x     = c(1, 2, 3, 4.6, 5.7, 3.1, 4.0),
+  y     = c(0, 0, 0, 0, 0, 0.8, 0.8),
+  shade = c(rep('main', 5), 'branch', 'branch')
+)
+
+edges <- tibble(
+  x    = c(1, 2, 3, 4.6, 2, 3.1, 4.0),
+  xend = c(2, 3, 4.6, 5.7, 3.1, 4.0, 4.6),
+  y    = c(0, 0, 0, 0, 0, 0.8, 0.8),
+  yend = c(0, 0, 0, 0, 0.8, 0.8, 0)
+)
+
+ggplot() +
+  geom_segment(data = edges,
+               aes(x = x, y = y, xend = xend, yend = yend),
+               color = 'grey45', linewidth = 0.45) +
+  geom_point(data = nodes, aes(x = x, y = y, fill = shade),
+             shape = 21, size = 9, stroke = 0.5,
+             color = 'grey30', show.legend = FALSE) +
+  geom_text(data = nodes, aes(x = x, y = y, label = id),
+            size = 3, fontface = 'bold') +
+  scale_fill_manual(values = c(main = '#c3ddda',
+                               branch = '#f0e2c4')) +
+  annotate('text', x = 0.55, y = 0, label = 'main',
+           hjust = 1, fontface = 'bold', size = 3.2) +
+  annotate('text', x = 2.55, y = 0.8, label = 'branch',
+           hjust = 1, fontface = 'bold', size = 3.2) +
+  annotate('text', x = 4.6, y = -0.52,
+           label = 'M: two parents', size = 2.9,
+           color = 'grey25') +
+  annotate('text', x = 2.0, y = -0.52,
+           label = 'branch point', size = 2.9,
+           color = 'grey25') +
+  coord_cartesian(xlim = c(-0.1, 6.1), ylim = c(-0.8, 1.1)) +
+  theme_void()
+```
 
 ## The remote: GitHub, GitLab, and collaboration
 
@@ -725,6 +789,9 @@ should bother with the additional machinery of forks and
 pull requests. What does the pull request record that the
 commit history does not?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The commit history records what changed and, in its
 messages, why; it does not record who *reviewed* the change
 before it entered the shared analysis, or what they said.
@@ -739,6 +806,7 @@ history answers 'what was changed and why'; the pull
 request answers 'who checked it, and did they agree'. For a
 regulated analysis both questions have auditors, and the
 two records together are stronger than either alone.
+:::
 :::
 
 ## What git does not do
@@ -852,7 +920,7 @@ git push -u origin main
 
 A collaborator at a second site forks the repository, adds
 a site-specific adjustment on a branch of their fork, and
-opens a pull request; the analyst reviews the diff inline,
+opens a pull request. The analyst reviews the diff inline,
 requests one change, and merges it, leaving a reviewable
 record of the exchange. Finally, at journal submission, the
 analyst marks the exact state.
@@ -975,6 +1043,245 @@ made.
    stack that remain unpinned, and rewrite the sentence so
    that it claims exactly what version control secures and no
    more.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. The first
+two ask the reader to work in their own directories, so what
+they produce will vary; the boxes say what a good answer
+establishes.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+No single correct answer. What a good answer establishes is
+the asymmetry between the two questions, because the
+asymmetry is the argument for version control.
+
+Almost every reader can answer *what changed* between two
+snapshot files, because the files are still there and a
+diff tool will show it. Almost no reader can answer *why*,
+because the reason was never written down anywhere. It
+lived in the analyst's head, or in an email, or in a
+conversation after a meeting, and it is gone. Readers
+commonly find they can reconstruct the what for files a
+year old and cannot reconstruct the why for files a month
+old.
+
+That gap is precisely what a commit history preserves.
+The diff is recoverable from the files themselves, so it
+is the cheaper half; the message is not recoverable from
+anything, so it is the half that decays. This is why the
+chapter insists that a commit is an atomic unit of one
+idea with a message attached: the message is the only part
+of the record that cannot be reconstructed later.
+
+A reader who finds that they *can* answer why, because
+they named the files carefully, has demonstrated the
+`FINAL` method working at its best, and should notice how
+much of the reasoning fits in a filename.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+The mechanics are straightforward, so the substance is the
+last clause.
+
+```bash
+git init
+# edit file_a.txt
+git add file_a.txt && git commit -m 'Add the cohort filter'
+# edit file_b.txt
+git add file_b.txt && git commit -m 'Raise the outlier threshold'
+# edit file_c.txt
+git add file_c.txt && git commit -m 'Add the summary table'
+git log --oneline
+git show <middle-hash>
+```
+
+`git log --oneline` lists the three commits newest first,
+each with an abbreviated hash and its subject line.
+`git show` on the middle hash prints both halves of the
+record: the message you wrote, and the diff of what
+changed.
+
+On the hashes: recording the middle commit's hash before
+making the third commit and comparing afterward shows it
+unchanged. This is worth dwelling on. A commit hash is
+computed over the commit's content *and* its parent's
+hash, so it fixes the entire history leading to it. Adding
+a commit on top cannot alter it, because the new commit
+points backward and nothing points forward. That is the
+property that makes the history an audit trail rather than
+a mutable log.
+
+The honest qualification, which a careful reader may
+raise: hashes are stable under *adding* history, not under
+*rewriting* it. An `amend` or a `rebase` produces new
+commits with new hashes, and the old ones become
+unreferenced. The audit-trail property holds for a history
+that is appended to, which is why rewriting shared history
+is treated as a serious act.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+The two files share most of their content and differ in a
+way that follows from what each archetype produces.
+
+Common to both: `.Rproj.user/`, `.Rhistory`, `.RData`,
+`.DS_Store`, and `renv/library/`, which is a local install
+tree reconstructable from the lockfile and must never be
+committed.
+
+In the **data-analysis** file but not the package one:
+patterns for rendered outputs, `*.html` and `*.pdf`, since
+the report is a product the code regenerates; the derived
+data directory, or selected paths within it; and, most
+importantly, the raw-data extract if it carries protected
+information.
+
+In the **R-package** file but not the analysis one:
+`inst/doc/`, which holds built vignettes, and `src/*.o`
+and `src/*.so`, the compiled object files, which exist only
+if the package carries compiled code and are rebuilt on
+every install.
+
+The explanation to give for each difference is the same
+shape: an archetype ignores what it *generates* and commits
+what it *is*. A data-analysis compendium generates a
+report and so ignores it. A package generates compiled
+objects and built vignettes and so ignores those. Neither
+ignores its own source.
+
+The one line that is not a matter of archetype is the data
+carrying protected health information, which is ignored in
+every archetype, always, and is the subject of the next
+exercise.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+The colleague's mental model is that a repository holds the
+current state of the files. It holds their whole history,
+and that is the point of it.
+
+**Why the file is still there.** Deleting a file in a new
+commit records the deletion as a change; the commit that
+added the file is untouched, and the file's contents are
+retrievable from it by anyone who clones the repository.
+The deletion is a new fact appended to the record, not an
+erasure of the old one.
+
+**What determines whether it can be removed.** Whether the
+history has been shared. Removing content means rewriting
+every commit from the offending one forward, with
+`git filter-repo` or an equivalent, which produces new
+hashes for all of them. If the offending commit exists only
+in the local repository, this is a local operation and
+costs nothing but care. If it has been pushed, every clone
+and fork holds the old objects, and rewriting the local
+copy does not touch them.
+
+**What to do if it was already pushed to GitHub.** Treat
+the data as disclosed and act in that order. Notify whoever
+is responsible for the data, an IRB or a privacy office,
+because a disclosure has occurred and the notification
+obligation is not a technical question. Rotate anything
+rotatable. Then rewrite the history and force-push, ask
+GitHub Support to purge cached views and any dangling
+objects, and require every collaborator to re-clone rather
+than pull, since a pull onto a rewritten history
+reintroduces the old objects. Note the ordering: the
+cleanup is the last step and the least important one,
+because it does not undo the exposure.
+
+The lesson the chapter draws is that this is why the
+`.gitignore` for protected data is written before the first
+commit rather than after the first mistake.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+A serviceable sequence, with the audit contribution of each
+step.
+
+```bash
+# 1. Fork the canonical repository on the forge.
+git clone https://github.com/<site2>/<study>.git
+cd <study>
+git remote add upstream https://github.com/<coord>/<study>.git
+
+# 2. Branch from an up-to-date main.
+git fetch upstream && git checkout -b fix/outlier-threshold upstream/main
+
+# 3. Commit the change.
+git add R/clean_cohort.R
+git commit -m 'Raise outlier threshold to 4 SD per DSMB request'
+
+# 4. Push to the fork and open a pull request.
+git push origin fix/outlier-threshold
+```
+
+What each step records that a direct push would not. The
+**fork** establishes that the contributor did not hold
+write access to the canonical analysis, so the change could
+not enter without someone else's action. The **branch**
+separates the proposal from the accepted state, so the
+history of `main` contains only what was agreed. The
+**commit** is the same in either workflow and records what
+and why. The **pull request** is the artifact that carries
+everything a direct push destroys: the proposed diff before
+it was accepted, the discussion, any requested changes and
+the revisions answering them, the identity of the approver,
+and the timestamp of the approval. The **merge** records
+that the approval preceded the entry into `main`.
+
+The compressed version of the answer: the commit history
+answers 'what changed and why'; the pull request answers
+'who checked it, and did they agree'. A direct push to
+`main` answers only the first, and in a multi-site trial
+the second question has auditors too.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**The rung reached is L0.** Version control makes the
+analysis locatable and gives it a history. It pins the
+analysis code, which is a real achievement and the
+precondition for everything above it, but the ladder grades
+how far *down* the determinant stack a result is locked,
+and the code sits at the top of that stack.
+
+**Two layers that remain unpinned.** The package versions,
+since nothing in a git repository records which version of
+`dplyr` produced the numbers; and the environment beneath
+them, the R runtime, the operating system, and the system
+libraries. A reader may equally name the numerical
+libraries or the session configuration and be right; the
+point is to name layers the repository does not touch. The
+common wrong answer is to name the data, which version
+control *can* pin for a small committed dataset, though
+usually does not for a large or protected one.
+
+**A rewritten sentence.** 'The analysis code is version
+controlled and deposited at [location], so the exact code
+that produced these results can be retrieved. The software
+environment was not recorded; re-execution may therefore
+require package versions differing from those used here,
+and we have not verified that the results regenerate.'
+
+The three clauses map onto the three claims: what is
+secured, what is not, and what has not been checked. The
+last clause is the one authors most often omit, and it is
+the difference between claiming L0 honestly and claiming
+L3 by implication.
+:::
 
 ## Further reading
 

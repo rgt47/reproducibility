@@ -52,8 +52,8 @@ fix the environment (@sec-containers), render the
 report (@sec-literate), and validate the whole with
 tests and continuous integration (@sec-verification).
 The present chapter concerns what happens when the
-analysis must leave that machine, first to reach a
-collaborator down the hall, and eventually to reach a
+analysis must leave that machine. It must first reach
+a collaborator down the hall, and eventually reach a
 stranger, a reviewer, or the analyst's own future self,
 years after the original laptop has been recycled.
 
@@ -199,8 +199,7 @@ digest, and fixes it for every collaborator. This is
 the slow-moving half. It corresponds to pillar one, the
 computational environment, and it is where the L1-to-L2
 transition of the ladder is secured. The lead builds
-this environment once, and the whole team reuses it;
-the vignette that describes the pattern calls this
+this environment once, and the whole team reuses it. the vignette that describes the pattern calls this
 'build once, use everywhere', and reports that reusing
 a pre-built team image reduces the setup of a new
 project from the fifteen or twenty minutes of a full
@@ -396,7 +395,7 @@ community has crystallized under the acronym FAIR.
 Wilkinson and colleagues proposed that a research object
 should be Findable, Accessible, Interoperable, and
 Reusable, and framed the principles for research data
-[@wilkinson2016]; Barker and colleagues subsequently
+[@wilkinson2016]. Barker and colleagues subsequently
 adapted them for research software, whose reuse involves
 execution and not only reading [@barker2022]. A DOI
 serves findability; an open repository serves
@@ -417,7 +416,7 @@ compendium-plus-archived-image pattern approaches by
 other means. And the Turing Way, a community-authored
 handbook, collects the collaborative and stewardship
 practices of reproducible research into one continually
-updated reference [@turingway2022]; a reader who wants
+updated reference [@turingway2022]. A reader who wants
 the social side of collaboration, from code review to
 project governance to credit, in more depth than a
 single chapter allows, should begin there.
@@ -525,7 +524,7 @@ useful recorded fact is the *date the analysis was run*,
 from which `rang` resolves the historical package set.
 It is a stewardship failure rather than a capture
 failure because the pins were captured correctly at the
-time (the compendium was genuinely L1); what lapsed was
+time (the compendium was genuinely L1). What lapsed was
 the preservation of a runnable environment over time,
 which an archived image or a recorded run date would have
 protected. Capturing the level and stewarding it are
@@ -806,6 +805,246 @@ not a reproduction.
    archival deposit, and explain what validation gate, if
    any, that step adds.
 
+## Solutions
+
+Attempt an exercise before expanding its solution. Most of
+these are performed on a compendium of the reader's own, so
+their outputs vary; the boxes record the criterion to apply
+and the reasoning behind it.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+No single correct answer. The criterion to apply is
+**how often the package changes and how many contributors
+need it**.
+
+The **environment layer** holds what everyone needs and
+nobody changes: the tidyverse, `knitr` and `rmarkdown`, the
+plotting stack, anything requiring system libraries that
+are expensive to install. Baking these into the image means
+each contributor pays the install cost zero times rather
+than once each, and the layer moves only when the team lead
+rebuilds.
+
+The **package layer** holds what one contributor needs for
+one piece of work: a specialized survival package, a
+mapping library used in a single figure, anything adopted
+mid-project. These arrive through the lockfile, which every
+contributor extends.
+
+**The borderline cases** are the substance of the exercise,
+and three kinds recur.
+
+A package that *started* in the package layer and is now
+used by everyone belongs in the environment layer at the
+next rebuild. The signal is the union model: when a package
+appears in the lockfile because several contributors
+installed it independently, it has outgrown the fast layer.
+
+A package with heavy system dependencies used by only one
+contributor is genuinely ambiguous. Installing it from the
+lockfile is slow and may fail without the system libraries;
+baking it in imposes the size on everyone. The usual
+resolution is to put the *system libraries* in the image
+and leave the R package in the lockfile.
+
+A package pinned to an unusual version for one analysis
+belongs in the package layer regardless of how widely it
+is used, because the image cannot carry two versions.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+A paragraph a collaborator could act on:
+
+> The Dockerfile is a recipe and the image is a
+> cake. The recipe says how the environment was made,
+> in text, in version control, reviewable line by line,
+> and it will still say so in ten years. The image is an
+> opaque binary that someone must keep hosting. It can be
+> deleted, pruned, rate-limited, or rebuilt under the same
+> tag, and nothing in it explains how it was produced. So
+> commit the Dockerfile and treat the pushed image as a
+> cache: convenient, worth having, and not the record.
+
+**A concrete failure from relying on the pushed image.**
+Docker Hub applies a retention policy to inactive
+repositories and the image is removed, or the organization
+account lapses, or the tag is overwritten by a later push.
+An analysis whose only environment record was that image
+is now unreconstructable, and the failure appears at
+exactly the moment someone tries to reproduce the work,
+which is usually years after anyone was watching.
+
+A second and more insidious failure, worth mentioning
+because it produces no error: the image is rebuilt and
+pushed under the same tag with a newer base. A reader pulls
+the tag, gets a different environment from the one the
+analysis ran in, and obtains slightly different numbers
+with nothing to indicate anything moved. This is the
+argument for pinning by digest as well as committing the
+recipe.
+
+A third, if the collaborator works on Apple Silicon: the
+pushed image may have been built for one architecture only,
+so the pull succeeds on the author's machine and fails, or
+runs under emulation with different numerical behavior, on
+someone else's.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+**What must change.** The CI configuration file, from
+`.github/workflows/*.yml` to a single `.gitlab-ci.yml` at
+the root, in the dialect of stages and scripts rather than
+jobs and reusable actions. The remote URL and the
+authentication method. The registry, from GHCR to the
+GitLab container registry, and therefore the image
+reference in any pull. The secrets, which must be
+re-created as GitLab CI variables. Anything relying on a
+GitHub-specific feature: pull-request comment bots,
+`GITHUB_TOKEN`, Actions from the marketplace.
+
+**What does not change.** Everything that constitutes the
+reproducibility of the compendium. The Dockerfile, the
+`renv.lock`, the directory structure, the `DESCRIPTION`,
+the tests, the analysis code, the data, and the checks
+themselves are all forge-agnostic. This is the point worth
+drawing out: the reproducibility machinery is not a
+property of the hosting platform, and a compendium that
+must be substantially rewritten to move forges was coupled
+to its forge in ways it should not have been.
+
+**Where the CI logic should live.** In a `Makefile`, or an
+equivalent single entry point, so that both forges' CI
+files reduce to a shim naming an image and calling
+`make check`, `make render`, `make check-renv`. The
+migration then touches one thin file rather than the
+check logic, and the same commands run locally, which is
+the incidental benefit that makes the arrangement worth
+adopting even for a project that will never move.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+The deposit and DOI will differ for each reader. The
+substance is the statement and its defense.
+
+For a compendium with a lockfile and a Dockerfile but no
+verification record:
+
+> The complete research compendium, comprising the
+> analysis code, the derived data, the package lockfile,
+> and the container recipe, is archived at
+> https://doi.org/10.5281/zenodo.XXXXXXX. The
+> computational environment is pinned by a
+> digest-referenced container image and an `renv.lock`
+> lockfile, so the analysis can be re-executed in the
+> environment in which it was developed (L2 on the
+> capture ladder used in the accompanying methods). We
+> have not independently verified that re-execution
+> regenerates the reported outputs, so no L3 claim is
+> made.
+
+**Defending the claim against the honest-level standard**
+means checking three things and being willing to have the
+answer come out lower than one would like. Is there a
+lockfile? Then L1. Is there an artifact pinning the runtime
+and system libraries? Then L2. Is there *evidence* that a
+rebuild regenerated the recorded outputs, a CI log, a
+verification report, recorded output hashes? Only then L3.
+
+The last clause of the statement above is the one that
+makes it honest, and it is the clause most authors omit.
+Omitting it does not merely leave the claim vague; it
+invites the reader to assume verification that nobody
+performed.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+```r
+rang::dockerize_rang(
+  rang::resolve(readLines('renv.lock'), snapshot_date = '2026-06-29'),
+  output_dir = 'rang_build'
+)
+```
+
+The comparison typically shows most packages matching and
+a minority differing, with the differing set growing as
+the gap widens between the snapshot date and the dates on
+which packages were actually installed.
+
+**Why a date-based reconstruction may not match a
+lockfile exactly.** Four reasons, and it is worth
+separating them.
+
+First and most important, a lockfile records what was
+*installed*, and a date reconstruction records what was
+*current on a date*. These differ whenever a package was
+installed on one date and the lockfile written on another,
+which is the normal case for a project of any duration.
+
+Second, packages installed from sources other than CRAN,
+from GitHub at a particular commit, or from Bioconductor,
+have no CRAN-dated equivalent, so the reconstruction
+either misses them or substitutes something.
+
+Third, archived packages present a gap: a package removed
+from CRAN is recoverable from the archive by version but
+its dependency resolution at a past date may not be.
+
+Fourth, the reconstruction resolves the transitive closure
+afresh, so a dependency that has since changed its own
+requirements can pull a different set than the lockfile
+recorded.
+
+The conclusion the chapter draws: reconstruction by date
+is what one falls back on when no lockfile exists, and it
+is an approximation rather than a substitute. A project
+with a lockfile should restore it.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+Taking each in turn; the reader needs only one.
+
+**R package.** The sharing step beyond the deposit is
+publication to a package repository, CRAN or
+Bioconductor, or at minimum a tagged release installable
+with `remotes::install_github()`. The validation gate this
+adds is substantial and externally imposed: CRAN runs
+`R CMD check` across multiple platforms and R versions,
+including development R, and rejects the package on
+failure. This is a stronger gate than any the author
+configured, precisely because the author did not configure
+it, and it is the closest thing in the R ecosystem to the
+independent verification of @sec-verification.
+
+**Blog.** The step is deployment to a public URL with a
+feed, and registration where readers will find it. The
+gate added is thin: a deploy check confirming the site
+builds and links resolve. Notably, no gate checks that the
+code in the posts still runs, which is why an old post is
+the most reliably broken artifact in this book's
+taxonomy.
+
+**Simulation study.** The step is depositing the full
+results alongside the reduced pipeline, since the full run
+is too expensive to reproduce on demand, together with the
+seed and the replicate count. The gate added is the
+correspondence check: the reduced pipeline under the
+recorded seed must regenerate the leading replicates of
+the deposited full results. That is what lets a reader
+verify the machinery without paying for the study.
+:::
+
 ## Further reading
 
 - Wilkinson and colleagues [@wilkinson2016] formulate
@@ -846,7 +1085,7 @@ We have reached the end of the book, and it is fitting
 to gather its argument into a few points, in the manner
 of a closing summary. Reproducibility, we have
 maintained throughout, is not a badge a project either
-holds or lacks; it is a level a project reaches, and the
+holds or lacks. It is a level a project reaches, and the
 discipline is to reach as high as the work warrants and
 to say plainly how high that was.
 
@@ -884,7 +1123,7 @@ Third, the unit of reproducible work is the research
 compendium, and it is not only a manuscript. The same
 machinery, the same pillars, and the same ladder serve a
 data analysis, a simulation study, an R package, a blog,
-and a scholarly manuscript alike; the archetypes differ
+and a scholarly manuscript alike. the archetypes differ
 only in their directory layout, in whether a report is
 rendered, and in the last mile of publication, a package
 submission, a deployed website, or a deposit beside an

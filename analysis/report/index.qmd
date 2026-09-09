@@ -5,25 +5,25 @@ the Health Sciences** by Ronald 'Ryy' G. Thomas, a graduate
 course textbook.
 
 The book takes a position that a health scientist will
-recognize from their own methodological training:
-computational reproducibility is not a property of any
-single file but a property of the relationships among the
-operating system, the language runtime, the package set,
-the session configuration, the source code, and the data.
-A result reproduces when those relationships are captured
-well enough that another person, on another machine, at a
-later time, obtains the same answer. The mature tools of
-the R ecosystem each capture one or two of these
-relationships; the unsolved problem, and the subject of
-this book, is composing them into a single workflow that a
-working analyst can actually adopt.
+recognize from their own methodological training.
+Computational reproducibility is not a property of any
+single file. It is a property of the relationships among
+the operating system, the language runtime, the package
+set, the session configuration, the source code, and the
+data. A result reproduces when those relationships are
+captured well enough that another person, on another
+machine, at a later time, obtains the same answer. The
+mature tools of the R ecosystem each capture one or two of
+these relationships. The unsolved problem, and the subject
+of this book, is composing them into a single workflow
+that a working analyst can actually adopt.
 
 The book is organized around three ideas that recur in
 every chapter. The first is a ladder of reproducibility
-levels, from a merely locatable analysis (L0) through
-pinned packages (L1) and a pinned environment (L2) to a
-verified analysis whose recorded outputs have been shown to
-regenerate (L3). The second is a distinction between
+levels. It runs from a merely locatable analysis (L0)
+through pinned packages (L1) and a pinned environment (L2)
+to a verified analysis whose recorded outputs have been
+shown to regenerate (L3). The second is a distinction between
 capturing reproducibility and validating it: pinning an
 environment captures a level, whereas continuous
 integration and verification confirm it. The third is the
@@ -32,13 +32,13 @@ code, and manuscript inside a structure that any reader can
 navigate and any machine can rebuild.
 
 The concrete vehicle throughout is `zzcollab`, an
-open-source R framework that composes the standard tools
-(`renv` or Nix for packages, Docker or a runtime
-alternative for the environment, a research-compendium
-package structure, continuous integration, testing, and
-data-integrity checking) into one system organized by the
-levels ladder. The book teaches the concepts first and the
-tool second: a reader who finishes it should be able to
+open-source R framework built around the levels ladder. It
+composes the standard tools (`renv` or Nix for packages,
+Docker or a runtime alternative for the environment, a
+research-compendium package structure, continuous
+integration, testing, and data-integrity checking) into a
+single system. We teach the concepts first and the tool
+second. A reader who finishes the book should be able to
 reason about reproducibility with any toolchain, and to
 operate this one.
 
@@ -62,7 +62,10 @@ that others will need to trust, audit, and rebuild.
 
 This book is licensed under
 [Creative Commons
-Attribution-NonCommercial-NoDerivatives 4.0 International](https://creativecommons.org/licenses/by-nc-nd/4.0/).
+Attribution-NonCommercial-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-nc-sa/4.0/).
+You may share and adapt it, including for teaching, provided
+you give attribution, do not use it commercially, and license
+your adaptation under the same terms.
 
 Code samples are licensed under
 [Creative Commons CC0 1.0 Universal](https://creativecommons.org/publicdomain/zero/1.0/),

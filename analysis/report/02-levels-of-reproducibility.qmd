@@ -66,17 +66,17 @@ observation that a computational result depends on a
 stack of determinants beneath the code and the data,
 and that a published script pins almost none of them.
 Here we make that observation precise. We shall lay out
-the stack layer by layer, and then define the ladder
+the stack layer by layer. We then define the ladder
 that this book uses to say how far down the stack a
 particular effort has reached: L0 locatable, L1 pinned
 packages, L2 pinned environment, and L3 verified.
 
 The ladder is the conceptual backbone of everything
 that follows. Every later chapter is, in effect, an
-account of how to climb one rung of it: pinning
+account of how to climb one rung of it. Pinning
 packages with a lockfile (@sec-dependencies) is the
-L0-to-L1 step, pinning the environment with a container
-(@sec-containers) is the L1-to-L2 step, and verifying
+L0-to-L1 step. Pinning the environment with a container
+(@sec-containers) is the L1-to-L2 step. And verifying
 the outputs (@sec-verification) is the L2-to-L3 step.
 Before we can teach the climbing we need the ladder
 itself, together with the discipline of naming, without
@@ -96,7 +96,7 @@ them.
    author will claim. The judgment that a paper's
    reproducibility statement will match the level
    actually secured, and never assert above it, is the
-   analyst's alone, and it is the single habit this book
+   analyst's alone. It is the single habit this book
    most wishes to instill.
 
 2. **Matching the investment to the stakes.** Climbing
@@ -113,8 +113,8 @@ them.
    L2 must still ask whether the layers left unpinned,
    the numerical libraries, the random-number
    discipline, the integrity of an external data source,
-   matter for this particular analysis, and must close
-   those that do by hand. Recognizing a live exposure
+   matter for this particular analysis. Those that do
+   must be closed by hand. Recognizing a live exposure
    from an inert one is a matter of subject-matter
    judgment.
 
@@ -161,7 +161,7 @@ collected here for reference.
 We begin with the determinants, because the ladder is
 only intelligible once one sees what it grades. A
 computational result is the output of running some code
-against some data, but the code and the data are the
+against some data. But the code and the data are only the
 two topmost of a tall stack of dependencies, and the
 result is a function of the whole stack, not of its top
 two layers alone. Arranging the determinants from the
@@ -180,11 +180,11 @@ count, reorders the floating-point summations and can
 change a result in its low-order digits. Above these
 sit the **operating system and its system libraries**,
 the kernel, the C library, the locale data, the fonts,
-and the document toolchain of `pandoc` and LaTeX; then
-the **R runtime** itself, whose default behaviors shift
-between releases, as the random-number change of R 3.6.0
-and the `stringsAsFactors` change of R 4.0.0 both
-illustrate.
+and the document toolchain of `pandoc` and LaTeX. Then
+comes the **R runtime** itself, whose default behaviors
+shift between releases. The random-number change of
+R 3.6.0 and the `stringsAsFactors` change of R 4.0.0
+both illustrate the point.
 
 Above the runtime sit the layers most analysts think of
 first. The **package versions**, the exact release of
@@ -210,18 +210,20 @@ Now, which of these layers does common practice pin? The
 answer is sobering, and it motivates the entire book. A
 bare published script pins exactly one layer with any
 reliability, the analysis code, since the code is the
-file itself, and, if the reader is fortunate, a second,
-the data, when it has been deposited alongside. Every
-other layer is left to whatever the next machine happens
-to provide. @fig-determinant-stack maps the stack against
-the rung of the ladder that first secures each layer, and
-the reader will note that three layers, the hardware, the
-numerical libraries, and intrinsic non-determinism, are
-secured by no rung of the capture ladder at all.
+file itself. If the reader is fortunate, it pins a
+second, the data, when it has been deposited alongside.
+Every other layer is left to whatever the next machine
+happens to provide. @fig-determinant-stack maps the stack
+against the rung of the ladder that first secures each
+layer. The reader will note that three layers, the
+hardware, the numerical libraries, and intrinsic
+non-determinism, are secured by no rung of the capture
+ladder at all.
 
 ```{r}
 #| label: fig-determinant-stack
 #| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, colored by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
+#| fig-alt: 'A horizontal bar chart of nine stacked layers, hardware at the bottom and intrinsic non-determinism at the top, each bar colored by the rung that secures it. Hardware, numerical libraries, and intrinsic non-determinism are colored as unpinned by any rung; the operating system, system libraries, and R runtime are colored L2; package versions are colored L1; analysis code and input data are colored L0, that is, locatable only. Session configuration is colored L2 but is noted as only partially pinned.'
 #| fig-width: 7
 #| fig-height: 4.4
 library(ggplot2)
@@ -280,17 +282,18 @@ by an analyst who has already adopted a lockfile and a
 container. The random-number kind is the more dangerous.
 An analysis that seeds its generator and draws a sample
 is reproducible only if the algorithm behind the seed is
-also fixed; the change of the default `sample.kind` in
+also fixed. The change of the default `sample.kind` in
 R 3.6.0 broke exactly this, silently, for every analysis
 that had set a seed under the old default. Given that
 simulation studies, multiple imputation, and bootstrap
 confidence intervals are staples of health research, the
 RNG kind is a first-order concern, not a footnote. The
-locale is the second: `sort()` and `order()` on a
+locale is the second. `sort()` and `order()` on a
 character vector depend on `LC_COLLATE`, and the parsing
-of a decimal mark depends on `LC_NUMERIC`, so an analysis
+of a decimal mark depends on `LC_NUMERIC`. An analysis
 developed under one locale and re-run under another can
-reorder a table or misread a number without any error.
+therefore reorder a table or misread a number without
+any error.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: locating a failure on the stack
@@ -303,17 +306,22 @@ operating system were all identical. Which layer of the
 determinant stack is the most likely culprit, and is the
 discrepancy a bug?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 Neither the code nor the data nor the pinned layers can
 be at fault, since all were identical. A discrepancy
 confined to the low-order digits is the signature of the
-numerical-library layer: the two machines used a
+numerical-library layer. The two machines used a
 different BLAS implementation, or the same one with a
-different thread count, and the floating-point
+different thread count, and so the floating-point
 summations were reordered. It is not a bug in the
 analysis. It is the reason that byte-for-byte identity
 across different hardware is a stronger claim than
-number-for-number agreement on a fixed architecture, and
-it is a layer that no rung of the capture ladder pins.
+number-for-number agreement on a fixed architecture.
+And it is a layer that no rung of the capture ladder
+pins.
+:::
 :::
 
 ## The ladder: capture sets the level, validation confirms it
@@ -322,8 +330,8 @@ With the stack in view we can define the ladder. The
 central design idea, which we take from the framework
 this book uses and develop as a general principle, is
 that the features acting on reproducibility divide into
-two kinds that are constantly confused, and that
-separating them is what makes an honest grade possible.
+two kinds that are constantly confused. Separating them
+is what makes an honest grade possible.
 
 The **capture axes** fix inputs, and therefore set the
 level. There are two of them: the package backend, which
@@ -382,11 +390,11 @@ knitr::kable(ladder)
 The rungs are cumulative. An L2 analysis is also
 locatable and package-pinned; the label names the
 highest rung reached. The transition that matters most
-for a first-year student to internalise is the one
+for a first-year student to internalize is the one
 between L1 and L2. A lockfile alone, the L1 artifact,
 pins the packages but not the R version, the operating
-system, or the system libraries a package links against;
-a lockfile restored under a different R version may fail
+system, or the system libraries a package links against.
+A lockfile restored under a different R version may fail
 to install or, more insidiously, may install and behave
 differently. The container image, the L2 artifact, fixes
 what the lockfile cannot. The two are complements, not
@@ -399,12 +407,13 @@ reproducibility that the literature has offered in
 different vocabularies. @peng2011 arranged computational
 work along a spectrum, from the merely published, through
 code available, code and data available, and linked and
-executable, to full replication; our L0, L1, and L2 track
-the lower and middle reaches of that spectrum. The artifact-review badges used by the ACM
+executable, to full replication. Our L0, L1, and L2 track
+the lower and middle reaches of that spectrum. The
+artifact-review badges used by the ACM
 and several computing venues express a related ordering,
 from artifacts that are available, through artifacts
 evaluated as functional and then reusable, to results
-independently reproduced [@acm2020]; our L3 is the
+independently reproduced [@acm2020]. Our L3 is the
 analogue of the 'Results Reproduced' badge. The
 correspondence is close but not exact. The 'functional'
 and 'reusable' badges grade how well an artifact is
@@ -413,9 +422,10 @@ package-versus-environment pinning depth that separates
 L1 from L2, so the middle rows are analogies rather than
 alignments. The contribution of the L-scheme is not a new
 definition of reproducibility but a mapping of these
-graded views onto artifacts a tool can detect, so that
-the level of a repository can be determined mechanically
-and reported honestly rather than asserted by its author.
+graded views onto artifacts a tool can detect. The point
+is that the level of a repository can then be determined
+mechanically and reported honestly, rather than asserted
+by its author.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: capture or validation?
@@ -427,20 +437,24 @@ reproducibility, because it pins no new layer of the
 determinant stack. Is the colleague correct, and has the
 laboratory wasted its effort?
 
+::: {.callout-note icon=false collapse=true}
+## Answer
+
 The colleague is correct on the narrow point and wrong on
 the conclusion. Continuous integration is a validation
 feature, not a capture feature: it pins no new layer, and
 removing it would leave the compendium exactly as
 reconstructable as before. What it adds is confirmation.
 It re-runs the captured analysis in a clean environment
-that carries none of the author's undeclared state, and
-so catches the silent decay that a
+that carries none of the author's undeclared state. It
+therefore catches the silent decay that a
 captured-but-never-retested analysis suffers, and the
 'works on my machine' failure at its source. The
 laboratory has moved from L2, a pinned environment
 asserted to reproduce, toward L3, a pinned environment
 shown to reproduce. That is the whole purpose of the
 capture-versus-validation distinction.
+:::
 :::
 
 ## Reproduced, replicated, and a warning about the words
@@ -463,7 +477,7 @@ studies aimed at the same question, each with its own
 data: it is a statement about the robustness of a
 scientific finding. The two are independent. A result can
 be perfectly reproducible and entirely wrong, if the code
-faithfully regenerates a mistaken number every time, and a
+faithfully regenerates a mistaken number every time. And a
 finding can replicate across laboratories while no single
 analysis in the set is computationally reproducible. Leek
 and Peng press exactly this point, that a reproducible
@@ -481,27 +495,28 @@ both conventions, 'Reproduced' denotes obtaining a prior
 result using the author's own artifacts and the same
 setup, and 'Replicated' denotes obtaining it
 independently, with a different team and a new setup. The
-genuine word-swap that trips students belongs to two other
-places: the pre-2020 ACM badging, which attached the two
-words in the opposite direction along the re-execution
-axis, and some biomedical and field usages, which a reader
-may still encounter, where 'reproduce' names an
-independent study rather than a re-run. A reader who
+genuine word-swap that trips students belongs to two
+other places. One is the pre-2020 ACM badging, which
+attached the two words in the opposite direction along
+the re-execution axis. The other is some biomedical and
+field usages, which a reader may still encounter, where
+'reproduce' names an independent study rather than a
+re-run. A reader who
 carries the sense of the words from one of those older
 documents into a current one will be misled, silently and
 without any error to warn them, in exactly the manner of a
 shifted package default. This book fixes the meaning and
 states it once: throughout, L3 denotes the ACM 'Results
 Reproduced' sense, which now coincides with the National
-Academies reproducibility sense, namely that the captured
-analysis, rebuilt from its pinned definition and re-run,
-regenerates its own recorded outputs. It is deliberately
-not replication in the sense of an independent study on
-new data, which no software framework can supply. When the
-reader meets 'reproduced' or 'replicated' in a journal's
-author instructions or a venue's badging policy, the first
-task is to determine which convention that document uses,
-because the word alone does not tell them.
+Academies reproducibility sense. That sense is that the
+captured analysis, rebuilt from its pinned definition and
+re-run, regenerates its own recorded outputs. It is
+deliberately not replication in the sense of an independent
+study on new data, which no software framework can supply.
+When the reader meets 'reproduced' or 'replicated' in a
+journal's author instructions or a venue's badging policy,
+the first task is to determine which convention that
+document uses. The word alone does not tell them.
 
 ::: {.callout-important}
 ## The honest level
@@ -542,9 +557,9 @@ preceding sections, L0 through L3, and it grades something
 different: *how far down the determinant stack a result has
 been locked, and whether the lock has been verified*. The
 two axes are related but not identical. Adopting `renv`
-(the tool scheme's Level 2) is what lifts a project to L1;
-adopting a container (the tool scheme's Level 3) is what
-lifts it to L2; and the tool scheme's testing and
+(the tool scheme's Level 2) is what lifts a project to L1.
+Adopting a container (the tool scheme's Level 3) is what
+lifts it to L2. The tool scheme's testing and
 continuous-integration levels belong to the validation
 layer that reaches L3. But one can imagine a project that
 has adopted every tool and still verified nothing, and the
@@ -569,26 +584,27 @@ means and to the same rungs.
 
 A **data-analysis project** and a **scholarly manuscript**
 are the familiar cases, and for them the reading is the
-one given above: the lockfile lifts to L1, the container to
-L2, and the verification run, which for a manuscript
+one given above: the lockfile lifts to L1, and the container
+lifts to L2. The verification run, for a manuscript,
 re-renders the report and compares its figures and tables
-against a recorded baseline, to L3. An **R package**, by
-contrast, has no report to render, so its L3 verification
-is the passing of `R CMD check` and its test suite in a
-clean environment rather than the regeneration of a
-manuscript; the pinning of its packages and its environment
-is otherwise identical. A **simulation study** reaches the
-same rungs by the same artifacts, but its exposure on the
-session-configuration layer is acute, because its outputs
-are functions of the random-number stream: an unseeded or
-wrongly seeded simulation can sit at L2, with a perfectly
-pinned environment, and still fail to reproduce, so for this
-archetype the discipline of fixing the RNG kind and the seed
-is the difference between a nominal L2 and a real one. A
-**blog** renders many posts rather than one report, and its
-L3 verification is the successful rebuild of the whole site
-from its pinned environment; the ladder applies post by post
-exactly as it applies to a single manuscript.
+against a recorded baseline, and this is what lifts it to
+L3. An **R package**, by contrast, has no report to render.
+Its L3 verification is instead the passing of `R CMD check`
+and its test suite in a clean environment, rather than the
+regeneration of a manuscript, though the pinning of its
+packages and its environment is otherwise identical. A
+**simulation study** reaches the same rungs by the same
+artifacts, but its exposure on the session-configuration
+layer is acute, because its outputs are functions of the
+random-number stream. An unseeded or wrongly seeded
+simulation can sit at L2, with a perfectly pinned
+environment, and still fail to reproduce. For this
+archetype, the discipline of fixing the RNG kind and the
+seed is the difference between a nominal L2 and a real
+one. A **blog** renders many posts rather than one report.
+Its L3 verification is the successful rebuild of the whole
+site from its pinned environment, and the ladder applies
+post by post exactly as it applies to a single manuscript.
 
 The lesson is that the ladder is a property of the
 determinant stack, which every archetype shares, and not of
@@ -617,7 +633,7 @@ is inherited from the base image and neither pinned nor
 documented, the integrity of external data is recorded by
 provenance but not by checksum, and the fonts and the
 graphics device are pinned only for some profiles. These
-are not defects peculiar to one tool; they are the layers
+are not defects peculiar to one tool. They are the layers
 that the whole class of integrative frameworks currently
 leaves exposed, and an honest L2 or L3 claim names them
 rather than papering over them. The reader will therefore
@@ -688,7 +704,7 @@ guarantee.
 ## Collaborating with an LLM
 
 A large language model is a capable assistant for reasoning
-about levels, but it is confident in a register that this
+about levels. But it is confident in a register that this
 chapter has just taught the reader to distrust, and its
 confidence is not calibrated to the honest level. The
 following triples illustrate productive prompts and the
@@ -700,7 +716,7 @@ and what would it take to reach the next rung?'
 
 *Watch for.* The model will read the presence of a
 `renv.lock` as L1 and a `Dockerfile` as L2, which is the
-right heuristic, but it cannot tell from a listing whether
+right heuristic. But it cannot tell from a listing whether
 the lockfile is current, whether the image is pinned by a
 mutable tag or an immutable digest, or whether a
 verification run has ever passed. It may report L3 on the
@@ -709,9 +725,9 @@ been run green.
 
 *Verification.* Confirm each rung against the artifact
 itself, not its filename. For L1, check that the lockfile is
-in step with the code; for L2, check that the base image
+in step with the code. For L2, check that the base image
 carries a digest and that the library is not shadowed by a
-bind mount; for L3, find an actual passing verification run.
+bind mount. For L3, find an actual passing verification run.
 The presence of a file is capture asserted; a green run is
 validation observed.
 
@@ -735,8 +751,8 @@ each time even inside the container. Why, and is it a bug?'
 
 *Watch for.* The model may propose plausible but wrong
 culprits, a package version or an operating-system
-difference, that the container has already pinned, and may
-not distinguish an unseeded RNG (a real defect) from
+difference, that the container has already pinned. It may
+also not distinguish an unseeded RNG (a real defect) from
 low-order-digit variation due to BLAS threading (an inherent
 limit at L2).
 
@@ -784,6 +800,222 @@ inference at hand.
    unchanged. Explain which layer of the determinant stack
    this demonstrates and why a container alone would not
    protect against it.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. Two of
+these ask the reader to work with an analysis or a paper of
+their own, so they have no single correct answer; for those
+the box says what a good answer establishes.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+No single correct answer. What a good answer establishes is
+that the reader can name the layers in order and attach an
+artifact, or an admission, to each.
+
+Working up from the base: **hardware**, pinned by nothing
+short of running on the same machine; **numerical
+libraries**, pinned by the container image if it fixes the
+BLAS, and otherwise not at all; **operating system and
+system libraries**, pinned by the container image;
+**R runtime**, pinned by the container image, and merely
+*recorded* by the lockfile's `R` block; **package
+versions**, pinned by `renv.lock`; **session
+configuration**, partly pinned by the image through the
+locale and the time zone, and not pinned at all for the RNG
+kind, the contrasts, and the printed digits; **analysis
+code**, pinned by version control; **input data**, pinned
+by a checksum or an archived deposit, and often only
+locatable; and **intrinsic non-determinism**, such as
+parallel reduction order, pinned by nothing.
+
+Most readers find their lowest unpinned layer is either the
+numerical libraries or the session configuration, and both
+answers are common and honest. A reader who finds their
+lowest unpinned layer is the input data has discovered
+something more urgent than anything this chapter teaches,
+because the analysis is not reconstructable at all.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+No single correct answer. What a good answer establishes is
+that the rung is read off the *deposited artifacts*, not off
+the quality of the paper or the reputation of the authors.
+
+The procedure is mechanical. Is there code and data that
+can be located? That is L0. Is there a lockfile, or an
+equivalent exact version record? That is L1. Is there a
+container recipe, or another artifact pinning the runtime
+and the system libraries? That is L2. Is there evidence
+that the outputs were regenerated from the pinned
+definition, a CI log, a verification report, recorded output
+hashes? That is L3. Stop at the highest rung for which an
+artifact is actually present.
+
+The reproducibility statement should then claim that rung
+and no more. For the common L0 case: 'The analysis code and
+the derived dataset are deposited at [location]. The
+software environment was not recorded, so re-execution may
+require package versions that differ from those used here.'
+The second clause is the part most papers omit, and it is
+the part that makes the statement honest rather than
+merely modest.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+Two determinants an image does not pin, with a
+circumstance for each.
+
+**The numerical libraries, when the image does not fix
+them.** An image built on a base that links against a
+BLAS chosen at run time, or one run on hosts that expose
+different thread counts, will reorder floating-point
+summations. Two runs of the same image on two machines can
+then return an incidence rate agreeing to five decimal
+places and differing in the sixth. The image pinned the
+software and not the arithmetic beneath it.
+
+**The session configuration, specifically the RNG kind.**
+An image fixes the R version, and the R version determines
+the *default* sampler, so this exposure is narrower than
+it first appears. It bites when the analysis sets
+`RNGkind()` itself, or inherits it from a project
+`.Rprofile` that is mounted rather than baked in, or when
+a package changes the generator as a side effect. Two runs
+then draw different samples from the same seed, and a
+bootstrap interval moves.
+
+A third acceptable answer is the input data: an image
+mounting a host directory reproduces the environment and
+not the extract, so a changed file underneath produces a
+different result with the image unchanged. A fourth is
+intrinsic non-determinism from parallelism, where the
+reduction order of a parallel sum varies run to run on the
+same machine.
+
+The general form of the answer is that a container pins
+the environment and the environment is not the whole
+stack. It is the L1-to-L2 step, not the whole ladder.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+'Level 4' on the framework's scale means the project has
+adopted a particular set of *tools*: an R project, `renv`,
+Docker, and unit testing. It is a statement about tool
+adoption, and it is read from the bottom up, so Level 4
+implies the first three as well.
+
+What it tells you about the architectural ladder is
+therefore quite a lot, but indirectly and with one gap. The
+presence of `renv` implies the machinery for L1; the
+presence of Docker implies the machinery for L2. What it
+does not tell you is whether any of it has been
+*verified*, because the tool scale counts adoption and the
+architectural ladder grades locking and verification. A
+project can hold every tool in the list and have never
+rebuilt from its pinned definition, in which case it sits
+at L2 and is asserted rather than shown to reproduce. L3
+is the tool scale's Level 5 territory, and Level 4 is
+below it.
+
+The artifact to inspect is the continuous-integration
+record: a log showing that the container was rebuilt from
+the recipe and the analysis re-run, and its outputs checked
+against recorded values. Absent that, the honest reading of
+'Level 4' is L2. Inspecting `renv.lock` and the Dockerfile
+tells you the capture artifacts exist; only the CI record
+tells you the capture works.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+The colleague almost certainly meant the National
+Academies sense: a second cohort, collecting its own data,
+found a consistent result. That is *replication*, a
+statement about the durability of the finding, and it is
+the sense in which the word is ordinarily used in health
+research.
+
+The reviewer read it in an artifact-badging frame, where
+the pair of words attaches to re-execution rather than to
+new data. Under the current 2020 ACM vocabulary the two
+conventions actually agree, so the reviewer's request is
+not simply a misreading of the current standard. The
+miscommunication traces to one of two places: the
+pre-2020 ACM badging, which attached the two words in the
+opposite direction, or a field usage in which 'reproduce'
+names an independent study rather than a re-run. A reviewer
+carrying the sense of the words from an older document into
+a current one is misled silently, with no error to warn
+them.
+
+The practical resolution is that the container request is a
+category error given what the colleague did. A container
+would let the reviewer re-execute the *original* analysis,
+which is not what the colleague claimed and not what a
+second cohort demonstrates. The colleague should answer by
+naming the convention, stating that the second cohort
+collected its own data, and offering the artifact that
+actually matches the claim, which is the second cohort's
+own analysis code.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+The demonstration is the worked example of @sec-crisis in
+miniature.
+
+```r
+draw <- function(kind) {
+  suppressWarnings({
+    RNGkind(sample.kind = kind)
+    set.seed(42)
+    sample(1:10, 5)
+  })
+}
+original <- RNGkind()
+draw('Rounding')
+draw('Rejection')
+suppressWarnings(RNGkind(
+  kind = original[1], normal.kind = original[2],
+  sample.kind = original[3]
+))
+```
+
+The two calls share a seed and return different draws.
+Restoring the original generator afterward matters, since
+`RNGkind()` sets session state that would otherwise persist
+and quietly affect everything downstream.
+
+The layer demonstrated is the **session configuration**
+layer, which sits above the package versions and below the
+analysis code. It is the layer this chapter singles out as
+only partially pinned at L2: an image fixes the locale and
+the time zone, and the R version it carries fixes the
+*default* sampler, but the RNG kind, the contrasts, and the
+number of printed digits are all settable from inside the
+session and are not properties of the image.
+
+A container alone would not protect against this because
+the change is made by the analysis, inside the container,
+after the environment is fixed. Two runs of the identical
+image produce different draws if the code sets the sampler
+differently, or if a mounted `.Rprofile` does. The
+protection is not a heavier container but an explicit
+declaration: set `RNGkind()` in the analysis, record it
+alongside the seed, and treat it as part of the analysis
+code rather than part of the environment.
+:::
 
 ## Further reading
 

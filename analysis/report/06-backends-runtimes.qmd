@@ -34,7 +34,7 @@ to:
 - Choose a backend or runtime to fit a concrete setting:
   a high-performance cluster, a Windows-only laboratory,
   a reviewer who must install nothing, a project
-  demanding maximum rigour, or an institution with a
+  demanding maximum rigor, or an institution with a
   licensing constraint.
 - State honestly which reproducibility level each option
   reaches, and match the claim to the level.
@@ -70,8 +70,8 @@ one tool, and to equip the reader to choose among the
 alternatives with judgment rather than habit.
 
 The framework this book uses organizes those
-alternatives along three axes, and the organization is
-worth internalising before any command is typed, because
+alternatives along three axes. The organization is
+worth internalizing before any command is typed, because
 it prevents the common error of treating every unfamiliar
 tool as a special case. The first axis changes only the
 runner: a different program runs the very same image, and
@@ -100,7 +100,7 @@ chapter.
    an absence of administrative rights on a cluster, an
    operating system, a mixed-language pipeline, a
    licensing term, a reviewer's patience, a demand for
-   maximum rigour. The analyst identifies the binding
+   maximum rigor. The analyst identifies the binding
    constraint first, and the constraint usually selects
    the axis, and often the tool.
 
@@ -199,8 +199,8 @@ for macOS and Windows, is under its current terms not free
 for use by larger commercial and institutional
 organizations, and many universities fall within those
 terms. The terms do carve out an exception for education,
-but institutions differ on whether a given use qualifies,
-and the point is contested, which is why many institutions
+but institutions differ on whether a given use qualifies.
+The point is contested, which is why many institutions
 either license Docker Desktop or avoid it. Podman carries
 no such restriction. For an analyst
 whose institution has declined to license Docker Desktop,
@@ -213,11 +213,11 @@ Apptainer, known until its move to the Linux Foundation as
 Singularity, is the runtime built for high-performance
 computing [@kurtzer2017]. Kurtzer and colleagues designed
 it for precisely the setting that defeats Docker on a
-cluster: it runs unprivileged, integrating with the batch
+cluster. It runs unprivileged, integrating with the batch
 schedulers, message-passing libraries, and graphics
-processors that scientific clusters provide, so that a
+processors that scientific clusters provide. A
 user with no administrative rights can nonetheless run a
-containerised analysis under the cluster's job system.
+containerized analysis under the cluster's job system.
 
 Two rules govern its use, and observing them keeps the
 image pinning of @sec-containers intact. The first is that
@@ -274,7 +274,10 @@ to avoid a licensing constraint. Which of the following
 change: the base image, the pinned digest, the installed
 package versions, the reproducibility level reached?
 
-*Answer.* None of them change. The runtime is a parameter
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+None of them change. The runtime is a parameter
 over the same OCI image. The base image, its digest, and
 the package versions are all properties of the image, not
 of the program that runs it, and the level reached is L2
@@ -282,6 +285,7 @@ in either case. Only the launching command differs
 (`podman run` for `docker run`). This is exactly why a
 runtime swap is the cheapest of the three axes: it changes
 the runner and nothing else.
+:::
 :::
 
 ## Axis two: a different environment model without a container
@@ -377,20 +381,21 @@ form, and the reader will encounter both in the wild.
 
 We should be candid about the trade-offs, in the two-sided
 manner this book prefers. On the plus side, Nix delivers
-the entire environment pillar in one mechanism, reaches L2
-without the container machinery, and gives deterministic,
-reproducible environments that Docker, whose reproducibility
-depends on careful digest and snapshot discipline,
-approaches but does not guarantee by construction. On the minus side, the Nix
+the entire environment pillar in one mechanism and
+reaches L2 without the container machinery. It gives
+deterministic, reproducible environments that Docker,
+whose reproducibility depends on careful digest and
+snapshot discipline, approaches but does not guarantee
+by construction. On the minus side, the Nix
 model is genuinely alien to the audience, and although
 `rix` hides much of the language, diagnosing a build that
-has failed still calls for some Nix knowledge; the first
-build is slow and consumes substantial disk; Nix is a host
+has failed still calls for some Nix knowledge. The first
+build is slow and consumes substantial disk. Nix is a host
 prerequisite comparable to Docker, requiring Linux, macOS,
-or the Windows Subsystem for Linux; and `rix` is young
+or the Windows Subsystem for Linux. And `rix` is young
 enough that its own version must be pinned. These caveats
 are the reason Nix is carried as an opt-in backend for the
-analyst who wants maximum rigour, while `renv` with a
+analyst who wants maximum rigor, while `renv` with a
 container remains the accessible default. The choice is
 real, and it is not free either way.
 
@@ -408,16 +413,17 @@ ground, and it answers two constraints the container route
 handles awkwardly. Conda [@anaconda2023], with the faster
 resolver `mamba` and the lockfile-oriented `pixi`
 [@pixi2024], reproduces natively on Windows, without the
-Linux-emulation layer a Docker image requires there, and it
-spans R and Python in a single environment rather than
-forcing the mixed-language analyst to bridge two toolchains.
+Linux-emulation layer a Docker image requires there. It
+also spans R and Python in a single environment, rather
+than forcing the mixed-language analyst to bridge two
+toolchains.
 For a Windows-only laboratory running a pipeline that mixes
 the two languages, this is a decisive practical advantage.
-The cost is rigour: conda draws its packages from
+The cost is rigor: conda draws its packages from
 conda-forge rather than from CRAN or the Posit Package
 Manager, and it pins less strictly than Nix. It is, in the
 honest accounting, a middle-ground option, more reproducible
-than an unpinned install and less exacting than Nix, and it
+than an unpinned install and less exacting than Nix. It
 is the right choice precisely when its two native strengths,
 Windows and mixed languages, are the binding constraint.
 
@@ -457,9 +463,9 @@ environment, with no Docker, no Nix, and no local
 installation of any kind. The corresponding limitation is
 equally exact, and it returns us to the honest-level
 theme: the Binder session reaches L2 for the life of the
-session, on a server that pins the environment, but it
-pins nothing on the reviewer's own machine and does not
-persist. It is superb for demonstration and review, and it
+session, on a server that pins the environment. But it
+pins nothing on the reviewer's own machine, and it does
+not persist. It is superb for demonstration and review, and it
 is not an archival guarantee.
 
 Development containers, and the hosted Codespaces service
@@ -476,7 +482,7 @@ drives the automated build.
 Here again the archetype guides the choice. A **blog** or a
 **manuscript** archetype, whose whole purpose is to be read
 and its results inspected by others, benefits most from
-browser execution: a reader of a teaching post, or a
+browser execution. A reader of a teaching post, or a
 reviewer of a manuscript, re-runs the analysis in Binder
 with nothing to install, which is exactly the low-friction
 path such archetypes want. A blog that renders many posts
@@ -564,7 +570,7 @@ natively on Windows and spans both languages at the cost of
 strict pinning. When a **reviewer must install nothing**,
 the choice is Binder, which serves the running environment
 in a browser for the life of a session. When the project
-demands **maximum rigour** and the team can absorb the
+demands **maximum rigor** and the team can absorb the
 learning curve, the choice is Nix through `rix`, which
 gives deterministic, reproducible builds and reaches L2
 without a container. And when the obstacle is a **licensing
@@ -585,7 +591,10 @@ reviewer of your manuscript should re-run the main figure
 without installing anything. (c) Your laboratory runs
 Windows and your pipeline calls both R and Python.
 
-*Answer.* (a) Axis one, a different runtime over the same
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+(a) Axis one, a different runtime over the same
 image: Apptainer, built from the digest-pinned image and
 run under the scheduler, with the SIF as the archival
 record. (b) Axis three, remote execution: Binder, which
@@ -595,6 +604,7 @@ two, a different environment model: the conda family, and
 natively on Windows and spans both languages. Note that no
 single tool answers all three; each constraint selects a
 different axis.
+:::
 :::
 
 ## Worked example
@@ -642,8 +652,8 @@ in @sec-containers; this chapter merely ran it in three
 places. Had the group instead chosen Nix from the outset,
 the image would have been replaced by a `default.nix`, and
 the laptop and cluster runs would have entered the
-environment through `nix-shell` rather than a runtime, but
-the discipline, one pinned declaration exercised in several
+environment through `nix-shell` rather than a runtime.
+The discipline, one pinned declaration exercised in several
 places, would have been identical.
 
 ## Collaborating with an LLM
@@ -688,7 +698,7 @@ following triples show where each stands.
   Windows. Should I use Nix, Podman, or conda?'
 - *Watch for.* A model may recommend the most fashionable
   tool rather than the one that fits the constraint, and
-  may overstate a tool's rigour, presenting conda as
+  may overstate a tool's rigor, presenting conda as
   reaching the same level as Nix.
 - *Verification.* Check the recommendation against the
   binding constraint: mixed languages on Windows point to
@@ -732,6 +742,210 @@ following triples show where each stands.
    built from the same compendium machinery. Describe which
    runtime or backend each most naturally uses and why the
    underlying pinning is nonetheless identical.
+
+## Solutions
+
+Attempt an exercise before expanding its solution. The first
+three are hands-on and their outputs will vary by machine;
+the boxes record the reasoning and the expected shape of the
+result.
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+```bash
+podman run --rm -v "$PWD":/project -w /project \
+  <image>@sha256:... Rscript analysis/scripts/run.R
+```
+
+The container starts and the analysis runs, with no
+rebuild, because Podman consumes the same OCI image format
+Docker produces. The command differs only in its first
+word.
+
+**Why the level is unchanged.** The reproducibility level
+is a property of what is *captured*, and the image is the
+capture. The base image, its digest, the installed package
+versions, and the determinism variables are all properties
+of the image rather than of the program that launches it,
+so swapping the launcher changes nothing that the ladder
+grades. The analysis sits at L2 under either runtime.
+
+This is the sense in which the runtime is the cheapest of
+the three axes: it changes the runner and nothing else.
+The one caveat worth noting is that rootless Podman
+handles file ownership on bind mounts differently from
+Docker, so the *mechanics* of the mount may need
+adjusting even though the environment inside does not
+change.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 2
+
+```bash
+apptainer build analysis.sif docker://<image>@sha256:...
+sha256sum analysis.sif
+```
+
+The build converts the OCI image into a single SIF file.
+The checksum is a hash of that file.
+
+**How one file serves both purposes.** As a **cluster
+runtime**, the SIF needs no daemon and no root, which is
+what makes it acceptable on a shared HPC system where the
+user is not an administrator; the scheduler runs
+`apptainer exec analysis.sif ...` directly. As an
+**archival deposit**, the SIF is a single immutable file
+with a checksum, which is exactly the shape an archive
+wants: it can be uploaded to a repository, assigned a DOI,
+and verified on download by rehashing.
+
+The property that unifies the two roles is that a SIF is a
+file rather than a service. A Docker image lives in a
+daemon's storage and is addressed by a name that a
+registry must resolve; a SIF is bytes on disk that can be
+copied, hashed, and deposited like any other artifact.
+That is why the chapter treats it as the archival form of
+a container.
+
+Two honest qualifications. The SIF is opaque: it records
+the environment without recording how it was made, so the
+Dockerfile remains the source of truth and the SIF is the
+built product. And SIF files are large, often several
+gigabytes, which some archives will not accept.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 3
+
+```r
+rix::rix(
+  r_ver = '4.4.0',
+  r_pkgs = c('dplyr', 'ggplot2', 'targets'),
+  project_path = '.'
+)
+```
+
+The pinned `nixpkgs` revision appears near the top of the
+generated `default.nix`, in the `fetchTarball` or
+`fetchFromGitHub` expression that imports `nixpkgs`. It is
+a full git commit hash of the `nixpkgs` repository,
+accompanied by a `sha256` of the fetched archive.
+
+**What would change if the revision were altered.**
+Essentially everything below the R packages, and some of
+the packages too. The `nixpkgs` revision determines the
+entire dependency graph: the R version itself, the C and
+Fortran compilers used to build it, the BLAS and LAPACK
+implementations, every system library, and the versions of
+the R packages available at that revision. Moving the
+revision moves all of them together.
+
+This is the property that makes Nix interesting for
+reproducibility and is worth stating precisely: the
+revision is a single value that pins the whole stack from
+the system libraries upward, where a lockfile pins only
+the R packages and a container pins a built artifact
+rather than a recipe for one. It is also the property that
+makes Nix unforgiving, since there is no way to move one
+component without moving the revision, and moving the
+revision moves everything.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 4
+
+**(a) A laboratory forbidden from licensing Docker
+Desktop.** Axis one, a different runtime over the same
+image: Podman. The images, the digests, and the recipes
+are unchanged, so the constraint is met at the cost of
+changing one word in the launch command.
+
+**(b) A reviewer who must run a figure with no local
+installation.** Axis three, remote execution: Binder,
+which builds the environment from the repository and
+serves it in a browser for the session. The reviewer
+installs nothing.
+
+**(c) A simulation study destined for a shared cluster.**
+Axis one again, but a different tool: Apptainer, because
+a shared cluster will not grant the root daemon Docker
+requires, and the SIF doubles as the archival record.
+
+**(d) A Windows-only pipeline mixing R and Python.** Axis
+two, a different environment model: the conda family, and
+`pixi` in particular, which reproduces natively on Windows
+and spans both languages without a container.
+
+The pattern the exercise is built to show is that no
+single tool answers all four, and that each constraint
+selects an *axis* before it selects a tool. Naming the
+axis first is what makes the choice principled rather than
+a matter of preference.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 5
+
+A serviceable reply:
+
+> Nix pins the whole stack from the system libraries
+> upward, and does it from a recipe rather than a built
+> artifact, so it reaches L2 as cleanly as a container
+> does and arguably more transparently. What it does not
+> reach is L3, because pinning an environment is capture
+> and L3 is validation: it needs evidence that the
+> analysis was rebuilt from the pinned definition and
+> regenerated its recorded outputs, which is a
+> continuous-integration question rather than a Nix one.
+
+The correction to make is the level claim, not the tool
+choice. 'Fully reproducible' is the phrase that overstates,
+and it overstates in the direction this book cares about:
+it asserts verification that has not been performed. The
+colleague is right that Nix is a strong capture mechanism
+and right to prefer it if they value a declarative recipe;
+they are wrong that capture is the whole ladder.
+
+Worth adding if the conversation continues: Nix pins more
+of the stack than a lockfile and does not pin the hardware
+or the intrinsic non-determinism, so even the capture claim
+has a ceiling.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 6
+
+**The simulation archetype** most naturally uses Apptainer
+on a scheduler. Its work is many independent replicates,
+which suits a cluster, and a cluster will not run a root
+daemon. The SIF is built once from the digest-pinned image
+and dispatched to every node.
+
+**The blog archetype** most naturally uses remote
+execution, a CI runner that renders the site and publishes
+it, or Binder if readers are to run the posts themselves.
+Its work is a render on every push, which is small, and
+its audience is on the web.
+
+**Why the pinning is nonetheless identical.** Both are
+built from the same compendium machinery: the same
+digest-pinned base image, the same dated snapshot, the
+same restored lockfile, the same determinism variables.
+The SIF is a conversion of that image, not a different
+environment, and the CI runner pulls that same image.
+Neither archetype changes what is captured; they differ
+only in where the captured environment is executed and by
+what program.
+
+This is the chapter's central claim in miniature. The
+backends and runtimes are an axis of *delivery*, and the
+reproducibility level is set on an axis of *capture*. A
+simulation on a cluster and a blog in CI can sit on
+exactly the same rung, because they are running the same
+pinned thing in different places.
+:::
 
 ## Further reading
 

@@ -1,16 +1,26 @@
 {
+  // The project image built from the repository Dockerfile is not yet
+  // available; the book's colophon records that pinning its own
+  // environment is planned rather than complete. Until that lands, this
+  // container starts from a public Rocker image that actually exists, so
+  // the devcontainer is usable rather than merely declared. Rocker verse
+  // carries R, the tidyverse, Quarto, and a TeX distribution, which is
+  // what building this book needs.
+  //
+  // When the Dockerfile lands, replace "image" with:
+  //   "build": { "dockerfile": "../Dockerfile" }
+  // and pin the base by digest, as chapter 5 argues.
   "name": "reproducibility",
-  "image": "reproducibility",
-  "workspaceFolder": "/home/analyst/project",
-  "workspaceMount": "source=${localWorkspaceFolder},target=/home/analyst/project,type=bind",
+  "image": "rocker/verse:4.4.0",
+  "workspaceFolder": "/home/rstudio/project",
+  "workspaceMount": "source=${localWorkspaceFolder},target=/home/rstudio/project,type=bind",
   "mounts": [
     "source=${env:HOME}/.cache/R/renv,target=/opt/renv/cache,type=bind,consistency=cached"
   ],
-  "remoteUser": "analyst",
+  "remoteUser": "rstudio",
   "containerEnv": {
     "ZZCOLLAB_CONTAINER": "true",
     "ZZCOLLAB_AUTO_RESTORE": "false",
-    "RENV_PATHS_LIBRARY": "/opt/renv/library",
     "RENV_PATHS_CACHE": "/opt/renv/cache"
   },
   "customizations": {
