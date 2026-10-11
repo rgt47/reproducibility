@@ -17,28 +17,102 @@ for Reproducible Research* (2015)
 ```
 :::
 
-## Learning objectives
+By the end of this chapter you will be able to write a
+Dockerfile that reaches L2, pinned environment, rather
+than one that merely looks reproducible: a recipe whose
+base is named by an immutable digest, whose installer
+fetches from a dated snapshot rather than whatever is
+current today, and whose locale, time zone, and thread
+count are declared rather than inherited from whichever
+machine happens to run it.
 
-By the end of this chapter the reader should be able
-to:
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so the fig-alt
+# option below computes its text from the same call that
+# draws the figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-- Explain which determinants of a computational
-  result a package lockfile leaves unpinned, and why
-  a container is required to fix them.
-- Distinguish a Docker image from a container, and
-  explain image layers and the precise sense in which
-  an image 'runs the same everywhere it runs'.
-- Pin a base image by its immutable content digest and
-  point its in-image installer at a dated repository
-  snapshot, and say what each step secures.
-- Set the environment variables that govern locale,
-  time zone, and thread determinism, and predict a
-  concrete failure that each one prevents.
-- Select a Rocker profile appropriate to a given
-  research archetype, from a minimal base to a
-  publishing base carrying a LaTeX toolchain.
-- State honestly which rung of the reproducibility
-  ladder a given image reaches, and which it does not.
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 40 minutes.
+
+**Prerequisites.** @sec-levels, for the L0-L3 ladder and
+the capture-versus-validation vocabulary this chapter
+relies on throughout; @sec-dependencies, for the
+lockfile this chapter's container restores inside itself
+and the L0-to-L1 step the container builds on. No R
+fluency beyond reading a short script is assumed; no
+Docker or systems-administration background is assumed,
+since the chapter builds the idea from first principles.
+
+**By the end of this chapter you will be able to
+answer:**
+
+- Can you explain which determinants of a computational
+  result a package lockfile leaves unpinned, and why a
+  container is required to fix them?
+- Can you distinguish a Docker image from a container,
+  and state the precise sense in which an image 'runs
+  the same everywhere it runs'?
+- Can you pin a base image by its immutable content
+  digest, point its in-image installer at a dated
+  repository snapshot, and say what each step secures?
+- Can you name the environment variables that govern
+  locale, time zone, and thread determinism, and predict
+  a concrete failure that each one prevents?
+- Can you select a Rocker profile appropriate to a given
+  research archetype, and state honestly which rung of
+  the reproducibility ladder a given image reaches and
+  which it does not?
+
+**Outline.**
+
+- Orientation: a lockfile that restored and still
+  computed a different number.
+- The analyst's contribution: three judgments no tool
+  automates.
+- Where this sits on the stack: the layers a container
+  pins.
+- What the lockfile leaves standing: the operating
+  system, the system libraries, the R runtime.
+- Images and containers: the vocabulary, and the Rocker
+  project.
+- Making the image itself reproducible: pinning by
+  digest and by dated snapshot.
+- Environment-variable determinism: locale, time zone,
+  thread count.
+- Profiles as base images, and a first look at the
+  two-layer team model.
+- The cohort, continued: what the compendium's own
+  Dockerfile would still need.
+- Worked example: one project walked from L1 to L2.
+:::
+
+## Where this sits on the stack
+
+This chapter captures, for the first time in the book,
+the two layers beneath the packages: the operating
+system and its system libraries, and the R runtime
+itself. @fig-stack-containers marks both as captured on
+the shared determinant stack of @sec-levels. It captures
+nothing above those two layers; a container that pins
+the operating system and the R version still restores
+whatever the lockfile says about packages, which is the
+layer @sec-dependencies already captures.
+
+```{r}
+#| label: fig-stack-containers
+#| fig-cap: 'The determinant stack of @sec-levels, with the operating system and system libraries, and the R runtime, marked as captured by this chapter. These are the two layers a lockfile cannot reach, because neither is an R package; pinning them is the L1-to-L2 step this chapter teaches.'
+#| fig-alt: !expr determinant_stack_alt(captures = c('Operating system, system libraries', 'R runtime'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  captures = c('Operating system, system libraries', 'R runtime'),
+  title = 'Containers capture the operating system and the R runtime')
+```
 
 ## Orientation
 
@@ -85,6 +159,30 @@ to the two refinements that make a container itself
 reproducible rather than merely convenient. We close
 with the profiles, a short menu of base environments,
 and a first look at how a team shares one.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the lockfile missed
+
+The epidemiologist's lockfile restored cleanly on a
+third machine but produced a subtly different number.
+Her collaborator's restore, on a second machine, failed
+outright. Name the determinant responsible for each
+failure, and say why the lockfile pinned neither.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The collaborator's restore failed because a package
+linked against GDAL, a system library the lockfile
+cannot name because GDAL is not an R package; the third
+machine's different number came from an older R release
+in which a numerical default differed, and the lockfile
+pins package versions, not the R version they run under.
+Both failures sit beneath the package layer, on the
+system-library layer and the R-runtime layer, which is
+exactly the gap a container closes.
+:::
+:::
 
 ## The analyst's contribution
 
@@ -164,6 +262,33 @@ belong to the analyst and to no script.
   `publishing`. It selects the `FROM` image.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: whose decision
+
+A junior analyst asks why the base image is not simply
+'the biggest one available', since a bigger image can
+only contain more of what might be needed. Using the
+first analyst judgment of this section, explain what is
+wrong with that reasoning.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The choice of base must match the archetype, not the
+maximum. A bigger image is not free: it inflates the
+image, slows every rebuild, and, more importantly,
+obscures what the analysis actually depends on, because
+anything the base happens to carry no longer shows up as
+a declared dependency in the lockfile. An R-package
+archetype that builds on a publishing base, for
+instance, could pass its checks while silently depending
+on a LaTeX toolchain its own declared dependencies never
+mention. The analyst chooses the smallest base that
+carries the real requirement, which is a judgment about
+honesty, not a search for the largest safety margin.
+:::
+:::
+
 ## What the lockfile leaves standing
 
 It is worth stating precisely what a lockfile fixes,
@@ -201,6 +326,31 @@ leaves the three layers beneath it exposed. To fix
 those, we need a tool that packages not just the
 packages but the whole computer they ran on. That tool
 is the container.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: three layers, one tool
+
+Name the three determinants beneath the package layer
+that a lockfile cannot pin, and say, for each, why it is
+not an R package and so cannot appear in a lockfile.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The operating system supplies the C library and the
+locale and sorting conventions every package was
+compiled against, and it is not installed by `install.
+packages()`. The system libraries, such as GDAL or
+`libxml2`, are compiled non-R software that packages
+link against but do not bundle, so `renv` has nothing to
+record about them. The R interpreter itself is the
+program the lockfile's `install.packages()` calls run
+inside, not a package those calls install, so its
+version is recorded nowhere in the lockfile. All three
+need something beneath the package manager, which is the
+container's job.
+:::
+:::
 
 ## Images and containers
 
@@ -326,6 +476,33 @@ manuscripts to PDF. Each higher image is built on the
 one below, so they share layers, and each fixes a
 larger environment than the last. We shall meet these
 again as the profiles.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why not start bare
+
+Starting a Dockerfile from a bare operating-system image
+and installing R by hand is possible. Explain why almost
+no one does, and what is lost in reproducibility terms
+if two analysts each hand-roll their own R installation
+rather than build on the same Rocker base.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A hand-rolled install recreates work the Rocker project
+has already done, tested, and kept in step with R
+releases, and is slower to build because it shares no
+cached layers with any other project. More to the point
+for reproducibility, two analysts who each write their
+own installation steps are two independent sources of
+small decisions, such as which compiler flags or which
+locale packages get installed, that a shared Rocker base
+fixes identically for everyone who builds on it. Building
+on the same base image turns those into one decision
+made once, by the Rocker maintainers, rather than many
+decisions made silently and differently by each analyst.
+:::
+:::
 
 ## Making the image itself reproducible
 
@@ -580,31 +757,67 @@ the honest reading of an image is that it reaches L2 only
 when the base is pinned by digest, the snapshot is
 dated, and a lockfile is restored inside it.
 
-::: {.callout-important}
-## The honest level
+::: {.callout-tip icon=false}
+## Verification
 
-An image built on a mutable tag, installing from a live
-repository, is not L2, however much it looks like a
-container. It will rebuild to a different image next
-year, and a result it produced cannot be regenerated
-from the recipe alone. Reaching L2 requires the digest
-pin, the dated snapshot, and a restored lockfile
-together. Match the claim to what the recipe actually
-fixes. A useful discipline is to build the image twice
-and confirm the two builds carry the same content, that
-is, the same operating system and the same R and package
-versions, for example by comparing `renv::status()` and
-the installed apt and R package versions across the two
-builds; if the content differs, the recipe is not yet
-pinned, and the honest level is still L1. Do not test
-this by comparing the two image digests: Docker digests
-are not reproducible across rebuilds by default, because
+See the pinning actually hold by building the image
+twice and confirming the two builds carry the same
+content, that is, the same operating system and the same
+R and package versions, for example by comparing
+`renv::status()` and the installed apt and R package
+versions across the two builds. Do not test this by
+comparing the two image digests: Docker digests are not
+reproducible across rebuilds by default, because
 per-layer timestamps and file modification times differ,
 so two builds of a correctly pinned recipe carry
 different digests. Bit-identical digests require
 reproducible-build tooling, such as `SOURCE_DATE_EPOCH`
 and the BuildKit rewrite-timestamp option, which is a
-separate concern from whether the content is pinned.
+separate concern from whether the content is pinned. Make
+the check able to fail: replace the digest with a mutable
+tag and the snapshot with a live repository, rebuild on
+two different days, and confirm `renv::status()` or the
+package versions now disagree. If the content differs
+between two builds of the recipe you believe is pinned,
+the recipe is not yet pinned, and the honest level is
+still L1 whatever the `FROM` line claims.
+:::
+
+::: {.callout-important}
+## The honest level
+
+This chapter's own practice, when it names a digest, a
+dated snapshot, and a restored lockfile together as it
+does in the Dockerfile above, reaches L2 for the two
+layers a lockfile cannot reach, the operating system and
+system libraries and the R runtime, but leaves L3,
+verification against a recorded baseline, entirely to
+@sec-verification.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: tag versus digest versus snapshot
+
+A recipe pins the base image by digest but still installs
+packages with a plain `install.packages()` against the
+live repository. Is this recipe's claim to L2 honest? Say
+exactly what is and is not pinned.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Not honest as an L2 claim. The digest pins the operating
+system, the system libraries, and the R runtime, which is
+genuine progress on the two layers a lockfile cannot
+reach. But a plain `install.packages()` against the live
+repository still resolves 'the current version' to
+whatever is current on the day of that particular build,
+so the recipe can produce a different set of packages on
+two builds months apart even though the `FROM` line is
+identical both times. Pinning the base and dating the
+package source are two separate refinements, and a recipe
+that does only the first has not finished the second.
+:::
 :::
 
 ## Environment-variable determinism
@@ -825,6 +1038,32 @@ is not only a manuscript, and the container does not
 assume it is. One set of machinery, varied by a single
 `FROM` line, pins the environment for all of them.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: choosing a profile
+
+An R-package archetype is built against the publishing
+profile because the author 'might as well have LaTeX
+available'. Name the concrete risk this choice creates,
+distinct from image size.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A package must be checked against a clean environment
+carrying only its declared dependencies, so that `R CMD
+check` or its equivalent catches a dependency the
+`DESCRIPTION` fails to declare. A rich publishing base can
+mask exactly that failure: the package's code may rely,
+without declaring it, on a LaTeX tool or a system library
+the publishing base happens to carry, and the check will
+pass in this image and fail the moment the package is
+installed on a user's machine that lacks that base. The
+minimal profile is the honest choice precisely because it
+cannot hide an undeclared dependency behind extra
+software nobody asked for.
+:::
+:::
+
 ## A first look at the two-layer team model
 
 A container fixes an environment for one analyst. A team
@@ -853,6 +1092,33 @@ digest-recording, and updating the team image are the
 business of @sec-archiving. For now it is enough to see
 that the image is not only a solo instrument but the
 natural unit of a shared, reproducible environment.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why not rebuild every time
+
+Explain, to a lab member who asks why the team does not
+simply have every project build from the raw Rocker base,
+what the two-layer model buys beyond saved build minutes.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Saved time is real but not the main point. Building a
+comprehensive image once and pinning it by digest means
+every project in the lab, and every member working on
+any of them, starts from byte-identical bytes rather than
+from independently resolved installs that could drift
+even when every project names the same package versions
+in its own lockfile. Rebuilding from the raw base every
+time reintroduces the chance that two builds, run on
+different days against a live snapshot or a different
+system-library patch level, diverge in ways no lockfile
+would catch, because the divergence sits below the
+package layer. The shared team image is what makes 'works
+on my machine' inapplicable across the whole lab, not
+only within one project.
+:::
+:::
 
 ## Worked example
 
@@ -923,6 +1189,83 @@ recorded baseline. That is the subject of
 @sec-verification, and it is the honest boundary of what
 this chapter delivers.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what changed and what did not
+
+Between the minimal and the publishing build in the
+worked example, name every line of the Dockerfile that
+had to change, and every piece of reproducibility
+machinery that stayed exactly as it was.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Only the `FROM` line changed, from the digest-pinned
+`rocker/r-ver` to the digest-pinned `rocker/verse`. Every
+other reproducibility-relevant line stayed fixed: the
+locale and time-zone and thread-count variables, the
+dated snapshot wired into the repository options, and the
+`renv::restore()` that installs the locked packages. This
+is the point of keeping the profiles cleanly separated
+from the rest of the recipe: changing what the deliverable
+is changes one line, not the discipline that makes either
+build reproducible.
+:::
+:::
+
+## The cohort, continued
+
+The running cohort compendium of this book is, itself, a
+small research compendium: a `cohort_raw.csv`, a
+`clean_cohort()`, and a model fit on top. It is a fair
+question whether it has reached L2 yet, and the honest
+answer is checked rather than asserted.
+
+```{r}
+#| label: cohort-dockerfile-check
+files_needed <- c('Dockerfile', 'renv.lock')
+present <- file.exists(file.path('../..', files_needed))
+names(present) <- files_needed
+present
+```
+
+Neither file exists at the compendium's root, so the
+compendium has not reached L2 by this chapter's standard,
+consistent with the honest L0/L1 framing @sec-levels and
+@sec-compendium already gave it. Reaching L2 would not
+require inventing anything new; it would require writing
+a Dockerfile that follows exactly the showcase recipe
+built and verified earlier in this chapter, adapted to
+what the compendium's own `renv.lock` (once @sec-dependencies'
+lockfile is committed) records:
+
+- a `FROM` line naming a Rocker base appropriate to the
+  compendium's archetype, data analysis, so `rocker/r-ver`
+  or `rocker/tidyverse`, pinned by digest rather than by
+  the tag `4.4.0` alone;
+- a dated-snapshot `ARG`, naming the Ubuntu release the
+  chosen base actually runs (`jammy` for the current
+  `rocker/r-ver:4.4.0`), wired into
+  `RENV_CONFIG_REPOS_OVERRIDE` exactly as the showcase
+  Dockerfile does;
+- the three determinism variables this chapter argued for,
+  `LANG`/`LC_ALL` set to a fixed locale, `TZ=UTC`, and
+  `OMP_NUM_THREADS`/`OPENBLAS_NUM_THREADS` set to a
+  deliberate value, since the cohort's own model fit uses
+  a bootstrap whose last digits the thread count can move;
+- a `WORKDIR`, a `COPY renv.lock renv.lock`, and the same
+  two-step `renv` install and `renv::restore()` pattern,
+  so the packages the compendium's scripts load are
+  restored inside the pinned environment rather than
+  assumed to already be present.
+
+None of this is built here, because building and verifying
+an image is slow and the showcase Dockerfile earlier in
+this chapter already did exactly that verification once.
+What the check above adds is specific to the compendium:
+it is not yet done, and the gap is these five concrete
+lines, not a vague 'needs a Dockerfile'.
+
 ## Collaborating with an LLM
 
 A language model is a capable assistant for container
@@ -932,16 +1275,20 @@ is not a reproducible one. The analyst who delegates must
 verify, and the following three exchanges show what to
 watch for.
 
-One rule comes before any prompt. Never paste or upload
-protected health information, identifiable records, or
-data held under a data use agreement, nor outputs
-derived from them, into a model unless your institution
-has approved that endpoint for that data; to ask about a
-container, describe the structure instead, such as the
-column names and types or a synthetic example. A coding
-agent that runs commands can read whatever the container
-mounts, so run one only in projects whose data it is
-allowed to see.
+::: {.callout-important}
+## Restricted data
+
+One rule comes before any prompt (habit 3). Never paste
+or upload protected health information, identifiable
+records, or data held under a data use agreement, nor
+outputs derived from them, into a model unless your
+institution has approved that endpoint for that data; to
+ask about a container, describe the structure instead,
+such as the column names and types or a synthetic
+example. A coding agent that runs commands can read
+whatever the container mounts, so run one only in
+projects whose data it is allowed to see.
+:::
 
 **Prompt.** 'Write me a Dockerfile for my R analysis.'
 
@@ -1054,6 +1401,24 @@ contributions, and it is not one to delegate.
    most likely cause, and explain why a container alone,
    without the lockfile restored inside it, does not
    guarantee identical packages.
+
+7. (Cumulative) Run
+   `raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')`
+   and `cohort <- clean_cohort(raw)`, as in 'The cohort,
+   continued' above. Report three things: `nrow(cohort)`;
+   the number of distinct values of `cohort$sex` after
+   cleaning; and whether `file.exists('Dockerfile')`
+   evaluates to `TRUE` or `FALSE` when run from the
+   compendium's root. Then name the one line this chapter's
+   showcase Dockerfile would need to add to pin the thread
+   count the cohort's bootstrap depends on.
+
+8. (Spacing) This exercise returns to the lockfile of
+   Chapter 6, 'Pinning Packages with renv' (@sec-dependencies).
+   Explain, in two or three sentences, what a pinned
+   `renv.lock` guarantees about a result and what it does
+   not, and name the specific gap this chapter's container
+   closes that the lockfile by itself cannot.
 
 ## Solutions
 
@@ -1321,6 +1686,76 @@ The compact statement: the container guarantees the same
 *floor*, the lockfile guarantees the same *packages*, and
 an analysis needs both.
 :::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
+nrow(cohort)
+#> [1] 337
+length(unique(cohort$sex))
+#> [1] 2
+file.exists('Dockerfile')
+#> [1] FALSE
+```
+
+`nrow(cohort)` is 337, after `clean_cohort()` drops the
+one duplicated `mrn`; `cohort$sex` takes exactly 2 distinct
+values, `'F'` and `'M'`, after the inconsistent coding is
+repaired; and `file.exists('Dockerfile')` is `FALSE`,
+because the compendium has no Dockerfile yet, as 'The
+cohort, continued' above found.
+
+The one line the showcase Dockerfile would need to add for
+the thread count is the `ENV` line already shown in that
+Dockerfile: `OMP_NUM_THREADS=1` together with
+`OPENBLAS_NUM_THREADS=1`, since `rocker/r-ver` links R
+against multithreaded OpenBLAS and the cohort's bootstrap
+sums partial results whose order depends on the thread
+count.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+A pinned `renv.lock` guarantees that every R package the
+analysis loads is reinstalled at the exact version
+recorded, from the repository recorded, so two restores of
+the same lockfile install the same packages. It guarantees
+nothing about the operating system, the system libraries a
+package links against, or the version of R itself that
+runs those packages, because none of those three is an R
+package and so none of them has an entry in the lockfile.
+
+The specific gap this chapter's container closes is
+exactly those three: the `FROM` line fixes the operating
+system and the system libraries, and the digest-pinned
+Rocker base fixes which R runtime runs the restored
+packages. The lockfile answers 'which packages', the
+container answers 'on what', and this chapter's own
+orientation story, the GDAL-dependent package that failed
+to install on a collaborator's machine even though the
+lockfile restored cleanly, is precisely a failure the
+lockfile could not prevent and the container does.
+:::
+
+## Cheat sheet
+
+| Line or rule | What it does |
+|---|---|
+| `FROM image@sha256:...` | Pins the base by immutable content digest, not a mutable tag. |
+| `ARG PPM_SNAPSHOT=.../jammy/YYYY-MM-DD` | Names a dated package-repository snapshot matching the base's Ubuntu release. |
+| `ENV RENV_CONFIG_REPOS_OVERRIDE=...` | Forces `renv::restore()` to fetch from the dated snapshot (habit 2). |
+| `ENV LANG=... LC_ALL=...` | Fixes locale-dependent sorting and formatted output. |
+| `ENV TZ=UTC` | Fixes day-boundary assignment for date/time arithmetic. |
+| `ENV OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1` | Removes thread count as a source of floating-point variation, trading speed for stability. |
+| `WORKDIR /project` | Keeps `renv` out of the image root, where it refuses to initialize. |
+| `COPY renv.lock renv.lock` + `renv::restore()` | Restores the exact package set inside the fixed environment. |
+| `docker build --platform linux/amd64` | Builds an `amd64`-only image correctly from Apple Silicon. |
+| `docker inspect --format='{{index .RepoDigests 0}}'` | Finds the digest a tag currently resolves to. |
+| Rule of thumb | Compare content (`renv::status()`, package lists) across two builds to verify pinning; never compare digests, which differ by default even when content is identical (habit 4). |
 
 ## Further reading
 

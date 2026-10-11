@@ -2361,6 +2361,27 @@ Not done: 7 chapters remain on the pre-revision structure
 which its converting agent will need to handle carefully to avoid
 disturbing either.
 
+**Phase 9 rollout batch 2, 2026-10-11.** Part II, Capturing the
+Environment: 04-dependencies, 05-containers, 06-backends-runtimes.
+Same branch, one commit.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Stack figures | ch04 `captures = c('Package versions')`; ch05 and ch06 both `captures = c('Operating system, system libraries', 'R runtime')`, the same L2 rung reached by different routes, which ch06's fig-cap states explicitly | V lead: all three alt texts reproduced exactly from the rendered HTML |
+| `@sec-conventions` crossref | A third instance of the same unresolved-crossref defect, this time in 06-backends-runtimes.qmd | V lead: fixed with the same plain-link pattern; grepped the whole book afterward, zero remaining instances across all 13 chapters |
+| Cohort passages | ch04: `renv::dependencies()` run for real on `R/cohort.R` and the generator, showing `tibble` as the only contributed (non-base) dependency; ch05 and ch06: `file.exists()` checks on `Dockerfile`/`renv.lock`/`default.nix`/`.devcontainer/devcontainer.json` at the repo root | V lead: reproduced the base-versus-contributed distinction (`stats`/`utils` are base, `tibble` is not) and all four file-existence checks exactly |
+| ch05 Exercise 7 | Cumulative, autogradable: cohort row count (337), distinct sex codes (2), `Dockerfile` existence (false) | V lead, reproduced exactly |
+| Chapter-numbering inconsistency (new finding) | ch05's converting agent found the book's own chapters disagree with each other about which chapter number names which: ch02 calls ch01 'Chapter 1' while ch01 claims that number itself; ch03 calls ch02 'Chapter 2' while version-control calls it 'Chapter 3'. Each agent derives its own chapter's number correctly from the rendered build but does not reconcile cross-chapter citations, since no single agent owns more than its own file | Not fixed; flagged for a dedicated consistency pass (candidate for Phase 12, restructure) before any further spacing-exercise cross-references are added in later batches |
+
+Render: freeze cleared for all three chapters; HTML and PDF exit 0,
+no warnings, no unresolved references or missing citations, no
+literal HTML entities [V]. Repository test suite 260/260 (up from
+231).
+
+**Length report.** PDF is now 514 pages, up from 484 before this
+batch (+30 pages, +6.2%). Since before Phase 6: 398 to 514 pages,
++29.1%. 8 of 13 chapters now carry the full template.
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their
