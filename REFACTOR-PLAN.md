@@ -3,6 +3,14 @@
 
 ## 0. Status
 
+**A second review was conducted on 2026-10-10 and is reported in
+Section 10.** Unlike the scan below, it read every chapter, checked
+technical claims by running them, and surveyed coverage against 30
+syllabi and 28 reference texts. It found eleven Tier 1 defects,
+including that the L3 stamp can be awarded to a compendium whose
+tests fail and that no CI gate the book teaches can fail on what it
+checks. Phases 6 to 14 and Decisions D1 to D12 are in Section 10.
+
 **Phases 0, 1, and 2 were applied on 2026-09-07 and 2026-09-08.**
 Their acceptance criteria were checked by running them, with one
 criterion deliberately not met and recorded as such in Phase 2.
@@ -1288,7 +1296,7 @@ second is ever done, do Phase 5. Both are done.
   reader who wants print concealment needs answers moved to an
   appendix, which was not done and would be a substantial
   restructuring.
-- **Epistemic status by finding.** Findings 1, 3, 4, 5, 6, 8, and 9
+- **Evidence status by finding** (heading renamed 2026-10-10). Findings 1, 3, 4, 5, 6, 8, and 9
   rest on counts that were verified by running commands and reading
   their output, with the figure count cross-checked against the
   rendered output directory rather than against labels. Finding 2's
@@ -1296,7 +1304,949 @@ second is ever done, do Phase 5. Both are done.
   convertible is inferred from inspecting two chapters. Finding 7 is
   verified. Finding 10 is inspected, not tested.
 
-## 9. Appendix: reproducing the measurements
+## 10. Second review: reading, experts, and coverage (2026-10-10)
+*2026-10-10 18:14 PDT*
+
+Sections 1 to 8 report a mechanical scan, and Section 8 says plainly
+that the scan could not judge whether the prose is correct, clear,
+or well organized. This section reports the review that does: a full
+reading of every chapter, three simulated expert reviews, a
+learning-science survey, a model-book comparison, a review of the
+LLM sections, and a worldwide coverage sweep. Findings continue the
+numbering of Section 4 (from Finding 12); phases continue the
+numbering of Section 5 (from Phase 6). Nothing in Sections 1 to 8 or
+the appendix (renumbered Section 11 on 2026-10-10, formerly 9) is
+withdrawn, but Decision D6 reopens one Phase 1 choice explicitly.
+
+### 10.1 Parameters
+
+Decided by the author on 2026-10-10.
+
+| Parameter | Choice |
+|---|---|
+| Scope | Audit and plan; no chapter edits in this pass |
+| Primary audience | MS and PhD students in the health sciences (biostatistics, epidemiology, public health) who know R and basic git |
+| Course format | One 10-week quarter |
+| R library for renders | Local library, `RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` (no `renv.lock` exists) |
+| Expert personas | Academic biostatistician directing an MS program; pharmaceutical statistical programmer; research software engineer |
+| Model book | *R Packages* (2e), Wickham and Bryan |
+| Running example | The existing simulated cohort (`analysis/scripts/simulate_cohort.R`) |
+| Existing plan | Extend (this section) |
+
+### 10.2 Executive summary
+
+The book's organizing ideas are sound and every reviewer said so
+unprompted: the L0 to L3 ladder, the distinction between capturing
+reproducibility and validating it, the 'honest level', the oracle
+principle for tests, and the sealed render. The problems are not in
+the ideas. They are in whether the machinery the book teaches
+actually does what the book says it does, and on that question the
+review found the book's central claims undelivered.
+
+1. **The top rung is not delivered by the tool.** `zzc verify --full`
+   stamps a compendium 'L3, verified' when the image rebuilds and the
+   test target exits 0. The test target exits 0 even when a test
+   fails, and no output is ever compared with a baseline. A
+   compendium with failing tests is stamped L3 (Finding 12).
+2. **None of the three CI gates the book teaches can fail on what it
+   claims to check.** R CMD check does not see `analysis/`; its
+   `error_on = "error"` passes undeclared dependencies; the
+   dependency gate defaults to `error_on_fail = FALSE`; and no render
+   gate exists in either workflow (Finding 13).
+3. **The showcase Dockerfile neither builds nor pins what it claims
+   to pin** (Finding 14), and the lockfile chapter teaches a lockfile
+   format renv no longer writes (Finding 15).
+4. **Restricted patient data is the largest gap for this audience.**
+   The archiving chapter sends 'the code, the data' to a public
+   repository with no word on de-identification or controlled access;
+   the LLM prompts invite pasting a cohort data frame; CI is taught
+   with no guidance for data that cannot be committed (Finding 16).
+5. **The running example is both broken and unused.** Its generator
+   corrupts the ground truth it plants errors in, and almost no
+   chapter uses it (Finding 17).
+6. **The book is roughly 30 percent too long for one quarter** and
+   repeats its core definitions up to five times (Finding 21).
+
+This repository itself does not reach the level the book teaches:
+its CI renders HTML from a committed freeze cache and runs no tests,
+and its own test files exit with zero assertions when the package is
+built (Finding 25). In a book on computational verification, that is
+the first thing a critical reader will check.
+
+**Document map.** 10.3 method and evidence; 10.4 findings 12 to 28;
+10.5 the tiered correctness register; 10.6 house rules; 10.7 the
+revised chapter template; 10.8 habit list and motto; 10.9 the
+running example and its canonical analysis plan; 10.10 topic
+additions from the coverage sweep; 10.11 the one-quarter core path;
+10.12 per-chapter actions; 10.13 phases 6 to 14; 10.14 what not to
+do; 10.15 decisions; 10.16 limitations; 10.17 defects outside the
+book.
+
+### 10.3 Method and evidence
+
+Twelve read-only agents (four readers, three personas, one
+learning-science and model-book researcher, one LLM-section
+reviewer, three coverage researchers) worked from shared briefs and wrote
+reports to the session scratchpad; the lead reviewer re-checked the
+most consequential claims before accepting them. Every claim below
+carries one of these labels:
+
+- **[V]** verified: the lead reviewer ran it and observed the result.
+- **[I]** inspected: the lead reviewer read the source and confirmed.
+- **[A-V]** an agent ran it; the lead did not re-run.
+- **[A-I]** an agent read the source or documentation.
+- **[EK]** expert knowledge, not checked against a primary source.
+- **[U]** unverified: the source could not be opened.
+
+The renders were run by the lead on 2026-10-10: HTML (22 pages, no
+warnings, no `quarto-unresolved-ref` or `citation-missing`) and PDF
+(398 pages, no LaTeX warnings, no literal HTML entities; em dashes
+appear only inside published reference titles) [V]. Both renders
+reused the committed `_freeze` cache, so they show the book builds,
+not that its code runs today. The PDF has grown from 304 pages on
+2026-09-08 to 398, about 31 percent; the cause was not isolated
+[V for the counts; cause U].
+
+### 10.4 Findings
+
+#### Finding 12. The L3 stamp is unfalsifiable
+
+`zzc verify --full` (zzcollab `modules/verify.sh:238-266`) marks a
+project L3 when `make docker-build` and `make docker-test` both exit
+0 [I]. `docker-test` (`templates/Makefile:341`) runs
+`R -e "tinytest::run_test_dir('inst/tinytest')"`, which exits 0
+with a failing test [V: deliberately failing test, exit status 0].
+Nothing compares any output to a recorded baseline [I]. The book
+defines L3 as a verified analysis 'whose recorded outputs have been
+shown to regenerate' (`index.qmd`, `00-intro.qmd:474-478`,
+`08-testing-quality.qmd:501-505`, `09-continuous-integration.qmd:528-560`)
+[A-I]. The book's culminating claim therefore rests on a mechanism
+that cannot fail.
+
+Related: the same-session reproducibility test
+(`08:453-459`, `03:1037-1040`) runs seeded code twice in one session,
+so it cannot detect a change in R's RNG defaults [I by reasoning;
+A-V: passes under `sample.kind = 'Rounding'`]; the baseline test the
+chapter shows does not exist in `inst/tinytest/` [A-I]. And L3 is
+equated with the ACM 'Results Reproduced' badge (`02:416-417`,
+`:509-511`), which requires an independent team; what L3 describes
+is closer to ACM's 'repeatability' [U: the ACM page could not be
+opened; EK].
+
+#### Finding 13. The CI the book teaches cannot fail
+
+- R CMD check is described as checking 'the whole compendium'
+  (`03:203-229`, `09:245-255`), but the compendium's `.Rbuildignore`
+  excludes `^analysis$` [I], so analysis scripts are never checked
+  [A-V twice: a syntax error and a missing package in
+  `analysis/scripts/` passed]. The ch09 worked example (`09:842-858`)
+  depends on a failure that cannot occur.
+- Both workflows use `error_on = "error"` (`09:337`, `09:476`), so
+  undeclared dependencies, which R CMD check reports as WARNINGs,
+  pass [A-V]. The r-lib/actions default is `"warning"` [A-I].
+- The dependency gate calls `zzrenvcheck::check_packages(strict =
+  TRUE)` (`09:343-344`) without `error_on_fail = TRUE`; the default
+  is `FALSE` (zzrenvcheck `R/compare.R:70`) [I], so it reports and
+  exits 0 [A-V]. `strict` means 'also scan tests and vignettes', not
+  the check described [A-I]. zzrenvcheck is never installed in the
+  workflow and is not on CRAN [A-I].
+- Neither workflow contains the render gate the text promises as the
+  third gate [A-I]. CI never builds the project Dockerfile, so it
+  validates nothing at L2 despite `09:508-511` [A-I].
+
+#### Finding 14. The showcase Dockerfile does not build or pin
+
+The Dockerfile at `05-containers.qmd:450-473`, the book's model of
+an L2 image [I]:
+
+- calls `renv::init(bare = TRUE)` with no `WORKDIR` and no `force =
+  TRUE`; renv refuses to initialize a project that contains `$HOME`
+  [A-V: refusal reproduced locally, no Docker build run];
+- pairs `rocker/r-ver:4.4.0`, built on Ubuntu 22.04 (jammy), with a
+  `__linux__/noble` (24.04) binary URL [A-I: Rocker Dockerfiles at
+  tag R4.4.0]; zzcollab's `get_ubuntu_codename` has the same defect
+  [A-I];
+- sets the dated snapshot in `Rprofile.site`, which
+  `renv::restore()` ignores in favor of the lockfile's recorded
+  repositories unless `RENV_CONFIG_REPOS_OVERRIDE` is set [A-I renv
+  documentation; EK], so `05:439-443` and `05:476-479` overstate what
+  the snapshot governs.
+
+Further: Rocker uses OpenBLAS, not reference BLAS (`05:595-597`)
+[A-I]; the decimal-mark table (`05:540-574`, also `02:292-293`)
+shows a locale effect R does not have, since R holds `LC_NUMERIC` at
+`C` [A-V twice]; zzcollab never sets `OMP_NUM_THREADS` though
+`05:761` and `05:783` say it does [A-I]; Apple Silicon and amd64
+emulation are never taught although `rocker/tidyverse` and
+`rocker/verse` are amd64-only [A-I]; and Nüst et al. (2020) is cited
+for digest pins and dated snapshots, which its text does not
+recommend (`05:336-340`) [A-I].
+
+#### Finding 15. The lockfile chapter teaches an obsolete format, and its auto-fix misrecords versions
+
+- renv 1.2.3 writes lockfile records with DESCRIPTION metadata and
+  no `Hash` or `Requirements` field [V: lead snapshot]; the format
+  changed in renv 1.1.0 [A-I]. `04:142-144`, `04:195-242`, and
+  Exercises 1 and 2 (`04:923-960`) describe what students will not
+  see. The old `Hash` was a hash of DESCRIPTION fields, never of
+  package contents, so 'byte-identical' was never true [A-I].
+- `make check-renv`'s auto-fix, taught at `04:451-466`, writes the
+  **current CRAN version** into `renv.lock`, not the installed one
+  (zzrenvcheck `R/autofix.R:162-170`) [I]. The lockfile then passes
+  the gate while describing an environment that did not produce the
+  result.
+- renv's snapshot omits packages listed only in `Suggests`, so the
+  'triad invariant' can fail by renv's own action, while the chapter
+  recommends `Suggests` for analysis-only packages [A-V].
+- The 'recommended packages need no declaring' rule (`04:367-370`,
+  `conventions.qmd:92-95`) is contradicted by the chapter's own
+  `survival` example and by R CMD check [A-V].
+
+#### Finding 16. Restricted data is the largest content gap
+
+The audience works with patient data. Three independent reviews
+reached this finding [A-I x3; I grep].
+
+- `10-archiving-sharing.qmd` contains no occurrence of
+  de-identification, PHI, consent, data-use agreement, or controlled
+  access [I grep], and `10:556-557` says the deposited compendium
+  'carries the code, the data' [I].
+- No LLM section says restricted data may go only to an approved
+  endpoint; `08:959` prompts 'Write data-validation tests for this
+  cohort data frame' [I]. NIH NOT-OD-25-081 forbids sharing
+  controlled-access data with public generative-AI tools [A-I].
+- CI, Binder, and Codespaces are taught with no guidance for data
+  that is gitignored because it is PHI [A-I]; the predictable student
+  response to a red render gate is to commit a sample of the data
+  [inferred].
+- NIH, the Data Management and Sharing Policy, trusted research
+  environments, and the Five Safes appear nowhere [I grep].
+- 'The history is the audit trail' (`version-control.qmd:225-275`)
+  and 'append-only', 'tamper-evident' (`:272`, `:494`) overstate git:
+  author and date are client-asserted and rewritable [A-V: a commit
+  forged with a false name and a 2019 date].
+
+#### Finding 17. The running example is broken and largely unused
+
+- `simulate_cohort.R:83` assigns `'Female'` to 18 random rows
+  regardless of true sex [I]; cleaning then 'repairs' nine true males
+  to `F`, and all tests pass on the corrupted data [A-V]. A planted
+  pathology must be recoverable, or the data-validation lesson
+  teaches the wrong thing.
+- The cohort is labeled 'incident' diabetes yet 15.8 percent of it
+  meets the HbA1c diagnostic threshold at baseline, and it is
+  analyzed with logistic regression despite variable follow-up [A-V].
+- Of the 13 chapters, none of 00 to 07 uses it; the ch02 worked
+  example invents `cohort.csv` and a Cox model while
+  `cohort_raw.csv` already has `incident_dm` and `followup_days`
+  [A-I x3]. Four late chapters use four different datasets [A-I].
+- The committed CSV has `mrn`, `patient_name`, and `dob` columns [I]
+  and is tracked in git [I], while the version-control chapter
+  teaches that raw data must never be committed. `analysis/data/
+  README.md` describes Palmer Penguins [I]. See Decision D7.
+- The generator is byte-reproducible: a fresh run matched the
+  committed CSV (MD5 `63665139b559eec7687d2af423358f96`) [A-V].
+
+#### Finding 18. Factual errors in the history and the motivating examples
+
+- R 3.6.0 'changed the default random-number algorithm' and 'every
+  simulation' draws differently (`00-intro.qmd:168-170`,
+  `01:391-393`): only `sample()`'s discrete-uniform method changed;
+  `rnorm()` is identical under both [V].
+- `stringsAsFactors` 'altered every model' (`00-intro.qmd:175-176`):
+  `lm()` coefficients are identical for character and factor
+  predictors [V]; the change matters for level-dependent code only.
+- Trisovic et al. (2022): 'fewer than one in four' files ran
+  (`00-intro.qmd:97-99`, figure at `:134` plots 24 percent); the
+  paper reports 74 percent failing, about 26 percent succeeding
+  [A-I; EK]. Chapter 01 (`:208`) has it right; ch01 `:412-416`
+  attributes package churn over time to a study that does not track
+  files over time [A-I].
+- Peng (2011) misquoted inside quotation marks (`00-intro.qmd:76-77`)
+  [A-I]; `@peng2009` cited for work that is `@peng2006` (`02:1029`)
+  [A-I].
+- `pacman::p_load()` invisible to renv (`07:481-487`): renv 1.2.3
+  detects it [A-V].
+- rocker/verse renders PDF with no runtime installs (`07:606-609`):
+  it ships minimal TeX Live, and zzcollab itself pre-installs 25 more
+  LaTeX packages [A-I].
+- Apptainer: the OCI digest does not 'carry through' to the SIF and
+  host environment and `$HOME` leak in by default, so 'provably the
+  one used on the laptop' (`06:632`) is false; Docker has a rootless
+  mode (`06:135-138`); rix pins a dated rstats-on-nix fork, not a
+  NixOS commit (`06:352-363`) [A-I].
+- `targets` catches a content change with an unchanged timestamp
+  (`pipelines:537-538`): not under default `trust_timestamps` [A-V];
+  the `report` target (`pipelines:513-516`) never tracks
+  `report.Rmd`, so a prose edit leaves a stale report [I; A-V].
+- Rebuilds 'byte-for-byte identical' (`10:269`) contradicts
+  `05:505-513`; regulatory submissions 'call for bit-for-bit results'
+  (`05:1116`) misstates the FDA 2015 statement [A-I].
+- The example DOI `10.5281/zenodo.7654321` (`10:693`) resolves to a
+  real record [A-V]. `rang` was archived on CRAN on 2026-08-22, and
+  `dockerize_rang()` does not exist [A-V].
+- A `.gitignore` line with a trailing comment (`version-control.qmd:562`)
+  ignores nothing [A-V].
+
+#### Finding 19. Statistical treatment below the audience's standard
+
+- Monte Carlo error is treated as noise to pin with a seed; no Monte
+  Carlo standard error is taught. Changing the sampler moved a
+  bootstrap upper bound from 5.149 to 5.268, against a Monte Carlo SD
+  of 0.125 across seeds [A-V].
+- An optimizer-sensitive mixed-model estimate is called 'not
+  statistical' (`02:48-60`); it is a fragile fit, which is a
+  statistical fact [A-I].
+- Chapters 07 and 09 recommend hashing outputs (exact comparison);
+  chapter 08 rejects exact comparison for floating point. Hashing
+  coefficients fails on a one-ulp change that `all.equal()` accepts
+  [A-V]. The ch09 checksum demo hashes R serialization, not file
+  bytes, so it changes between a tibble and a data frame [A-V].
+- The recommended seeding pattern (`08:471-478`) overwrites the
+  caller's RNG stream [A-V]; *R Packages* (2e) section 6.5 says to
+  restore global state with `withr` [A-I].
+- A test that 'no hazard ratio is negative' (`03:725-727`) cannot
+  fail [I].
+- Parallel RNG streams and missing-data mechanisms are absent [A-I].
+
+#### Finding 20. 'Validation', 'verification', and 'audit trail' collide with their regulated meanings
+
+The glossary's 'Validation' (`glossary.qmd:746-753`) and the L3
+'verified' label are research usages; in pharmaceutical work the
+same words mean computer system validation under 21 CFR 11.10(a)
+and the EMA's 2023 guideline, which lists statistical software in
+scope [A-I]. The book has a 'warning about the words' for
+reproduced versus replicated (`02:460-520`) but none for these.
+Double programming and package risk assessment (R Validation Hub)
+are absent [A-I grep]. Graduates entering CROs and industry will
+meet the other meaning in their first month.
+
+#### Finding 21. Too long for one quarter, with core content repeated
+
+- Body prose is about 77,100 words excluding exercises (3,600) and
+  solutions (17,600) [A-V], about 7,700 words per week over ten
+  weeks; the persona's target for a lab course taken alongside
+  first-year theory is about 5,000 [A-I, persona judgment].
+- The intro's 'Why the failures are computational, not statistical'
+  (`00-intro.qmd:163-198`) is a near-verbatim, weaker copy of
+  `01:375-435` and carries both errors in Finding 18; 220 shared
+  8-word sequences between intro and ch01 [A-V].
+- The ladder is defined in full five times; the opening anecdote is
+  told three times (preface, intro, ch01) [A-I].
+- Archetype sections recur in every chapter and again in exercises,
+  costing several thousand words [A-I].
+- 'The honest level' callout recites the same L0 to L3 summary in
+  most chapters [A-I x4].
+- The intro says 'twelve-week course' (`00-intro.qmd:544`) [A-I].
+
+#### Finding 22. The LLM sections predate coding agents and omit governance and disclosure
+
+4,928 words (about 4.7 percent of the book) in 36 prompt,
+watch-for, verification triples [V count]. Strengths: the
+verification steps are executable and well chosen [A-I]. Problems
+[A-I]:
+
+- they assume a chat partner; 'cannot see your directory'
+  (`version-control.qmd:978-979`) and 'has no access to your session'
+  (`01:641-642`) are false for coding agents that edit files, run
+  shells, and open pull requests;
+- no data-governance rule (Finding 16);
+- no disclosure guidance (ICMJE requires it) and no statement that
+  LLM output is itself not reproducible (nondeterminism, retired
+  model IDs, unrecorded prompts);
+- five triples repeat the same 'do not let the model claim full
+  reproducibility' point; `04:820` names testthat in a tinytest
+  book.
+
+#### Finding 23. Coverage is deep on infrastructure and thin on everyday practice
+
+Across 30 comparable courses with opened syllabi, containers appear
+in 5, CI in 4, Apptainer in 2, DOI archiving in 2, and Nix in 0
+[A-I; 7 of 30 re-opened by the agent, 23 not re-checked]. The most
+widely taught topics the book lacks or only mentions are licensing
+(9 of 30), debugging a failed reproduction (9), README and data
+dictionary documentation (8), a shell primer (7), and git recovery
+and merge conflicts (6) [A-I; I grep: no `conflict`, `revert`,
+`reset`, or `restore` in the version-control chapter; README once
+each in ch04 and ch08]. The textbook and reference sweep (28
+sources) agrees on README, licensing and `CITATION.cff`, code
+review, and project-oriented paths (`here`) [A-I]. The book is at or
+beyond its sources on dependencies, containers, CI concepts,
+testing, literate programming, and the LLM topic [A-I]. See 10.10.
+
+#### Finding 24. The exercises cannot be graded at scale
+
+Of 30 exercises classified in five chapters, 12 depend on the
+student's own paper, analysis, or data, which is ungradeable and,
+in a health-sciences program, a PHI risk; about 4 have checkable
+code output [A-I]. All 72 solutions are printed in the book. None of
+the exercises builds on the shared cohort. A template repository
+with planted defects, autograded by CI, is the standard remedy, and
+it cannot work until Findings 12 and 13 are fixed.
+
+#### Finding 25. This repository does not reach the level it teaches
+
+- `.github/workflows/render-book.yml` renders HTML only, from the
+  committed `_freeze` cache, installs only knitr and rmarkdown on the
+  host path, and runs no tests [I].
+- `inst/tinytest/test-cohort.R` and `test-manuscript-invariants.R`
+  call `exit_file()` when the book sources or raw extract are absent,
+  as they are in a built package [I]; under `test_package()` they
+  report 'All ok, 0 results' [A-V].
+- No `renv.lock` and no Dockerfile (REFACTOR-PLAN Finding 5,
+  unchanged) [I].
+
+#### Finding 26. Currency
+
+`actions/checkout@v4` (current v7.0.1, released 2026-07-20,
+per the GitHub API on 2026-10-11 [V]; the audit's 'v6' was
+itself out of date) and no mention of
+`r-lib/actions` (`09`) [A-V]; renv cited at 0.12.0 and *R Packages*
+at the first edition [A-I]; zzcollab now has six archetypes, a
+`--bare` mode, and `zzc analysis` is a deprecated alias (`03`)
+[A-I]; Make targets `ci-check`, `ci-render`, `render` named in ch09
+do not exist in zzcollab's Makefile [A-I]; the 'four of ten
+determinants' figure comes from a June 2026 internal review that
+predates digest pinning [A-I]; `targets` 1.12.0 prints a skip summary
+rather than names (`pipelines:579-583`) [A-V].
+
+#### Finding 27. Accessibility
+
+The `fig-gates` colors have 1.64 to 2.35:1 contrast, below the WCAG
+1.4.11 minimum of 3:1, and status is conveyed by color alone [A-V].
+No automated accessibility check is configured [A-I]. The Simpson
+figure's alt text describes descending clusters that the data do not
+show (`07:330`) [A-V].
+
+#### Finding 28. Presentation: the dose of practice, not its design, is the issue
+
+The learning-science survey grades retrieval practice and spacing as
+strong evidence (classroom meta-analysis g = 0.50; Cepeda et al.
+2006) [A-I; several primary pages login-gated, see report]. The book
+places two retrieval checks per roughly 7,500-word chapter and no
+cumulative exercises. Callouts are not overused (about four per
+chapter besides solutions), but `conventions.qmd` advertises Tip and
+Warning callouts that appear once in 13 chapters [A-V]. The prose is
+strongly third person ('the reader'); evidence for a conversational
+register is moderate [A-I]. From *R Packages* (2e), the device most
+worth borrowing is a 'whole game' chapter: one end-to-end, executed
+pass through a single compendium that later chapters extend [A-I].
+
+### 10.5 Correctness register
+
+Tier 1: a reader acting on it would lose data, expose PHI, or ship
+an irreproducible result believing it reproducible. Tier 2: wrong or
+misleading, low direct harm. Tier 3 items (spelling, stale
+version strings, cross-reference slips) are listed in the per-chapter
+actions.
+
+| ID | Location | Defect | Evidence | Fix in |
+|---|---|---|---|---|
+| T1-1 | zzcollab `verify.sh:238-266`, `templates/Makefile:341`; book `00:474-478`, `08:501-505`, `09:528-560` | L3 stamped with failing tests; no baseline comparison | V, I | zzcollab, then 02, 08, 09 |
+| T1-2 | `09:337-344`, `09:476-479`; `03:203-229` | No CI gate can fail on what it claims | I, A-V | 03, 09 |
+| T1-3 | `05:450-473` | Showcase Dockerfile fails and mispins | A-V, A-I | 05 |
+| T1-4 | `04:195-242`, `04:451-466`; zzrenvcheck `autofix.R:162-170` | Obsolete lockfile format; auto-fix records CRAN-current versions | V, I | 04, zzrenvcheck |
+| T1-5 | `10:356-391`, `10:556-557` | Public deposit with no data protection | I | 10 |
+| T1-6 | all LLM sections; `08:959` | No restricted-data rule for LLM use | I, A-I | every chapter's LLM section (D5) |
+| T1-7 | `simulate_cohort.R:83` | Planted error destroys ground truth | I, A-V | generator, tests |
+| T1-8 | `08:453-459`; `03:1037-1040` | Reproducibility test cannot detect what it claims | I, A-V | 08 |
+| T1-9 | `pipelines:513-516` | Report target misses edits to the report source | I, A-V | pipelines |
+| T1-10 | repository CI and `inst/tinytest/` | The book's own verification is vacuous | I, A-V | repository |
+| T1-11 | `version-control.qmd:225-275`, `:272`, `:494` | Git presented as an audit trail | A-V | version-control |
+| T2-1 to T2-37 | see Findings 14 to 27 | Factual and technical errors listed there | as labeled | per chapter |
+
+T1-11 is Tier 1 only for readers entering regulated work; it is kept
+here because the book does not say which readers it is written for.
+
+### 10.6 House rules (additions)
+
+1. Every gate shown in the book must be demonstrated to fail. Each
+   CI, test, or verification recipe is accompanied by the deliberate
+   breakage that turns it red.
+2. Every executed claim about a tool is run in the book, against a
+   pinned version, or labeled as illustrative static text with the
+   version it describes.
+3. No exact-equality comparison of floating-point results without a
+   stated tolerance; hashes are for files and data, not estimates.
+4. No prompt in the book carries data. Every LLM passage that could
+   tempt a reader to paste data says where restricted data may and
+   may not go.
+5. The running cohort is the default example; another dataset needs
+   a stated reason.
+6. One definition per term, in one place, linked thereafter. The
+   ladder is defined once in ch02 and summarized once in the intro.
+7. Claims about zzcollab describe what the current source does, with
+   the version, and are re-checked at each tool release.
+8. US English, no em dashes, single quotes in prose, native pipe,
+   `<-`, snake_case, 2-space indentation, tinytest, roxygen2, wrap at
+   about 66 characters (existing rules, restated).
+
+### 10.7 Chapter template (revised)
+
+The existing template (preface, 'Chapter template') is kept, with
+these changes, in order of appearance:
+
+1. **Opening.** One concrete failure from the running cohort, or a
+   payoff statement, on the first screen. No epigraph-only openings.
+2. **Chapter card.** Reading time, prerequisites (chapters and
+   statistical knowledge), three to five objectives phrased as
+   questions the reader will be able to answer, and a section
+   outline. Optional skip-ahead quiz of three items for readers who
+   know the material.
+3. **Where this sits on the stack.** The determinant-stack figure,
+   produced by one shared function, with the layers this chapter
+   captures or validates highlighted and generated alt text.
+4. **Numbered sections**, each ending in a folded Check (one per
+   major section, not two per chapter) and its own short exercise.
+5. **Callouts**, three kinds only: Verification (how to see that it
+   worked, and how to make it fail), Pitfall, and Restricted data.
+6. **The cohort, continued.** The chapter's step applied to the
+   running compendium, executed.
+7. **The honest level.** One sentence stating which rung this
+   chapter's practice reaches and what it leaves exposed; no
+   recital of the whole ladder.
+8. **Collaborating with an LLM.** Kept in place and patched
+   (Decision D5): a restricted-data rule, premises corrected for
+   coding agents, duplicated triples removed.
+9. **Exercises.** At least one cumulative exercise on the cohort
+   compendium, autogradable; at least one that revisits an earlier
+   chapter (spacing).
+10. **Cheat sheet.** One half-page table of commands and rules,
+    collected later into a cheat-sheet index.
+11. **Further reading.**
+
+### 10.8 Habit list and motto
+
+**Motto:** *Claim only the level you have verified.*
+
+1. Commit before you compute.
+2. Pin what you ran, not what is current.
+3. Never commit, deposit, or paste restricted data.
+4. Make every gate able to fail, and watch it fail once.
+5. Compare against a recorded baseline, with a stated tolerance.
+6. Rebuild from clean, on a machine that is not yours.
+7. Write the honest level down.
+
+The list and motto live in one include file shared by the
+introduction and the closing chapter; each rule of thumb in a
+chapter cites its habit number.
+
+### 10.9 Running example and canonical analysis plan
+
+**Study.** A synthetic retrospective cohort of 400 adults
+(`simulate_cohort.R`, `n <- 400`) followed for incident type 2
+diabetes. **Revision required:** exclude, at generation, anyone whose
+baseline HbA1c meets the diagnostic threshold, so the cohort is
+genuinely at risk (Finding 17).
+
+**Canonical analysis.** Primary: Cox proportional-hazards model of
+time to incident diabetes (`followup_days`, `incident_dm`) on BMI
+per 5 kg/m^2, adjusted for age and sex; report the hazard ratio and
+95 percent CI. Secondary: a bootstrap CI for the same estimate, with
+its Monte Carlo standard error reported. The baseline for L3 is the
+hazard ratio, its CI, and the cleaned-data row count, stored in a
+committed baseline file and compared with tolerance `1e-8` relative
+for deterministic quantities and a stated Monte Carlo tolerance for
+the bootstrap.
+
+**Planted pathologies, mapped to chapters.**
+
+| Pathology | Taught in |
+|---|---|
+| Identifier columns (`mrn`, `patient_name`, `dob`) | version-control, 10 |
+| Mixed date formats | 07, 08 |
+| One duplicated record | 08 |
+| One implausible age (400) | 08 |
+| Inconsistent sex coding, applied only to true females | 08 |
+| A seeded bootstrap that differs under `sample.kind = 'Rounding'` | 02, 08 |
+| An undeclared package in an analysis script | 04, 09 |
+
+**Seed policy.** The generator's seed stays as committed. Fixing line
+83 to recode only true females changes only that step's draws,
+because it is the last random step; the change is to be reported
+and the new MD5 recorded, not re-drawn until convenient.
+
+### 10.10 Topic additions from the coverage sweep
+
+Breadth is the count of opened sources that include the topic, as a
+lower bound: S = 30 syllabi, T = 28 textbooks and references, E = 39
+emerging-topic sources.
+
+| Topic | Breadth | Settled | Placement | Size (words) | Priority |
+|---|---|---|---|---|---|
+| Restricted data: de-identification, controlled-access deposit, trusted research environments, Five Safes, synthetic data for sharing | T 3, E several (NHS SDE, EHDS, NIH) | Stable | New section set in 10; Restricted-data callout in VC, 07, 09 | 2,500 | 1 |
+| Funder and journal obligations: NIH DMS Policy, code-availability statements, TRIPOD+AI 18f | E several | Stable | Section in 10, with an exercise | 1,000 | 1 |
+| Regulated meaning of validation; double programming; package risk assessment | T 2, persona | Stable | 'Warning about the words' box in 02; one section in 08 | 900 | 1 |
+| README, data dictionary, project documentation | S 8, T 6 | Stable | Section in 03 | 900 | 1 |
+| Licensing, `CITATION.cff`, Software Heritage | S 9, T 6 | Stable | Section in 10 | 900 | 1 |
+| Git recovery and merge conflicts | S 6 | Stable | Section in version-control after `:614` | 1,200 | 2 |
+| Debugging a failed reproduction (`git bisect`, lockfile diff, session-info diff, `tar_outdated`) | S 9 | Stable | Section in 09 | 1,200 | 2 |
+| Apple Silicon, multi-architecture images, `--platform` | E several, persona | Stable | Section in 05; setup appendix | 800 | 2 |
+| Pre-specified analysis plan as the oracle for the primary analysis | persona | Stable | Section in 08 | 700 | 2 |
+| Monte Carlo standard error; parallel RNG streams | persona | Stable | Section in 08 | 700 | 2 |
+| Project-oriented paths (`here`, no `setwd`) | S 7, T 7 | Stable | Section in 03 | 400 | 2 |
+| Secrets in CI, token permissions, SHA-pinned actions | persona | Stable | Section in 09 | 600 | 2 |
+| AI-use disclosure and recording model IDs | E (ICMJE, NIH) | Stable rule, volatile tools | LLM sections of 01 and 07 (D5); no tool names | 500 | 2 |
+| Shell primer | S 7 | Stable | Appendix | 2,000 | 3 |
+| HPC: Slurm plus Apptainer worked example, `--cleanenv` | persona | Stable | Optional section in 06 | 1,000 | 3 |
+
+**Skipped,** with reasons recorded in the coverage reports: the EU
+AI Act, SBOM and SLSA supply-chain security, uv, webR and Quarto
+Live, TRIPOD-LLM, duckdb and parquet, full R package development
+(pointer to *R Packages* instead), Shiny, Python, SQL.
+
+**Length effect** [inferred estimate]. Priority 1 and 2 additions
+total about 12,500 words; the shell primer and HPC section add 3,000
+more. Cuts in 10.12 total about 11,000 words (intro duplication
+2,700, archetype consolidation 3,000, LLM consolidation net 600,
+honest-level recitals 800, ch02 numbering schemes 500, ch07 history
+400, ch05 and ch10 team model moved to an optional section 3,000).
+Net change for priorities 1 and 2: about +1,500 words, roughly
++2 percent. The PDF's 31 percent growth since September is a
+separate question (Decision D10).
+
+### 10.11 One-quarter core path
+
+Adapted from the academic persona's proposal [A-I], after the cuts
+in 10.12. Loads are body words; post-cut loads are estimates.
+
+| Week | Reading | Load | Graded lab on the cohort template |
+|---|---|---|---|
+| 1 | Preface; intro (trimmed); 01 | 6,800 | Setup check; RNG `sample.kind` demonstration |
+| 2 | 02 (cut `538-575`) | 5,000 | Place a published paper on the ladder |
+| 3 | Version control | 6,800 | Repository, `.gitignore`, synthetic identifiers |
+| 4 | 03 | 4,500 | Scripts to compendium; README and data dictionary |
+| 5 | 04 | 5,700 | Lockfile; restore on a second machine |
+| 6 | 05 | 5,500 | Digest-pinned image built in CI |
+| 7 | 07; Make excerpt from pipelines | 7,300 | Sealed render with inline numbers |
+| 8 | 08 | 6,100 | Repair the cohort; oracle and baseline tests |
+| 9 | 09 | 6,700 | CI that compares to the baseline, shown failing |
+| 10 | 10 | 4,500 | Deposit to the Zenodo sandbox; restricted-data plan |
+
+Optional: 06 (backends and runtimes), the remainder of pipelines
+(`targets`, Snakemake, Nextflow), and the shell-primer and HPC
+material. Average about 5,900 words per week, still above the
+persona's 5,000 target; weeks 1, 3, and 7 remain heavy.
+
+### 10.12 Per-chapter actions
+
+Line references are to the current sources; T-numbers refer to the
+register in the scratchpad and Findings above.
+
+- **index, preface.** Remove the duplicated plan list from the
+  preface; keep motive and the zzcollab rationale. Add a
+  prerequisites statement (statistics assumed: logistic and Cox
+  regression, the bootstrap; R package anatomy introduced in 03).
+  Confirm the author name form; the PDF metadata renders a backtick.
+- **00-intro.** Delete `:163-198` and replace with two sentences
+  pointing to @sec-crisis; delete or reduce `:200-498` (tool survey
+  and zzcollab internals, about 2,700 words) to a one-page map; fix
+  Trisovic, R 3.6.0, `stringsAsFactors`, Peng quotation, 'twelve-week
+  course', and 'an image built today and next year are the same
+  image' (`:302-304`).
+- **01.** Fix `:391-393`, `:412-416`; replace the honest-level box
+  with a one-line pointer; 'mislabelled' at `:627`.
+- **02.** One definition of L3 (`:380` versus `:591-593`); realign L3
+  with ACM terminology after the ACM page is checked; add the
+  regulated-terminology box; fix `:48-60` (fragility is statistical),
+  `:218-225` versus the Exercise 1 solution, the `.Rprofile` seed in
+  the worked example (`:684-689`), the decimal-mark claim
+  (`:292-293`), `@peng2009` (`:1029`); reconcile 'nine or ten'
+  determinants; use the cohort in the worked example.
+- **version-control.** Add recovery and merge conflicts; fix `:562`;
+  fix `:98` (forward reference); temper audit-trail language
+  (`:225-275`, `:272`, `:494`); complete the history-scrubbing
+  procedure (`git filter-repo`, forge cache, credential rotation);
+  add `.RData`, knitr cache, and `_freeze` guidance; correct the LLM
+  premise at `:978-979`.
+- **03.** Correct what R CMD check sees (`:203-229`, `:934-942`);
+  add README and data-dictionary and `here` sections; update to six
+  archetypes and `--bare`, replace `zzc analysis`; replace the
+  vacuous hazard-ratio test (`:725-727`); fix the Exercise 5 test path
+  (`:1028-1033`); consolidate all archetype material into one table
+  here.
+- **04.** Rewrite the lockfile section for the current format;
+  correct the auto-fix description after zzrenvcheck is fixed; resolve
+  `Suggests` and the recommended-package rule; remove the 'naive
+  scanner' straw man (`:522-531`); remove or source the dplyr 1.2
+  story (`:55-58`); update the renv citation.
+- **05.** Rewrite the showcase Dockerfile and its exercise solution
+  and test them by building (`--platform linux/amd64`); correct BLAS,
+  `OMP_NUM_THREADS`, locale table (use collation instead), Nüst
+  attribution, 'bit-for-bit' regulatory claim; add Apple Silicon;
+  move the team model to an optional section.
+- **06.** Mark optional. Fix Apptainer, rootless Docker, rix claims;
+  add an `sbatch` plus Apptainer example with `--cleanenv`.
+- **07.** Fix `pacman` (`:481-487`, `:1106-1109`), rocker/verse
+  (`:606-609`), Simpson alt text (`:330`); trim Sweave history
+  (`:235-287`) and archetypes (`:705-785`); quote Buckheit and Donoho
+  verbatim with a page number.
+- **pipelines.** Replace the report target with `tar_quarto()` or
+  `tar_render()`; fix `:537-538`, the Exercise 3 solution
+  (`:1115-1121`), skip-output text, the 'ratios are durable' claim;
+  teach `.DELETE_ON_ERROR`; produce the Make excerpt for the core
+  path.
+- **08.** Fix test paths (`:331`, `:421`, `:464`, `:488`); replace the
+  same-session reproducibility test with a baseline test across
+  sessions and RNG kinds; fix the seeding pattern with `withr`; fix
+  the Cox argument (`:342-350`); add Monte Carlo error, analysis plan
+  as oracle, and the regulated-validation section; fix the LLM prompt
+  at `:959`; replace testthat at `04:820`.
+- **09.** Make every gate fail: `error_on = "warning"`,
+  `error_on_fail = TRUE`, install zzrenvcheck, add the render gate,
+  build the Dockerfile in CI, remove `continue-on-error`; replace the
+  worked example's impossible failure; update actions versions and
+  introduce r-lib/actions; hash files, not serializations; compare
+  estimates with tolerance; add debugging a failed reproduction and
+  secrets; remove Make targets that do not exist; reconcile L3 with
+  02 and 08.
+- **10.** Add restricted data, funder obligations, licensing and
+  `CITATION.cff`, Software Heritage; replace the example DOI with a
+  non-resolving placeholder; replace `rang` material; fix
+  'nine chapters' (`:48`), 'byte-for-byte' (`:269`); tighten the FAIR
+  mapping against Wilkinson et al. (2016).
+- **glossary, conventions.** Regulated-sense note on Validation;
+  conventions lists only the three callout kinds actually used.
+- **Repository.** Rewrite `analysis/data/README.md` for the cohort;
+  delete the stray conflicted-copy log and
+  `07-literate-programming.html` from `analysis/report/`; fix the
+  `fig-gates` palette.
+
+### 10.13 Phases
+
+Each phase on its own branch, closed by a clean HTML and PDF render
+and the checks in Section 10.3, one commit per phase.
+
+| Phase | Content | Depends on | Estimate |
+|---|---|---|---|
+| 6 (E1) | Tier 1: T1-1 to T1-11 in the book; independent re-check of each fix; the showcase Dockerfile built | zzcollab and zzrenvcheck fixes (10.17) for T1-1, T1-4 | 6 to 9 days |
+| 7 (E1b) | This repository to L3: CI executes code (freeze checked, not trusted), runs tinytest so that a failure fails the build, renders PDF; `renv.lock` | none | 2 to 3 days |
+| 8 (E2) | Tier 2 and 3 corrections; generator fix and baseline file with tests | 6 | 5 to 7 days |
+| 9 (F) | Template: conventions page, habit include, shared stack-diagram function, instructor guide; two prototype chapters (02 and 08). **Checkpoint.** | 8 | 4 to 6 days |
+| 10 (G) | Running study threaded through every chapter; course template repository with planted defects and CI autograder | 8, 9 | 5 to 8 days |
+| 11 (H/K) | Conversion in batches of four chapters, with approved additions from 10.10. **Checkpoint after the first batch with a length report.** | 9, 10 | 15 to 25 days |
+| 12 (I) | Restructure: intro cut, archetype consolidation, optional marking, core path in preface and instructor guide. **Checkpoint before any renumbering.** | 11 | 4 to 6 days |
+| 13 (J) | Apparatus: cheat-sheet index, setup appendix (Apple Silicon, Windows, WSL2), colophon generated at render time, glossary first-use links, accessibility check | 12 | 4 to 6 days |
+| 14 | Verification pass of every [EK] and [U] claim against primary sources, each marked verified, corrected, hedged, or removed with URL and date | 13 | 3 to 5 days |
+
+Total: about 48 to 75 working days, of which Phases 6 to 8 (13 to
+19 days) carry nearly all the risk reduction. If only one phase is
+done, do Phase 6. Per Decision D12, Phase 7 runs after Phase 13,
+not second; the table keeps its number for reference.
+
+### 10.14 What not to do (additions)
+
+- **Do not rewrite the chapters to describe zzcollab as it is.** The
+  tool's L3 stamp and CI gate defaults are defects; fix them first
+  (10.17), or teach the hand-written equivalent.
+- **Do not add the infrastructure topics the syllabi show few peers
+  teach** (SBOMs, SLSA, more Nix). Depth there is already beyond the
+  comparison set.
+- **Do not add a chapter per gap.** Every addition in 10.10 except
+  restricted data fits as a section; the shell primer is an appendix.
+- **Do not let a planted pathology destroy the truth it hides.**
+- **Do not re-pick the generator seed after seeing the draws.**
+- **Do not publish solutions for exercises used for grades**
+  (Decision D6).
+- **Do not name AI tools or models in the LLM sections.** The rules
+  are stable; the products are not.
+
+### 10.15 Decisions
+
+Each decision lists options and a recommendation. Answers are
+recorded here once given.
+
+- **D1. zzcollab and zzrenvcheck defects.** (a) Fix the tools first
+  and describe the fixed behavior; (b) describe the current behavior
+  with warnings; (c) teach hand-written equivalents and drop the tool
+  from the gating chapters. *Recommendation: (a), with (c) as the
+  fallback for any fix not released before Phase 6.*
+- **D2. Role of zzcollab.** (a) Concepts first, with a 'with
+  zzcollab' track in boxed sections so that the course is teachable
+  with renv, a Dockerfile, GitHub Actions, and tinytest alone; (b)
+  keep zzcollab as the vehicle throughout. *Recommendation: (a).*
+- **D3. Core path.** (a) Adopt the 10-week path in 10.11, with 06 and
+  most of pipelines optional; (b) keep every chapter core.
+  *Recommendation: (a).*
+- **D4. Restricted data.** (a) A section set in 10 plus
+  Restricted-data callouts in version-control, 07, and 09; (b) a new
+  short chapter. *Recommendation: (a).*
+- **D5. LLM sections.** (a) Consolidate into one appendix (about
+  2,500 words: governance, agents, prompt writing, disclosure,
+  nondeterminism) and keep a two-triple box per chapter; (b) keep as
+  is and patch. *Recommendation: (a).*
+- **D6. Published solutions (reopens Phase 1).** (a) Keep solutions
+  for checks and for practice exercises; move solutions for graded,
+  cohort-based exercises to the instructor guide; (b) keep all
+  solutions in the book. *Recommendation: (a). Phase 1 was right for
+  self-study; a course needs gradeable work.*
+- **D7. The committed synthetic extract.** (a) Commit only the
+  generator; gitignore the CSV and generate it in CI and tests, so
+  the repository practices what the version-control chapter teaches;
+  (b) keep it committed and mark it as synthetic in the data README
+  and file header. *Recommendation: (a).*
+- **D8. Topic additions.** Approve the Priority 1 and 2 rows of
+  10.10, and decide on the Priority 3 rows. *Recommendation: approve
+  Priority 1 and 2; shell primer yes; HPC optional section yes.*
+- **D9. Regulated terminology.** (a) A 'warning about the words' box
+  in 02 plus one section in 08; (b) rename the ladder's L3 and the
+  'validation' axis. *Recommendation: (a).*
+- **D10. Length.** (a) Hold net prose within about 5 percent of
+  today and investigate the 31 percent page growth before Phase 11;
+  (b) accept growth. *Recommendation: (a).*
+- **D11. L3 and ACM.** (a) After checking the ACM page, map L3 to
+  'repeatability' and reserve 'reproduced' for independent
+  verification (the existing 'Independent external verification'
+  section, `09:796`); (b) keep the current mapping. *Recommendation:
+  (a), conditional on the check.*
+- **D12. Repository L3 first.** (a) Do Phase 7 before or alongside
+  Phase 6, so the book reaches the level it teaches; (b) defer.
+  *Recommendation: (a).*
+
+**Answers recorded 2026-10-11.**
+
+| Decision | Answer | Matches recommendation |
+|---|---|---|
+| D1 | Fix the tools first; hand-written equivalents as fallback | Yes |
+| D2 | Concepts first, 'With zzcollab' boxed track | Yes |
+| D3 | Adopt the core path in 10.11 | Yes |
+| D4 | Section set in 10 plus Restricted-data callouts | Yes |
+| D5 | Keep the LLM sections in place and patch them | No |
+| D6 | Keep all solutions in the book (Phase 1 stands) | No |
+| D7 | Keep the extract committed; label it synthetic | No |
+| D8 | Approve Priority 1, Priority 2, shell primer, HPC section | Yes |
+| D9 | Warning box in 02 plus one section in 08 | Yes |
+| D10 | Accept growth | No |
+| D11 | Realign L3 with ACM after checking the page | Yes |
+| D12 | Defer repository L3 until after the content work | No |
+
+**Consequences for the plan.**
+
+- *D5.* Template item 8 becomes: the existing section, patched with
+  a one-line restricted-data rule, corrected premises for coding
+  agents, and removal of the five duplicated 'full reproducibility'
+  triples. AI-use disclosure and LLM nondeterminism go into the 01
+  and 07 sections rather than an appendix. The LLM length saving in
+  10.10 (600 words) no longer applies.
+- *D6.* Graded work comes from the course template repository and
+  its CI autograder (Phase 10), with instructor-written graded tasks
+  whose answers are not in the book. Phase 1's rationale is
+  unchanged.
+- *D7.* Rewrite `analysis/data/README.md` for the cohort, add a
+  synthetic-data notice to the CSV's documentation, and add a
+  paragraph to the version-control chapter explaining why this
+  repository commits a synthetic extract while real projects must
+  not. Habit 3 is unaffected.
+- *D10.* The net-length estimate in 10.10 becomes about +6,000 to
+  +7,000 words after cuts (all D8 additions, no LLM saving), roughly
+  +7 to 8 percent of prose. Length is still reported at each
+  checkpoint so that the per-week load in 10.11 can be re-measured;
+  the 31 percent page growth since September is to be explained in
+  the Phase 11 length report, not capped.
+- *D12.* Phase 7 moves after Phase 13. **Risk accepted by the
+  author:** during Phases 6 to 13 no CI re-executes the book's code
+  or runs its tests, so regressions introduced by conversion will
+  surface only when Phase 7 runs. Mitigation within the existing
+  rules: each phase's clean render must be done with the freeze
+  cache cleared for the chapters it touches, and tinytest run
+  locally with `run_test_dir()` from the repository root, where the
+  tests do not exit early.
+
+### 10.15a Implementation record
+
+**Phase 6 (E1, Tier 1), 2026-10-11.** Book branch `phase-6-tier1`
+(commit message 'Phase 6: Tier 1 correctness fixes'); zzrenvcheck
+branch `fix/gate-defaults` at `19f6c2a`; zzcollab branch
+`fix/l3-verification` at `80293ae`. All local; nothing pushed.
+Merge order when merging: zzrenvcheck before zzcollab, because
+zzcollab's `ensure-zzrenvcheck` now requires 0.9.0.
+
+| Item | Result | Evidence |
+|---|---|---|
+| T1-1 L3 stamp | zzcollab test targets exit nonzero on failure; `verify --full` requires a `test-baseline*.R`; one L3 definition across 00, 02, 08, 09 and the glossary | V (lead ran the new runner on a failing test: exit 1); A-V stubbed verify runs; I grep |
+| T1-2 CI gates | 03 and 09 state what R CMD check sees; both workflows use `error-on: warning`, install zzrenvcheck with `error_on_fail = TRUE`, add a render gate and an image-build verify job; each gate shown failing | A-V locally per gate; YAML parsed (structural only); CI jobs not run |
+| T1-3 Dockerfile | Rewritten; built with `--platform linux/amd64`, exit 0, `jsonlite` 2.0.0 and `renv` 1.2.3 installed from the jammy snapshot; wrong renv version fails the build | A-V; I: chapter block byte-identical to the built file |
+| T1-4 lockfile | 04 shows a real renv 1.2.3 record; auto-fix records the installed version (zzrenvcheck 0.9.0) | V lead snapshot; V zzrenvcheck suite 188/0 |
+| T1-5 deposit | New subsection `sec-restricted-deposit` in 10; worked example and exercises say what is deposited; placeholder DOI | A-V image-contents check; I |
+| T1-6 LLM data rule | Restricted-data passage in every LLM section; data-carrying prompts rewritten; coding-agent premises corrected | A-I; not separately re-read by the lead |
+| T1-7 generator | Line 83 recodes only true females; MD5 `63665139...` to `4c8ca6ed60bc25ff679ac87717fd7308`; 4 new assertions | V lead regeneration matched; V tests 185/0 |
+| T1-8 baseline test | Cross-session baseline test in 08 with an executed chunk showing detection of the RNG-default change | A-V; V executed in the clean render |
+| T1-9 report target | `tar_render()`; `trust_timestamps` described correctly | A-V in rocker/verse:4.5.2 |
+| T1-11 audit trail | Language tempered with 21 CFR 11.10(e); five-step PHI response; `.gitignore` fixed; D7 paragraph | A-V scratch repositories |
+| T1-10 repository CI | Deferred by D12 | not done |
+
+Render: freeze cleared for all 13 chapters, so every chunk
+re-executed; HTML and PDF exit 0, no warnings, no unresolved
+references or missing citations [V]. PDF 436 pages (398 before
+Phase 6). Shared files changed by the lead: glossary (six
+entries), references.bib (seven entries, URLs checked, HTTP 200),
+`_quarto.yml` (fvextra line breaking in PDF code blocks, because
+long digests were truncated at the margin).
+
+Not done in Phase 6, carried to Phase 8: the renv citation
+(`ushey2020` is 0.12.0); ch09 Exercise 3 and `tbl-integrity` still
+hash coefficients and serializations; ch09 Exercise 4's Make
+targets; the vacuous hazard-ratio test (03:725); decimal-mark table
+(05); illustrative truncated digests in ch05's figure; `rang`
+material and 'nine chapters' in 10; pipelines Exercise 3 solution;
+'Initialise' in `tbl-audit-trail`. Known tool gap: a tinytest file
+that exits early with zero assertions still counts as passing in
+`run_test_dir()`; the book's `ci/run-tests.R` treats it as a
+failure, the zzcollab Makefile does not.
+
+### 10.16 Limitations
+
+- **The expert reviewers are simulated personas,** not people. Their
+  judgments of adoption, course load, and what a profession expects
+  are informed opinions, not evidence. Human second readers are
+  needed for the regulatory, restricted-data, and statistical
+  chapters before any catalog listing.
+- **No Docker image was built and no CI service was run.** Findings
+  14 and 13 rest on source reading, documentation, local analogs,
+  and toy packages. Phase 6 must build the Dockerfile.
+- **Several primary sources could not be opened:** the ACM badging
+  page, some Nature, Springer, SAGE, COPE, and HHS pages,
+  softwareheritage.org (certificate error), and Posit release notes.
+  Claims depending on them are labeled [U] or [EK] and are scheduled
+  for Phase 14.
+- **Coverage breadth counts are lower bounds.** Of 30 syllabi, the
+  agent re-opened 7; 23 were opened by helper agents and not
+  re-checked. Asia is effectively unrepresented (no open graduate
+  syllabus found). The syllabi agent launched three helper agents of
+  its own, exceeding the intended concurrency; its results are
+  retained with that caveat.
+- **The lead reviewer did not read every chapter in full.** The
+  readings were done by agents; the lead verified the Tier 1 items
+  and a sample of Tier 2 items as labeled.
+- **The renders reused the freeze cache** and do not show that the
+  executed code runs on today's library.
+- **Length estimates after cuts and additions are inferred,** not
+  measured.
+
+### 10.17 Defects outside the book
+
+These are in the author's other repositories. They are listed here
+because the book's correctness depends on them; they are not edited
+by this plan.
+
+| Repository | Location | Defect | Evidence |
+|---|---|---|---|
+| zzcollab | `modules/verify.sh:238-266` | L3 stamped without baseline comparison | I |
+| zzcollab | `templates/Makefile:341` | `docker-test` exits 0 on test failure | V (runner), I |
+| zzcollab | `docker.sh:900-904` | `get_ubuntu_codename` maps R 4.4 to noble | A-I |
+| zzcollab | generated Dockerfile | `OMP_NUM_THREADS` never set, though the book says it is | A-I |
+| zzcollab | CI template | tests run with `continue-on-error` | A-I |
+| zzcollab | RStudio target | listens on all interfaces with a fixed printed login | A-I |
+| zzrenvcheck | `R/compare.R:70` | `error_on_fail = FALSE` default makes the CI gate unable to fail | I |
+| zzrenvcheck | `R/autofix.R:162-170` | auto-fix writes CRAN-current versions into `renv.lock` | I |
+| zzrenvcheck | archetype handling | no archetype exemption, contrary to `04:386-395` | A-V |
+
+Supporting reports (scratchpad, not committed): four chapter
+readings, three persona reviews, learning science and model-book
+comparison, LLM sections, three coverage sweeps, the structural
+scan, and the working register.
+
+## 11. Appendix: reproducing the measurements
 
 From the repository root. Chapter list, taken from the `chapters:`
 block of `analysis/report/_quarto.yml`, excluding front matter and
@@ -1373,5 +2323,5 @@ grep -ohE 'year *= *\{?[0-9]{4}' analysis/report/references.bib \
 ```
 
 ---
-*Rendered on 2026-09-08 at 18:32 PDT.*<br>
+*Rendered on 2026-10-11 at 10:28 PDT.*<br>
 *Source: ~/prj/tch/12-reproducibility/REFACTOR-PLAN.md*

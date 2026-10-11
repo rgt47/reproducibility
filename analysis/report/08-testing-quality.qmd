@@ -99,7 +99,7 @@ reached not by capturing more but by *confirming*
 that a recorded computational output regenerates.
 That confirmation is itself a test, of a
 particular kind we shall meet below as the
-reproducibility test. Testing is therefore not
+baseline test. Testing is therefore not
 merely adjacent to the levels; the topmost level
 is defined by a test. We begin with the human
 judgments that no testing tool can make, then
@@ -166,9 +166,11 @@ human core of everything that follows.
   a plausible range, that no impossible ages appear,
   that the expected columns are present.
 - **Reproducibility test.** A check that a recorded
-  computational result regenerates, either across
-  repeated runs with a fixed seed or against a
-  stored baseline.
+  computational result regenerates. The form that can
+  fail is the *baseline test*, which compares a fresh
+  result with a value recorded in an earlier session
+  and committed, within a stated tolerance; two runs
+  in one session do not qualify.
 - **Oracle.** The source of independent truth a
   test compares against; the known correct answer.
 - **`tinytest`.** A lightweight, zero-dependency R
@@ -278,7 +280,11 @@ common cases, `expect_equal()`, `expect_true()`,
 others, and a compendium's tests are collected in
 `inst/tinytest/` and driven by a small
 `tests/tinytest.R` runner that `R CMD check`
-invokes. We follow the convention throughout: bare
+invokes. `tinytest` runs each file with the test
+directory as its working directory, so a test that
+reads a project file from the root reaches it through
+`../../`, as the listings below do. We follow the
+convention throughout: bare
 top-level expectations, one concern per file, named
 `test-<thing>.R`.
 
@@ -328,7 +334,7 @@ checks the result:
 
 ```r
 # inst/tinytest/test-cohort.R
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 cohort <- clean_cohort(raw)
 fit <- fit_model(cohort)
 summary_tbl <- summarise_fit(fit)
@@ -418,7 +424,7 @@ not to the data in front of you.
 
 ```r
 # inst/tinytest/test-cohort.R
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 cohort <- clean_cohort(raw)
 
 # the expected columns are present
@@ -450,63 +456,189 @@ suite.
 ### Reproducibility tests
 
 The fourth kind closes the loop back to the ladder.
-A reproducibility test checks that a result
-regenerates, and it comes in two forms. The first
-fixes a seed and confirms that a stochastic
-procedure returns the same draw twice, which guards
-against the accidental omission of `set.seed` and
-against the silent RNG-default changes discussed in
-@sec-intro:
+A reproducibility test checks that a recorded result
+regenerates. Its most tempting form runs a seeded
+procedure twice in one session and asserts that the
+two results agree:
 
 ```r
-# inst/tinytest/test-cohort.R
+# a same-session check: it cannot detect what it
+# appears to guard against
+expect_equal(bootstrap_ci(cohort, n = 2000, seed = 2024),
+             bootstrap_ci(cohort, n = 2000, seed = 2024))
+```
+
+Note first where the seed lives. `bootstrap_ci()` takes
+it as an argument and sets it internally, with
+`withr::with_seed()`, which also restores the caller's
+generator state on exit, so the function is
+deterministic given its arguments and does not disturb
+any random stream around it. A procedure that depends
+on the caller setting a seed first is one `set.seed`
+away from irreproducible, and moving the seed into the
+signature makes forgetting it impossible.
+
+The check itself, however, cannot fail for the reason
+it seems to serve. Both calls run in the same R, under
+the same random-number defaults, with the same package
+versions. When an upgrade changes how `sample()` draws,
+as R 3.6.0 did, both calls change together and still
+agree. What the check does catch is narrower: a
+procedure that ignores its seed. That is worth one line
+in a unit test, but it is not a reproducibility test.
+
+A reproducibility test that can fail compares today's
+result with one recorded in an earlier session and
+committed to the repository. We call it a *baseline
+test*, and it has three parts: a script, run once, that
+records the baseline; the committed baseline file; and
+a test file that recomputes the quantities and compares
+them with a stated tolerance.
+
+```r
+# analysis/scripts/record_baseline.R
+# Run once from the project root, inspect the values,
+# then commit the file it writes.
 cohort <- clean_cohort(
   load_cohort('analysis/data/raw_data/cohort_raw.csv')
 )
-
-expect_equal(bootstrap_ci(cohort, n = 50),
-             bootstrap_ci(cohort, n = 50))
+baseline <- list(
+  n_clean = nrow(cohort),
+  boot_upper = bootstrap_ci(cohort, n = 2000,
+                            seed = 2024)[['upper']],
+  r_version = as.character(getRversion()),
+  rng_kind = RNGkind()
+)
+saveRDS(baseline, 'inst/tinytest/baseline-estimates.rds')
 ```
-
-Note where the seed lives. `bootstrap_ci()` takes it as
-an argument and sets it internally, so the test does not
-set one, and two calls agree because the function is
-deterministic given its arguments rather than because
-the caller remembered. A procedure that depends on the
-caller setting a seed first is one `set.seed` away from
-irreproducible, and moving the seed into the signature
-makes forgetting it impossible.
-
-The second form is stronger and is the single-result
-analogue of the L3 check: it compares a freshly
-computed result against a baseline recorded at an
-earlier and trusted moment, typically stored as a
-small file alongside the tests.
 
 ```r
-# inst/tinytest/test-baseline.R
-baseline <- readRDS('inst/tinytest/baseline-estimate.rds')
-current <- run_primary_analysis()
-expect_equal(current$estimate, baseline,
-             tolerance = 1e-6)
+# inst/tinytest/test-baseline-estimates.R
+data_file <- '../../analysis/data/raw_data/cohort_raw.csv'
+if (!file.exists(data_file)) {
+  exit_file('analysis data absent, as under R CMD check')
+}
+baseline <- readRDS('baseline-estimates.rds')
+cohort <- clean_cohort(load_cohort(data_file))
+
+expect_equal(nrow(cohort), baseline$n_clean,
+             info = 'cleaned row count matches the baseline')
+expect_equal(
+  bootstrap_ci(cohort, n = 2000, seed = 2024)[['upper']],
+  baseline$boot_upper, tolerance = 1e-8,
+  info = 'seeded bootstrap bound matches the baseline'
+)
 ```
 
-The tolerance is not decoration. An exact comparison
-would fail whenever a different BLAS or a different
-thread count reorders the floating-point summations
-inside the fit, as @sec-containers describes, and a
+Three details carry the weight. The paths are relative
+to `inst/tinytest/`, where `tinytest` runs the file. The
+guard lets the file exit quietly under `R CMD check`,
+which installs the package without `analysis/`; the
+price is that `R CMD check` never runs this test, so the
+step that does run it, from the project root, must also
+confirm that it ran (@sec-verification). And the
+tolerance is stated and chosen, not left at a default.
+Given the seed, the sampler, the code, and the data, the
+bound is deterministic, so the tolerance is numerical,
+not statistical: `1e-8` relative is wide enough to absorb
+a floating-point summation reordered by a different BLAS
+or thread count (@sec-containers) and far too narrow for
+a change in the resampled draws to pass. A comparison
+with no tolerance would fail on that reordering, and a
 check that fails for reasons unrelated to the analysis
 trains its reader to ignore it.
 
-A suite that includes this last test is doing, at
-the scale of a single result, what `zzc verify --full`
-does at the scale of the whole compendium in
-@sec-verification: regenerating a recorded output
-and confirming that it matches. L3 proper is that
-full-compendium check, which rebuilds the environment
-and re-runs the whole analysis; the baseline test is
-its single-result counterpart, not a substitute that
-places a project at the verified rung on its own.
+The test can be watched failing for the reason it
+exists. The chunk below plays both sessions on the
+synthetic cohort. It records the 97.5 percent bootstrap
+bound for mean BMI under the sampler R used before
+version 3.6.0 (`sample.kind = 'Rounding'`), as an
+analysis recorded on an older R would have; reruns it
+with the same seed and sampler; and reruns it with the
+same seed under the current default (`'Rejection'`). The
+comparison is the one `expect_equal()` makes, `all.equal()`
+at the stated tolerance. `withr::with_seed()` sets the
+sampler only for the duration of each call, and the final
+`stopifnot()` confirms the session's generator is as it
+was.
+
+```{r}
+#| label: tbl-baseline-rng
+#| tbl-cap: 'A baseline test across sessions. The bound recorded under the pre-3.6.0 sampler is reproduced exactly by a rerun with the same seed and sampler, and is not reproduced by a rerun with the same seed under the current default sampler, so the comparison at tolerance 1e-8 passes once and fails once. A same-session check would have passed in both cases.'
+
+library(knitr)
+
+cohort <- read.csv('../data/raw_data/cohort_raw.csv')
+bmi <- cohort$bmi[!is.na(cohort$bmi)]
+
+boot_upper <- function(x, seed, sample_kind, reps = 2000) {
+  withr::with_seed(
+    seed,
+    {
+      means <- replicate(reps, mean(sample(x, replace = TRUE)))
+      unname(quantile(means, 0.975))
+    },
+    .rng_sample_kind = sample_kind
+  )
+}
+
+kind_before <- RNGkind()[3]
+
+# R warns whenever the pre-3.6.0 sampler is selected;
+# the warning is expected here and muffled.
+baseline <- suppressWarnings(boot_upper(bmi, 2024, 'Rounding'))
+rerun_same <- suppressWarnings(boot_upper(bmi, 2024, 'Rounding'))
+rerun_new <- boot_upper(bmi, 2024, 'Rejection')
+
+tol <- 1e-8
+passes <- function(current) {
+  isTRUE(all.equal(current, baseline, tolerance = tol))
+}
+
+checks <- data.frame(
+  run = c('recorded baseline (Rounding)',
+          'rerun, same seed and sampler (Rounding)',
+          'rerun, same seed, current default (Rejection)'),
+  upper_bound = c(baseline, rerun_same, rerun_new),
+  passes = c('(baseline)',
+             ifelse(passes(rerun_same), 'yes', 'no'),
+             ifelse(passes(rerun_new), 'yes', 'no'))
+)
+
+stopifnot(identical(RNGkind()[3], kind_before))
+
+kable(checks, digits = 4,
+      col.names = c('Run', '97.5% bootstrap bound',
+                    'Passes at tolerance 1e-8'))
+```
+
+The rerun under the current sampler moves the bound by
+`r format(signif(abs(rerun_new - baseline), 2))` units of
+BMI, from `r sprintf('%.4f', baseline)` to
+`r sprintf('%.4f', rerun_new)`. That is a small number,
+and it is not a numerical artifact: the resamples
+themselves are different. The baseline test reports it;
+two calls in one session, both under whichever sampler
+the session uses, would have agreed with each other and
+reported nothing.
+
+A baseline test is what L3 requires. The top rung, as
+@sec-levels defines it, asks that recorded outputs be
+shown to regenerate within a stated tolerance from a
+clean rebuild. The baseline test supplies the recorded
+outputs and the tolerance; running it inside an
+environment rebuilt from its recipe supplies the clean
+rebuild, and @sec-verification assembles the two in
+continuous integration. A suite with no baseline test
+can show that the code runs and that its functions are
+correct on known inputs, but it cannot show that a
+recorded result regenerates, so it does not reach L3
+however thorough it is. In the zzcollab composition,
+`zzc verify --full` applies exactly this rule: it stamps
+L3 only when the image rebuilds, the test suite passes,
+and at least one `inst/tinytest/test-baseline*.R` file
+exists and ran; otherwise it reports the project as
+rebuilt and tested, at L2, with no baseline comparison.
 
 The four kinds are not four ways of doing one thing.
 Each catches defects the others do not see, and
@@ -586,9 +718,10 @@ which would see the changed row count, or a
 data-validation test asserting the expected sample
 size. (b) A data-validation test on the age range.
 (c) A unit test against a hand-computed standard
-deviation. (d) A reproducibility test comparing the
-seeded result against a recorded baseline, which is
-the single-result form of the L3 check. Note that
+deviation. (d) A baseline test comparing the seeded
+result with a value recorded before the upgrade and
+committed, which is the comparison L3 requires; a
+same-session test would miss it. Note that
 the unit and
 data-validation tests catch defects that
 reproduction alone would happily propagate: this is
@@ -793,9 +926,10 @@ regenerate. Here the data-validation tests and the
 reproducibility tests carry the weight. A simulation
 archetype in particular leans on the reproducibility
 test, because its entire output is a function of a
-seed, and a test that fixes the seed and checks the
-draw is the guarantee that the reported numbers can
-be recovered. The point developed at length in
+seed, and a baseline test that fixes the seed and
+compares the result with the committed baseline is the
+guarantee that the reported numbers can be recovered.
+The point developed at length in
 @sec-verification, that seeding is the load-bearing
 determinant of a simulation, has its testing
 counterpart exactly here.
@@ -934,6 +1068,18 @@ the same as tests that are correct. The analyst's
 verification duty is heaviest exactly where the
 model is most fluent.
 
+Tests sit close to the data, so one rule comes first.
+Never paste or upload protected health information,
+identifiable records, or data covered by a data-use
+agreement, nor outputs derived from them, such as a
+failing test's printout of offending rows, into a model
+unless your institution has approved that endpoint for
+that data. Describe the structure instead: the data
+dictionary, column names and types, and a synthetic
+example such as the book's simulated cohort. A coding
+agent reads the files in its project, so run one only
+where it is permitted to see the data.
+
 **Prompt.** 'Here is my `calculate_mean` function.
 Write `tinytest` unit tests for it, including edge
 cases.'
@@ -956,16 +1102,21 @@ Confirm that the edge cases you care about, the
 empty input, the single value, the missing value,
 each have a test.
 
-**Prompt.** 'Write data-validation tests for this
-cohort data frame.'
+**Prompt.** 'Here is the data dictionary, not the
+data, for my cohort: `age_at_enroll` (integer, years),
+`sex` (character, coded `F` or `M` after cleaning),
+`bmi` (numeric, kg/m^2), `incident_dm` (integer, 0 or
+1). Write `tinytest` data-validation tests for a data
+frame with these columns.'
 
 *Watch for.* The model will propose generic checks,
 non-missing identifiers, numeric outcomes, that are
-reasonable but do not encode *your* domain. It does
-not know that your outcome is a probability bounded
-in the unit interval, or that your ages were
-recorded in years, or which treatment labels are
-admissible.
+reasonable but do not encode *your* domain. The
+dictionary gives types and codes; it does not give
+the protocol's eligibility ages, the plausible range
+of BMI in your population, or how much outcome
+missingness the analysis can tolerate, so the model
+will invent those bounds.
 
 *Verification.* Supply the domain constraints
 yourself, or check that the generated ranges match
@@ -1122,7 +1273,7 @@ The four constraints, in the form the chapter uses:
 
 ```r
 # inst/tinytest/test-data-cohort.R
-cohort <- readRDS('analysis/data/derived_data/cohort.rds')
+cohort <- readRDS('../../analysis/data/derived_data/cohort.rds')
 
 expect_true(
   all(c('id', 'age', 'sex', 'outcome') %in% names(cohort)),
@@ -1185,13 +1336,16 @@ class of error the tests were catching, a wrong function
 and an out-of-range dataset, returns to being invisible.
 
 The one qualification worth making, because it is a real
-subtlety rather than a hedge: removing tests does bear on
-L3 indirectly. L3 requires evidence that recorded outputs
-regenerate, and a test suite is one of the mechanisms that
-produces such evidence. A project relying on its tests as
-its L3 evidence would fall to L2 on their removal. It is
-the *verification role* that matters there, not the
-testing role, and a reader who makes this distinction has
+subtlety rather than a hedge, concerns L3. L3 requires that
+recorded outputs be shown to regenerate within a stated
+tolerance from a clean rebuild, and the evidence for that
+is a baseline test. The unit and data-validation tests of
+exercises 1 and 3 are not baseline tests, so removing them
+leaves L3 where it was; removing the baseline test would
+drop a project from L3 to L2, because the one piece of
+evidence the rung requires would be gone. It is the
+*verification role* that matters there, not the testing
+role, and a reader who makes this distinction has
 understood the chapter's central division.
 :::
 
@@ -1199,23 +1353,32 @@ understood the chapter's central division.
 ## Exercise 5
 
 ```r
-# once, to record the baseline
-set.seed(42)
-result <- fit_model(cohort)
-saveRDS(coef(result), 'inst/tinytest/baseline-coefs.rds')
+# once, from the project root, to record the baseline
+cohort <- clean_cohort(
+  load_cohort('analysis/data/raw_data/cohort_raw.csv')
+)
+saveRDS(coef(fit_model(cohort)),
+        'inst/tinytest/baseline-coefs.rds')
 ```
 
 ```r
-# inst/tinytest/test-reproducibility.R
+# inst/tinytest/test-baseline-coefs.R
+data_file <- '../../analysis/data/raw_data/cohort_raw.csv'
+if (!file.exists(data_file)) exit_file('no analysis data')
 baseline <- readRDS('baseline-coefs.rds')
-set.seed(42)
+cohort <- clean_cohort(load_cohort(data_file))
 current <- coef(fit_model(cohort))
 expect_equal(current, baseline, tolerance = 1e-8,
              info = 'model coefficients match the baseline')
 ```
 
-Changing one line of the analysis makes the test fail,
-reporting the coefficients that moved.
+The model fit draws no random numbers, so no seed is
+needed; a stochastic quantity would take its seed as an
+argument, as `bootstrap_ci()` does in the chapter. The
+file name begins `test-baseline`, the convention by which
+a verification step finds baseline tests. Changing one
+line of the analysis makes the test fail, reporting the
+coefficients that moved.
 
 **On the tolerance**, which is the part of this exercise
 that repays thought. An exact comparison is the strongest
@@ -1230,8 +1393,8 @@ and there is no universally correct value; it should be
 chosen against the precision at which results are
 reported.
 
-**What this test is and is not.** It is the single-result
-form of the L3 check, and it is a *change detector*: it
+**What this test is and is not.** It is the kind of
+baseline test L3 requires, and it is a *change detector*: it
 asserts that today's answer matches the recorded one, not
 that either is correct. It is worth being clear about
 this, because the baseline was produced by the same code

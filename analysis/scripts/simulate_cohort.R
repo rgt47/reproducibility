@@ -80,7 +80,12 @@ cohort <- rbind(cohort, cohort[7, ])
 cohort$age_at_enroll[13] <- 400L
 
 # 5. Inconsistent coding of one categorical, from a merged export.
-cohort$sex[sample(nrow(cohort), 18)] <- 'Female'
+#    Only rows that are truly 'F' are recoded, so that cleaning can
+#    recover the true value; recoding any row would turn some males
+#    into 'Female' and destroy the ground truth the tests rely on.
+#    Indexing into f_rows avoids sample()'s scalar trap.
+f_rows <- which(cohort$sex == 'F')
+cohort$sex[f_rows[sample(length(f_rows), 18)]] <- 'Female'
 
 out_dir <- file.path('analysis', 'data', 'raw_data')
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)

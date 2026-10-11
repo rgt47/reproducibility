@@ -471,11 +471,17 @@ builds and runs inside the image, and otherwise runs on the
 host. On every push the workflow runs `R CMD check`,
 renders the report, and runs the dependency-consistency
 gate, so that a claim of reproducibility is re-tested
-continuously rather than asserted once. A separate command
-rebuilds the whole compendium and re-runs the analysis,
-comparing the regenerated computational outputs against a
-recorded baseline; passing this is what the ladder calls
-verification, the L2-to-L3 transition.
+continuously rather than asserted once. A separate command,
+`zzc verify --full`, rebuilds the image from clean, runs the
+test suite, and requires at least one baseline test: a test
+that compares the regenerated outputs with values recorded
+in a committed baseline file, within a stated tolerance. It
+records L3 only when all three succeed; a project with no
+baseline test is reported as rebuilt and tested, which is
+L2, and not as L3. That is what the ladder calls
+verification: recorded outputs shown to regenerate within a
+stated tolerance from a clean rebuild, checked by a
+baseline test (@sec-levels).
 
 The alternatives of the previous section are not bolted on
 but built in: the package backend may be Nix instead of

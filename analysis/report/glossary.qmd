@@ -40,6 +40,12 @@ declares the environment directly. (@sec-backends)
 the `FROM` line. Here, a Rocker image providing a fixed R
 version on a fixed operating system. (@sec-containers)
 
+**Baseline test.** A test, in a file named `test-baseline-*.R`,
+that recomputes key outputs and compares them with values
+recorded in an earlier session and committed, using
+`expect_equal()` with a stated tolerance. It is the evidence L3
+requires. (@sec-testing, @sec-verification)
+
 **Binder.** A service that builds an environment from a public
 repository and serves it in a browser, so a reviewer can run an
 analysis with nothing installed locally. (@sec-backends)
@@ -96,10 +102,6 @@ filesystem. (@sec-containers)
 recipe, that carries the operating system, the system libraries,
 and the language runtime, and runs identically wherever a
 container runtime runs. (@sec-levels)
-
-**Content hash.** A short fingerprint computed from a package's
-contents, so that two installations claiming the same version
-can be confirmed byte-identical. (@sec-dependencies)
 
 **Continuous integration (CI).** A hosted service that, on every
 committed change to a repository, checks out the code onto a
@@ -335,8 +337,10 @@ the program and its explanation. The term is Knuth's.
 (@sec-literate)
 
 **Lockfile.** A machine-generated file, `renv.lock`, recording
-the exact version, source repository, and content hash of every
-package in a project's library. (@sec-levels, @sec-dependencies)
+the R version, the package repositories, and the exact version
+and source of every package the project uses, with metadata
+copied from each package's `DESCRIPTION`. (@sec-levels,
+@sec-dependencies)
 
 
 ## M {.unnumbered .unlisted}
@@ -383,6 +387,13 @@ time. (@sec-crisis)
 packages. A project-local library belongs to one project rather
 than being shared across all of a user's work.
 (@sec-dependencies)
+
+**Package record.** The `renv.lock` entry for one package: its
+name, exact version, and source, plus fields such as `Imports`
+and `License` copied from its `DESCRIPTION`. It contains no
+checksum of the package's files; the `Hash` field written by
+`renv` before 1.1.0 was a fingerprint of `DESCRIPTION` fields
+used to key the package cache. (@sec-dependencies)
 
 **Package repository.** A server, such as CRAN or the Posit
 Package Manager, from which packages are installed.
@@ -474,7 +485,9 @@ code has to clear the cache first. (@sec-literate)
 
 **`R CMD check`.** The standard R command that builds a package,
 runs its tests, and applies dozens of standardized checks; here
-it serves as a universal integrity gate on the whole compendium.
+it serves as an integrity gate on the compendium's package skin
+(`R/`, the tests, `DESCRIPTION`). It does not check `analysis/`,
+which `.Rbuildignore` excludes from the build.
 (@sec-compendium, @sec-verification)
 
 **`rang`, `groundhog`, and `capsule`.** Lighter alternatives to
@@ -552,8 +565,8 @@ re-executing the same code on the same data. Contrast
 with new data. (@sec-levels)
 
 **Reproducibility test.** A check that a recorded computational
-result regenerates, either across repeated runs with a fixed
-seed or against a stored baseline. (@sec-testing)
+result regenerates. The form that can fail is the baseline test;
+two runs in one session do not qualify. (@sec-testing)
 
 **Research compendium.** A single self-describing directory
 bundling the code, data, prose, and environment record of an
@@ -747,10 +760,11 @@ skipped. (@sec-pipelines)
 suffice, by rebuilding and re-running. Validation does not pin
 anything new; it checks. (@sec-levels)
 
-**Verification.** The act of rebuilding the compendium,
-re-running the analysis, and comparing the regenerated
-computational outputs against a recorded baseline; passing it is
-what the ladder calls level L3. (@sec-verification)
+**Verification.** Rebuilding the compendium's environment from
+its recipe, re-running the analysis in it, and comparing the
+regenerated outputs with a committed baseline, within a stated
+tolerance, by means of a baseline test; passing it is what the
+ladder calls level L3. (@sec-verification)
 
 
 ## W {.unnumbered .unlisted}

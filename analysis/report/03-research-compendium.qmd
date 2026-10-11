@@ -26,8 +26,9 @@ to:
   lineage from Gentleman and Temple Lang through
   `rrtools`.
 - Justify why the R-package structure is the ideal
-  compendium container, and describe how `R CMD check`
-  thereby becomes a universal integrity gate.
+  compendium container, describe how `R CMD check`
+  thereby becomes a universal integrity gate for the
+  package skin, and say what it does not check.
 - Enumerate the Five Pillars of a compendium and name
   the single artifact that captures each.
 - Distinguish the five compendium archetypes and state,
@@ -77,7 +78,7 @@ locatable. It is not yet L1, because nothing has pinned
 the package versions. It is not yet L2, because nothing
 has pinned the environment. And it is certainly not yet
 L3, because nothing has re-run it and shown the numbers
-to match. What the compendium provides is the container
+to match a recorded baseline. What the compendium provides is the container
 into which the later chapters install those higher
 guarantees. We build the box first, and the chapters
 that follow fill it.
@@ -130,7 +131,9 @@ nonetheless the wrong shape for the work.
 - **`R CMD check`.** The standard R command that builds
   a package, runs its tests, and applies dozens of
   standardized checks; here it serves as a universal
-  integrity gate on the whole compendium.
+  integrity gate on the compendium's package skin
+  (`R/`, the tests, `DESCRIPTION`). It does not check
+  `analysis/`, which the build excludes.
 - **The Five Pillars.** The five artifacts a compendium
   manages, one per capture point: the `Dockerfile`,
   `renv.lock`, `.Rprofile`, the source code, and the
@@ -197,8 +200,9 @@ single most consequential design decision in this
 lineage, and it repays careful statement. It appears at
 first to be a convenience, reuse of a familiar layout,
 but its real value is that it makes an existing,
-rigorous, and universal gate apply to the whole
-compendium for free.
+rigorous, and universal gate apply to the compendium's
+package skin for free. What that gate does not reach
+matters as much as what it does, and we state both.
 
 The gate is `R CMD check`. When R was designed as a
 system for distributing statistical software, its
@@ -211,10 +215,30 @@ pass. The command was built to keep the tens of thousands
 of packages on CRAN mutually consistent. By dressing a
 compendium in the R-package skin, one inherits this
 entire apparatus at no cost. A compendium that passes
-`R CMD check` is one whose code loads, whose stated
-dependencies resolve, and whose tests succeed, in a clean
-process that carries none of the author's accumulated and
-undeclared state.
+`R CMD check` is one whose functions in `R/` load, whose
+stated dependencies resolve, and whose tests succeed, in a
+clean process that carries none of the author's
+accumulated and undeclared state.
+
+The qualification 'in `R/`' is exact, not cautious.
+`R CMD check` does not check the directory it is pointed
+at; it checks the package tarball that `R CMD build`
+makes from that directory, and the build omits every path
+listed in `.Rbuildignore`. A compendium lists `^analysis$`
+there, as it must, because raw data, derived files, and a
+manuscript do not belong in an installable package. The
+consequence is that the check never sees `analysis/`. An
+analysis script with a syntax error, or one that calls
+`library()` on a package declared nowhere, passes
+`R CMD check` with no error, warning, or note; we
+confirmed this on a toy compendium with R 4.6.1 and
+`rcmdcheck` 1.4.0. The same undeclared package used inside
+a function in `R/` draws a WARNING ('`::` or `:::` import
+not declared from'). The code in `analysis/` therefore
+needs gates of its own: a render gate, which executes it,
+and a dependency scan, which reads it for packages that
+the lockfile does not pin. Both are developed in
+@sec-verification.
 
 This is why the R-package structure is not incidental to
 the compendium but constitutive of it. Every archetype we
@@ -224,9 +248,13 @@ carries the same minimal R-package skin, and therefore
 them. A manuscript compendium adds a render gate on top;
 a simulation compendium adds a seeding discipline; a
 package compendium leans on the check most heavily of
-all; but the universal floor is the same. We return to
-this point when we tabulate the archetypes, because it is
-the thread that unifies them.
+all; but the universal floor is the same. It is a floor
+under `R/` and the tests, not under the analysis, which
+is one reason the analyst's third judgment, what becomes
+a function, matters: code moved into `R/` comes under the
+check, and code left in `analysis/` does not. We return
+to this point when we tabulate the archetypes, because it
+is the thread that unifies them.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: why an R package?
@@ -245,8 +273,10 @@ hold all five artifacts, so it can in principle reach the
 higher levels of the ladder. What is lost is the universal
 gate. Without the R-package skin, `R CMD check` has
 nothing to check, so there is no single, standard,
-pre-built command that verifies the code loads, the
-dependencies resolve, and the tests pass. The analyst
+pre-built command that verifies the functions load, their
+dependencies resolve, and the tests pass. (The analysis
+scripts are a separate matter: with or without the skin,
+they need a render gate and a dependency scan.) The analyst
 must then assemble an equivalent set of checks by hand for
 every project. The ceremony is precisely the interface
 that makes an existing verification apparatus apply.
@@ -311,7 +341,8 @@ for a reproducibility guarantee. A compendium that
 contains a `Dockerfile`, a `renv.lock`, and a clean
 `analysis/` tree looks reproducible. But until the image
 has been rebuilt from the recipe, the lockfile restored,
-and the outputs regenerated and compared, the compendium
+and the outputs regenerated and compared with a recorded
+baseline, the compendium
 sits at L0 or L1, not at L2 or L3. Match the claim to the
 rung actually reached. A well-organized directory is a
 precondition for reproducibility, not evidence of it.
@@ -765,6 +796,17 @@ organizing a compendium, and an unreliable one for the
 judgments that define it. The three triples below mark the
 division.
 
+One rule comes before any prompt. Never paste or upload
+protected health information, identifiable records, or
+data covered by a data-use agreement, nor outputs derived
+from them, into a model unless your institution has
+approved that endpoint for that data; describe the
+structure instead, as the prompts below do, with file
+names, column names and types, and a synthetic example. A
+coding agent reads the files in the directory it is
+started in, so run one only in a compendium whose data it
+is permitted to see.
+
 **Prompt.** 'I have a folder of R scripts and CSV files for
 a cohort analysis. Propose a research-compendium directory
 structure and tell me which files go where.'
@@ -780,7 +822,9 @@ and an omission of the R-package skin (`DESCRIPTION`,
 `derived_data/` is regenerable from code, because this is
 the analyst's judgment and not the model's. Confirm the
 R-package skin is present, and run `R CMD check` to
-establish that the proposed structure is in fact checkable.
+establish that the proposed structure is in fact checkable,
+remembering that the check covers `R/` and the tests, not
+the scripts under `analysis/`.
 
 **Prompt.** 'Which archetype should this project be, and
 which validation gates apply?'
@@ -811,9 +855,13 @@ is reproducible.
 *Verification*: read each generated test and confirm it
 checks a value the analysis actually depends on, not merely
 that code executes. For a simulation study, add or verify a
-test that a fixed seed yields identical output on a second
-call, since that is the property the archetype exists to
-protect and the one a model is most likely to omit.
+test that compares the seeded output with a baseline
+recorded in an earlier session and committed, within a
+stated tolerance (@sec-testing), since that is the
+property the archetype exists to protect and the one a
+model is most likely to omit. A second call in the same
+session agrees with the first even when the generator has
+changed, so it does not test this.
 
 ## Exercises
 
@@ -933,13 +981,23 @@ indefinitely.
 
 `R CMD check` is universal because it is the one gate that
 applies to every archetype regardless of deliverable. A
-manuscript, a simulation, a blog, and a package all consist
-of code that must load, dependencies that must resolve, and
-tests that must pass, and `R CMD check` verifies exactly
-those three things without knowing or caring what the
-project produces. The archetype-specific gates, rendering a
-document and checking seed determinism, apply to some
-archetypes and not others; this one applies to all of them.
+manuscript, a simulation, a blog, and a package all carry
+the same skin, functions in `R/` that must load, declared
+dependencies that must resolve, and tests that must pass,
+and `R CMD check` verifies exactly those three things
+without knowing or caring what the project produces. The
+archetype-specific gates, rendering a document and
+checking seed determinism, apply to some archetypes and
+not others; this one applies to all of them.
+
+A complete answer also states the limit. The check runs on
+the built package, and `.Rbuildignore` excludes
+`analysis/`, so it never parses or runs the analysis
+scripts. A script there can carry a syntax error or an
+undeclared package and the check still passes. 'Universal'
+means it applies to every archetype, not that it covers
+every file; the analysis code is gated by the render gate
+and the dependency scan of @sec-verification.
 
 What the R-package skin buys over a well-named folder is
 **an existing verification apparatus that the project
@@ -1006,7 +1064,8 @@ stops it reaching the second rung. What it cannot do is
 reach L3.
 
 **Why not, even in principle.** L3 means the recorded
-outputs have been shown to regenerate. Without a seed, the
+outputs have been shown to regenerate, within a stated
+tolerance, from a clean rebuild. Without a seed, the
 generator is initialized from a source that varies between
 sessions, so every run draws a different sample and
 produces different numbers. There is nothing stable to
@@ -1020,24 +1079,39 @@ Note that the analysis may be perfectly good statistics.
 With enough replicates the Monte Carlo error is small and
 two runs agree to within it. But 'agrees to within Monte
 Carlo error' is a different and weaker claim than 'produces
-the recorded outputs', and it is the latter that L3 names.
+the recorded outputs to numerical tolerance', and it is the
+latter that L3 names.
 
 **A one-line gate.** The cheapest form asserts that the
-driver sets a seed at all:
+driver sets a seed at all. `tinytest` runs each test file
+with `inst/tinytest/` as the working directory, so the path
+climbs two levels to the project root, and the guard lets
+the file exit quietly under `R CMD check`, where
+`analysis/` is not part of the built package:
 
 ```r
+driver <- '../../analysis/scripts/run_sim.R'
+if (!file.exists(driver)) exit_file('analysis/ not present')
 expect_true(
-  any(grepl('set\\.seed\\(', readLines('analysis/scripts/run_sim.R'))),
+  any(grepl('set\\.seed\\(', readLines(driver))),
   info = 'the simulation driver sets a seed'
 )
 ```
 
 That is a structural check and it is worth saying so: it
 confirms the call is present, not that the results are
-stable. The stronger gate runs the simulation twice under
-the recorded seed and asserts the results are identical,
-which is the actual L3 property and costs a great deal
-more to run.
+stable. Running the simulation twice in one session and
+asserting the results agree is not the stronger gate
+either: both runs share the same R and the same generator
+defaults, so a change to those moves both runs together
+and the assertion still holds. The stronger gate is a
+baseline test (@sec-testing): run the reduced simulation
+once, save its summary to a committed baseline file, and
+have a `test-baseline-*.R` file recompute the summary in
+each later session and compare it with
+`expect_equal(..., tolerance = 1e-8)`. That is the
+comparison L3 requires, and it costs a great deal more to
+run than the one-line check.
 :::
 
 ::: {.callout-note icon=false collapse=true}

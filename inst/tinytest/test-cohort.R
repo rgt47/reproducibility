@@ -87,6 +87,32 @@ expect_true(any(raw$age_at_enroll > 105),
 expect_true(length(unique(raw$sex)) > 2,
             info = 'the raw extract still carries inconsistent sex coding')
 
+# The miscoding must be applied only to true females, so that
+# cleaning recovers the truth. The CSV alone cannot show this, so the
+# generator is replayed up to the planted recoding to obtain the true
+# sex, and the cleaned value is compared with it row by row.
+expect_equal(sum(raw$sex == 'Female'), 18L,
+             info = "the generator plants exactly 18 'Female' codes")
+raw_first <- raw[!duplicated(raw$mrn), , drop = FALSE]
+expect_equal(sum(cohort$sex == 'F'),
+             sum(raw_first$sex %in% c('F', 'Female')),
+             info = "cleaning maps 'F' and 'Female', and only those, to F")
+
+gen_path <- sub(file.path('data', 'raw_data', 'cohort_raw.csv'),
+                file.path('scripts', 'simulate_cohort.R'),
+                raw_path, fixed = TRUE)
+if (file.exists(gen_path)) {
+  gen_src <- readLines(gen_path)
+  stop_at <- grep('^# 5\\. Inconsistent coding', gen_src) - 1L
+  gen_env <- new.env()
+  eval(parse(text = gen_src[seq_len(stop_at)]), envir = gen_env)
+  truth <- gen_env$cohort
+  expect_true(all(truth$sex[raw$sex == 'Female'] == 'F'),
+              info = "every 'Female' code sits on a truly female row")
+  expect_equal(cohort$sex, truth$sex[match(cohort$mrn, truth$mrn)],
+               info = 'cleaned sex equals the pre-corruption sex')
+}
+
 # --- reproducibility: the same seed gives the same answer ----------
 
 expect_equal(bootstrap_ci(cohort, n = 50), bootstrap_ci(cohort, n = 50),

@@ -694,8 +694,10 @@ is level-agnostic: a sealed report can sit at L0, running
 only on its author's machine. To claim L1 the packages
 must be pinned in a lockfile; to claim L2 the environment
 must be fixed in a container or a Nix declaration; to
-claim L3 the outputs must have been regenerated and shown
-to match. 'The report renders' is a claim about the seal,
+claim L3 the outputs must have been regenerated from a
+clean rebuild and shown by a baseline test to match their
+recorded values within a stated tolerance. 'The report
+renders' is a claim about the seal,
 not about the level. Match the claim to the level actually
 reached, and state plainly that a render which succeeds on
 one machine has demonstrated the seal and nothing above
@@ -912,12 +914,26 @@ stepped on, and the failure names which.
 A language model is a capable assistant for literate
 documents, and a treacherous one, because its fluency in
 producing chunks that run on the author's machine is
-exactly the fluency that plants landmines. Three exchanges
+exactly the fluency that plants landmines. A literate
+document mixes code with data and results, so it is easy
+to paste too much. Never paste or upload protected health
+information, identifiable or agreement-restricted data, or
+outputs derived from them (a rendered table of small cells
+included), into a model unless the endpoint is approved by
+the reader's institution for that data; describe the
+structure instead, with column names, types, and a
+synthetic example. A coding agent asked to render the
+document reads the data it renders, so it belongs only in
+projects whose data it is allowed to see. Three exchanges
 illustrate the pattern of use and the verification the
 analyst must supply.
 
-**Prompt.** 'Write a `knitr` chunk that loads the packages
-I need for this analysis and reads my cohort data.'
+**Prompt.** 'Write a `knitr` chunk that loads `dplyr` and
+`survival` and reads the CSV at
+`analysis/data/raw_data/cohort_raw.csv`, which has columns
+`mrn` (character), `enroll_date` (character, in two date
+formats), `hba1c` and `bmi` (numeric), and `incident_dm`
+(integer, 0 or 1, with missing values).'
 
 *Watch for.* A model will often reach for convenience over
 seal. It may emit `pacman::p_load(...)`, or an
@@ -964,8 +980,8 @@ chapter exists to prevent.
 explicitly. A render that succeeds demonstrates the seal.
 Whether the analysis is pinned (L1), environment-fixed
 (L2), or verified (L3) is a separate question, settled by
-the lockfile, the container, and the verification command
-of the later chapters, not by the fact of a render. State
+the lockfile, the container, and a baseline test run after
+a clean rebuild (@sec-levels), not by the fact of a render. State
 the level actually reached and no more.
 
 ## Exercises
@@ -1162,9 +1178,9 @@ toolchain into the image is the L1-to-L2 step for the
 *rendering* dependency specifically. If the packages were
 never pinned, the project moves to L2 only once the
 lockfile is restored inside the image too, since L2
-presupposes L1. And it does not reach L3, because nothing
-has yet verified that the render regenerates its recorded
-outputs.
+presupposes L1. And it does not reach L3, because no
+baseline test has yet shown that the render regenerates its
+recorded outputs within a stated tolerance.
 :::
 
 ::: {.callout-note icon=false collapse=true}

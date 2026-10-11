@@ -106,6 +106,8 @@ format:
         \usepackage{fontspec}
         \usepackage{graphicx}
         \setmonofont{DejaVu Sans Mono}[Scale=0.9]
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,breaknonspaceingroup,commandchars=\\\{\}}
     template-partials:
       - partials/before-body.tex
 

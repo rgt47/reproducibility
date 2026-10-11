@@ -495,6 +495,7 @@ analysis reads:
 
 ```r
 library(targets)
+library(tarchetypes)
 tar_option_set(packages = c('dplyr', 'ggplot2'))
 
 # Analysis functions live in R/ and are sourced here.
@@ -510,13 +511,30 @@ list(
   tar_target(cleaned, clean_data(raw_data)),
   tar_target(model, fit_model(cleaned)),
   tar_target(figures, make_figures(model, cleaned)),
-  tar_target(
-    report,
-    render_report(model, figures),
-    format = 'file'
-  )
+  tar_render(report, 'report.Rmd')
 )
 ```
+
+The last line needs a word, because it is where a
+hand-written pipeline most often goes wrong. A report is a
+file produced from another file, the `report.Rmd` source,
+and the target that renders it must track that source as
+well as the results it displays. `tar_render()`, from the
+companion package `tarchetypes`, does both: it tracks
+`report.Rmd` as a file, and it reads the document for calls
+such as `tar_read(model)` and `tar_load(figures)`, making
+each target so named a dependency of the report. Inside
+`report.Rmd`, results are therefore fetched with
+`targets::tar_read()` rather than recomputed. For a Quarto
+document, `tar_quarto()` plays the same role. The tempting
+alternative, a plain `tar_target(report, render_report(model,
+figures), format = 'file')`, tracks the model, the figures,
+and the rendered HTML, but not the source: in a scratch run
+with `targets` 1.12.0 and `tarchetypes` 0.14.0, editing the
+report's prose left `tar_outdated()` empty under that
+pattern, while under `tar_render()` it listed `report`. A
+report that does not rebuild when its own text changes is
+a stale report that the pipeline calls current.
 
 Several features distinguish this from the Makefile, and
 each is the point. The intermediate results, `raw_data`,
@@ -526,16 +544,31 @@ store, keyed and versioned, and hands it to the next
 target as a plain R value. The analyst never writes a
 `saveRDS` or a `readRDS`, because the storage is the
 tool's job. Where a real file must be tracked, the raw
-CSV at the top and the rendered report at the bottom, the
-target is declared with `format = 'file'`, and `targets`
-then watches the file's contents, by hashing them, rather
-than the R object.
+CSV at the top, the target is declared with
+`format = 'file'`, and `targets` then watches the file's
+contents, by hashing them, rather than the R object;
+`tar_render()` does the same for the report's source and
+its rendered output.
 
 That hashing is the second and deeper difference. Where
 Make compares timestamps, `targets` compares **content
 hashes**, so that a file touched but not changed does not
-trigger a rebuild, and a change that leaves the timestamp
-untouched is nonetheless caught. And the hashing extends
+trigger a rebuild. The hashing is not unconditional,
+however. When the `trust_timestamps` option is left unset,
+`targets` chooses by file system, and on a file system with
+precise time stamps it trusts them: it compares a tracked
+file's modification time with the one it recorded and
+recomputes the hash only if the two differ. A file whose
+content changed while its time stamp did not is therefore
+*not* caught. Such changes are rare in ordinary editing, but
+copying tools that preserve time stamps, and file systems
+with coarse time stamps, can produce them. In a scratch run
+with `targets` 1.12.0, a one-digit edit to the raw CSV with
+its time stamp restored left `tar_outdated()` empty under the
+default, while `tar_option_set(trust_timestamps = FALSE)`
+made it list every target downstream of the file, at the
+cost of hashing every tracked file on every check. And the
+hashing extends
 past the data to the code: `targets` records a hash of the
 body of every function a target calls, and of the R
 expression in the target itself, so that editing
@@ -864,10 +897,14 @@ warned against.
 The first step is not to write `_targets.R` but to refactor the
 scripts into functions, because a function-oriented pipeline
 needs functions. Each script's body becomes a function in `R/`:
-`read_raw()`, `clean_data()`, `fit_model()`, `make_figures()`,
-and `render_report()`, each taking its inputs as arguments and
+`read_raw()`, `clean_data()`, `fit_model()`, and
+`make_figures()`, each taking its inputs as arguments and
 returning its result rather than reading and writing files by
-side effect. This refactoring is worthwhile on its own, because
+side effect. The fourth script, the report, becomes
+`report.Rmd`, which fetches the model and the figures with
+`targets::tar_read()` instead of recomputing them, so that
+`tar_render()` can see what it depends on. This refactoring
+is worthwhile on its own, because
 functions with explicit inputs and outputs are testable in the
 sense of @sec-testing, where a script that reads and writes
 global files is not.
@@ -896,7 +933,9 @@ nothing, because everything depends on the data. A refinement to
 `make_figures()`, followed by `tar_make()`, rebuilds only
 `figures` and `report`, and the console reports `raw_data`,
 `cleaned`, and `model` as skipped; the model fit, the expensive
-step, is preserved untouched. At any moment `tar_outdated()`
+step, is preserved untouched. A change to the wording of the
+discussion in `report.Rmd` rebuilds `report` alone. At any
+moment `tar_outdated()`
 answers the question the manual workflow could never answer with
 confidence: it lists precisely the targets a rebuild would
 touch, so that the analyst always knows whether the project is
@@ -921,7 +960,17 @@ A language model is a fluent author of Makefiles and `targets`
 pipelines, and its characteristic failures are worth
 anticipating, because they bear directly on the one discipline
 this chapter rests on, the honesty of the dependency
-declarations.
+declarations. A pipeline is described to a model by its
+structure, the scripts, the files each reads and writes, and
+the column names and types of the data, never by pasting the
+data, a printed data frame, or a log of row-level output;
+patient-level, identifiable, or agreement-restricted data and
+outputs derived from them go only to an endpoint the
+institution has approved for that data. A coding agent asked
+to convert or run a pipeline will execute it and so read
+every input it touches, which means it is run only in
+projects whose data it is allowed to see, or against a
+synthetic extract of the same structure.
 
 **Prompt.** 'Write a Makefile for my analysis: I have a cleaning
 script, a modeling script, and a report.'
@@ -954,14 +1003,18 @@ not rebuild when the file changes. It may also leave the scripts
 as scripts, called for their side effects, rather than
 refactoring them into functions that return values, which
 defeats the object-tracking that is the whole reason to prefer
-`targets` over Make.
+`targets` over Make. A third common error is a report target
+that calls `rmarkdown::render()` inside a plain `tar_target()`,
+which never tracks the report's source.
 
 *Verification.* Confirm that every external file the pipeline
 depends on is a `tar_target(..., format = 'file')` and that
 intermediate results are returned R objects, not files written
 by side effect. Then run `tar_make()`, edit one function body,
 and confirm with `tar_outdated()` and a second `tar_make()` that
-exactly the dependent targets, and no others, rebuild. If a
+exactly the dependent targets, and no others, rebuild. Edit
+one sentence of the report's prose and confirm that
+`tar_outdated()` lists the report. If a
 change to a function fails to invalidate a downstream target,
 the dependency is not being tracked and the pipeline is lying
 about what is current.

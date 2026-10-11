@@ -85,8 +85,9 @@ package is fixed by a lockfile. It is L2, pinned
 environment, when the operating system, the language
 runtime, and the system libraries are fixed as well,
 usually inside a container. It is L3, verified, when
-the recorded computational outputs have been
-regenerated and shown to match. The auditor's failure
+the recorded computational outputs have been shown to
+regenerate within a stated tolerance from a clean
+rebuild, checked by a baseline test. The auditor's failure
 above is the failure of an analysis that reached, at
 best, L0: the code could be found, and nothing else
 about the computation had been fixed. The ladder is
@@ -613,8 +614,17 @@ visible in the interim.
 A large language model is a capable assistant for the
 material of this chapter, provided the analyst treats
 its output as a draft to be verified rather than an
-authority to be trusted. Three uses recur, and each
-carries a specific verification burden.
+authority to be trusted. One rule governs every prompt
+in this book. Never paste or upload protected health
+information, identifiable data, or data under a data use
+agreement, nor outputs derived from them, into a model
+unless the endpoint is approved by the reader's
+institution for that data; describe the structure
+instead, with column names, types, and a small synthetic
+example. Coding agents that read the working tree see
+whatever files are there, so they belong only in projects
+whose data they are allowed to see. Three uses recur, and
+each carries a specific verification burden.
 
 **Prompt.** 'Explain the difference between
 reproducibility, replicability, and robustness, and
@@ -624,7 +634,7 @@ give a health-sciences example of each.'
 terms, or adopt the reversed convention that some
 fields use, because both usages are well represented
 in their training data. The example offered may be
-plausible-sounding but mislabelled.
+plausible-sounding but mislabeled.
 
 *Verification.* Check the definitions against the
 National Academies framing [@nas2019] adopted in this
@@ -638,16 +648,24 @@ What could have caused this and how do I diagnose it?'
 
 *Watch for.* The model may propose confident but
 untested causes, or invent version numbers and release
-dates for the change it blames. It has no access to
-your session and cannot know which layer actually
-moved.
+dates for the change it blames. A chat model has no
+access to the session and cannot know which layer
+actually moved. A coding agent that can run R in the
+project can inspect `sessionInfo()` itself, but it may
+still report a cause it has not tested, and it can
+change the environment while investigating it, for
+example by reinstalling a package or updating the
+lockfile.
 
 *Verification.* Treat every proposed cause as a
 hypothesis to test against your own `sessionInfo()`
 and the actual release notes, not as a diagnosis.
 Confirm the specific mechanism (for the RNG change, by
 the demonstration above; for `stringsAsFactors`, by
-inspecting a column's class) before acting on it.
+inspecting a column's class) before acting on it. If an
+agent did the investigating, run `git diff` on
+`renv.lock` and the code afterward, so that a repair it
+made silently is seen before it is committed.
 
 **Prompt.** 'Write a paragraph for my methods section
 stating that my analysis is fully reproducible.'
@@ -744,7 +762,9 @@ analysis is L0. Code and data that can be located and
 downloaded are locatable, and that is what most deposits
 supply. A deposit that also carries a lockfile is L1; one
 carrying a container recipe is L2; one carrying evidence
-that the outputs were regenerated is L3. Note that the
+that the outputs were regenerated from a clean rebuild
+and matched recorded values within a stated tolerance is
+L3. Note that the
 rung is set by what the authors deposited, not by whether
 the code happened to run on your machine. An analysis can
 be L0 and still run, because you were lucky, and it can be
@@ -862,9 +882,10 @@ A clean construction: a cohort analysis computes
 thirty-day readmission but the cohort was defined with an
 off-by-one error in the date window, so patients
 readmitted on day thirty are excluded. The analysis is
-containerized, its packages pinned, its outputs verified
-against recorded hashes, and it regenerates the same
-number on every machine and every rerun. It is L3. It is
+containerized, its packages pinned, its outputs checked
+by a baseline test against recorded values, and it
+regenerates the same number, within tolerance, on every
+machine and every rerun. It is L3. It is
 also wrong, and it will remain wrong, identically, for as
 long as anyone runs it. Other serviceable examples are a
 sign error in a contrast, a covariate adjusted for that
