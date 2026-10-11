@@ -2309,11 +2309,57 @@ no literal HTML entities [V]. PDF 456 pages (440 before Phase 9).
 Repository test suite 204/204 (up from 185, all new assertions from
 the two chapters' new material).
 
-Not done in Phase 9: the template is applied to exactly two
-chapters, as scoped. Every other numbered chapter still uses the
-pre-revision structure. 'Two numbering schemes, and which this book
-uses' (ch02) was judged not redundant with the new material and left
-untouched, a judgment call the author may want to revisit.
+Not done in Phase 9's prototype step: the template is applied to
+exactly two chapters, as scoped. Every other numbered chapter still
+used the pre-revision structure at that point. 'Two numbering
+schemes, and which this book uses' (ch02) was judged not redundant
+with the new material and left untouched, a judgment call the
+author may want to revisit.
+
+**Phase 9 continued, book-wide rollout batch 1, 2026-10-11.** The
+author approved a book-wide rollout at the prototype checkpoint.
+Per the plan's standing rule (checkpoint after the first batch, with
+a length report), this batch converts the remaining three chapters
+of Part I, Foundations: 01-reproducibility-crisis, version-control,
+03-research-compendium. Branch `phase-9-template`, same branch as
+the prototypes; one commit for this batch. All local; nothing
+pushed.
+
+| Item | Result | Evidence |
+|---|---|---|
+| ch01 stack figure | First draft used `validates` to mean 'demonstrates an unpinned layer is volatile', which is not what the term means elsewhere in the book (confirming a previously *captured* value, per ch02's own prose and the function's contract) | Caught by the lead, not the converting agent, which had itself flagged the stretch as uncertain; fixed to an honest empty/empty call (the chapter captures and validates nothing), which exposed a real grammar bug in `determinant_stack_alt()`'s all-empty case, also fixed; re-rendered clean [V] |
+| `@sec-conventions` crossref | A second instance of the same unresolved-crossref defect found in Phase 9's prototype step, this time in version-control.qmd, introduced fresh by that chapter's converting agent | V lead: grepped the whole book after fixing, confirmed zero remaining instances; replaced with the same plain-link pattern |
+| ch03 vacuous test | The converting agent fixed, beyond its assigned scope (optional per the brief), the long-standing 'no hazard ratio is negative' vacuous test (Finding 14/T2-14, open since the original audit), replacing it with a baseline comparison at a stated tolerance and keeping the old bound only as a named negative example | V lead: read the passage in context, confirmed it is now used correctly as a contrast, not as the chapter's actual test |
+| Cohort row counts, file-existence checks | ch03's Five Pillars check (338 raw, 337 cleaned, 1 duplicate; `.Rprofile` present, `renv.lock` and `Dockerfile` absent) and version-control's PHI-column check (`mrn`, `patient_name`, `dob` all present) | V lead, reproduced independently, both exact |
+| Chapter numbering citations | ch01's agent confirmed, by rendering, that 00-intro is Chapter 1 and 01-reproducibility-crisis is Chapter 2; version-control's agent confirmed version-control itself is Chapter 4 and ch02 (sec-levels) is Chapter 3, before writing spacing-exercise cross-references | A-V both; V lead reproduced version-control's chapter-4 claim independently |
+
+Render: freeze cleared for all three chapters; HTML and PDF exit 0,
+no warnings, no unresolved references or missing citations, no
+literal HTML entities [V]. Repository test suite 231/231 (up from
+204).
+
+**Length report.** PDF is now 484 pages, up from 456 before this
+batch (+28 pages, +6.1%) and from 440 before Phase 9 began (+44
+pages, +10.0%). Measured from the pre-Phase-6 baseline of 398 pages
+(REFACTOR-PLAN Section 10.3), the book is now 484 pages, +21.6%,
+which crosses the plan's 20 percent length-growth checkpoint
+threshold (10.6 house rules notwithstanding, Decision D10 already
+chose 'accept growth' over holding net prose within 5 percent, so
+this is reported, not treated as a stop). The growth is concentrated
+in the five chapters now carrying the full template (chapter card,
+a new figure, up to 9 folded Checks, two new exercises each, a
+cheat sheet): this is template overhead applying to every remaining
+chapter, not a one-time cost, so the full-book total after all 13
+chapters are converted will be materially higher than a linear
+extrapolation from 5 of 13 chapters might suggest.
+
+Not done: 7 chapters remain on the pre-revision structure
+(04-dependencies, 05-containers, 06-backends-runtimes,
+07-literate-programming, pipelines, 09-continuous-integration,
+10-archiving-sharing). 10-archiving-sharing also holds the closing
+`_habits.qmd` include and the book's final 'In conclusion' section,
+which its converting agent will need to handle carefully to avoid
+disturbing either.
 
 ### 10.16 Limitations
 

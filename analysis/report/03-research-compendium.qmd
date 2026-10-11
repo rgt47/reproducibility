@@ -17,28 +17,96 @@ Data Analytical Work Reproducibly Using R (and Friends)*
 ```
 :::
 
-## Learning objectives
+By the end of this chapter you will be able to look at
+a folder of scripts and spreadsheets, name what kind of
+research object it is trying to be, draw the line
+between what counts as raw input and what counts as a
+derived product, and say exactly which single build gate,
+`R CMD check`, a tidy directory earns for free and what
+that gate still leaves unexamined.
 
-By the end of this chapter the reader should be able
-to:
+```{r}
+#| include: false
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-- Explain what a research compendium is, and trace its
-  lineage from Gentleman and Temple Lang through
-  `rrtools`.
-- Justify why the R-package structure is the ideal
-  compendium container, describe how `R CMD check`
-  thereby becomes a universal integrity gate for the
-  package skin, and say what it does not check.
-- Enumerate the Five Pillars of a compendium and name
-  the single artifact that captures each.
-- Distinguish the five compendium archetypes and state,
-  for each, how the directory layout, the presence of a
-  rendered report, and the applicable validation gates
-  differ while the reproducibility machinery stays the
-  same.
-- Apply the principle of progressive disclosure to let a
-  project evolve from one archetype to another without
-  structural reorganization.
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 50 minutes.
+
+**Prerequisites.** @sec-levels, for the L0-L3 ladder
+vocabulary this chapter uses when it places a compendium
+on it; no other chapter is assumed. Statistically, nothing
+beyond reading a hazard ratio and a coefficient table, as
+in the chapter's cohort and comorbidity examples, is
+required. No R fluency beyond reading a short script and a
+directory listing is assumed; this chapter writes almost
+no code itself.
+
+**By the end of this chapter you will be able to
+answer:**
+
+- Can you explain what a research compendium is, and
+  trace its lineage from Gentleman and Temple Lang through
+  `rrtools`?
+- Can you justify why the R package is the compendium
+  container, say precisely what `R CMD check` thereby
+  checks, and say what it does not?
+- Can you enumerate the Five Pillars of a compendium and
+  name the single artifact that captures each?
+- Can you distinguish the five compendium archetypes and
+  state how their directory layout, their report, and
+  their gates differ while the reproducibility machinery
+  stays the same?
+- Can you apply progressive disclosure to walk a project
+  from one archetype to another without reorganizing it?
+
+**Outline.**
+
+- Orientation: a cohort analysis that is a scatter, not
+  an object.
+- The analyst's contribution: naming the archetype,
+  fixing the raw-and-derived boundary, deciding what
+  becomes a function.
+- Where this sits on the stack: locatable, and nothing
+  pinned yet.
+- The compendium as the unit of reproducible work: where
+  the idea comes from.
+- The R package as the compendium container: `R CMD
+  check` as a universal gate, and its limit.
+- The Five Pillars.
+- The directory layout, concretely.
+- The five archetypes, each with a health-sciences
+  example.
+- Progressive disclosure: one layout, several stages.
+- Worked example: one compendium through two archetypes.
+- The cohort, continued: this book's own compendium
+  against the Five Pillars.
+:::
+
+## Where this sits on the stack
+
+This chapter captures nothing on the determinant stack
+of @sec-levels in the sense of pinning a package version
+or a system library; it captures the two layers that sit
+above those, the analysis code and the input data,
+by making them locatable and organized in the first
+place. @fig-stack-compendium marks that: a compendium is
+what first turns a scatter of files into something a
+reader can find, name, and locate the raw-versus-derived
+boundary within, which is the L0 rung and no further.
+
+```{r}
+#| label: fig-stack-compendium
+#| fig-cap: 'The determinant stack of @sec-levels, with analysis code and input data marked as captured by this chapter. A research compendium does not pin a package version or an operating system; what it captures, for the first time, is that the code and the data are locatable, organized by convention, and separated into raw and derived, which is the L0 rung this chapter secures and the container the later chapters install L1 through L3 into.'
+#| fig-alt: !expr determinant_stack_alt(captures = c('Analysis code', 'Input data'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  captures = c('Analysis code', 'Input data'),
+  title = 'The compendium captures locatability, not yet packages or environment')
+```
 
 ## Orientation
 
@@ -83,6 +151,26 @@ into which the later chapters install those higher
 guarantees. We build the box first, and the chapters
 that follow fill it.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the scatter is missing
+
+The epidemiology student's three months of work already
+contains correct statistics. What, precisely, does the
+compendium add that the statistics alone do not supply?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Not correctness, which the statistics already have, but
+the property of being a single, locatable object: a thing
+that can be handed to a colleague, cited, archived, and
+re-run, because every part of it (the code, the data, and
+eventually the environment record) lives in one
+self-describing directory rather than scattered across a
+laptop's folders and a manuscript's pasted figures.
+:::
+:::
+
 ## The analyst's contribution
 
 Three judgments at the center of this chapter are the
@@ -116,6 +204,25 @@ nonetheless the wrong shape for the work.
    `R CMD check` and the test suite will actually
    protect, and it is revisited continuously as a
    project matures.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: three judgments, one tool-free
+
+A newcomer asks which of `zzcollab`'s commands tells the
+analyst where the raw-and-derived boundary falls. What is
+the honest answer?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+None of them. The framework's commands create the
+directories (`raw_data/`, `derived_data/`) and enforce the
+gates once the boundary is drawn, but drawing it, like
+naming the archetype and deciding what becomes a function,
+is a judgment about the science, not a setting the tooling
+can infer from the files themselves.
+:::
+:::
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -193,6 +300,26 @@ companion guide on how to *read* such a compendium, which
 is a useful sign that the object had matured enough to
 have a reading protocol at all [@nust2018].
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why the R package, not a new format
+
+Marwick, Boettiger, and Mullen could have proposed a
+wholly new compendium format instead of reusing the R
+package. What did reusing an existing format buy that a
+bespoke one would not have?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A build system, a validation tool, and tens of thousands
+of developers already fluent in the convention, all for
+free. A bespoke format would have needed its own checker
+written from scratch and its own community taught to use
+it; the R package came with `R CMD check` and a working
+ecosystem already attached.
+:::
+:::
+
 ## The R package as the compendium container
 
 The choice of the R package as the container is the
@@ -230,15 +357,45 @@ manuscript do not belong in an installable package. The
 consequence is that the check never sees `analysis/`. An
 analysis script with a syntax error, or one that calls
 `library()` on a package declared nowhere, passes
-`R CMD check` with no error, warning, or note; we
-confirmed this on a toy compendium with R 4.6.1 and
-`rcmdcheck` 1.4.0. The same undeclared package used inside
+`R CMD check` with no error, warning, or note. The same
+undeclared package used inside
 a function in `R/` draws a WARNING ('`::` or `:::` import
 not declared from'). The code in `analysis/` therefore
 needs gates of its own: a render gate, which executes it,
 and a dependency scan, which reads it for packages that
 the lockfile does not pin. Both are developed in
 @sec-verification.
+
+::: {.callout-tip icon=false}
+## Verification
+
+To see the claim hold: add a deliberate syntax error to
+any script under `analysis/scripts/`, then run
+`rcmdcheck::rcmdcheck('.')` (we ran this on a toy
+compendium with R 4.6.1 and `rcmdcheck` 1.4.0) from the
+project root. It reports zero errors, warnings, or notes,
+because the broken file never entered the build. To make
+the same claim fail on purpose, move the broken code, or a
+function that calls an undeclared package, into a file
+under `R/` instead, and run the check again; it now fails
+or warns, because that file is part of what gets built.
+:::
+
+::: {.callout-warning}
+## Pitfall
+
+A new compendium that omits `^analysis$` from
+`.Rbuildignore`, or deletes the line while editing the
+file by hand, does not fail quietly. `R CMD build` then
+tries to fold the raw data, the derived files, and the
+rendered report into the installable tarball, which can
+make the build slow, bloat the package beyond what CRAN
+or a reviewer will tolerate, or fail outright on a binary
+data file the build process cannot parse as package data.
+The fix is to treat `.Rbuildignore` as part of the
+package skin, checked into version control like
+`DESCRIPTION`, not as an incidental dotfile.
+:::
 
 This is why the R-package structure is not incidental to
 the compendium but constitutive of it. Every archetype we
@@ -332,20 +489,35 @@ occurs. This chapter is about the container that holds all
 five and the shape that container takes. The individual
 pillars are developed in the chapters named against them.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: layered, not independent
+
+Why does the chapter say the pillars are 'layered rather
+than independent,' and what would it mean to capture
+pillar two, package versions, while leaving pillar one,
+the computational environment, uncaptured?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A lockfile restored outside any pinned environment still
+depends on whatever R version and system libraries the
+host machine happens to supply, so pillar two's guarantee,
+'the same packages,' is only as strong as pillar one's,
+'the same environment,' lets it be. Capturing packages
+without the environment is exactly @sec-levels's L1
+without L2: a real step, but one whose benefit a different
+R release or a missing system library can still erase.
+:::
+:::
+
 ::: {.callout-important}
 ## The honest level
 
-Assembling the five artifacts into a tidy compendium is a
-capture activity, and it is easy to mistake the tidiness
-for a reproducibility guarantee. A compendium that
-contains a `Dockerfile`, a `renv.lock`, and a clean
-`analysis/` tree looks reproducible. But until the image
-has been rebuilt from the recipe, the lockfile restored,
-and the outputs regenerated and compared with a recorded
-baseline, the compendium
-sits at L0 or L1, not at L2 or L3. Match the claim to the
-rung actually reached. A well-organized directory is a
-precondition for reproducibility, not evidence of it.
+This chapter's own practice stops at naming and separating
+the five artifacts; it leaves their actual capture, and the
+rung that capture buys, to the chapters named against each
+pillar above.
 :::
 
 ## The directory layout, concretely
@@ -396,6 +568,26 @@ to the centerpiece of the chapter, because the archetype
 is a first-class parameter recorded there, elicited at
 creation time alongside the choice of base image.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: finding the boundary in the tree
+
+Using the directory listing above, name the one line that
+marks the boundary `R CMD check` actually respects, and
+state which side of that line `renv.lock` falls on.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The boundary is the `analysis/` entry itself, the one path
+`.Rbuildignore` excludes from the build. `renv.lock` sits
+outside `analysis/`, at the project root, so it is not
+excluded by that line, but it is also not parsed by
+`R CMD check`, which reads `DESCRIPTION` for declared
+dependencies rather than the lockfile; the two artifacts
+answer different questions about the same package skin.
+:::
+:::
+
 ## The five archetypes
 
 We come now to the heart of the matter, and to the point
@@ -445,7 +637,10 @@ point; the point is the pipeline and its outputs.
 The applicable gates are the universal `R CMD check` and
 the unit tests, the latter guarding the cleaning logic and
 the data invariants (that the cohort has the expected
-number of subjects, that no derived rate is negative). A
+number of subjects, and that a derived rate matches a
+value recorded in a baseline file within a stated
+tolerance, rather than merely falling in a plausible
+range). A
 render gate is optional here, because there may be no
 report to render. The reproducibility machinery,
 environment and packages and session, is nonetheless
@@ -735,6 +930,26 @@ the archetypes and across the transitions between them. It
 is precisely this invariance that lets a project evolve
 without ever leaving the reproducible state it started in.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what moves, what does not
+
+In the student's trajectory above, name one thing that
+changes at each transition and one thing that never does.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+What changes: the archetype recorded in `zzcollab.yaml`,
+and the set of gates that apply (a render gate joins at
+the manuscript transition; `R CMD check`'s documentation
+and export checks start to bite once functions migrate
+into `R/`). What never changes: the directory layout
+itself. No file already written is moved or renamed at
+either transition, and the Five Pillars sit in the same
+three root-level artifacts throughout.
+:::
+:::
+
 ## Worked example
 
 To make the progressive-disclosure trajectory concrete, we
@@ -754,8 +969,13 @@ The student places the registry extract under `raw_data/`,
 writes `analysis/scripts/01_clean.R` to produce a derived
 cohort table, and writes `analysis/scripts/02_model.R` to
 fit the Cox model. A unit test in `inst/tinytest/` asserts
-the cohort size and that no fitted hazard ratio is
-negative. At this point the only gates that apply are the
+the cohort size and that the fitted hazard ratio matches a
+value recorded in a committed baseline file, within a
+stated tolerance, which is a test that can actually fail
+if the model's inputs or the `survival` version drift,
+unlike a bound such as 'no hazard ratio is negative' that
+every correct and every broken fit alike would satisfy. At
+this point the only gates that apply are the
 universal check and the tests, run in a clean environment:
 
 ```bash
@@ -789,6 +1009,96 @@ warrants it. This is progressive disclosure in operation,
 and it is the payoff of having chosen a single, principled
 container at the outset.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the manuscript transition
+
+When `report.Rmd` is added and the project becomes a
+manuscript compendium, what single gate becomes active
+that was not before, and what about the compendium's
+Five Pillars status is unaffected by this transition?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The render gate becomes active: a validation run must now
+rebuild `report.Rmd` to PDF, where before there was no
+report to render. The Five Pillars are unaffected, because
+adding a manuscript changes which gates apply, not which
+artifacts capture the environment, the packages, the
+session, the code, or the data; those five pillars are the
+same five files or records before and after the archetype
+changes.
+:::
+:::
+
+## The cohort, continued
+
+The chapters placed so far have all described a composite
+student's compendium. Here is the same classification
+exercise performed on this book's own running cohort
+compendium, as it actually sits in this repository today.
+
+```{r}
+raw <- load_cohort('../data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
+pillars <- c(
+  environment_dockerfile = file.exists('../../Dockerfile'),
+  packages_renv_lock = file.exists('../../renv.lock'),
+  session_rprofile = file.exists('../../.Rprofile'),
+  source_code_r_cohort = file.exists('../../R/cohort.R'),
+  data_raw_csv = file.exists('../data/raw_data/cohort_raw.csv')
+)
+pillars
+nrow(raw)
+nrow(cohort)
+```
+
+Three of the Five Pillars already have an artifact in this
+repository: the project `.Rprofile` (session configuration),
+`R/cohort.R` (source code, under version control), and the
+raw extract itself (data, included directly because it is
+small and synthetic). Two do not: there is no `Dockerfile`
+and no `renv.lock` at the time this chapter is being
+written, so the environment and the package-versions
+pillars are uncaptured. Against the archetype table above,
+this compendium is a **data analysis**, since its deliverable
+is the pipeline of `R/cohort.R` and the chunks this book's
+chapters run against it, not a rendered manuscript of its
+own; the applicable gates are therefore the universal
+`R CMD check` and the unit tests, with no render gate
+required. Measured against the Five Pillars rather than the
+archetype table, three artifacts present and two absent is
+consistent with @sec-levels's own placement of this same
+compendium at L0, locatable, and no further: having a
+source-code pillar and a data pillar is exactly what makes
+a compendium locatable, and it is not yet what pins a
+package version or an environment.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: pillars present, rung reached
+
+This compendium currently has three of the Five Pillars
+captured by an artifact (session, source code, data) and
+two absent (environment, packages). Does having three of
+five pillars put it partway between L0 and L1 on the
+ladder of @sec-levels?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The ladder is not a count of pillars; it is a
+cumulative scale in which L1 specifically requires the
+package-versions pillar (`renv.lock`) and L2 specifically
+requires the environment pillar (`Dockerfile`). Having
+the session, source-code, and data pillars without a
+lockfile still leaves the compendium at L0, because L0
+asks only that the source and data be locatable under
+version control, which all three present pillars already
+satisfy, and no rung is reached by partial credit across
+unrelated pillars.
+:::
+:::
+
 ## Collaborating with an LLM
 
 A language model is a capable assistant for scaffolding and
@@ -796,16 +1106,21 @@ organizing a compendium, and an unreliable one for the
 judgments that define it. The three triples below mark the
 division.
 
-One rule comes before any prompt. Never paste or upload
-protected health information, identifiable records, or
-data covered by a data-use agreement, nor outputs derived
-from them, into a model unless your institution has
-approved that endpoint for that data; describe the
-structure instead, as the prompts below do, with file
-names, column names and types, and a synthetic example. A
-coding agent reads the files in the directory it is
-started in, so run one only in a compendium whose data it
-is permitted to see.
+::: {.callout-important}
+## Restricted data
+
+A compendium's own directory listing can be enough to
+tempt a reader into pasting what it names (habit 3). Never
+paste or upload protected health information, identifiable
+records, or data covered by a data-use agreement, nor
+outputs derived from them, into a model unless your
+institution has approved that endpoint for that data;
+describe the structure instead, as the prompts below do,
+with file names, column names and types, and a synthetic
+example. A coding agent reads the files in the directory it
+is started in, so run one only in a compendium whose data
+it is permitted to see.
+:::
 
 **Prompt.** 'I have a folder of R scripts and CSV files for
 a cohort analysis. Propose a research-compendium directory
@@ -900,6 +1215,24 @@ changed, so it does not test this.
    for the opposing view, that every serious research
    compendium should ultimately produce a rendered document,
    and then state where the argument fails.
+
+7. On this book's own running cohort compendium, run
+   `load_cohort()` and `clean_cohort()` from `R/cohort.R`
+   against `analysis/data/raw_data/cohort_raw.csv`, as in
+   'The cohort, continued' above, and separately check
+   `file.exists()` for `Dockerfile`, `renv.lock`, and
+   `.Rprofile` at the project root. Report three numbers a
+   grading script could check without fitting any model: the
+   raw row count, the cleaned row count, and how many of the
+   Five Pillars currently have a committed artifact present in
+   this repository.
+
+8. This exercise returns to the reproducibility ladder of
+   Chapter 2 (@sec-levels). Using the pillar count from
+   Exercise 7, state which single rung of the L0-L3 ladder
+   this book's own cohort compendium occupies today, and
+   explain why having three of the five pillars captured does
+   not place it partway between two rungs.
 
 ## Solutions
 
@@ -1156,6 +1489,76 @@ compendium needs an artifact binding claims to
 computation, and that a rendered document is one such
 artifact rather than the only one.
 :::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
+nrow(raw)
+#> [1] 338
+nrow(cohort)
+#> [1] 337
+pillars <- c(
+  file.exists('Dockerfile'),
+  file.exists('renv.lock'),
+  file.exists('.Rprofile')
+)
+sum(pillars)
+#> [1] 1
+```
+
+**The three numbers**, run against the extract and the
+repository as committed: the raw extract holds 338 rows;
+the cleaned cohort holds 337; and of the three pillars
+checked directly by this script, only `.Rprofile` is
+present, so one of three. Counting the source-code pillar
+(satisfied by `R/cohort.R` under version control) and the
+data pillar (satisfied by the committed raw extract) as
+also present, which the script above does not check but
+'The cohort, continued' does, brings the total to three of
+the Five Pillars, with `Dockerfile` and `renv.lock` absent.
+A reader who gets a different row count has either an
+edited extract or a different `clean_cohort()` than the
+one shipped with this book.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+The compendium sits at **L0, locatable**, and no further.
+
+The pillar count from Exercise 7, three of five present,
+does not translate into a fraction of a rung because the
+ladder of @sec-levels is not a tally across the Five
+Pillars; it is a cumulative scale keyed to two specific
+artifacts. L1 requires `renv.lock` specifically, and L2
+requires an environment recipe specifically, such as a
+`Dockerfile`. Both are absent here, so neither L1 nor L2 is
+reached regardless of how many of the other three pillars
+are present. The session-configuration pillar
+(`.Rprofile`), the source-code pillar, and the data pillar
+being captured is exactly what L0 already asks for,
+locatable code and data under version control, so three
+pillars present and L0 reached are the same fact stated
+twice, not partial credit toward L1. A compendium cannot
+be 'sixty percent of the way' to pinned packages; either
+the lockfile exists or it does not.
+:::
+
+## Cheat sheet
+
+| Command or rule | What it does or checks |
+|---|---|
+| `DESCRIPTION`, `NAMESPACE`, `R/` | The minimal R-package skin; makes a directory checkable by `R CMD check` |
+| `.Rbuildignore` entry `^analysis$` | Excludes `analysis/` from the built tarball; `R CMD check` never sees it |
+| The Five Pillars | `Dockerfile` (environment), `renv.lock` (packages), `.Rprofile` (session), version control (source code), inclusion or a resolvable identifier (data) |
+| 'If I deleted this file, could the code regenerate it?' | The operative test for the raw-versus-derived boundary |
+| Five archetypes | Data analysis, scholarly manuscript, R package, simulation study, blog: one skin, differing gates |
+| Progressive disclosure | One directory layout carries a project through every archetype with no reorganization |
+| Rule of thumb | Name the archetype from the deliverable (a document, a function, stored results, a post), never from the subject matter or the project's size |
+| Habit 7 | Write the honest level down: a tidy compendium is a precondition for reproducibility, not evidence of it |
 
 ## Further reading
 

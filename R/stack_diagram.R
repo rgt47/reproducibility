@@ -155,6 +155,17 @@ determinant_stack_alt <- function(captures = character(0),
             n_remaining, if (n_remaining == 1) ' is' else 's are')
   }
 
+  if (!length(parts)) {
+    return(sprintf(
+      paste0('A horizontal bar chart of the nine-layer determinant ',
+             'stack, hardware at the bottom and intrinsic ',
+             'non-determinism at the top, each bar colored by the ',
+             'rung that secures it across the book. This chapter ',
+             'highlights no layer of its own; every layer is shown ',
+             'faded, as secured or validated elsewhere in the ',
+             'book.')))
+  }
+
   sprintf(
     paste0('A horizontal bar chart of the nine-layer determinant ',
            'stack, hardware at the bottom and intrinsic ',
