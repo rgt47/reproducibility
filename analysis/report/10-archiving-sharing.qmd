@@ -45,9 +45,9 @@ to:
 
 We arrive at the last question a reproducible analysis
 must answer, and it is not a technical question but a
-social and temporal one. The nine chapters preceding
-this one were concerned with a single machine and a
-single analyst: how to pin the packages (@sec-dependencies),
+social and temporal one. Every earlier chapter was
+concerned with a single machine and a single analyst:
+how to pin the packages (@sec-dependencies),
 fix the environment (@sec-containers), render the
 report (@sec-literate), and validate the whole with
 tests and continuous integration (@sec-verification).
@@ -274,15 +274,23 @@ that is worth restating in our terms: pushing the image
 to a registry is optional, and if the image is not
 available, building from the Dockerfile reproduces the
 environment. We should qualify that claim, in keeping
-with this chapter's own discipline: a rebuild is
-byte-for-byte identical only when the base image is
-pinned by content digest and the package snapshot is
-dated, as @sec-containers urged; a recipe pinned by a
-mutable tag, or drawing on a rolling snapshot,
-reconstructs a functionally equivalent environment
-rather than a bit-identical one. The image is the fast
-path; the recipe is the guarantee. A team that treats the pushed
-image as authoritative, and lets the Dockerfile drift
+with this chapter's own discipline: a rebuild reproduces
+the same content, the same base image, R version, and
+package versions, only when the base image is pinned by
+content digest and the package snapshot is dated, as
+@sec-containers urged; a recipe pinned by a mutable tag,
+or drawing on a rolling snapshot, reconstructs at best a
+functionally equivalent environment whose content may
+have drifted. Even a correctly digest-pinned,
+dated-snapshot rebuild is not guaranteed byte-for-byte
+identical at the image level, because per-layer
+timestamps ordinarily differ between builds; matching
+content is the guarantee a pinned recipe gives, and
+bit-identical bytes require separate reproducible-build
+tooling (@sec-containers). The image is the fast path;
+the recipe is the guarantee of content, not of bytes.
+A team that treats the pushed image as authoritative,
+and lets the Dockerfile drift
 out of step with it, has quietly converted its
 compendium from something reconstructable into something
 that merely happens to exist, which is exactly the
@@ -417,10 +425,14 @@ procedure serves accessibility, which for restricted
 data means a controlled route rather than an open
 download; a documented, standard container format
 serves interoperability; and a pinned, rebuildable
-environment serves reusability. The archetype-agnostic
-compendium of @sec-compendium is, in this light, a FAIR
-object almost by construction, provided it is deposited
-rather than merely committed.
+environment serves part of reusability. Reusability
+also requires a clear usage license (R1.1 in the
+original principles), which a pinned environment does
+not by itself supply. The archetype-agnostic compendium
+of @sec-compendium is, in this light, most of the way to
+a FAIR object by construction, provided it is deposited
+rather than merely committed and carries an explicit
+license; licensing practice is treated separately.
 
 Two broader efforts are worth the analyst's attention.
 The Whole Tale platform, described by Brinckman and
@@ -563,20 +575,27 @@ question stewardship answers is: when the pins have
 decayed and the archived image was lost or never built,
 can the environment still be recovered?
 
-For the R ecosystem the most useful recovery tool is
-`rang`, described by Chan and colleagues [@chan2023].
-Where the ordinary workflow pins prospectively, by
-recording a lockfile at development time and restoring
-from it, `rang` reconstructs an environment
-retrospectively, from a *date*. Given the date an
-analysis was run, it resolves the package versions
-current on the archives at that date and generates a
-Dockerfile that can often reconstruct a period-correct
-environment even when no original lockfile survives. The two approaches are complementary on a time
-axis: the framework of this book enforces consistency
-prospectively over a project's active life, and `rang`
-provides a recovery path retrospectively when that
-consistency has lapsed. A prudent steward records the
+For the R ecosystem a useful recovery tool is `rang`,
+described by Chan and colleagues [@chan2023]. (`rang`
+was archived on CRAN on 2026-08-22; the historical
+versions remain installable from the CRAN archive or
+from its GitHub repository, and the technique it
+illustrates is worth knowing even if the package itself
+needs an alternative source or a successor tool by the
+time a reader needs it.) Where the ordinary workflow
+pins prospectively, by recording a lockfile at
+development time and restoring from it, `rang`
+reconstructs an environment retrospectively, from a
+*date*. Given the date an analysis was run, it resolves
+the package versions current on the archives at that
+date and generates a Dockerfile that can often
+reconstruct a period-correct environment even when no
+original lockfile survives. The two approaches are
+complementary on a time axis: the framework of this book
+enforces consistency prospectively over a project's
+active life, and `rang` provides a recovery path
+retrospectively when that consistency has lapsed. A
+prudent steward records the
 run date in the compendium precisely so that this
 recovery path stays open.
 
@@ -1176,10 +1195,11 @@ performed.
 ## Exercise 5
 
 ```r
-rang::dockerize_rang(
-  rang::resolve(readLines('renv.lock'), snapshot_date = '2026-06-29'),
-  output_dir = 'rang_build'
-)
+lockfile <- renv::lockfile_read('renv.lock')
+pkg_names <- names(lockfile$Packages)
+
+graph <- rang::resolve(pkg_names, snapshot_date = '2026-06-29')
+rang::dockerize(graph, output_dir = 'rang_build')
 ```
 
 The comparison typically shows most packages matching and

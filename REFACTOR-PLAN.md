@@ -2194,6 +2194,62 @@ that exits early with zero assertions still counts as passing in
 `run_test_dir()`; the book's `ci/run-tests.R` treats it as a
 failure, the zzcollab Makefile does not.
 
+**Phase 8 (E2, Tier 2 and 3), 2026-10-11.** Book branch
+`phase-8-tier2`, built on `phase-6-tier1`; two commits: one for the
+generator's baseline-exclusion fix (below), one for the chapter
+corrections. All local; nothing pushed.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Finding 17 / T2-26, cohort baseline-prevalent cases | 400 people are screened; those meeting the HbA1c diagnostic threshold at baseline are excluded before the outcome is drawn, leaving 337 at-risk people (338 rows with the duplicate); MD5 `63665139...` to `4c8ca6ed60bc25ff679ac87717fd7308` (Phase 6) to `c9c8e19173397c2c2b6ceb073b2ba1cf` | V lead regeneration (0 rows with baseline HbA1c >= 6.5); V tests 185/0. The outcome model stays logistic, as `R/cohort.R`'s `fit_model()` expects; a true time-to-event analysis using `followup_days` is explicitly left as future work (Phase 10), not attempted, since it would require rewriting `fit_model()`, `bootstrap_ci()`, and every chapter and test built on their `glm`-shaped output |
+| T2-28 'twelve-week course' | 00-intro now says the book is organized in four parts, written for a one-quarter ten-week course, with some material optional at that pace; no promise of a core-path marker that does not yet exist | I lead, hand-edited |
+| Decimal-mark / locale (05) | Rewritten: R holds `LC_NUMERIC` at `C` regardless of locale, so `as.numeric()` never varies; reframed the misread as an external-tool/ingest problem; added a genuine locale effect (sort order, month names) to justify pinning `LANG`/`LC_ALL` | A-V (locale switched, confirmed); V lead re-ran independently, same result |
+| fig-tag-digest illustrative digest (05) | Parenthetical added noting the truncated digests are illustrative, pointing to the showcase Dockerfile's full digest as the real one | A-I |
+| Nüst citation (05) | Softened to: the paper argues for version tags/pinning, stops short of digest pins or dated snapshots, which the chapter adds itself | A-I (fetched paper); V lead independently fetched the same paper, confirmed |
+| Apptainer/Docker claims (06) | 'Same content digest carries through' and 'provably the one used on the laptop' softened; `$HOME`/env leakage and `--cleanenv` noted; Windows conda/Docker claim softened | A-I / EK (labeled) |
+| Simpson figure alt text (07) | Rewritten to 'nearly flat with a slight downward tilt'; a sentence added that the reversal is in sign, not magnitude | A-V; V lead independently re-ran the exact chunk: per-species slopes 0.1806/0.1293/0.1452, pooled -0.0606, matches exactly |
+| rocker/verse PDF claim (07) | Softened: a base TeX Live sufficient for straightforward renders, not a full distribution; some documents need `tlmgr` installs | A-I zzcollab's own ~24-package pre-install |
+| ch09 Exercise 3 / `tbl-integrity` hashing (09) | Exercise rewritten to ask why a digest is wrong for estimates; solution explains serialization is not a value comparison, points to `expect_equal(..., tolerance = ...)`; `tbl-integrity` itself was already correct (file-byte hashing) | A-V (digest changes on a tolerance-level nudge); V lead independently reran: `all.equal` true, digest differs |
+| ch09 Exercise 4 Make targets (09) | `make render` replaced with `make docker-render-book`; prose now names the real render targets | A-I zzcollab Makefile; V lead grep confirmed `docker-render-book`, `check`, `check-renv` exist, no plain `render` |
+| `renv::snapshot()` / DESCRIPTION (09) | Checked: no passage claims `snapshot()` updates DESCRIPTION; confirmed correct, no change needed | A-V scratch test |
+| ch08 coxph/`expect_inherits` | No `coxph` reference exists in ch08; already resolved, no action needed | A-I grep; V lead grep confirmed |
+| `rang` archived / wrong API (10) | Noted as archived (2026-08-22); `dockerize_rang()` replaced with the real `resolve()`/`dockerize()` API | A-I (CRAN, GitHub README); V lead independently fetched CRAN archive page and GitHub README, confirmed both |
+| 'nine chapters' (10) | Reworded to 'Every earlier chapter...', avoiding a count that goes stale again | A-I (`_quarto.yml` count: 12); V lead recounted independently, confirmed 12 |
+| 'byte-for-byte' (10) | Softened to match ch05: a pinned/dated rebuild reproduces the same content, not guaranteed byte-identical | A-I cross-check against 05 |
+| FAIR mapping / license (10) | 'A FAIR object almost by construction' softened to 'most of the way', conditioned on an explicit license (R1.1); no new section (Phase 11 scope) | A-I |
+| pipelines Exercise 3 `format = 'file'` | Split into a file target and a read target, mirroring the chapter's own correct pattern | Reported as inspected only (agent's `targets`/`igraph` build failed on host and stalled under Docker emulation); V lead ran both the original buggy and the fixed pipeline in `rocker/r-ver:4.6.0` (`--platform linux/amd64` + `libglpk40`): buggy version fails with exactly the diagnosed error, fixed version completes all 4 targets, `targets` 1.12.0 confirmed |
+| skipped-target console text (pipelines) | Reworded to say current `targets` shows a skip count, not enumerated names | Reported as inspected only; V lead confirmed `targets` 1.12.0 is the version in use (matches the version this behavior change applies to) |
+| 'ratios are durable' (pipelines) | Softened: repeated runs vary several-fold; ratios are illustrative, not stable | A-V (an earlier reviewer's 85/101/284 across three runs), not independently re-run this phase |
+| renv citation (04, 05, 06) | `ushey2020` entry corrected in place (kept the existing key, since it is cited by that key in three chapters): `@manual`, year 2026, authors Ushey and Wickham, 'R package version 1.2.3' | V lead (`packageDescription('renv')`: 1.2.3, packaged 2026-05-16, Wickham now a listed author) |
+| 'Controlled access' / 'Data-availability statement' glossary entries | Added in alphabetical position, matching the existing format | I lead, hand-written |
+
+One process note: an agent working on 04/05/06 created a stray
+`scratchpad/` directory inside the book repository itself (wrong
+path; the session scratchpad is outside the repo) and wrote a
+renv-citation proposal and a locale test script into it. Both were
+untracked, matched the fix already applied independently by the
+lead, and were deleted before committing; nothing from that
+directory reached a commit.
+
+Render: freeze cleared for the 7 touched chapters; first attempt
+failed with a transient network error fetching the CSL style from
+`zotero.org` (confirmed reachable on retry, unrelated to any
+content change); retry succeeded, HTML and PDF exit 0, no warnings,
+no unresolved references or missing citations, no literal HTML
+entities outside published reference titles [V]. PDF 440 pages (436
+after Phase 6). Repository test suite 185/185 after Phase 8, run
+from the repository root, confirming Phase 8's chapter-only edits
+did not disturb Phase 6's fixes.
+
+Not done in Phase 8, still outstanding: 'Initialise' (British
+spelling) in `version-control.qmd`'s `tbl-audit-trail`; the vacuous
+hazard-ratio test at `03-research-compendium.qmd:725` (neither file
+was in Phase 8's scope). Both, plus every Priority 1/2/3 addition
+approved under Decision D8 (restricted data detail, licensing,
+`CITATION.cff`, README/data-dictionary sections, git recovery, a
+debugging guide, a shell primer, the HPC section), remain for Phase
+11 (content additions) or a future correctness pass.
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their

@@ -223,7 +223,17 @@ Two rules govern its use, and observing them keeps the
 image pinning of @sec-containers intact. The first is that
 an Apptainer image should be built from the
 digest-pinned Docker image, never authored independently,
-so that the same content digest carries through:
+so that the build recipe stays pinned end to end. The SIF
+file Apptainer produces gets its own content hash,
+computed over the converted single-file format, not the
+same bytes as the Docker digest, so the two checksums
+differ even though the SIF was built deterministically
+from that one pinned digest (expert knowledge, not
+checked against Apptainer's own documentation here:
+Apptainer/Singularity does not claim to preserve the
+OCI digest identity into the SIF's own hash; what is
+pinned is the input to the conversion, not the output's
+checksum):
 
 ```bash
 $ apptainer build env.sif \
@@ -412,20 +422,31 @@ The conda family occupies a genuinely different middle
 ground, and it answers two constraints the container route
 handles awkwardly. Conda [@anaconda2023], with the faster
 resolver `mamba` and the lockfile-oriented `pixi`
-[@pixi2024], reproduces natively on Windows, without the
-Linux-emulation layer a Docker image requires there. It
-also spans R and Python in a single environment, rather
-than forcing the mixed-language analyst to bridge two
-toolchains.
+[@pixi2024], installs and runs directly on Windows, without
+the WSL2 or Hyper-V virtual machine a Docker (or Podman)
+image requires there. This is a genuine practical
+advantage, but it is not a guarantee that any given
+package is available: conda-forge's Windows (`win-64`)
+build coverage for R packages is narrower than its Linux
+coverage, so a pipeline that needs a package without a
+`win-64` build still needs a fallback, and 'reproduces
+on Windows' should be read as 'for the packages that
+conda-forge actually ships there' rather than as a blanket
+claim (expert knowledge, not verified against a current
+`win-64` package listing). Conda also spans R and Python
+in a single environment, rather than forcing the
+mixed-language analyst to bridge two toolchains.
 For a Windows-only laboratory running a pipeline that mixes
-the two languages, this is a decisive practical advantage.
-The cost is rigor: conda draws its packages from
-conda-forge rather than from CRAN or the Posit Package
-Manager, and it pins less strictly than Nix. It is, in the
-honest accounting, a middle-ground option, more reproducible
-than an unpinned install and less exacting than Nix. It
-is the right choice precisely when its two native strengths,
-Windows and mixed languages, are the binding constraint.
+the two languages and whose packages are available on
+`win-64`, this is a decisive practical advantage. The cost
+is rigor: conda draws its packages from conda-forge rather
+than from CRAN or the Posit Package Manager, and it pins
+less strictly than Nix. It is, in the honest accounting, a
+middle-ground option, more reproducible than an unpinned
+install and less exacting than Nix. It is the right choice
+precisely when its two native strengths, running directly
+on Windows and spanning two languages, are the binding
+constraint and the required packages are available there.
 
 ::: {.callout-important}
 ## The honest level
@@ -630,13 +651,23 @@ When a sensitivity analysis must be repeated across many
 simulated cohorts, the work moves to the university
 cluster. The analyst builds a SIF from the same digest and
 submits it to the scheduler; nothing is rebuilt, and the
-environment is provably the one used on the laptop:
+image contents are the same ones pinned on the laptop,
+because the SIF was built from that one digest and not
+reauthored. That pins the recipe, not the run: by default
+Apptainer mounts the user's `$HOME` and passes most host
+environment variables through into the container (expert
+knowledge, not verified here against a primary source),
+so a stray `R_LIBS_USER` or locale variable set on the
+cluster login node can still leak into execution even
+though the image itself did not change. The `--cleanenv`
+flag drops the inherited environment and isolates `$HOME`,
+and is the right default for a verified run:
 
 ```bash
 $ apptainer build cohort-env.sif \
     docker://ghcr.io/lab/cohort-env@sha256:9f2c...
 
-$ apptainer exec cohort-env.sif \
+$ apptainer exec --cleanenv cohort-env.sif \
     Rscript -e 'source("analysis/simulate.R")'
 ```
 

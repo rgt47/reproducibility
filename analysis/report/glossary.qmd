@@ -103,6 +103,13 @@ recipe, that carries the operating system, the system libraries,
 and the language runtime, and runs identically wherever a
 container runtime runs. (@sec-levels)
 
+**Controlled access.** A deposit arrangement in which a
+repository holds restricted data behind an approval process,
+rather than releasing it on request, so that a data-use
+agreement and the terms a participant consented to are
+honored while the record stays discoverable and citable.
+(@sec-archiving)
+
 **Continuous integration (CI).** A hosted service that, on every
 committed change to a repository, checks out the code onto a
 fresh virtual machine, rebuilds the project, and runs a defined
@@ -116,6 +123,13 @@ set of checks, reporting success or failure automatically.
 with elevated privilege. Docker relies on one; Podman and
 Apptainer do not, which is why they run without administrative
 rights. (@sec-backends)
+
+**Data-availability statement.** A sentence in a manuscript,
+or in its compendium, naming where the data behind its
+results can be obtained: an open deposit's DOI, the name and
+access route of a controlled-access repository, or the
+terms under which the data cannot be shared at all.
+(@sec-archiving)
 
 **Data-validation test.** A check on the data itself rather than
 the code: that a value lies in a plausible range, that no

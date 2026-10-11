@@ -284,7 +284,7 @@ untidiness is where the argument lives.
 
 ```{r}
 #| label: tbl-pipeline-steps
-#| tbl-cap: 'The retinopathy analysis expressed as a dependency graph, with the cost of each step measured rather than asserted. The timings are from one run on one machine and will differ on another; their ratios are the durable part. Note that the two expensive steps sit at the end, so an edit to the plotting code that forced a full rebuild would waste almost all of the total.'
+#| tbl-cap: 'The retinopathy analysis expressed as a dependency graph, with the cost of each step measured rather than asserted. The timings are from one run on one machine and will differ on another, and repeated runs on the same machine have varied by several-fold; even the ratios between steps should be read as illustrative, not as a stable property of the analysis. Note that the two expensive steps sit at the end, so an edit to the plotting code that forced a full rebuild would waste almost all of the total.'
 
 library(tibble)
 library(knitr)
@@ -611,9 +611,12 @@ tar_make()
 On the first run every target builds and `targets`
 reports each in turn. Edit `make_figures()` and run
 `tar_make()` again, and the output is eloquent: `targets`
-reports that `figures` and `report` are built and that
-`raw_data`, `cleaned`, and `model` are skipped, each
-marked as already current. The analyst did not have to
+names `figures` and `report` as built, and reports
+`raw_data`, `cleaned`, and `model` as already current; in
+`targets` 1.12 and later the up-to-date targets are
+summarized as a count in the progress display rather than
+listed by name, but the distinction between what rebuilt
+and what did not is unchanged. The analyst did not have to
 remember which steps the edit affected; the tool derived
 it from the graph and the hashes. And a companion command,
 `tar_outdated()`, answers the end-to-end doubt directly,
@@ -931,9 +934,11 @@ payoff arrives. A correction to the raw data, followed by
 `tar_make()`, rebuilds all five downstream targets and skips
 nothing, because everything depends on the data. A refinement to
 `make_figures()`, followed by `tar_make()`, rebuilds only
-`figures` and `report`, and the console reports `raw_data`,
-`cleaned`, and `model` as skipped; the model fit, the expensive
-step, is preserved untouched. A change to the wording of the
+`figures` and `report`; `raw_data`, `cleaned`, and `model`
+are left untouched, the model fit, the expensive step,
+among them. In current versions of `targets` the console
+marks the untouched targets with a skip count rather than
+naming each one. A change to the wording of the
 discussion in `report.Rmd` rebuilds `report` alone. At any
 moment `tar_outdated()`
 answers the question the manual workflow could never answer with
@@ -1166,13 +1171,28 @@ declares the targets that call them:
 
 ```r
 list(
-  tar_target(raw, read_raw('data/raw_data/cohort.csv'),
-             format = 'file'),
+  tar_target(
+    raw_file,
+    'data/raw_data/cohort.csv',
+    format = 'file'
+  ),
+  tar_target(raw, read_raw(raw_file)),
   tar_target(cleaned, clean_cohort(raw)),
   tar_target(model, fit_model(cleaned)),
   tar_target(figures, make_figures(model))
 )
 ```
+
+`format = 'file'` belongs on `raw_file`, not on `raw`: it
+tells `targets` to hash the file at the path a target
+returns, and only `raw_file` returns a path (the string
+literal above). `raw` returns the data frame that
+`read_raw()` builds from that path, so declaring it
+`format = 'file'` makes `targets` try to hash a data frame
+as if it were a file path and error. The two-target split,
+one target for the tracked file and one for the object
+read from it, mirrors the pattern used earlier in this
+chapter for the same reason.
 
 `tar_visnetwork()` should show the same nodes and arrows
 as the hand drawing. A mismatch is informative and usually

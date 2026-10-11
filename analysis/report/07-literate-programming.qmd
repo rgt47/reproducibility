@@ -327,7 +327,7 @@ therefore disagree with the sentences around it.
 ```{r}
 #| label: fig-simpson
 #| fig-cap: 'The reversal of an association upon pooling. Within each synthetic species bill depth rises with bill length (solid lines); across the pooled sample the fitted line falls (dashed). Because the figure is computed when the book is built, the described reversal cannot drift from the code that produces it.'
-#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species, each drawn in its own color. Within every species the points trend upward and carry a solid fitted line of positive slope. A single dashed line fitted to all the points pooled together runs downward across the whole plot, in the opposite direction to all three within-species lines, because the species clusters sit at descending heights as bill length increases.'
+#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species, each drawn in its own color. Within every species the points trend upward and carry a solid fitted line of positive slope. A single dashed line fitted to all the points pooled together is nearly flat with a slight downward tilt, the opposite sign from all three within-species lines, because the species clusters sit at descending heights as bill length increases.'
 #| echo: true
 #| message: false
 #| warning: false
@@ -376,10 +376,14 @@ ggplot(penguin_like,
 Within each of the three synthetic species, bill depth
 rises with bill length: the three solid lines slope
 upward. Pooled across the species, the relationship
-reverses, and the dashed line slopes down, because
-across species longer bills are associated on average
-with shallower ones. This is Simpson's paradox, and it is a
-useful thing for a figure to show. For our purposes,
+reverses sign, and the dashed line comes out nearly
+flat with a slight downward tilt rather than a steep
+descent, because across species longer bills are
+associated on average with shallower ones. The reversal
+here is real but modest: it is the sign of the pooled
+slope that flips, not its magnitude that grows. This is
+Simpson's paradox, and it is a useful thing for a figure
+to show. For our purposes,
 however, the statistical lesson is secondary. The
 methodological lesson is that the preceding paragraph is
 safe to write. If a later edit changed the synthetic
@@ -604,17 +608,24 @@ failing on a machine where the HTML render succeeds. This
 is precisely the environmental problem the earlier
 chapters solved, and it is why the framework's publishing
 profile exists. The publishing profile builds on the
-`rocker/verse` base image, which carries a LaTeX
-distribution baked in, so that a PDF render works inside
-the container with no runtime install. A project that
-renders to PDF chooses the publishing profile at
-initialization; a project that renders only to HTML does
-not need it, and pays neither the build time nor the
-image size that the LaTeX toolchain costs. The playbook
-that migrates a compendium to the publishing profile
-turns on exactly this question: it scans every report's
-YAML for a `pdf_document` or `latex_engine` output and,
-finding one, concludes that the verse base is required.
+`rocker/verse` base image, which carries a base LaTeX
+distribution sufficient for a straightforward render:
+plain prose, ordinary tables, standard mathematics. It
+does not carry a full LaTeX distribution, so a document
+that reaches for a package the base omits, dense tables,
+`moderncv`-style layouts, and similar, still needs that
+package installed with `tlmgr` before it will render.
+zzcollab's own publishing profile pre-installs roughly two
+dozen such packages at image build time precisely because
+the base image does not ship them. A project that renders
+to PDF chooses the publishing profile at initialization;
+a project that renders only to HTML does not need it, and
+pays neither the build time nor the image size that the
+LaTeX toolchain costs. The playbook that migrates a
+compendium to the publishing profile turns on exactly this
+question: it scans every report's YAML for a
+`pdf_document` or `latex_engine` output and, finding one,
+concludes that the verse base is required.
 
 The general principle is the one that runs through the
 whole book. The literate document declares what it wants

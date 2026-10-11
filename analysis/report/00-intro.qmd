@@ -547,8 +547,11 @@ exposed.
 
 ## The plan of this book
 
-The book is a twelve-week course in four parts, and three
-ideas recur in every chapter. The first is the ladder of
+The book is organized in four parts, and three ideas recur
+in every chapter. It is written for a one-quarter, ten-week
+course; not every chapter fits in ten weeks, and an
+instructor teaching on that schedule should expect to treat
+some material as optional. The first is the ladder of
 reproducibility levels (L0 locatable, L1 pinned packages,
 L2 pinned environment, L3 verified), introduced in
 @sec-levels and used thereafter as the common scale. The

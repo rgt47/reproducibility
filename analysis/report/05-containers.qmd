@@ -334,10 +334,18 @@ reproducible only if the recipe that builds it is, and
 the naive recipe is not. Two refinements separate a
 container that merely runs today from one that will
 rebuild to the same image next year. Nüst and
-colleagues collect the full set of practices in their
-ten simple rules for writing Dockerfiles for
-reproducible data science [@nust2020]; the two that do
-the most work are the following.
+colleagues, in their ten simple rules for writing
+Dockerfiles for reproducible data science [@nust2020],
+argue for pinning software versions explicitly and for
+naming version-specific image tags rather than `:latest`,
+while cautioning that even a version-specific tag is not
+a guarantee against change, since the maintainer can
+still rebuild and repoint it (inspected: the published
+rules recommend version tags, not cryptographic digests,
+and do not discuss dated package-repository snapshots).
+This chapter takes that caution one step further than
+their rules do, with two refinements that do the most
+work here:
 
 The first refinement pins the base image by its
 **digest** rather than by a **tag**. A tag such as
@@ -362,7 +370,12 @@ forever. Pinning the digest is the difference between a
 year to show what the difference costs. The recipe is not
 edited at any point in either row; the only thing that
 varies is whether its `FROM` line names the tag or the
-digest. Note that nothing in the upper row is an error or
+digest. (The digest strings shown here and in the figure,
+such as `sha256:1c2f...e8a9` and `sha256:6f05...`, are
+truncated for display and illustrative only; a digest
+copied for actual use must be the full 64-character hash,
+such as the one the showcase Dockerfile below carries.)
+Note that nothing in the upper row is an error or
 a misconfiguration on the maintainer's part. Repointing a
 tag to patch a security flaw is the correct thing for
 them to do, which is exactly why a tag cannot carry a
@@ -606,21 +619,33 @@ line each.
 
 The first is the **locale**, carried in `LANG` and
 `LC_ALL`, which governs, among other things, how text is
-sorted and how numbers are formatted and parsed. A
-locale that uses a comma as the decimal mark, common
-across much of Europe, writes the number one and a half
-as `1,5`, whereas a locale that uses a period writes
-`1.5`. Code that reads a data file written under one
-convention on a machine configured for the other will
-not error. It will misread the numbers. To make the
+sorted and how dates and numbers are formatted for
+display. R's own numeric parsing is not one of the
+things it governs: `LC_NUMERIC` is pinned to `"C"` inside
+R regardless of what `LANG` or `LC_ALL` say, so
+`as.numeric('1,5')` returns `NA` with a coercion warning
+under any locale the host or container sets (verified by
+calling `Sys.setlocale('LC_ALL', 'fr_FR.UTF-8')` and
+confirming `Sys.getlocale('LC_NUMERIC')` still reports
+`'C'` and `as.numeric('1,5')` is still `NA`). The risk is
+not that R silently reparses a number under a different
+convention; it is that data arriving from *outside* R
+already carries a convention baked in. A locale that
+uses a comma as the decimal mark, common across much of
+Europe, writes the number one and a half as `1,5` in a
+spreadsheet or CSV export, and an ingest step that
+assumes a period decimal mark, perhaps a hand-written
+regex that strips what it takes to be thousands
+separators, will misread it without erroring. To make the
 failure concrete, consider the same numeric vector
-written under each convention, and what a parser that
-assumes a period decimal mark reads back from the
+written under each convention by an external tool such
+as a spreadsheet application, and what a naive
+period-assuming cleaning step reads back from the
 comma-convention strings.
 
 ```{r}
 #| label: tbl-decimal-mark
-#| tbl-cap: 'The same numbers written under a period decimal mark and a comma decimal mark, and what a parser assuming a period reads back from each. The comma-convention values are silently misread, with no error raised.'
+#| tbl-cap: 'The same numbers written under a period decimal mark and a comma decimal mark, as a spreadsheet export might write them, and what a naive period-assuming cleaning step reads back from each. The comma-convention values are silently misread, with no error raised.'
 library(tibble)
 
 x <- c(1.5, 2200.75, 0.333)
@@ -647,12 +672,24 @@ The parsed values are not approximately wrong; they are
 wildly wrong, and nothing warns the analyst. The number
 `1.5` returns as `1500`, the number `2200.75` as
 roughly `2.2`, and the number `0.333` as `333`, because
-the period-assuming parser treats the European comma as
-noise and strips it. Fixing `LANG` and `LC_ALL` in the
-image removes the ambiguity: every container runs under
-the one declared locale, so the parse is the same
-everywhere the image runs. This is exactly why the
-Dockerfile above sets both to `en_US.UTF-8`.
+the period-assuming cleaning step treats the European
+comma as noise and strips it. This is a failure of the
+ingest code, not of R's parser, but pinning `LANG` and
+`LC_ALL` in the image still matters for the parts of R
+that genuinely do depend on locale: collation and
+formatted output. Sorting the strings
+`'cote'`, `'côte'`, `'coté'`, `'coter'` with
+`sort()` returns a different order under `LC_ALL=C` than
+under `LC_ALL=fr_FR.UTF-8` (verified), and
+`format(Sys.Date(), '%B')` prints an English month name
+under one and a French month name under the other
+(verified). A report that sorts a table of names, or
+prints a month in running text, will read differently
+on two machines that disagree about locale even though
+every number in it was parsed identically. Fixing `LANG`
+and `LC_ALL` in the image removes that variability, which
+is exactly why the Dockerfile above sets both to
+`en_US.UTF-8`.
 
 The second is the **time zone**, carried in `TZ`. Date
 and time arithmetic depends on it, and an analysis that
@@ -1299,9 +1336,13 @@ own.
 
 On making a container genuinely reproducible rather than
 merely convenient, the essential reference is @nust2020,
-whose ten simple rules for writing Dockerfiles codify
-the digest pin, the dated snapshot, and much else this
-chapter has drawn from. Read it as a checklist against
+whose ten simple rules for writing Dockerfiles argue for
+version-specific image tags over `:latest`, explicit
+version pinning, and much else this chapter has drawn
+from. The published rules stop short of recommending a
+digest pin or a dated package snapshot (inspected); this
+chapter adds both as a stronger discipline on top of
+that checklist. Read the ten rules as a baseline against
 any Dockerfile one is asked to trust.
 
 For the division of labor between the container and the

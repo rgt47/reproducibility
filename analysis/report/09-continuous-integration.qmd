@@ -1231,15 +1231,21 @@ the analyst must verify and cannot delegate.
    and say which gate, verification or data integrity,
    addresses it.
 
-3. **What to hash.** Take the code in @tbl-integrity as a
-   starting point. Extend it to hash a small linear model
-   object fitted to the synthetic `cohort` data with
-   `lm(outcome ~ arm, data = cohort)`, record the digest,
-   refit the identical model, and confirm the digest is
-   unchanged. Then alter one outcome value, refit, and
-   confirm the digest changes. Explain why hashing the model
-   object is a sound verification target whereas hashing a
-   plot of the model would not be.
+3. **What a digest can and cannot tell you.** Take the code
+   in @tbl-integrity as a starting point. Extend it to hash
+   the coefficients of a small linear model fitted to the
+   synthetic `cohort` data with `lm(outcome ~ arm, data =
+   cohort)`, record the digest, refit the identical model in
+   the same session, and confirm the digest is unchanged.
+   Then alter one outcome value, refit, and confirm the
+   digest changes. Explain why this hash reliably detects
+   that *something* changed, and then explain why it is
+   still the wrong tool for the question a baseline test
+   answers, whether a reported estimate has drifted: say
+   what would make the digest an unreliable guard even when
+   the coefficients themselves are unchanged, and why a
+   tolerance-based comparison is the correct instrument for
+   a floating-point result.
 
 4. **Two dialects.** Take the condensed GitHub Actions
    workflow shown in this chapter and translate it into the
@@ -1367,23 +1373,54 @@ m3 <- lm(outcome ~ arm, data = cohort)
 digest(coef(m3), algo = 'sha256') == d1     # FALSE
 ```
 
-Refitting the identical model to identical data gives an
-identical digest; altering one outcome value changes it.
+Refitting the identical model to identical data, in the
+same session, gives an identical digest; altering one
+outcome value changes it (verified above: `TRUE` then
+`FALSE`, on R 4.6.1).
 
-**Why the model object is a sound target.** The
+**Why the digest is sensitive to any change.** The
 coefficients are a deterministic function of the data and
 the model specification. Nothing about the time of
 fitting, the machine's fonts, or the session's history
-enters them. So the digest changes exactly when a number
-changes and not otherwise, which is what makes a failure
-informative.
+enters them, so within one session and platform the digest
+changes exactly when a number changes and not otherwise.
+
+**Why it is still the wrong tool for verification.** A
+digest compares serialized *bytes*, not numeric *values*.
+R's own documentation for `serialize()` (the mechanism
+`digest()` and `saveRDS()` both rely on) states that the
+default serialization format changed from version 2 to
+version 3 in R 3.6.0, and warns explicitly that 'the
+serialization format may change in future versions of R, so
+this interface should not be used for long-term storage of
+R objects' (`?serialize`, inspected). Nothing guarantees
+that two R versions, or two platforms, serialize an
+identical numeric vector to identical bytes; an added
+attribute, a changed internal representation, or a future
+format bump can flip the digest while every coefficient is
+still correct to the last bit. That makes a coefficient
+digest a plausible false-positive generator across
+upgrades, exactly the failure mode this book's baseline
+test is built to avoid by comparing *values* with
+`expect_equal(..., tolerance = ...)` rather than comparing
+serialized bytes with `==`. The digest in @tbl-integrity is
+defensible because it targets the raw data bytes on disk,
+where byte-for-byte identity is the actual requirement;
+reused on a fitted model's coefficients, it answers a
+different, stricter question ('are the bytes identical')
+than the one a reproducibility check needs answered ('is
+the value the same within tolerance'), and will occasionally
+answer it wrong in a way that looks like a false alarm.
 
 One practical refinement the exercise invites. Digesting
 the whole `lm` object rather than `coef()` is fragile,
 because the object stores the call and a `terms`
 environment, which can carry incidental references. Hashing
 the coefficient vector, or a named list of the quantities
-actually reported, is the more robust choice.
+actually reported, is more robust against incidental
+differences, but does not remove the cross-version risk
+above; a baseline test with a stated tolerance remains the
+right tool for verifying that an estimate has not drifted.
 
 **Why hashing a plot would not be sound.** A rendered plot
 is an image file, and image files embed creation
@@ -1409,7 +1446,7 @@ check:
   image: rocker/verse:4.4.0
   script:
     - make check
-    - make render
+    - make docker-render-book
     - make check-renv
 ```
 
@@ -1436,12 +1473,25 @@ selecting what runs when.
 entirely about *orchestration*: what runs, in what order,
 on what trigger. The check logic itself, run `R CMD check`,
 render the report, verify the manifests, is identical in
-both and belongs in neither file. Putting it behind
-`make check`, `make render`, and `make check-renv` leaves
-each CI file a thin shim naming the image and calling
-three targets. The logic is then single-sourced, testable
-locally with the same command CI runs, and portable to a
-third forge for the cost of one more shim.
+both and belongs in neither file. Putting it behind named
+targets leaves each CI file a thin shim naming the image
+and calling a short list of them. The logic is then
+single-sourced, testable locally with the same command CI
+runs, and portable to a third forge for the cost of one
+more shim. This is not a hypothetical convenience: a
+zzcollab-scaffolded compendium's own `Makefile` already
+ships `check` (`R CMD check --as-cran`, building first) and
+`check-renv` (the dependency-manifest gate, run on the
+host) as real targets, along with archetype-specific render
+targets such as `docker-render-book` for a Quarto book, so
+the two `.yml` files above can call them as written rather
+than reimplementing the check logic inline. There is no
+plain `make render` target; the render step's actual name
+depends on the archetype (`docker-render-qmd` for a single
+report, `docker-render-book` for a book, `docker-render` for
+an `.Rmd` report), so a reader adapting this exercise to
+their own compendium should name the target that matches
+it, not assume `render` is a zzcollab convention.
 :::
 
 ::: {.callout-note icon=false collapse=true}
