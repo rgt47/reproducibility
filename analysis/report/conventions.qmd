@@ -1,4 +1,4 @@
-# Conventions {.unnumbered}
+# Conventions {#sec-conventions .unnumbered}
 
 This page summarizes the visual and structural conventions
 used throughout the book.
@@ -25,24 +25,42 @@ Inline code is in `monospace`. File and directory names
 (`renv.lock`, `analysis/`) and command names (`make`, `zzc`)
 are also set in monospace.
 
-## Callouts
+## The chapter card
 
-Four callout types appear:
+Each numbered chapter opens with a card: an estimated
+reading time, the chapters and the statistical knowledge it
+assumes, three to five objectives phrased as questions the
+reader should be able to answer by the end, and a short
+outline of what follows. A reader who already knows the
+material can check the objectives and skip ahead.
 
-::: {.callout-tip}
-## Tip
+## Where a chapter sits on the stack
 
-A small practical recommendation.
-:::
+A computational result rests on nine layers, from the
+hardware at the base to intrinsic non-determinism at the
+top (@sec-levels works through all nine). Most chapters
+open with a figure placing that chapter on the stack, with
+the layers it **captures**, pins for the first time, drawn
+in full color, and the layers it **validates**, checks
+without itself pinning anything new, outlined. Every such
+figure is a call to the same function, `plot_determinant_stack()`,
+and its alt text is computed from the same call that draws
+the figure, so the two cannot describe different layers.
+
+## The folded Check
+
+Most numbered sections end with a folded Check: a short
+question testing comprehension of the section just read,
+with the answer folded inside it so that attempting the
+question is not optional. Expand the box to read the
+question, attempt an answer, and only then expand the
+Answer nested inside it.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: example
 
 A short question testing comprehension of the just-read
-material. Expand this box to read the question, attempt an
-answer, and only then expand the answer nested inside it.
-The two are separated deliberately: the attempt is what
-makes the check worth doing.
+material.
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -52,33 +70,53 @@ rather than the conclusion alone.
 :::
 :::
 
-::: {.callout-warning}
-## Warning
+## Callouts
 
-A pitfall the reader may otherwise hit.
+Three kinds of callout appear, each with one job.
+
+::: {.callout-tip icon=false}
+## Verification
+
+How to see that a claim actually holds, and, just as
+important, how to make it fail on purpose. A gate that
+cannot fail is not a gate.
 :::
+
+::: {.callout-warning}
+## Pitfall
+
+A specific way the preceding technique goes wrong in
+practice, not a generic warning.
+:::
+
+::: {.callout-important}
+## Restricted data
+
+Where protected, identifiable, or data-use-agreement
+restricted data may and may not go: which endpoints,
+which tools, which repositories. This callout appears
+wherever a technique could tempt a reader into committing,
+depositing, or pasting such data.
+:::
+
+A fourth, smaller device, the honest level, closes most
+chapters: one sentence naming the rung the chapter's own
+practice reaches and what it still leaves exposed, not a
+recital of the whole ladder.
 
 ::: {.callout-important}
 ## The honest level
 
-A reminder that a reproducibility claim must be matched to
-the level actually reached, never asserted above it.
+One sentence, specific to this chapter, not the whole
+ladder.
 :::
 
-## The reproducibility levels
+## Habits
 
-Throughout the book, an analysis is placed on a four-rung
-ladder, and the reader is trained to name the rung:
-
-- **L0, locatable.** Under version control; the source can
-  be found, but no computational input is pinned.
-- **L1, pinned packages.** The package versions are fixed
-  by a lockfile.
-- **L2, pinned environment.** The operating system, the
-  runtime, and the system libraries are fixed as well,
-  usually in a container.
-- **L3, verified.** The recorded computational outputs have
-  been regenerated and shown to match.
+Seven numbered habits recur across the book, introduced in
+full in @sec-intro and recalled in the closing chapter. A
+rule of thumb in a chapter cites its habit by number, for
+example 'habit 4', rather than restating it.
 
 ## The two datasets
 
@@ -121,6 +159,35 @@ Invented messiness is tidier and stranger than the
 messiness of an actual registry export, and a reader who
 has only ever met generated data will be surprised by their
 first real one.
+
+The cohort compendium is still taking shape across the
+book's chapters; not every chapter uses it yet, and a
+reader who notices a chapter working from a different
+example is seeing that in progress, not a different design.
+
+## The one-quarter core path
+
+The book is written for a one-quarter, ten-week course. The
+table below marks a core path through it; a chapter marked
+optional is not weaker material, only material a ten-week
+schedule has no room for. An instructor with more time, or
+a reader working alone, can take the whole book in order.
+
+| Chapter | Status |
+|---|---|
+| Introduction | Core |
+| The Reproducibility Crisis | Core |
+| Levels of Reproducibility | Core |
+| Version Control with Git and GitHub | Core |
+| The Research Compendium | Core |
+| Pinning Packages with renv | Core |
+| Pinning the Environment with Docker | Core |
+| Backends and Runtimes: Nix, Podman, and Apptainer | Optional |
+| Literate Programming and the Rendered Report | Core |
+| Automating the Analysis: Make and targets | Core for the Make section; `targets`, Snakemake, Nextflow, and workflowr are optional |
+| Testing and Code Quality | Core |
+| Continuous Integration and Verification | Core |
+| Collaboration, Archiving, and Stewardship | Core |
 
 ## Cross-references
 

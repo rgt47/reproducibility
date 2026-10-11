@@ -1377,3 +1377,9 @@ finishes this book with the judgment to name the level
 a given analysis has reached, across whatever archetype
 the work takes, and the honesty to claim no more, has
 learned the one thing the book most wished to teach.
+
+The introduction named seven habits that recur across
+every chapter since. They are worth gathering here, once
+more, as the book's last word rather than its first.
+
+{{< include _habits.qmd >}}

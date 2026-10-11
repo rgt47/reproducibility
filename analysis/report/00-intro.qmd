@@ -590,3 +590,11 @@ their own and, more durably, with the judgment to reason
 about reproducibility with any toolchain and to state,
 without flinching, the level a given analysis has actually
 reached.
+
+Seven habits recur across the chapters that follow, each a
+concrete instinct rather than a slogan, and a chapter's own
+rules of thumb will cite one by number rather than restate
+it. The closing chapter recalls them once the book's
+argument is complete.
+
+{{< include _habits.qmd >}}

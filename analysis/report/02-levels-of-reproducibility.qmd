@@ -15,6 +15,14 @@ Computational Science* (2011)
 ```
 :::
 
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so a later chunk's
+# `fig-alt` option can compute its text from the same call that
+# draws the figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
+
 ## Learning objectives
 
 By the end of this chapter the reader should be able
@@ -222,58 +230,13 @@ ladder at all.
 
 ```{r}
 #| label: fig-determinant-stack
-#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, colored by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
-#| fig-alt: 'A horizontal bar chart of nine stacked layers, hardware at the bottom and intrinsic non-determinism at the top, each bar colored by the rung that secures it. Hardware, numerical libraries, and intrinsic non-determinism are colored as unpinned by any rung; the operating system, system libraries, and R runtime are colored L2; package versions are colored L1; analysis code and input data are colored L0, that is, locatable only. Session configuration is colored L2 but is noted as only partially pinned.'
+#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, colored by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder. Every chapter that draws this stack draws it with the same function, as the [Conventions](conventions.qmd) page explains, so that no two chapters can disagree about what a layer is called or which rung secures it.'
+#| fig-alt: !expr determinant_stack_alt(captures = determinant_layers()$layer)
 #| fig-width: 7
 #| fig-height: 4.4
-library(ggplot2)
-library(tibble)
-
-stack <- tibble::tibble(
-  layer = c('Hardware',
-            'Numerical libraries (BLAS, LAPACK)',
-            'Operating system, system libraries',
-            'R runtime',
-            'Package versions',
-            'Session configuration',
-            'Analysis code',
-            'Input data',
-            'Intrinsic non-determinism'),
-  height = 1:9,
-  secured = c('Unpinned by any rung',
-              'Unpinned by any rung',
-              'L2 pinned environment',
-              'L2 pinned environment',
-              'L1 pinned packages',
-              'L2 partially pinned',
-              'L0 locatable',
-              'L0 locatable',
-              'Unpinned by any rung')
-)
-
-stack$secured <- factor(
-  stack$secured,
-  levels = c('L0 locatable', 'L1 pinned packages',
-             'L2 pinned environment', 'L2 partially pinned',
-             'Unpinned by any rung'))
-
-ggplot(stack, aes(x = reorder(layer, height),
-                  y = 1, fill = secured)) +
-  geom_col(width = 0.9) +
-  coord_flip() +
-  scale_fill_manual(
-    values = c('L0 locatable' = '#6baed6',
-               'L1 pinned packages' = '#3182bd',
-               'L2 pinned environment' = '#08519c',
-               'L2 partially pinned' = '#fd8d3c',
-               'Unpinned by any rung' = '#737373'),
-    name = NULL) +
-  labs(x = NULL, y = NULL,
-       title = 'Which rung first secures each layer') +
-  theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_blank(),
-        panel.grid = element_blank(),
-        legend.position = 'bottom')
+plot_determinant_stack(
+  captures = determinant_layers()$layer,
+  title = 'Which rung first secures each layer')
 ```
 
 Two features of the session-configuration layer deserve
