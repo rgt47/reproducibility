@@ -2250,6 +2250,71 @@ approved under Decision D8 (restricted data detail, licensing,
 debugging guide, a shell primer, the HPC section), remain for Phase
 11 (content additions) or a future correctness pass.
 
+**Phase 9 (F, template), 2026-10-11.** Book branch `phase-9-template`,
+built on `phase-8-tier2`; two commits: shared infrastructure
+(`0601109`), then the two prototype chapter conversions. All local;
+nothing pushed. This is the first application of the revised
+template (10.7) and, per the plan's standing checkpoint rule, stops
+here for the author's review before any book-wide rollout.
+
+Shared infrastructure, built once and reused by every chapter:
+
+| Item | Result | Evidence |
+|---|---|---|
+| Shared stack-diagram function | `R/stack_diagram.R`: `plot_determinant_stack(captures=, validates=, title=)` and `determinant_stack_alt()`, generating matched figure and alt text from one call | V (R CMD check clean, 0 warnings); V ch02's existing figure converted to call it, byte-faithful to the original |
+| Computed fig-alt in Quarto | A hidden `{r}` `#| include: false` setup chunk (`pkgload::load_all('../..')`) followed by `#| fig-alt: !expr determinant_stack_alt(...)` in the figure chunk | V: a first attempt (`knitr::opts_current$set()`) silently produced no alt attribute at all, caught only by checking the rendered HTML, not by trusting the render log; the `!expr` pattern verified in both HTML (`<img alt="...">`) and PDF |
+| Habit list and motto | `analysis/report/_habits.qmd`, included once each in 00-intro and 10-archiving-sharing via `{{< include >}}` | V: motto text appears exactly twice in the rendered PDF |
+| Conventions page | Rewritten: chapter card, stack figure, folded Check, three callout kinds (Verification, Pitfall, Restricted data), honest-level one-liner, habit citation, one-quarter core path table (Decision D3) | I lead, hand-written |
+| Instructor guide | `INSTRUCTOR-GUIDE.md` at the repo root, not part of the rendered book (follows the `CULTURAL-RELEVANCE-READING.md` precedent): week-by-week core path, why the book's own exercises are not fit for grading as written, known rough edges by week | I lead, hand-written |
+| `@sec-conventions` cross-reference | Does not resolve: Quarto does not support `@sec-` crossrefs to an unnumbered chapter-level heading, confirmed with a fully cleared `.quarto/` cache, not a caching artifact. Replaced with a plain markdown link (`[Conventions](conventions.qmd)`) everywhere it was needed | V lead, isolated repro |
+| `devtools::document()` | Run for the first time against this package's existing `Roxygen:` field; `NAMESPACE` now holds real `export()` calls and `man/` real `.Rd` files, replacing a placeholder `exportPattern` that predated any roxygen2 run | I lead |
+
+Prototype chapter conversions, both of the 11 template items applied
+in full:
+
+| Item | ch02 (Levels of Reproducibility) | ch08 (Testing and Code Quality) |
+|---|---|---|
+| Opening | Payoff paragraph added (chapter did not touch the cohort) | Payoff paragraph added (chapter already touches the cohort) |
+| Chapter card | 'Before you start': ~45 min, prerequisites (the book's first explicit prerequisites statement, closing a gap the academic persona's review found), 5 question-phrased objectives, outline | Same pattern, 5 objectives |
+| Stack figure | Confirmed the chapter's own existing figure already satisfies the template (`captures` = all nine layers, since this chapter defines the whole stack); untouched | New figure, `validates = c('Analysis code', 'Input data')`, `captures` empty, reflecting that testing is pure validation in the book's own capture/validate distinction |
+| Folded Checks | 9 total (7 new, 2 kept) | 9 total (7 new, 2 kept) |
+| Callout kinds | None of the three needed; only pre-existing plain `callout-note` (vocabulary box, exempted) and the honest-level box remained | One Verification (beside the existing baseline-test table), one Pitfall (the same-session-check anti-pattern), one Restricted data (the LLM section's existing paragraph, reboxed) |
+| Cohort, continued | New: `load_cohort()`/`clean_cohort()` on the real extract, states the compendium sits at L0 today (no `renv.lock`, no `Dockerfile` exist yet) | Judged already satisfied by the existing baseline-test passage; no new section added, per the brief's efficiency guidance |
+| Honest level | Cut to one sentence (what the new cohort passage itself reaches) | Cut to one sentence (this chapter's own tested scope) |
+| LLM section | Untouched (Decision D5) | Untouched except the restricted-data paragraph, reboxed with no substance change |
+| Exercises | Added 7 (cumulative, cohort `nrow`, autogradable) and 8 (spacing, revisits Chapter 1's R 3.6.0 sampler fact) | Added 7 (cumulative, five data-validation assertions on the cohort) and 8 (spacing, revisits version control and habit 1) |
+| Cheat sheet | Added, 8 rows | Added, ~11 rows |
+| Further reading | Unchanged | Unchanged |
+
+Independent verification, beyond the agents' own reports: both
+chapters re-rendered standalone by the lead after the agents
+finished (clean, no errors); both figures' computed alt text
+checked against their `captures`/`validates` arguments in the
+rendered HTML; ch02's cohort-passage row counts (338 raw, 337
+cleaned) and its Exercise 8 solution's layer/rung claim (R runtime
+secures at L2, not unpinned) reproduced independently; ch08's
+Exercise 7 solution's five assertions and three counts all run and
+confirmed true. One transient false alarm during verification: a
+mid-run test-suite check showed 1 failure (08 had new exercises
+without matching solutions yet); this was the ch08 agent's
+work-in-progress state caught by concurrent polling, not a defect in
+either agent's finished work, and resolved once both agents
+finished. The repository's `test-manuscript-invariants.R` grew with
+no changes needed, since it checks exercise/solution counts and
+check/answer pairing generically, not specific chapter content.
+
+Render: freeze cleared for both converted chapters; HTML and PDF
+exit 0, no warnings, no unresolved references or missing citations,
+no literal HTML entities [V]. PDF 456 pages (440 before Phase 9).
+Repository test suite 204/204 (up from 185, all new assertions from
+the two chapters' new material).
+
+Not done in Phase 9: the template is applied to exactly two
+chapters, as scoped. Every other numbered chapter still uses the
+pre-revision structure. 'Two numbering schemes, and which this book
+uses' (ch02) was judged not redundant with the new material and left
+untouched, a judgment call the author may want to revisit.
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their

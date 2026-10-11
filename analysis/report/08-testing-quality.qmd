@@ -14,29 +14,91 @@ Programming* (1972)
 ```
 :::
 
-## Learning objectives
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so the fig-alt option
+# below computes its text from the same call that draws the
+# figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-By the end of this chapter the reader should be
-able to:
+A function that silently sums instead of averaging will
+pass every rung of the reproducibility ladder and still
+be wrong on every machine that runs it. By the end of
+this chapter you will be able to say, of any
+computational result, whether it has merely been
+reproduced or actually checked, and you will have the
+four kinds of test, plus a baseline test of the kind
+@tbl-baseline-rng demonstrates on the book's own running
+cohort, to tell the difference in your own analysis.
 
-- Explain the reproducibility paradox, and say
-  why testing is a reproducibility layer rather
-  than a software nicety.
-- Distinguish capturing reproducibility from
-  validating it, and place testing squarely in
-  the validation register.
-- Write the four kinds of test a compendium
-  wants, using `tinytest` bare expectations:
-  unit, integration, data-validation, and
-  reproducibility tests.
-- Test behavior rather than implementation, so
-  that a test survives an honest refactor.
-- Apply `lintr`, `styler`, and a pre-commit hook
-  to keep code legible and consistent, and say
-  why legibility is itself a reproducibility aid.
-- State how the testing effort shifts across the
-  compendium archetypes, from an R package to a
-  data analysis to a simulation to a blog.
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 45 minutes.
+
+**Prerequisites.** @sec-levels, for the L0-L3 ladder and
+the capture-versus-validation vocabulary this chapter
+relies on throughout; @sec-compendium, for the
+`inst/tinytest/` layout and the R-package archetype.
+Statistically, no more than comfort reading a
+coefficient table from a fitted model and a percentile
+bootstrap interval; no new statistics are introduced.
+R knowledge assumed: writing and calling a function,
+vectors, and basic control flow.
+
+**Objectives.** By the end of this chapter, can you:
+
+- state the reproducibility paradox, and explain why
+  reproducibility machinery cannot, by itself, detect a
+  wrong answer?
+- place testing in the validation register rather than
+  the capture register, and say what that does and does
+  not change about an analysis's position on the L0-L3
+  ladder?
+- write a unit test, an integration test, a
+  data-validation test, and a baseline (reproducibility)
+  test in `tinytest`, naming the oracle behind each?
+- tell behavioral testing from implementation testing,
+  and say why the second kind breaks under an honest
+  refactor?
+- explain why `lintr`, `styler`, and a pre-commit hook
+  belong to the validation register rather than the
+  capture register?
+
+**Outline.** The analyst's irreplaceable judgments; the
+paradox stated precisely; `tinytest`'s bare-expectation
+style; the four kinds of test, worked on the cohort and
+the retinopathy trial; behavior versus implementation;
+linting, styling, and the pre-commit gate; how the
+emphasis shifts across archetypes; a worked example of
+the paradox itself; collaborating with an LLM;
+exercises, a cheat sheet, and further reading.
+:::
+
+## Where this sits on the stack
+
+Testing is this book's clearest case of pure
+validation. It is also, among the chapters so far, one
+that captures nothing at all: a test suite adds no
+package to the lockfile and no layer to the image.
+@fig-stack-testing marks that asymmetry on the shared
+determinant stack: the two layers this chapter writes
+code against, the analysis code and the input data, are
+validated here, not captured, because the surrounding
+chapters captured them already and this chapter only
+confirms they still behave.
+
+```{r}
+#| label: fig-stack-testing
+#| fig-cap: 'The determinant stack of @sec-levels, with analysis code and input data marked as validated rather than captured. This chapter pins no new layer; a unit test, a data-validation test, and a baseline test each confirm that the code and the data already captured by earlier chapters still produce the answer they are supposed to, which is the capture-versus-validation distinction the chapter develops.'
+#| fig-alt: !expr determinant_stack_alt(validates = c('Analysis code', 'Input data'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  validates = c('Analysis code', 'Input data'),
+  title = 'Testing validates code and data; it captures neither')
+```
 
 ## Orientation
 
@@ -107,6 +169,28 @@ develop the four kinds of test in turn, then take
 up code quality as a second validation feature,
 and close with the way the emphasis shifts across
 archetypes.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the paradox
+
+A colleague reports that their analysis reaches L2
+pinned environment and argues this means the reported
+hazard ratio must be correct. What is wrong with the
+argument?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+L2 is a claim about capture, that the packages and the
+environment are pinned so the same code produces the
+same output everywhere. It is not a claim about
+correctness: a pinned, containerized analysis still
+reproduces a wrong hazard ratio exactly, if the code
+that computes it is wrong. Only a test, comparing
+against an independent oracle, bears on whether the
+number is right.
+:::
+:::
 
 ## The analyst's contribution
 
@@ -190,6 +274,23 @@ human core of everything that follows.
   here to run the linter and the styler as a gate.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: three judgments
+
+Name the three judgments that a testing tool cannot
+make on its own, and that fall to the analyst instead.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+What 'correct' means for a given input, supplied by an
+oracle outside the code under test; which behaviors of
+a function constitute its contract and so deserve a
+test; and which domain constraints, such as a plausible
+age range, the data itself must satisfy.
+:::
+:::
+
 ## The reproducibility paradox, stated precisely
 
 It is worth stating the paradox with a little more
@@ -226,18 +327,35 @@ Testing exists to break the false inference from
 ::: {.callout-important}
 ## The honest level
 
-Placing an analysis at L2 pinned environment, or
-even at L3 verified, is a claim about
-reproducibility, not about correctness. A result
-can sit at the top of the ladder and still be
-wrong, if the code faithfully regenerates a
-mistaken number. When reporting a level, the honest
-formulation is that the analysis reliably
-reproduces a result, and that the result has, to
-the extent the test suite reaches, been checked for
-correctness. The two claims are distinct, and
-conflating them is the precise error the paradox
-warns against.
+This chapter's own practice reaches a baseline test
+on one bootstrap bound (@tbl-baseline-rng) and a short,
+illustrative suite of unit, integration, and
+data-validation checks on hand-picked examples; it
+establishes that those particular results regenerate
+and that those particular functions behave as
+intended, and it says nothing whatsoever about any
+function, dataset, or computation this chapter did not
+choose to test.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: capture, faithfully
+
+If the code encodes 'sum' where the analyst meant
+'mean', what does capturing the environment do to that
+error, and what does it not do?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Capture preserves the error exactly: every reproduction
+on every pinned machine returns the same sum, forever.
+It does nothing to detect the error, because capture
+examines only whether the mapping from input to output
+is held constant, never whether the mapping is the
+intended one. Only a test, comparing against an
+independent oracle, examines the mapping itself.
+:::
 :::
 
 ## tinytest: bare expectations
@@ -287,6 +405,26 @@ reads a project file from the root reaches it through
 convention throughout: bare
 top-level expectations, one concern per file, named
 `test-<thing>.R`.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: reading a bare file
+
+A `tinytest` test file contains no `test_that()` call
+and no function definition around its expectations.
+What does that tell you about how to run one line of
+it during development?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Because each expectation is a bare, top-level
+statement, the file is an ordinary runnable R script.
+An analyst can `source()` the whole file, or send a
+single line to the console, and watch that one
+expectation evaluate immediately, with no need to
+locate it inside a nested block first.
+:::
+:::
 
 ## The four kinds of test
 
@@ -478,14 +616,18 @@ on the caller setting a seed first is one `set.seed`
 away from irreproducible, and moving the seed into the
 signature makes forgetting it impossible.
 
-The check itself, however, cannot fail for the reason
-it seems to serve. Both calls run in the same R, under
-the same random-number defaults, with the same package
+::: {.callout-warning}
+## Pitfall
+
+A same-session check cannot fail for the reason it
+seems to serve. Both calls run in the same R, under the
+same random-number defaults, with the same package
 versions. When an upgrade changes how `sample()` draws,
 as R 3.6.0 did, both calls change together and still
 agree. What the check does catch is narrower: a
 procedure that ignores its seed. That is worth one line
 in a unit test, but it is not a reproducibility test.
+:::
 
 A reproducibility test that can fail compares today's
 result with one recorded in an earlier session and
@@ -621,6 +763,22 @@ themselves are different. The baseline test reports it;
 two calls in one session, both under whichever sampler
 the session uses, would have agreed with each other and
 reported nothing.
+
+::: {.callout-tip icon=false}
+## Verification
+
+To see this hold on your own machine: run
+`Rscript -e 'tinytest::test_package("mycompendium")'` from
+a clean checkout and confirm `test-baseline-estimates.R`
+reports a pass (habit 4). To make it fail on purpose,
+edit the committed `baseline-estimates.rds` by hand, or
+change the seed or `n` passed to `bootstrap_ci()` in
+`record_baseline.R` without regenerating the baseline,
+and rerun the same test; the comparison above, run with
+`sample.kind = 'Rejection'` against a baseline recorded
+under `'Rounding'`, is this exact failure captured in the
+chapter rather than only described.
+:::
 
 A baseline test is what L3 requires. The top rung, as
 @sec-levels defines it, asks that recorded outputs be
@@ -776,6 +934,27 @@ property tests too much and breaks on every
 revision. The judgment of what to pin, named above
 as the second of the analyst's contributions, is the
 skill the tooling cannot supply.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: fragile or robust
+
+`expect_equal(environment(my_clean)$helper_count, 3)`
+checks that an internal counter variable inside
+`my_clean` equals three. Is this a behavioral test or
+an implementation test, and what happens to it the
+first time `my_clean` is honestly rewritten?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+It is an implementation test: it pins a detail of how
+`my_clean` is built, an internal counter, rather than
+what it does. A rewrite that preserves the function's
+behavior but removes or renames that counter breaks
+the test for no good reason, training the analyst to
+distrust or delete it rather than to value it.
+:::
+:::
 
 ## Code quality as a validation feature
 
@@ -956,6 +1135,26 @@ archetype, then, the tests are drawn from the same
 four kinds; what changes is which kinds bear the
 load.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: shifting weight
+
+A data-analysis compendium with no exported functions
+and no package structure still needs tests. Which two
+kinds of test carry most of that weight, and why?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Data-validation tests and reproducibility (baseline)
+tests. With few reusable functions, the unit-test
+surface is small, so the risk shifts to the two places
+such a compendium still has: the data it reads, which
+may be malformed, and the result it reports, which
+must regenerate. Those are exactly what data-validation
+and baseline tests check.
+:::
+:::
+
 ## Worked example
 
 We now make the paradox concrete and executable. The
@@ -1059,6 +1258,28 @@ integration re-runs both on a clean machine so that
 neither guarantee depends on the author's local
 setup.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the oracle in the table
+
+In @tbl-paradox, why is `oracle <- c(2, 25, 5)` written
+by hand in the chunk rather than computed by calling
+`calculate_mean()` on the three `cases`?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Because an oracle has to come from outside the code
+under test. Computing the expected values by calling
+`calculate_mean()` would make the check compare the
+function against itself; it would pass identically
+whether `calculate_mean` were correct or carried the
+dropped-division bug, since both forms are internally
+consistent with their own output. The hand-written
+vector is what lets the table show the buggy column
+failing every row.
+:::
+:::
+
 ## Collaborating with an LLM
 
 A language model is a capable assistant for writing
@@ -1068,17 +1289,21 @@ the same as tests that are correct. The analyst's
 verification duty is heaviest exactly where the
 model is most fluent.
 
-Tests sit close to the data, so one rule comes first.
-Never paste or upload protected health information,
-identifiable records, or data covered by a data-use
-agreement, nor outputs derived from them, such as a
-failing test's printout of offending rows, into a model
-unless your institution has approved that endpoint for
-that data. Describe the structure instead: the data
+::: {.callout-important}
+## Restricted data
+
+Tests sit close to the data, so one rule comes first
+(habit 3). Never paste or upload protected health
+information, identifiable records, or data covered by a
+data-use agreement, nor outputs derived from them, such
+as a failing test's printout of offending rows, into a
+model unless your institution has approved that endpoint
+for that data. Describe the structure instead: the data
 dictionary, column names and types, and a synthetic
 example such as the book's simulated cohort. A coding
 agent reads the files in its project, so run one only
 where it is permitted to see the data.
+:::
 
 **Prompt.** 'Here is my `calculate_mean` function.
 Write `tinytest` unit tests for it, including edge
@@ -1181,6 +1406,29 @@ converts a test into a tautology.
    misformatted R code. Report what the hook does, and
    contrast it with what continuous integration would
    do in @sec-verification if the hook were absent.
+
+7. On the running cohort compendium, run
+   `load_cohort()` and `clean_cohort()` from `R/cohort.R`
+   against `analysis/data/raw_data/cohort_raw.csv`, then
+   write a data-validation test file that checks, against
+   the real cleaned cohort rather than a hypothetical one,
+   this chapter's four constraints: the expected columns,
+   the enrollment age range, the two coded sex values, and
+   a bound on outcome missingness. Report three numbers a
+   grading script could check without fitting any model:
+   the raw row count, the cleaned row count, and the
+   number of rows removed as duplicates.
+
+8. This exercise returns to the committing discipline of
+   the version-control chapter and habit 1, 'commit
+   before you compute.' The baseline test of this chapter
+   depends on a committed file,
+   `inst/tinytest/baseline-estimates.rds`, which is itself
+   a recorded result. State which must be committed first,
+   the analysis code that `record_baseline.R` runs or the
+   baseline file that running it produces, and explain
+   what goes wrong for a collaborator who pulls the
+   repository if the order is reversed.
 
 ## Solutions
 
@@ -1438,6 +1686,76 @@ that keeps trivia out of the history, and CI is the gate
 that actually guarantees anything, because it is the one
 nobody can skip.
 :::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
+
+expect_true(all(c('mrn', 'age_at_enroll', 'sex', 'incident_dm')
+                %in% names(raw)))
+expect_true(all(cohort$age_at_enroll >= 18 &
+                cohort$age_at_enroll <= 105, na.rm = TRUE))
+expect_true(all(cohort$sex %in% c('F', 'M')))
+expect_true(mean(is.na(cohort$incident_dm)) < 0.15)
+```
+
+**The three numbers**, run against the extract as
+committed: the raw extract holds 338 rows; the cleaned
+cohort holds 337; one row was removed as a duplicate
+`mrn`. These are exactly the row counts `nrow(raw)`,
+`nrow(cohort)`, and `sum(duplicated(raw$mrn))` return, so
+a grading script can check them without touching the
+model layer at all. A reader who gets different counts
+has either an edited extract or a different `clean_cohort`
+than the one shipped with this book, which is itself a
+useful diagnostic.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+The code must be committed first, then
+`record_baseline.R` is run against that committed code,
+and the baseline file it writes is committed second, in
+its own commit. This is habit 1 applied to a derived
+artifact rather than to the primary analysis: a committed
+file must always be traceable to the committed code that
+produced it.
+
+Reversing the order breaks that traceability. If the
+baseline is regenerated and committed while the code
+change that motivated it is still uncommitted, a
+collaborator who pulls the repository receives the new
+baseline paired with the *old* code, because the code
+change never reached the shared history. Their copy of
+the baseline test then fails immediately, not because
+anything is wrong with their checkout, but because the
+repository itself never recorded a consistent pair of
+code and baseline. Worse, if the local, uncommitted code
+change is later lost, the committed baseline becomes
+orphaned: a recorded result with no committed code that
+anyone can point to as having produced it, which is
+exactly the provenance gap habit 1 exists to close.
+:::
+
+## Cheat sheet
+
+| Command or rule | What it does |
+|---|---|
+| `expect_equal(a, e)` | Compares `a` to oracle `e` with `all.equal()`'s default tolerance. |
+| `expect_equal(a, e, tolerance = 1e-8)` | The baseline-test comparison: a stated, not default, tolerance (habit 5). |
+| `expect_true()`, `expect_false()`, `expect_identical()`, `expect_error()`, `expect_inherits()` | The common `tinytest` expectations beyond equality. |
+| `tinytest::test_package('pkg')` | Runs the suite under `inst/tinytest/` via the `tests/tinytest.R` runner. |
+| `exit_file('message')` | Exits a test file quietly, for a test that needs data `R CMD check` does not install. |
+| `make lint` / `make style` | Run `lintr` / `styler` inside the project container. |
+| `test-baseline*.R` naming | The convention `zzc verify --full` looks for to certify L3. |
+| Rule of thumb | Test behavior, not implementation; a test should fail only when the contract breaks. |
+| Rule of thumb | An oracle must be computed independently of the code under test, never by calling it. |
+| Habit 4 | Make every gate able to fail, and watch it fail once. |
+| Habit 5 | Compare against a recorded baseline, with a stated tolerance. |
 
 ## Further reading
 
