@@ -1,5 +1,5 @@
 # Data: the synthetic incident-diabetes cohort
-*2026-10-11 10:35 PDT*
+*2026-10-11 11:22 PDT*
 
 This directory holds the running example used throughout the
 book: a **synthetic** retrospective cohort of adults followed for
@@ -15,9 +15,12 @@ validation on a concrete extract without exposing anybody.
 - **Regenerate:** from the repository root, run
   `Rscript analysis/scripts/simulate_cohort.R`. The script uses
   base R only and overwrites the CSV.
-- **Size:** 401 rows (400 simulated records plus one planted
-  duplicate) and 10 columns.
-- **Checksum:** MD5 `4c8ca6ed60bc25ff679ac87717fd7308`, from
+- **Size:** 338 rows (337 simulated records plus one planted
+  duplicate) and 10 columns. 400 people are screened and those
+  already meeting the diabetes diagnostic threshold at baseline
+  are excluded, so the cohort is genuinely at risk; see 'Baseline
+  exclusion' below.
+- **Checksum:** MD5 `c9c8e19173397c2c2b6ceb073b2ba1cf`, from
   R 4.6.1 with the default generators (Mersenne-Twister,
   Inversion, Rejection). Compare `md5sum raw_data/cohort_raw.csv`
   (`md5` on macOS) after regeneration. A mismatch means the
@@ -46,6 +49,22 @@ can rebuild the extract and check it against the committed copy.
 
 The outcome is simulated from a logistic model in which risk
 rises with HbA1c and BMI; the coefficients are in the generator.
+`followup_days` is drawn independently of the outcome, so it
+documents how long each person was observed without driving
+whether they developed diabetes; a time-to-event analysis that
+uses `followup_days` as an exposure time, rather than the
+logistic model the book currently fits, is tracked as future
+work (plan Finding 17 and Phase 10).
+
+## Baseline exclusion
+
+400 people are initially simulated; anyone whose baseline HbA1c
+meets the diabetes diagnostic threshold (6.5 percent or higher)
+is excluded before the outcome is drawn, leaving 337 people
+genuinely at risk of incident disease. An earlier version of this
+generator skipped this step, which left 63 of 401 rows already
+diabetic at baseline; that defect is fixed as of 2026-10-11 and
+no longer appears in the committed extract.
 
 ## Planted pathologies
 
@@ -58,10 +77,10 @@ Each defect is introduced by a numbered step in the generator:
    values are written day first (`%d/%m/%Y`); the rest are ISO
    (`%Y-%m-%d`). The column is stored as character, as a CSV
    export would be.
-3. **One duplicated record.** Row 7 is appended again as row
-   401, with the same `mrn`. In the current draw, step 5 happens
-   to recode row 7, so the two copies differ only in how `sex` is
-   written (`Female` and `F`), as a re-export might.
+3. **One duplicated record.** Row 7 is appended again as the
+   last row, with the same `mrn`. In the current draw, step 5
+   happens to recode row 7, so the two copies differ only in how
+   `sex` is written (`Female` and `F`), as a re-export might.
 4. **One implausible age.** Row 13 has `age_at_enroll` of 400.
 5. **Inconsistent sex coding.** 18 rows read `Female` instead of
    `F`. The recoding is applied only to rows whose true value is
@@ -71,13 +90,6 @@ Each defect is introduced by a numbered step in the generator:
 
 `clean_cohort()` repairs defects 2 to 5 and leaves missing
 outcomes in place, because dropping them is an analytic decision.
-
-**Known limitation.** Baseline HbA1c is drawn from a normal
-distribution with mean 5.8 and standard deviation 0.7, so 63 of
-the 401 rows already meet the diagnostic threshold (6.5 percent)
-at baseline and are not genuinely at risk of
-incident diabetes. A future revision of the generator will
-exclude them.
 
 ## Why the identifier columns exist
 
