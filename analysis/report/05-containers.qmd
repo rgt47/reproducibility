@@ -504,6 +504,108 @@ decisions made silently and differently by each analyst.
 :::
 :::
 
+## Apple Silicon and multi-architecture images
+
+A single image tag, such as `rocker/r-ver:4.4.0`, need not
+name one fixed set of bytes. Docker images can be published
+as a **manifest list**, also called an image index: one tag,
+or even one digest, that points not directly at a filesystem
+but at a small table of entries, each naming a different CPU
+architecture built from the same recipe. When a client pulls
+the tag, the runtime inspects its own architecture and
+silently selects the matching entry. An `amd64` host receives
+the `amd64` build, an `arm64` host receives the `arm64` build,
+and the person who wrote `FROM rocker/r-ver:4.4.0` never
+chose between them. This is what a multi-architecture image
+is: one name that resolves to different, independently built
+images depending on who is asking.
+
+Not every Rocker image offers that choice. Rather than trust
+a secondary source, we checked directly, with `docker
+manifest inspect`. `rocker/r-ver:4.4.0` does publish both a
+`linux/amd64` and a `linux/arm64` entry (verified). But
+`rocker/tidyverse:4.4.0` and `rocker/verse:4.4.0`, the two
+images this book actually builds on, publish `linux/amd64`
+only (verified); neither tag carries an `arm64` entry. An
+Apple Silicon Mac is an `arm64` host, so a plain `docker
+build` against either image has nothing matching to select.
+This is the reason the showcase Dockerfile earlier in this
+chapter, built on `rocker/tidyverse`, needed `--platform
+linux/amd64` to build at all on the machine this book was
+written on: the flag was not an optimization, it was the only
+way to get a match.
+
+The `--platform linux/amd64` flag requests the `amd64` entry
+explicitly, overriding the host-architecture default. On an
+Apple Silicon host, Docker Desktop satisfies that request
+through QEMU, a CPU emulator that translates each `amd64`
+instruction into the sequence of native `arm64` instructions
+that has the same effect. Docker's own documentation on
+multi-platform builds is direct about the cost: emulation
+with QEMU 'can be much slower than native builds', especially
+for compute-heavy work [@docker2024multiplatform]. Every
+package compile and every `renv::restore()` inside the image
+pays this tax; a build that takes two minutes natively can
+take much longer under emulation. This is a real cost, worth
+planning a build around, but it is a cost in time, not in
+correctness. A QEMU-translated `amd64` instruction still
+computes the `amd64` result, so a container built this way is
+not running a different program, only running the same one
+more slowly.
+
+That last point deserves a careful qualification, because it
+is easy to overstate. Emulation is not where a numerical risk
+would come from. If an `arm64` variant of `rocker/tidyverse`
+existed, a native `arm64` build of the same Dockerfile would
+not be guaranteed to match an emulated `amd64` build bit for
+bit, because a different architecture's base image can, in
+principle, link a different BLAS, enable different vector
+instructions, or carry a different compiler default, any of
+which can shift a floating-point result in its last few bits.
+None of that is new: it is the same category of hidden
+determinant, beneath the package layer, that the next section
+exists to pin. The guarantee this chapter already teaches,
+pinning the base image by digest rather than by tag, is what
+actually settles the question, because a digest names one
+specific, byte-identical filesystem for one specific platform.
+Choosing `--platform linux/amd64` decides which platform's
+bytes a build asks for; pinning the digest decides that it
+receives the same bytes every time it asks. Architecture
+choice and digest pinning answer different questions, and
+only the second is a reproducibility guarantee.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: emulation and correctness
+
+A student on an Apple Silicon laptop builds this chapter's
+showcase Dockerfile with `--platform linux/amd64` and gets a
+working container, but the build takes nine minutes instead
+of the ninety seconds a labmate on an Intel laptop reports.
+The student worries the slow build means the result cannot be
+trusted. Is that worry justified, and what single step
+already taught in this chapter is the one that actually
+decides whether the result is trustworthy?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The worry conflates two separate things. The nine-minute
+build is QEMU translating `amd64` instructions into `arm64`
+instructions for a host that has no native `arm64` build of
+`rocker/tidyverse` to offer; that cost is real but it is a
+cost in time, not in correctness, since a translated `amd64`
+instruction still computes the `amd64` result. What actually
+decides trustworthiness is whether the `FROM` line names a
+digest rather than a tag. If it does, both laptops build the
+identical, byte-for-byte filesystem, one of them slowly; the
+build time difference carries no information about whether
+the two containers agree. If the `FROM` line named a tag
+instead, the two builds could silently diverge regardless of
+how long either one took, which is the whole reason this
+chapter pins by digest.
+:::
+:::
+
 ## Making the image itself reproducible
 
 Here we must be careful, because a container is

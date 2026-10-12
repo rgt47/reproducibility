@@ -1028,6 +1028,167 @@ commits A through C illustrate.
 :::
 :::
 
+## Undoing things, and merge conflicts
+
+Two kinds of trouble are common enough to deserve their
+own section: a change that needs to be undone, and a
+merge that git cannot finish by itself.
+
+**Undoing.** Git has three distinct commands for undoing
+work, and the right one depends on where the unwanted
+change lives.
+
+`git restore <file>` discards *unstaged* edits in the
+working tree, putting the file back to its last committed
+(or staged) content. It never touches history; there is no
+commit to undo, only a draft to throw away.
+
+```bash
+# an edit no one has staged or committed
+echo 'threshold <- 99' > analysis.R
+git restore analysis.R
+# analysis.R is back to its last committed content
+```
+
+`git reset` moves what `HEAD` points to, which is to say
+it moves the branch itself to an earlier (or different)
+commit, and the three flags differ only in how much else
+they touch along the way:
+
+- `--soft` moves `HEAD` and leaves everything else alone:
+  the undone commit's changes reappear staged, ready to be
+  recommitted differently.
+- `--mixed`, the default, additionally unstages those
+  changes, so they sit in the working tree, edited but not
+  staged.
+- `--hard` additionally overwrites the working tree,
+  discarding the changes outright.
+
+```bash
+# move HEAD back one commit; --mixed is the default
+git reset HEAD~1
+# the undone commit's edits are now unstaged, not gone
+
+git reset --hard HEAD~1
+# the undone commit's edits are discarded entirely
+```
+
+A reset, like the `amend` and `rebase` discussed earlier
+in this chapter, is a rewrite of what the branch name
+points to, not an addition to history, and the same
+caution applies: harmless on commits that exist only in
+the analyst's own clone, and a serious act, needing the
+collaborators' agreement and a force-push, once those
+commits have been pushed or pulled elsewhere. A reset
+performed only locally is always safe to try again; the
+discarded commits are not immediately deleted and can
+usually be found with `git reflog` if the reset turns out
+to be wrong. The same reflog is what makes `--hard`
+survivable rather than reckless on an unshared branch.
+
+`git revert <commit>` takes the opposite approach: instead
+of moving `HEAD` backward, it makes a *new* commit whose
+changes are the exact opposite of the one named, applied
+on top of the current history. The reverted commit is left
+untouched, in place, for anyone to read later. Because
+revert only ever adds a commit, it is the one of the three
+that is safe on a branch other people have already pulled;
+reset and amend are not.
+
+```bash
+git revert HEAD
+# creates a new commit, e.g. "Revert 'Add note line'",
+# that undoes the previous commit's changes; the
+# reverted commit itself still exists in the history
+```
+
+The choice, in one line: reaching for an edit that is not
+yet staged, use `restore`; reaching for a commit that
+exists only on a private branch, `reset` is simplest;
+reaching for a commit that others may already have, use
+`revert` and let history show both the mistake and its
+correction.
+
+**Merge conflicts.** A merge like the one in @fig-branch
+goes through cleanly whenever the two branches changed
+different lines. When both branches change the *same*
+lines of the *same* file, git has no way to choose between
+them, and the merge stops partway, leaving the decision to
+the analyst.
+
+```bash
+git switch main
+git merge sensitivity-analysis
+# Auto-merging analysis.R
+# CONFLICT (content): Merge conflict in analysis.R
+# Automatic merge failed; fix conflicts and then
+# commit the result.
+```
+
+`git status` reports the file as having "unmerged paths,"
+and the file itself now contains both versions, separated
+by conflict markers that git inserts directly into the
+text:
+
+```
+<<<<<<< HEAD
+threshold <- 4
+=======
+threshold <- 5
+>>>>>>> sensitivity-analysis
+```
+
+Everything between `<<<<<<< HEAD` and the `=======`
+divider is the current branch's version; everything
+between the divider and the final marker is the version
+being merged in. Resolving the conflict means editing the
+file by hand down to the single version that should
+survive, which may be one side, the other, or a
+combination of both, and then deleting the markers
+themselves; nothing removes them automatically. Once the
+file reads the way it should, the usual two-step cycle
+finishes the merge: `git add` the resolved file to tell
+git the conflict is settled, then `git commit` to record
+the merge. (`git merge --abort` backs out of the whole
+attempt instead, if the conflict turns out to need more
+thought than a mid-merge edit allows.)
+
+```bash
+# edit analysis.R to resolve the conflict, then:
+git add analysis.R
+git commit -m "Merge sensitivity-analysis: keep threshold 4"
+```
+
+A conflict is not git malfunctioning; it is git correctly
+refusing to guess at a scientific decision, such as which
+of two threshold values the analysis should use, that only
+the analyst can make.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which command for which undo
+
+A collaborator has three problems: an edit in `analysis.R`
+that was never staged and should be thrown away; a commit
+made on a private branch, pushed nowhere, that turns out to
+be wrong; and a commit on `main` that was already pulled by
+two other collaborators and turns out to be wrong. Which
+command fits each case?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The unstaged edit: `git restore analysis.R`, since nothing
+has been committed yet. The private, unpushed commit:
+`git reset`, most simply `--hard` if the change should be
+discarded outright, since no one else has a copy of that
+commit to lose synchronization with. The already-shared
+commit: `git revert`, because reset or amend would rewrite
+a commit other clones already hold, and reverting instead
+adds a new commit that undoes it without touching what
+collaborators already pulled.
+:::
+:::
+
 ## The remote: GitHub, GitLab, and collaboration
 
 Everything so far is *local*: the repository, its

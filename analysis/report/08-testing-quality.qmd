@@ -358,6 +358,99 @@ independent oracle, examines the mapping itself.
 :::
 :::
 
+## The analysis plan as an oracle
+
+The oracle introduced above sits at the level of a
+single function: a hand-computed mean, a row count a
+data dictionary fixes. The same structure scales up to
+the level of the whole analysis's primary result, and
+doing so closes a gap the paradox otherwise leaves
+open.
+
+A **pre-specified analysis plan** (also called a
+statistical analysis plan, or, when it is registered
+publicly before the data are seen, a pre-registration)
+states in advance the primary endpoint, the model, the
+covariates, and the comparison that will answer the
+study's main question. Written and dated before the
+analyst has looked at the outcome data, it is computed
+independently of any code's output in exactly the sense
+the Vocabulary box above requires of an oracle: it
+specifies what the correct analysis looks like, not by
+running anything, but by committing in writing to a
+choice that the data cannot later be allowed to revise.
+
+The gap this closes is specific. A function-level
+oracle, such as the hand-computed mean described above,
+catches a coding error: the function returns the wrong
+number for a known input. It says nothing about whether
+the analysis itself asks the right question. An analysis
+built by trying several models, several covariate sets,
+or several endpoints and reporting the one that reached
+significance can be bug-free in every function, pass
+every unit test, and still reproduce exactly on a second
+machine, because reproduction only checks that the same
+code returns the same output. The reproducibility
+paradox stated above applies again, one level up: a
+fully reproducible analysis can still be the wrong
+analysis, chosen with the benefit of having already seen
+the answer. A pre-specified plan is the oracle that
+guards against this failure, because it fixes the
+intended analysis before the data could have shaped it.
+
+The two oracles differ in what independence they supply.
+A function's oracle is independent of the code that
+computes the value; a pre-specified plan is independent
+of the data that will later be analyzed. Both are
+necessary, and neither substitutes for the other. A
+bug-free implementation of an unregistered, data-driven
+analysis is still untrustworthy in the way the plan would
+have prevented; a faithful implementation of a
+pre-specified plan can still contain a coding error that
+only a function-level oracle would catch.
+
+In a research compendium, a pre-specified plan is a
+dated document, committed to the repository (or
+deposited externally, as on the Open Science Framework)
+before the raw data arrive, or before they are
+unblinded. Checking an analysis against it is not an
+`expect_equal()` call but a review step: does the fitted
+model's formula, the stated primary comparison, and the
+decision rule actually implemented match what the plan
+specified? Where the match can be stated mechanically,
+for example that `fit_model()` fits the formula the plan
+names, a test can assert it directly, comparing the
+model's formula (as text, or as a parsed call) against a
+string recorded from the plan rather than against
+anything the analysis itself computed.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: two oracles
+
+A colleague's bootstrap confidence interval regenerates
+bit for bit on a second machine, and every unit test in
+the package passes. Is this enough to trust the
+reported result as the study's primary finding? What
+additional check, and what additional oracle, would you
+ask for?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. Reproducing exactly and passing every unit test
+shows that the code is a faithful, bug-free
+implementation of whatever analysis it runs; neither
+check examines whether that analysis is the one the
+study committed to before seeing the data. The
+additional check is whether the fitted model, the
+endpoint, and the comparison match a pre-specified
+analysis plan dated before the data arrived. That plan
+is the oracle: a source of what the correct analysis
+should look like, supplied independently of any result
+the code could produce.
+:::
+:::
+
 ## tinytest: bare expectations
 
 The framework this book uses adopts `tinytest`
@@ -798,6 +891,105 @@ and at least one `inst/tinytest/test-baseline*.R` file
 exists and ran; otherwise it reports the project as
 rebuilt and tested, at L2, with no baseline comparison.
 
+## Monte Carlo error and parallel streams
+
+@tbl-baseline-rng fixed the seed and the sampler and
+varied only the R version, which isolated one source of
+change in the bootstrap bound. A second source is always
+present and has nothing to do with R versions: a bootstrap
+estimate is itself a Monte Carlo quantity, built from a
+finite number of resamples, and it carries its own
+sampling variability on top of the statistical sampling
+variability of the original cohort. Two bootstrap runs at
+different seeds, same data, same `n`, will not return
+exactly the same bound, and the size of that disagreement
+is the Monte Carlo standard error (MCSE), distinct from
+the standard error the bootstrap is estimating.
+
+The practical diagnostic needs no extra theory: rerun the
+same call at several seeds for a given `n`, and look at
+how much the result moves; then raise `n` and watch the
+spread narrow. The chunk below does this with
+`bootstrap_ci()` on the HbA1c odds ratio, at `n = 300` and
+`n = 1500`, three seeds each.
+
+```{r}
+#| label: mc-stability
+cohort <- clean_cohort(
+  load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
+)
+width <- function(n, seed) {
+  ci <- bootstrap_ci(cohort, n = n, seed = seed)
+  unname(ci['upper'] - ci['lower'])
+}
+w300 <- vapply(1:3, width, numeric(1), n = 300)
+w1500 <- vapply(1:3, width, numeric(1), n = 1500)
+```
+
+At `n = 300` the interval's width across the three seeds
+ranges over `r sprintf('%.2f', min(w300))` to
+`r sprintf('%.2f', max(w300))`, a standard deviation of
+`r sprintf('%.3f', sd(w300))`. At `n = 1500`, five times
+as many resamples, the same spread falls to
+`r sprintf('%.3f', sd(w1500))`, a reduction broadly
+consistent with the Monte Carlo error's usual
+$1/\sqrt{n}$ scaling, though three seeds is too few to
+pin the exponent down. A result is 'Monte Carlo stable'
+at a given comparison tolerance when this seed-to-seed
+spread is small relative to that tolerance; the baseline
+test's `1e-8` in @tbl-baseline-rng is a numerical
+tolerance for one fixed sequence of draws and says
+nothing about this, so raising `n` until the spread
+shown here is small relative to whatever difference the
+analysis cares about detecting is a separate check,
+made once, by hand, when choosing `n`, not by the test
+suite on every run.
+
+Resampling at the `n` a real analysis needs is often
+parallelized across cores, and this is where Monte Carlo
+error becomes a correctness risk rather than only a
+precision question. Each worker process must draw from
+its own independent random stream; naive parallelization,
+such as `parallel::mclapply()` with no RNG setup, can
+leave workers sharing or overlapping generator state, so
+that resamples drawn as 'independent' on different cores
+are correlated, which understates the Monte Carlo error
+rather than merely adding to it. The fix is the
+L'Ecuyer-CMRG generator, built for exactly this, which
+R's `RNGkind('L\'Ecuyer-CMRG')` exposes directly and which
+`parallel::clusterSetRNGStream()` applies across the
+workers of a cluster, assigning each one a non-overlapping
+substream; the `doRNG` package applies the same discipline
+to a `foreach` loop. A parallel bootstrap run without this
+is not merely imprecise; its reported width can understate
+the true Monte Carlo error, and it adds a second way for
+the result to depend on how many cores happened to run it,
+on top of the seed discipline this chapter already
+requires.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: two kinds of instability
+
+A bootstrap bound changes when rerun with a different
+seed at the same `n`. It also changes when rerun with the
+same seed after an R version upgrade changes the default
+sampler (@tbl-baseline-rng). Are these the same problem,
+and does increasing `n` fix both?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The seed-to-seed change at fixed `n` is Monte Carlo
+error, the resampling's own finite-sample noise; raising
+`n` shrinks it toward zero. The sampler change after an
+upgrade is a change in which resamples a *given* seed
+produces, not in how many resamples were drawn; raising
+`n` does not fix it, because the two samplers will keep
+disagreeing at any `n`. Only pinning the sampler, as the
+baseline test does, addresses that second problem.
+:::
+:::
+
 The four kinds are not four ways of doing one thing.
 Each catches defects the others do not see, and
 @fig-test-coverage sets four representative defects
@@ -1071,6 +1263,103 @@ analysis from L2. The rule of thumb is that
 removing a capture feature lowers the level, while
 removing a validation feature leaves the level
 unchanged and only stops the checking.
+:::
+:::
+
+## Validation in the regulated sense
+
+Every use of 'validation' in this chapter has been the
+statistical and software-engineering sense: checking that
+code is correct, that data meet a constraint, that a
+result regenerates. In pharmaceutical, medical-device, and
+other FDA- or EMA-regulated work, 'validation' names a
+narrower and more procedural idea, and @sec-levels's
+warning box introduces the distinction; this section
+develops the three practices that fill it out for testing
+specifically.
+
+**Computer system validation.** Under 21 CFR 11.10(a),
+a regulated electronic record system must be validated
+'to ensure accuracy, reliability, consistent intended
+performance, and the ability to discriminate invalid or
+altered records' [@cfr21part11], a standard reflected in
+parallel form in European Medicines Agency expectations
+for computerized systems in the same regulatory setting.
+This is validation of the system across its lifecycle,
+documented once and maintained by a change-control
+process, not a one-time test run. A `tinytest` suite that
+passes is evidence toward this standard; it is not, by
+itself, the standard, which also demands documented
+installation qualification, operational qualification,
+and a record of who approved each change and when.
+
+**Double programming.** Independent of any code-based
+test, a regulated submission is commonly checked by
+*double programming*: two analysts, or one analyst and an
+independent reviewer, implement the same analysis
+separately, from the same specification, usually in
+isolation from each other's code, and the two results are
+compared. This is a different reproducibility practice
+from everything else in this chapter. A baseline test
+reruns the *same* code and checks that it still returns
+the same answer; double programming runs *two different*
+implementations of the same specification and checks that
+they agree. A bug shared by both implementations, because
+both analysts misread the same ambiguous protocol
+sentence, would pass a baseline test (the code is
+unchanged) and would also pass double programming (the
+two analysts made the same mistake); what double
+programming catches is a bug particular to one
+implementation, the error a single analyst's code review
+is least likely to find in their own work.
+
+**Package risk assessment.** Pinning package versions,
+as @sec-dependencies teaches, fixes which code runs; it
+says nothing about how much to trust that code. The R
+Validation Hub, an R Consortium working group formed for
+exactly this question, proposes a risk-based answer
+[@nicholls2020]: classify each package as either
+'intended for use' (called directly by the analysis) or
+an unexamined dependency reached only through another
+package; for each intended-for-use package, assess its
+purpose, maintenance practice, community usage, and
+existing test coverage; and have a qualified reviewer
+record a documented risk judgment, higher risk earning
+additional targeted testing and lower risk, such as base
+R or a long-established tidyverse package, earning
+'trusted' status with no further work. The `riskmetric`
+package operationalizes several of these metrics so the
+assessment does not start from nothing. This is a
+judgment about trustworthiness layered on top of the
+pinning @sec-dependencies already does, not a replacement
+for it.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: three validations
+
+A compendium has a committed `renv.lock`, a passing
+`tinytest` suite, and a documented sign-off that
+`dplyr` 1.1.4 has been risk-assessed as trusted. A
+regulator asks whether the system is validated under
+21 CFR 11.10(a). What is missing from the three items
+given?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+All three are real evidence, but none is computer
+system validation by itself, and the three together are
+not automatically enough either. The lockfile is
+capture; the test suite is software validation in this
+chapter's sense; the risk assessment is a package-level
+trust judgment. 21 CFR 11.10(a) asks for documented
+evidence that the system as a whole reliably does what
+it purports to do across its lifecycle, maintained
+through a change-control process, which requires
+installation and operational qualification records and
+sign-off on each subsequent change, not only a snapshot
+of the code, the tests, and one package's status at a
+single point in time.
 :::
 :::
 

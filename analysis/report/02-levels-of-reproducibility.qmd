@@ -590,6 +590,23 @@ journal's author instructions or a venue's badging policy,
 the first task is to determine which convention that
 document uses. The word alone does not tell them.
 
+::: {.callout-warning}
+## Another warning about the words: 'validation'
+
+This chapter uses 'validation' and the L3 label
+'verified' for a narrow act: confirming that a previously
+captured value still holds, as a baseline test does.
+Regulated industry work, pharmaceutical and other
+FDA-adjacent settings among them, attaches 'validation' to
+something larger: a formal, documented process confirming
+that a system is fit for its intended use, as under 21 CFR
+11.10(a) [@cfr21part11]. European regulators expect
+something comparable of a sponsor's analysis tools. A
+graduate moving into that kind of work will meet the
+regulated sense on arrival; this book's narrower one does
+not prepare them for the paperwork that comes with it.
+:::
+
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: which word, which sense?
 

@@ -2441,6 +2441,68 @@ addressed in this phase since they fall outside its scope (template
 structure, not the running example's own code or this repository's
 test harness).
 
+**Both fixed, 2026-10-11, branch `fix-seeding-and-test-discovery`
+(merged into `phase-11-content`).** `bootstrap_ci()` now uses
+`withr::with_seed()`, matching what the book's prose already (and,
+until this fix, incorrectly) claimed it did; verified deterministic
+given a seed and non-destructive of the caller's RNG state.
+`inst/tinytest/test-cohort.R` gained a third fixture-discovery tier,
+`inst/testdata/cohort_raw.csv` (a package-shipped, byte-identical
+mirror of the canonical extract), so the cohort tests actually run
+under `R CMD check`-like conditions instead of silently reporting
+0 tests, 0 fails; verified end to end with a fresh build and
+install, before (0/0) and after (23 tests, 0 fails) the fix, plus a
+full `R CMD check` (3 pre-existing, unrelated NOTEs, no new ones, no
+WARNING, no ERROR). A bug in the first attempt at the second fix,
+caught before committing: `sub()` silently returns its input
+unchanged when the pattern does not match, which happened to point
+at an existing file (the CSV itself), so the generator-replay block
+tried to parse data as R source; fixed by requiring a real
+substitution before trusting the derived path.
+
+### 10.17 Phase 11: content additions (Decision D8)
+
+Adds the topics the coverage sweep found missing and the author
+approved (10.10, Decision D8), placed where 10.10's table specifies.
+Phase 9's template is complete everywhere; this phase is additive
+only and does not touch chapter structure.
+
+**Batch 1, 2026-10-11.** Branch `phase-11-content`, built on the
+completed Phase 9 rollout plus the correctness-fix commit above
+(merged in first). Five chapters, five topics (ch08 carries three).
+All local; nothing pushed.
+
+| Topic | Chapter | Result | Evidence |
+|---|---|---|---|
+| Regulated validation warning (D9, ch02 half) | 02 | New callout-warning box, 109 words, right before the existing 'reproduced/replicated' Check | V lead: rendered clean; **fixed a citation-attribution error**, the first draft cited a US regulation (`@cfr21part11`) at the end of a sentence that also made an uncited EMA claim, which reads as if the citation covers both; corrected to attach the citation only to the CFR clause and state the EMA point as general, uncited prose |
+| README and data dictionary; project-oriented paths (`here`) | 03 | Two new sections, 472 and 278 words, after 'The directory layout, concretely' | V lead: reproduced the cited path inconsistency directly (`08-testing-quality.qmd` uses `../../analysis/...`, `01-reproducibility-crisis.qmd` uses `../analysis/...` for the same file); both proposed citations (NHS RAP Community of Practice, Bryan and Hester's 'Practice Safe Paths') opened and confirmed to resolve before merging |
+| Git recovery and merge conflicts | version-control | New section, 814 words (32% under the 1,200 estimate, not padded), after 'Branches, lightly' | V lead: independently reproduced `git restore` behavior in a scratch repository, matching the chapter's description exactly; confirmed consistency with the chapter's existing reset/rewrite language at the cited lines |
+| Apple Silicon and multi-architecture images | 05 | New section, 572 words, before the showcase Dockerfile | V lead: ran `docker manifest inspect` directly on `rocker/r-ver:4.4.0` (confirmed multi-arch, amd64 and arm64) and `rocker/tidyverse:4.4.0` (confirmed amd64-only), exactly as claimed; Docker's multi-platform-builds documentation opened and confirmed before merging the citation |
+| Regulated validation (D9, ch08 half), double programming, package risk assessment; analysis plan as oracle; Monte Carlo SE and parallel RNG streams | 08 | Three new sections, about 2,000 words combined (within the 2,000-2,300 target) | V lead: ran the chapter's own executed Monte Carlo stability chunk independently, reproducing its exact numbers (SD of interval width 0.319 at n=300, 0.101 at n=1500); the R Validation Hub white paper (Nicholls, Bargo, and Sims 2020) opened and confirmed before merging the citation; confirmed the citation to the CFR regulation is correctly scoped this time, unlike ch02's first draft |
+
+Render: freeze cleared for all five chapters; HTML and PDF exit 0,
+no warnings, no unresolved references or missing citations, no
+literal HTML entities [V]. Repository test suite 311/311 (up from
+305).
+
+**Length report.** PDF is now 574 pages, up from 560 before this
+batch (+14 pages, +2.5%). Since before Phase 6: 398 to 574 pages,
++44.2%. The strict per-topic size budgets held: every addition came
+in at or under its 10.10 estimate, several well under (version-
+control's 814 words against a 1,200 estimate; ch08's roughly 2,000
+words against a 2,000 to 2,300 target). At this rate, the remaining
+approved topics (the rest of 10.10's Priority 1 and 2 rows, the
+shell primer, and the HPC section) would add roughly another 15 to
+25 pages.
+
+**Remaining for a future batch:** funder and journal obligations
+(ch10); licensing, `CITATION.cff`, Software Heritage (ch10);
+debugging a failed reproduction (09); CI secrets and token
+permissions (09); AI-use disclosure (LLM sections of 01 and 07); the
+HPC optional section (06); the shell primer appendix (new); and the
+setup appendix mentioned alongside ch05's Apple Silicon section
+(new, broader than the in-chapter section just added).
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their

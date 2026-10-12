@@ -588,6 +588,102 @@ answer different questions about the same package skin.
 :::
 :::
 
+## The README and the data dictionary
+
+The directory listing above names a `README` nowhere, and
+that absence is not an oversight to copy. A compendium that
+captures all five pillars perfectly but ships without a
+`README` still fails the first test a stranger applies to
+it, because the stranger has no entry point. The NHS RAP
+Community of Practice makes the README the entire baseline
+criterion for reproducibility, ahead of any of the five
+pillars: a repository reaches the lowest rung only once it
+'includes a README.md file (or equivalent) that clearly
+details steps a user must follow to reproduce the code'
+[@nhsrap2024]. A `README.md` at the project root should
+state, in order, what the project is for, how to reproduce
+it (the `make` target or `Rscript` command that runs the
+pipeline end to end, and the archetype-specific gate from
+@sec-levels that passing it claims), and where the data
+dictionary lives for anyone who needs the columns rather
+than the narrative.
+
+The data dictionary is a second, separate document, usually
+in `analysis/data/metadata/` or beside the extract it
+describes, and it answers a question the README should not
+try to: what is each column, exactly. At minimum it gives,
+per column, the name, its type, a one-line meaning, its
+units where numeric, and its provenance, meaning whether it
+was measured, derived, or simulated and by what script. This
+book's own `analysis/data/README.md` is a worked, if
+unusually candid, example: because the extract it describes
+is synthetic, the dictionary can also say outright which
+rows are planted defects and why, a disclosure a real data
+use agreement would instead replace with an access-control
+statement. The columns table there (`mrn`, `patient_name`,
+`hba1c`, and seven more, each with a type and a one-line
+meaning) is the shape to imitate; the provenance section
+above it, naming the exact generator script and seed, is the
+part a real project cannot write the same way, since a real
+extract's provenance is the originating system and the
+extraction date, not a committed script.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: README versus data dictionary
+
+A compendium's `README.md` says 'run `make all` to reproduce
+every figure in the report' and nothing else about the data.
+Is this README sufficient on its own, and what, if anything,
+is still missing from the compendium?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The sentence satisfies the RAP baseline criterion by itself,
+since it states the one command a user must run. What is
+missing is not part of the README's job: a data dictionary
+naming each column's type, meaning, units, and provenance.
+A reproducer who can rerun the pipeline but cannot tell what
+`hba1c` means or whether it was measured or simulated has not
+been given a reproducible analysis, only a reproducible
+button press.
+:::
+:::
+
+## Project-oriented paths: `here`, not `setwd()`
+
+A script that opens with `setwd('/Users/jane/project')`
+reproduces on exactly one machine: Jane's. The fix taught by
+the `here` package is to mark the project root once, with a
+file such as `.here` or the marker RStudio and Git already
+leave behind, and then build every path with `here::here()`,
+which walks up from the working directory until it finds that
+marker and returns paths relative to it from there on
+[@bryan2024safepaths]. A script that reads
+`here::here('analysis', 'data', 'raw_data', 'cohort_raw.csv')`
+resolves the same file whether R is launched from the
+project root, from `analysis/report/`, or from a continuous-
+integration runner that checks the repository out to a
+different absolute path each time, because the path is
+computed from the marker rather than typed as a string.
+
+This book's own chapters, inspected directly, show why the
+discipline matters even without `setwd()`. Several chapters
+reach the cohort extract with `'../data/raw_data/...'`, but
+`08-testing-quality.qmd` reaches the same file with
+`'../../analysis/data/raw_data/...'`, two directories deeper,
+because that chunk assumes a different starting working
+directory than the others do. Every one of these paths works
+only because the author tracked, chunk by chunk, how many
+`../` steps the renderer's working directory is from the
+target file; `here::here('analysis', 'data', 'raw_data',
+'cohort_raw.csv')` would resolve identically from any of
+these chunks, because it does not depend on the renderer's
+starting point at all. The relative-path convention is not
+wrong, exactly; it is fragile in a way that is invisible
+until a chunk is moved, copied into a different chapter, or
+run from a different tool.
+
 ## The five archetypes
 
 We come now to the heart of the matter, and to the point
