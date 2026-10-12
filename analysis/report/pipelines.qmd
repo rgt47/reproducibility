@@ -46,7 +46,12 @@ its computation has moved out of that single document and
 into scripts. Comfort writing an R function with explicit
 arguments and a return value, reading a short shell
 command, and no prior exposure to Make, `targets`, or any
-other build tool.
+other build tool. In the one-quarter core path (see the
+[Conventions](conventions.qmd) page), only the Make section
+below is core; the `targets`, Snakemake, Nextflow, and
+`workflowr` sections that follow it are marked optional and
+can be skipped on that schedule without losing the
+chapter's central claim.
 
 **By the end of this chapter you will be able to
 answer:**

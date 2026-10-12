@@ -2692,9 +2692,33 @@ have used.
 **No renumbering was done in this phase.** The intro cut and the
 archetype consolidation both leave chapter order and chapter count
 unchanged, so Phase 12's 'checkpoint before any renumbering' does
-not trigger here. Optional-section marking and the core-path update
-to the preface and instructor guide, also listed under Phase 12 in
-10.13, were not addressed in this pass and remain open.
+not trigger here.
+
+**Optional marking and the core path in the preface and instructor
+guide, closing out Phase 12.** Checked first what already existed:
+the per-chapter Core/Optional table on the Conventions page and the
+week-by-week core-path table in `INSTRUCTOR-GUIDE.md` were both
+already correct and complete, added in Phase 9 (10.13's 'F' and 'G'
+phases); 06's own chapter card already names itself optional and
+points to the Conventions page. Two gaps remained: the preface had
+no mention of the core path at all, and `pipelines.qmd`'s chapter
+card did not say that only its Make section is core, unlike 06's
+card, which does name itself optional. Added a new preface section,
+'Reading it in one quarter' (118 words), pointing to the Conventions
+page and the instructor guide by name; added one sentence to
+`pipelines.qmd`'s 'Before you start' box naming the Make section
+core and the `targets`, Snakemake, Nextflow, and `workflowr`
+sections optional, matching the wording already established on the
+Conventions page and in the instructor guide rather than inventing
+new phrasing. Render: freeze cleared for `pipelines.qmd`; HTML and
+PDF exit 0, no unresolved references or missing citations, no
+literal HTML entities [V]; diff checked for em dashes and British
+spellings, none introduced [V]. PDF unchanged at 598 pages. Test
+suite 317/317, unaffected (no executed content changed).
+
+**Phase 12 is complete.** All four items in 10.13's phase table
+(intro cut, archetype consolidation, optional marking, core path in
+the preface and instructor guide) are done.
 
 ### 10.16 Limitations
 
