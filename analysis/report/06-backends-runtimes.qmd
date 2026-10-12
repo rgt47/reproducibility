@@ -907,6 +907,106 @@ to carry forward.
 :::
 :::
 
+## An HPC worked example: Apptainer under Slurm
+
+This section is supplementary to an already-optional
+chapter: skip it freely if the cluster destination above
+was enough. It extends that story with the submission
+mechanics a real cluster imposes, because knowing that
+Apptainer is the right tool does not by itself tell an
+analyst how a job reaches the scheduler.
+
+Three realities of a shared cluster shape the script below.
+First, the analyst has no administrative rights on any
+node, which is the constraint Apptainer exists to satisfy
+and already explained above: it runs unprivileged, so a job
+submitted under the analyst's own account can still execute
+a containerized analysis, which is why Apptainer, not
+Docker, is the standard choice on shared clusters. Second,
+the SIF file typically sits on a shared, read-only
+filesystem mounted on every compute node; the image is
+built once, usually on a login node or a separate build
+host with outbound network access, since compute nodes are
+often firewalled from the registry the image is pulled
+from. Third, and most consequentially, the analyst cannot
+install anything at the operating-system level once that
+image is built and placed on the shared filesystem. There
+is no `apt install` to fall back on from inside a running
+job. This is exactly why the pinning discipline of
+@sec-containers is not a nice-to-have on a cluster: the SIF
+built from the digest-pinned image is the only environment
+the job will ever see, for the life of the allocation.
+
+A minimal submission script for the cohort-analysis image
+introduced in the worked example above looks like this:
+
+```bash
+#!/bin/bash
+#SBATCH --job-name=cohort-analysis
+#SBATCH --partition=general
+#SBATCH --time=02:00:00
+#SBATCH --mem=8G
+#SBATCH --cpus-per-task=4
+#SBATCH --output=cohort-analysis-%j.log
+
+apptainer exec --cleanenv \
+    /shared/images/cohort-env.sif \
+    Rscript -e 'source("analysis/simulate.R")'
+```
+
+The `#SBATCH` lines are directives Slurm's `sbatch` command
+reads out of the script before any shell code runs: the
+partition to queue on, a wall-clock time limit, a memory
+reservation, a core count, and a destination for the job's
+combined output, with `%j` substituted for the numeric job
+ID at submission time. An analyst with access to a
+compliant cluster would submit the script with `sbatch
+run-cohort.sh`.
+
+The `apptainer exec` line is the same command and the same
+flag met in the Pitfall above, applied here to a batch job
+rather than an interactive run. Slurm's own job environment
+carries login-node variables, module loads, and whatever a
+cluster's site-wide profile sets, into the job by default,
+which is the batch-system version of the leakage the
+Pitfall described for an interactive shell. `--cleanenv`
+drops that inherited environment and isolates `$HOME`
+before `Rscript` ever starts, so the job runs against the
+image's own pinned packages and nothing the cluster happened
+to load on the analyst's behalf.
+
+This script's `#SBATCH` directive syntax is inspected
+against standard Slurm usage, not verified end to end: no
+Slurm cluster was available to actually submit it, so treat
+it as an illustrative template to adapt to a given site's
+partition names and resource limits, not as a script copied
+and run unexamined.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the script does and does not pin
+
+A colleague asks why the submission script above needs
+`--cleanenv` when the SIF file was already built from a
+digest-pinned image. What would leak into the job without
+it, and what does the flag not protect against?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Without `--cleanenv`, Slurm's job environment, including
+variables a cluster's login-node profile or a loaded module
+sets, such as a stray `R_LIBS_USER` or a locale setting,
+would pass through into the container alongside the pinned
+image, exactly as it would in an interactive Apptainer
+session. The flag isolates that environment and `$HOME`; it
+does nothing to the image's own pinned contents, which were
+already fixed when the SIF was built from the digest. A job
+that fails only without `--cleanenv`, and succeeds with it,
+is failing because of something outside the image, not
+inside it.
+:::
+:::
+
 ## Collaborating with an LLM
 
 A language model is a capable assistant for the mechanics

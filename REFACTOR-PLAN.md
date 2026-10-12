@@ -2495,13 +2495,74 @@ approved topics (the rest of 10.10's Priority 1 and 2 rows, the
 shell primer, and the HPC section) would add roughly another 15 to
 25 pages.
 
-**Remaining for a future batch:** funder and journal obligations
-(ch10); licensing, `CITATION.cff`, Software Heritage (ch10);
-debugging a failed reproduction (09); CI secrets and token
-permissions (09); AI-use disclosure (LLM sections of 01 and 07); the
-HPC optional section (06); the shell primer appendix (new); and the
-setup appendix mentioned alongside ch05's Apple Silicon section
-(new, broader than the in-chapter section just added).
+**Remaining for a future batch (now all added except one, see
+below):** funder and journal obligations (ch10); licensing,
+`CITATION.cff`, Software Heritage (ch10); debugging a failed
+reproduction (09); CI secrets and token permissions (09); AI-use
+disclosure (LLM sections of 01 and 07); the HPC optional section
+(06); the shell primer appendix (new); and the setup appendix
+mentioned alongside ch05's Apple Silicon section (new, broader than
+the in-chapter section just added, still open after batch 2).
+
+**Batch 2, 2026-10-12.** Branch `phase-11-content`, same branch as
+batch 1. Six of the seven remaining topics, across five chapters and
+one new appendix. All local; nothing pushed.
+
+| Topic | Chapter | Result | Evidence |
+|---|---|---|---|
+| AI-use disclosure | 01, 07 | Closing paragraphs before Exercises, 241 and 264 words | V lead: confirmed no AI product or model is named anywhere in either addition (house rule, REFACTOR-PLAN 10.14); both chapters render clean |
+| HPC worked example | 06 | New section, ~600 words (under the ~1,000 estimate), placed after the existing Apptainer Pitfall rather than the brief's suggested location, to avoid a forward reference to `--cleanenv` | V lead: confirmed the placement reasoning by checking `--cleanenv` is genuinely explained earlier in the chapter; the `#SBATCH` directive syntax is standard and the agent honestly labeled it inspected, not verified end to end (no cluster available) |
+| Licensing, `CITATION.cff`, Software Heritage; funder and journal obligations | 10 | Two new sections, 616 and 817 words (combined 1,433, under the 1,600-1,700 budget) | V lead: independently confirmed the SWHID format (`swh:1:<type>:<hash>`) against the swh-model repository; **found and fixed a second citation-attribution error**, the Software Heritage 'never deletes' claim was cited to a source (`@swhiso2025`) that the agent's own proposal notes admitted does not support it (it supports only the ISO standardization fact); corrected by restating the claim as general, uncited prose and re-scoping the citation to what it actually supports |
+| Debugging a failed reproduction; CI secrets, tokens, and pinned actions | 09 | Two new sections, 1,061 and 762 words (combined ~1,823, close to the ~1,800 target) | V lead: independently reproduced the chapter's git bisect demonstration in a fresh scratch repository (a proper 4-commit history with genuinely distinct content per commit, after an initial flawed attempt on my part); `git bisect run` correctly identified the breaking commit, matching the chapter's claim; checked all four new citations' placement and found each correctly scoped to the specific quoted claim it supports, no attribution issue this time |
+| Shell primer | new appendix, `shell-primer.qmd` | 1,566 words (22% under the 2,000 estimate) | V lead: independently ran every nontrivial claim in the appendix (`>` versus `>>`, `chmod +x` and the resulting permission-denied error with its exact wording, numeric `chmod` modes, `2>` stderr redirection, the `printf \| grep \| wc -l` pipe example, `export` and subshell inheritance) and reproduced the file's claimed output exactly in every case |
+
+**A repository defect this phase's research surfaced, fixed
+directly by the lead, not part of any chapter's word budget:** this
+repository's own `CITATION.cff` had an empty `orcid` field and a
+literal unfixed placeholder, `affiliation: Your Institution`, found
+while the ch10 agent verified its licensing section against this
+repository as a live example. Fixed the affiliation to the author's
+actual institution; the ORCID field is left empty rather than
+invented, since no verified ORCID was available this session.
+
+**A process incident, resolved without data loss.** While verifying
+its own render, the ch09 agent used `git stash` and `git stash pop`
+to isolate a bug, which (as git stash operates on the whole working
+tree, not per-file) caught every other concurrently running agent's
+uncommitted edits, including the lead's own `_quarto.yml` and
+`references.bib` changes. The agent reports recovering and
+reapplying everything via targeted patches before dropping the
+stash. This was not taken on trust: the lead independently
+re-verified every file the incident could have touched after the
+agent reported, including re-confirming the lead's own two wiped
+edits were correctly restored, re-confirming the AI-disclosure and
+HPC content in the three other chapters the stash would have caught
+was intact, and running the full test suite and a full clean
+render. No corruption or data loss was found. Lesson for any future
+phase: a subagent's own file-recovery tooling (stash, checkout,
+reset) run against a shared working tree while sibling agents are
+writing concurrently is exactly the kind of operation house rule 6
+(parallel agents own disjoint files) exists to prevent; agents
+should be instructed explicitly not to run tree-wide git recovery
+commands, and to isolate a render bug by copying the single file in
+question elsewhere instead.
+
+Render: freeze cleared for all five touched chapters; HTML and PDF
+exit 0, no warnings, no unresolved references or missing citations,
+no literal HTML entities [V]. Repository test suite 316/316 (up
+from 311).
+
+**Length report.** PDF is now 600 pages, up from 574 before this
+batch (+26 pages, +4.5%). Since before Phase 6: 398 to 600 pages,
+**+50.8%**, crossing the symbolic halfway-again mark. Every topic
+in this batch still came in at or close to its 10.10 budget (ch09's
+combined total landed almost exactly on target rather than under,
+the first batch-2 item to do so).
+
+**Remaining:** the setup appendix (Apple Silicon, Windows, WSL2,
+locked-down institutional laptops), mentioned in 10.10 alongside
+ch05's Apple Silicon section but broader in scope. This is the last
+topic from Decision D8's approved list.
 
 ### 10.16 Limitations
 

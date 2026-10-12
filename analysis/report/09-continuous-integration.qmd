@@ -667,6 +667,106 @@ and drawn precisely the wrong conclusion from it.
 :::
 :::
 
+## Secrets, tokens, and pinned actions
+
+A CI runner holds credentials the author's own laptop never
+needed, to comment on a pull request, push a built image, or
+deploy a rendered report. A leaked credential is a worse
+incident than a failed reproducibility check and deserves the
+same discipline this chapter applies elsewhere: nothing
+should reach the runner, or leave it, undeclared.
+
+The first rule is never to let a secret reach a log or a
+commit. GitHub's guidance on securing Actions workflows warns
+that sensitive values 'should never be stored as plaintext in
+workflow files' [@githubsecrets]; a workflow instead
+references a stored secret through the `secrets` context,
+`${{ secrets.NAME }}`, which the runner substitutes at
+execution time and GitHub attempts to redact from the log.
+That redaction is a safety net, not a guarantee: 'automatic
+redaction is not guaranteed', and the documentation
+recommends auditing a workflow's output to confirm a secret
+is never explicitly printed [@githubsecrets]. The condensed
+workflow earlier in this chapter already follows the pattern:
+`GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}` passes a credential
+into the job's environment without ever writing its value
+into the file.
+
+The second rule is least privilege. The default token GitHub
+Actions issues a job is scoped broadly unless told otherwise,
+and a workflow with no `permissions` block runs with more
+access than most jobs need. GitHub's hardening guidance calls
+a default of read-only repository contents 'good security
+practice', with individual jobs granted more only where they
+need it [@githubhardening]. The chapter's own example is
+already doing this: it declares `permissions: contents: read`
+at the top of the workflow, worth noting explicitly, since a
+reader looking for a problem to fix in that file will not
+find one here.
+
+The third rule has a direct parallel already established in
+this book. @sec-containers showed that pinning a base image
+by tag is not enough, because a tag is a mutable pointer a
+maintainer can repoint to different bytes with no change to
+the Dockerfile that names it, and that pinning by digest is
+what actually fixes the bytes a build receives. A third-party
+GitHub Action is the same hazard in different clothes: a
+version tag such as `@v4` can be moved to a different commit
+by its maintainer, or by anyone who compromises the
+maintainer's account, and the workflow that trusts the tag
+runs whatever that commit contains on its next trigger, with
+no diff in the consuming repository to review. GitHub's own
+hardening guidance recommends pinning a third-party action to
+a full-length commit SHA rather than a tag, stating the
+rationale plainly: a tag 'can be moved or deleted' by anyone
+with write access to the action's repository, while forging a
+given commit SHA would need an attacker to produce a SHA-1
+collision [@githubhardening]:
+
+```yaml
+- uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+```
+
+Here the chapter's own workflow examples fall short of their
+own advice and should be read as a teaching simplification,
+not a model to copy unchanged: `actions/checkout@v7` and
+`r-lib/actions/*@v2` above, and `rocker/verse:4.4.0` in the
+GitLab example, all pin by tag, for the same reason this
+book's Dockerfile explains a recipe by tag before showing the
+digest-pinned version: a tag is legible in a worked example in
+a way forty hex characters are not. A compendium's actual CI
+configuration should pin every third-party action to a commit
+SHA, exactly as its Dockerfile pins its base image by digest:
+a dependency that can change with no commit to the project's
+own history is undeclared state, whether it lives in a
+package repository, a container registry, or an action's git
+history.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what a version tag on an action actually promises
+
+A teammate argues that pinning an action with `uses:
+some-org/some-action@v3` is already safe, since the tag is
+version-controlled and anyone can see which commit `v3` points
+to on GitHub. What is wrong with this argument?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Visible is not the same as fixed. A tag is a label the
+action's maintainer, or anyone with write access to that
+repository, can repoint to a different commit at any time;
+the workflow records only the label it asked for, not which
+commit it ran last time. Checking what `v3` resolves to now
+answers only 'what would run if I checked right now', not
+what ran last week or what will run if the tag moves before
+the next trigger. A commit SHA fixes the content; a tag,
+however carefully maintained, is a pointer that can be moved,
+exactly the distinction this book already draws between a
+Docker tag and a Docker digest.
+:::
+:::
+
 ## Two dialects: GitHub Actions and GitLab CI
 
 Continuous integration is a general idea with several
@@ -1395,6 +1495,141 @@ that does read `analysis/`.
 :::
 :::
 
+## Debugging a failed reproduction
+
+The worked example above is the easy case: CI catches the
+defect the same day, on the same commit that introduced it.
+The harder case arrives later. A compendium that rendered
+cleanly in March fails in October, when a reviewer clones
+it, a collaborator resumes it, or the author themselves
+reruns it for a revision. Nothing in this section is
+generic R debugging, which is out of scope for this book;
+it is a diagnostic sequence specific to one question: it
+worked before, and it does not now, so what changed?
+
+The first move is to localize the failure in time, not in
+code. If the history between the last known-good state and
+the present failure holds more than a handful of commits,
+reading each one is slower than letting git find the
+boundary. `git bisect` does this by binary search: told one
+commit that is good and one that is bad, it checks out the
+midpoint and asks for a verdict, halving the remaining range
+at each step.
+
+```bash
+git bisect start <bad-commit> <good-commit>
+git bisect run Rscript -e 'rmarkdown::render("report.Rmd")'
+git bisect reset
+```
+
+`git bisect run` automates the verdict: it checks out each
+candidate commit and runs the given command, taking a
+nonzero exit status as 'bad' and zero as 'good', continuing
+until a single first-bad commit remains. We verified the
+mechanism on a disposable four-commit toy repository, under
+git 2.55.0: the first commit established a check that passed;
+the second, an unrelated-looking refactor, silently changed
+a value the check depended on; two further commits added
+only comments. Told that the fourth commit was bad and the
+first was good, `git bisect run Rscript check.R` tested the
+midpoint, found it still bad, tested the commit below that,
+and named the second commit as the first bad one, in two
+bisection steps rather than three linear checks. The command
+handed to `bisect run` need not be a toy; it can be the
+render gate or a baseline test from @sec-testing, which
+is exactly what lets the search run unattended across dozens
+of commits.
+
+Once the boundary commit is known, the next question is
+whether the commit changed code or whether something outside
+the commit changed under it, because `git bisect` can only
+blame a commit if the environment at each checkout is
+otherwise identical. A pipeline that reruns the same pinned
+commit weeks apart and gets a different answer did not fail
+because of anything in the diff; the fix is to compare
+environments, not history. `sessionInfo()` (@sec-dependencies
+and the glossary) is the cheapest comparison, run in the
+working environment and the failing one and diffed by eye for
+an R version, platform, or package version that moved.
+`renv::diagnostics()` goes further, checking the active
+library against the lockfile and reporting mismatched or
+missing packages directly, which is the first thing to run
+when the suspicion is drift in the restored library rather
+than in the analysis code. When the suspicion lands on the
+lockfile itself, `git diff <good-sha> <bad-sha> -- renv.lock`
+shows exactly which package or version entries changed
+between the two commits, narrowing 'something in the
+environment changed' to the one or two packages responsible.
+
+If the analysis is a `targets` pipeline (@sec-pipelines)
+rather than a single script, the diagnostic moves from
+history into the dependency graph. `tar_outdated()` lists
+which targets the pipeline considers stale and therefore
+due to rerun; `tar_visnetwork()` draws the same information
+as a graph, so the analyst can see where in the chain of
+targets the invalidation begins rather than at which commit
+it was introduced. This is the pipeline-native counterpart
+to bisecting: `targets` already tracks what depends on what,
+so the question 'what broke, and what does it affect'
+can be answered from the dependency graph instead of from
+commit history, provided the pipeline's metadata itself
+survived the problem (@sec-pipelines discusses when it does
+not).
+
+The last diagnostic is reading a CI log on its own terms.
+This chapter has already named the three gates and the
+discipline of reproducing a failure exactly as CI ran it,
+not as is convenient to invoke by hand ('Where CI bugs
+hide', above). Applied to a failed reproduction, that means:
+identify which of the three gates reported red, `R CMD
+check`, the dependency manifest, or the render; read what it
+printed, not just that it failed, since the WARNING text or
+the `stop()` message names the missing package or the broken
+chunk directly; and reproduce that exact step locally, from a
+session with the same restored library CI used, rather than
+re-running the whole render and hoping the same failure
+reappears in a more informative form. A log that says only
+'build failed' is a log nobody read past the first line.
+
+None of these five moves is a substitute for the others, and
+the order matters more than any single step. Bisection is
+cheap to run and narrows the search space before anything
+else is attempted. Session-info and lockfile comparisons cost
+nothing once the boundary commit is known and settle, quickly,
+whether the defect is in the diff or in the environment around
+it. `targets` diagnostics apply only when a pipeline is
+involved, and reading the CI log carefully is usually the last
+step, because by the time it is needed the first four moves
+have already said which gate to expect it from.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: bisecting an environment problem
+
+A pipeline's render step fails on a Tuesday rerun of a commit
+that rendered cleanly the previous Friday. The commit has not
+changed. Why will `git bisect` be useless here, and what
+should be compared instead?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+`git bisect` localizes a failure to a commit by checking out
+different revisions and testing each one, which only works
+when the thing that changed is in the history it walks. Here
+the commit is fixed and identical on both days, so bisection
+has nothing to vary and nothing to find; every checkout it
+tries is the same code. The defect lies outside the commit,
+most likely in the restored environment: an unpinned
+dependency that resolved to a different version between
+Friday and Tuesday, or a base image whose tag moved. The
+right comparison is `sessionInfo()` or
+`renv::diagnostics()` run on both days, or, if the lockfile
+itself is suspect, a diff of `renv.lock` against the copy
+captured on Friday, not a bisection across commits that never
+changed.
+:::
+:::
+
 ## Demonstrating a gate on the cohort compendium
 
 The three gates are not abstractions; the same logic that
@@ -1409,7 +1644,7 @@ reports whether the gate passes.
 ```{r}
 #| label: ci-cohort-gate
 used <- unique(renv::dependencies('../../R/cohort.R')$Package)
-locked <- c('tibble', 'ggplot2', 'stats', 'utils')
+locked <- c('tibble', 'ggplot2', 'stats', 'utils', 'withr')
 base_pkgs <- rownames(installed.packages(priority = 'base'))
 
 gate_check <- function(missing) {
@@ -1427,7 +1662,8 @@ cat('Result:', gate_check(missing_now), '\n')
 ```
 
 The gate passes, because `R/cohort.R` uses only `tibble`,
-`stats`, and `utils`, and all three are accounted for. The
+`stats`, `utils`, and `withr`, and all four are accounted
+for. The
 house rule of this book applies here as well: a gate shown
 only to pass has not been shown to work. The same script,
 run against a `used` list with the chapter's own running

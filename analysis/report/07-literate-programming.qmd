@@ -1319,6 +1319,36 @@ the lockfile, the container, and a baseline test run after
 a clean rebuild (@sec-levels), not by the fact of a render. State
 the level actually reached and no more.
 
+The same disclosure obligation applies to a literate
+document. If a language model drafted or edited a chunk, a
+caption, or a paragraph of prose here, that use belongs in
+the manuscript's methods section or acknowledgments, not
+left unstated. Current editorial guidance, including from
+the International Committee of Medical Journal Editors,
+treats AI assistance as disclosable, not authorable: a
+model cannot be listed as an author, because it cannot take
+responsibility for the work, but silence about its use is
+not an option either. Record which model, or model family
+and version, helped produce the document, and roughly when,
+exactly as the compendium already records an R and package
+version in its lockfile. A render's seal attests that the
+code ran and the prose agrees with it; it says nothing
+about whether a sentence of prose, or a chunk of code, was
+drafted by a person or a model, so that provenance has to
+be recorded separately, in prose the seal does not cover.
+This record matters because a model is not a versioned,
+reproducible dependency the way a package is. The same
+model name can behave differently across releases, a
+provider can retire or silently update a model identifier
+the document depended on, and even one unchanged version is
+not guaranteed to produce identical text or code from one
+call to the next. 'Drafted with language-model assistance,
+a general-purpose model, approximately mid-2026' is a
+usable record for a future reader auditing the document;
+'AI-assisted' alone is not, any more than 'used some R
+packages' would be an acceptable substitute for a lockfile
+entry.
+
 ## Exercises
 
 1. Take an existing `.Rmd` or `.qmd` document of your own

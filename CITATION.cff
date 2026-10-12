@@ -10,7 +10,7 @@ authors:
     given-names: Ronald G.
     orcid: ""
     email: rgthomas@ucsd.edu
-    affiliation: Your Institution
+    affiliation: University of California, San Diego
 abstract: >
   Reproducible research compendium created with zzcollab v0.3.0.
   Contains all data, code, and computational environment needed to reproduce

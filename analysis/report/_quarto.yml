@@ -61,6 +61,7 @@ book:
     - references.qmd
 
   appendices:
+    - shell-primer.qmd
     - glossary.qmd
     - credits.qmd
     - colophon.qmd

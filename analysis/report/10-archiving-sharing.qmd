@@ -568,6 +568,78 @@ a FAIR object by construction, provided it is deposited
 rather than merely committed and carries an explicit
 license; licensing practice is treated separately.
 
+### Licensing, CITATION.cff, and Software Heritage
+
+A pinned environment and a minted DOI satisfy three of
+FAIR's four letters without touching the fourth's hardest
+requirement. Reusability, principle R1.1 in the original
+statement, asks for 'a clear and accessible data usage
+license' [@wilkinson2016], and nothing about findability,
+accessibility, or interoperability supplies one: a
+compendium can be perfectly findable and still carry no
+statement of what a reader is permitted to do with it,
+which in the absence of a license defaults, under
+copyright, to nothing. 'The cohort, continued' below
+returns to what license this book's own compendium
+carries.
+
+Two further instruments round out what a deposit should
+carry, beyond the license file itself.
+
+**CITATION.cff.** A `CITATION.cff` file is a plain-text,
+machine-readable citation record placed at a repository's
+root, using a small set of `key: value` fields
+(`cff-version`, `authors`, `title`, `version`, and
+`date-released` among them) [@githubcitationfiles2024].
+GitHub parses the file, when it sits on the default branch,
+into a 'Cite this repository' link on the repository page
+that generates an APA or BibTeX citation on request
+[@githubcitationfiles2024]. Zenodo reads the same file on
+deposit and uses it to pre-fill the deposit's own citation
+metadata, so a `CITATION.cff` written once serves both the
+forge and the archive. Without it, a reader who wants to
+cite the compendium constructs a citation by hand from
+whatever metadata happens to be visible on the page, which
+is the same fragility that motivated the DOI in the first
+place.
+
+**Software Heritage.** Zenodo is a deposit repository: an
+institution, CERN, operates it, and while its continuation
+is a reasonable expectation, it is an expectation and not a
+guarantee, since a deposit repository could in principle be
+discontinued by the institution that runs it. Software
+Heritage undertakes something narrower and more absolute
+for source code specifically: its stated mission is a
+permanent, universal archive of publicly available source
+code, with no depositor-facing mechanism to remove
+something once archived. The project's own scale and its
+SWHID identifier scheme were formalized as an ISO/IEC
+standard in 2025 [@swhiso2025]. Every archived
+object, whether a file, a directory, a commit, or a full
+repository snapshot, receives a SoftWare Hash IDentifier of
+the form `swh:1:<type>:<hash>`, where `<type>` names the
+kind of object (`cnt` for a file's content, `dir` for a
+directory, among others) and `<hash>` is a 40-character
+value computed from the object's own bytes
+[@swhmodeldocs2024]. Because the identifier is computed
+from the content rather than assigned by a registry, two
+copies of the same file anywhere in the archive resolve to
+the same SWHID, which is a different kind of guarantee from
+a DOI: a DOI names a deposit, and a SWHID names the bytes.
+
+This book's own repository illustrates the gap between
+having these instruments and using them well. A
+`CITATION.cff` is present at the repository root, generated
+by zzcollab when the project was created, but it still
+carries an empty `orcid` field and the placeholder
+affiliation `Your Institution`, unfilled at the time of
+this writing. The file's presence is enough for GitHub to
+render the 'Cite this repository' link and for Zenodo to
+read it on deposit; its content is not yet enough to tell a
+reader whom, exactly, to credit. Filling it in is a
+five-minute task left to the lead, not a content addition
+this chapter needs to make.
+
 Two broader efforts are worth the analyst's attention.
 The Whole Tale platform, described by Brinckman and
 colleagues, bundles code, data, and computational
@@ -740,6 +812,70 @@ agreement allows it at all, only through a controlled-access
 repository or a direct request to the data steward.
 :::
 :::
+
+### Funder and journal obligations
+
+Everything the five routes above implement is a response
+to an obligation that exists before the analysis begins: a
+funder's data-sharing policy, and later, a journal's
+reporting requirement. Both predate the deposit and shape
+what the deposit must contain.
+
+**The funder side.** The NIH Data Management and Sharing
+Policy requires that, for proposals due on or after 25
+January 2023, an applicant submit a Data Management and
+Sharing Plan as part of the budget justification at the
+time of application, not drafted after data collection is
+underway [@nihdms2020]. NIH program staff review the Plan
+for completeness rather than scoring it, but once an award
+is made, the approved Plan becomes a term and condition of
+that award: noncompliance can bring added special terms,
+withheld funds, or termination, and can affect future
+funding decisions [@nihdms2020]. The practical consequence
+for the analyst is that the choice among the five routes
+above is not a free one, made at deposit time. It was made,
+in outline, when the grant was written, and the deposit is
+the Plan's execution rather than a fresh decision.
+
+**The journal side.** A code-availability statement is a
+narrower instrument than the data-availability statement
+of this section, above: it says where the *analysis code*
+lives, under what license, at what version, and what it
+does not include, independent of whatever the
+data-availability statement says about the data. The two
+statements answer different questions, and a manuscript
+needs both; a reader who wants to re-run the pipeline reads
+the code statement, and a reader who wants to obtain the
+inputs reads the data statement.
+
+Some reporting guidelines now name code availability as a
+checklist item rather than leaving it to a journal's
+general policy. TRIPOD+AI, the 2024 extension of the TRIPOD
+reporting guideline to prediction models built with
+regression or machine learning, lists item 18f under its
+'Open science' section: 'Provide details of the
+availability of the analytical code,' with a footnote
+specifying that this covers the analysis code, including
+any data cleaning, feature engineering, model building, and
+evaluation [@collinstripodai2024]. A separate item, 18e,
+asks the same question of the data. Naming code
+availability as its own item, distinct from data
+availability, is what makes TRIPOD+AI concrete where a
+general journal policy is often vague: an author completing
+the checklist cannot satisfy 18f by describing only the
+data.
+
+A code-availability statement that meets this bar states
+four things: where the code is deposited, with a persistent
+identifier if one was minted; under what license it is
+released; which version, commit, or tagged release
+corresponds to the reported results, since a repository's
+default branch moves on after publication; and what, if
+anything, the deposit withholds, and why (a proprietary
+dependency, institution-licensed software, or data
+referenced only by an accession number). 'Available on
+GitHub,' without a version and a license, answers none of
+the four.
 
 ## Stewardship over time
 
@@ -1321,6 +1457,18 @@ not a reproduction.
    SIF, and say which single artifact, if inspected before
    the deposit, would have caught the leak.
 
+9. Write a code-availability statement, meeting TRIPOD+AI
+   item 18f's standard, for this book's running cohort
+   compendium as it stands today: name the repository, the
+   license (recall 'The cohort, continued' above), the
+   commit or tagged release the statement should point to,
+   and anything withheld. Then write the parallel
+   data-availability statement for a hypothetical version
+   of the same analysis built on a registry extract held
+   under a data-use agreement, and say in one sentence how
+   the code statement would differ from the data statement
+   in that case.
+
 ## Solutions
 
 Attempt an exercise before expanding its solution. Most of
@@ -1652,6 +1800,45 @@ a file the plan did not anticipate. This is the Verification
 callout's own rule, 'how to see a claim actually holds,'
 applied to the narrower claim that no data entered the
 image.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 9
+
+**Code-availability statement.** A statement meeting
+18f's standard, as this book's repository stands:
+
+> The analysis code for this compendium is available at
+> [repository URL], at the commit tagged for this
+> submission (not the default branch, which continues to
+> change). The code is a `CITATION.cff`-bearing R research
+> compendium; the code itself is released under CC0 1.0,
+> and the accompanying prose and figures under CC BY-NC-SA
+> 4.0. The deposit withholds nothing: the cohort analyzed
+> is synthetic, generated by a committed, version-controlled
+> script, and no restricted data were used.
+
+**Data-availability statement, registry-extract version.**
+
+> The patient-level data analyzed were obtained from
+> [registry] under a data-use agreement that does not
+> permit redistribution. Qualified researchers may apply to
+> [data steward] for access under the same agreement terms.
+> A synthetic dataset of the same structure, on which the
+> pipeline runs end to end, is deposited alongside the code
+> and does not reproduce the reported estimates.
+
+**How the two differ.** The code statement answers 'can a
+reader obtain and run what produced these results,' and its
+answer here is simply yes, with a version and a license.
+The data statement answers a harder question, 'can a reader
+obtain what the code was run *on*,' and in the restricted
+case the honest answer is a controlled route rather than a
+download: the two statements can diverge sharply even for
+the same manuscript, which is exactly why a reporting
+guideline that names them as separate checklist items,
+rather than one general sentence about 'availability,' is
+doing real work.
 :::
 
 ## Cheat sheet

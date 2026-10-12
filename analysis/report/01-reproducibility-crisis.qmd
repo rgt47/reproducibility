@@ -944,6 +944,33 @@ analysis has genuinely reached, and edit the paragraph
 to claim that rung and no higher. The claim is your
 responsibility, not the model's.
 
+A final discipline belongs beside these three. If a large
+language model contributed to the code, prose, or analysis
+behind a paper, disclose that use. Current editorial
+guidance, including from the International Committee of
+Medical Journal Editors, treats AI assistance as something
+to be stated in the manuscript, not something that confers
+authorship: a model cannot take responsibility for the
+work, so it cannot be listed as an author, but its
+contribution should not go unmentioned either. Record which
+model, or model family and version, was used, and roughly
+when, with the same discipline this chapter already asks
+for an R package: 'R 4.4.1, glmnet 4.1-8' and 'a
+general-purpose language model, accessed October 2026'
+belong in the same methods paragraph. This matters because
+a model's output is not a fixed, reproducible artifact the
+way a package version is. Model behavior drifts across
+versions, providers retire and replace model identifiers
+over time, and even repeated calls to one unchanged version
+are not guaranteed to return identical output, so the text
+a model produced in January may not be the text it would
+produce from the same prompt in June, or even twice in the
+same afternoon. A citation that says only 'written with AI
+assistance' gives a future reader no way to audit what was
+used, while 'model family X, approximately version Y,
+queried in month Z' at least narrows the search the way a
+sessionInfo() snapshot narrows an R version mismatch.
+
 ## Exercises
 
 1. Locate a published article in your own field that
