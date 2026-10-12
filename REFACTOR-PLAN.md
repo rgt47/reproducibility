@@ -2559,10 +2559,44 @@ in this batch still came in at or close to its 10.10 budget (ch09's
 combined total landed almost exactly on target rather than under,
 the first batch-2 item to do so).
 
-**Remaining:** the setup appendix (Apple Silicon, Windows, WSL2,
-locked-down institutional laptops), mentioned in 10.10 alongside
-ch05's Apple Silicon section but broader in scope. This is the last
-topic from Decision D8's approved list.
+**Remaining after batch 2:** the setup appendix (Apple Silicon,
+Windows, WSL2, locked-down institutional laptops), mentioned in
+10.10 alongside ch05's Apple Silicon section but broader in scope.
+This was the last topic from Decision D8's approved list.
+
+**Batch 3, 2026-10-12: the setup appendix, closing out Phase 11.**
+Branch `phase-11-content`, same branch as batches 1 and 2. One new
+appendix, `setup-appendix.qmd`, covering Apple Silicon, Windows with
+WSL2, and locked-down institutional laptops, wired into
+`_quarto.yml`'s appendices list after `shell-primer.qmd`.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Apple Silicon checklist | Cross-references ch05's existing section rather than repeating it; a practical four-step sequence (confirm Docker Desktop is running, add `--platform linux/amd64`, expect slower not wrong builds, confirm emulation via `docker image inspect`) | V lead: ran `docker version --format` directly on this machine; output (`darwin/arm64` client, `linux/arm64` server) matches the appendix's own worked example exactly |
+| Windows with WSL2 | The WSL2 backend (not Hyper-V, not Windows containers), the `/mnt/c` performance penalty and CRLF line-ending hazard, with the fix being to clone inside WSL2's own filesystem | A-V: three new sources (Docker Desktop WSL2 docs, Microsoft's WSL install and filesystem docs) opened and confirmed directly; all three URLs independently confirmed to resolve by the lead before merging |
+| Locked-down institutional laptops | GitHub Codespaces (cross-referencing ch06's existing coverage), an HPC login node over SSH (cross-referencing ch06's Apptainer worked example from Phase 11 batch 2), and how to phrase a concrete IT request | V lead: confirmed ch06 already covers both Codespaces and the HPC/Apptainer material the cross-references point to |
+| Citations | All three new citations checked for correct scope (each attached to the specific claim it supports); no attribution error this time, unlike the two caught earlier in Phase 11 | I lead, read the full file |
+
+Render: no chapter needed its freeze cache cleared (the appendix has
+no executed chunks); HTML and PDF exit 0, no warnings, no
+unresolved references or missing citations, no literal HTML
+entities [V]. Repository test suite unaffected (the appendix adds no
+executed content).
+
+**Length report, Phase 11 final.** PDF is now 606 pages, up from
+600 before this batch (+6 pages, +1.0%). Since before Phase 6: 398
+to 606 pages, **+52.3%**.
+
+**Phase 11 is complete.** Every topic approved under Decision D8
+(10.10's Priority 1, Priority 2, the shell primer, and the HPC
+section) has been added, across three batches, nine chapters, and
+two new appendices. Two citation-attribution errors and one
+pre-existing repository defect (`CITATION.cff`'s placeholder
+affiliation) were found and fixed along the way, none of them
+things any chapter's word budget accounted for. One process
+incident (a subagent's tree-wide `git stash` catching concurrent
+work) was resolved without data loss and is recorded as a standing
+caution for future phases.
 
 ### 10.16 Limitations
 

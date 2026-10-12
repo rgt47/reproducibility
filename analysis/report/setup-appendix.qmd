@@ -1,0 +1,159 @@
+# Setup Appendix: Docker on Your Own Machine {#sec-setup .unnumbered}
+
+@sec-containers teaches what a container is and why pinning a
+base image by digest matters. This appendix is narrower and more
+mundane: getting Docker itself to run at all, on the three
+machines most readers actually sit down at, before any of that
+chapter's content applies. A 2026 expert review of this book
+named exactly this gap: no setup appendix covering Docker on
+`arm64` laptops, `--platform linux/amd64` emulation and its
+consequences, Windows and WSL2, or locked-down institutional
+laptops, and judged that without it, 'weeks 2 to 4' of a course
+built on this book are lost to installation trouble rather than
+spent on the material itself. Nothing here is new reproducibility
+theory; it is a checklist for the moment before the first `docker
+build` succeeds.
+
+## Apple Silicon (M-series Mac)
+
+@sec-containers already explains the mechanism: `rocker/tidyverse`
+and `rocker/verse`, the two base images this book's own Dockerfiles
+build on, publish a `linux/amd64` entry only, so an Apple Silicon
+Mac (an `arm64` host) has nothing native to match, and `--platform
+linux/amd64` is not an optimization but the only way to get a
+build at all. That section is worth reading before this one. What
+follows is the practical sequence for a reader sitting at such a
+machine for the first time.
+
+1. **Confirm Docker Desktop is installed and running.** `docker
+   version` should print both a `Client` and a `Server` block; a
+   `Client`-only response, or a connection error, means Docker
+   Desktop is not running, not merely that the command is missing.
+
+2. **Add `--platform linux/amd64` to every build and run** against
+   an image, like this book's own, that has no `arm64` entry:
+   `docker build --platform linux/amd64 -t myimage .`. Omitting the
+   flag against an `amd64`-only image does not silently succeed at
+   native speed; it fails to resolve a matching entry at all.
+
+3. **Expect the build to be slower, not wrong.** Docker's own
+   documentation on multi-platform builds warns that QEMU
+   emulation 'can be much slower than native builds,
+   especially for compute-heavy tasks' [@docker2024multiplatform].
+   A `renv::restore()` that compiles several packages from source
+   is exactly that kind of task; budget minutes, not seconds, for
+   a first build, and do not read slowness alone as a broken
+   Dockerfile.
+
+4. **Confirm emulation is actually what is happening**, rather
+   than guessing from slowness alone. `docker image inspect
+   myimage --format '{{.Architecture}}'` reports the architecture
+   of the image that was actually pulled or built; `amd64` on an
+   Apple Silicon host confirms QEMU emulation is in play. The
+   build log itself also names the platform at the top of each
+   stage (`[linux/amd64 ...]`) when `--platform` was passed
+   explicitly.
+
+## Windows with WSL2
+
+This book's images are Linux-based, and Docker Desktop on Windows
+runs them through the **WSL2 backend**, not through Hyper-V alone
+and not through Windows containers, which target Windows-native
+images this book never builds. Docker's own current documentation
+describes the setup directly (opened 2026-10-12): WSL2 itself must
+be installed and the Docker Desktop setting **Use WSL 2 based
+engine** enabled under Settings > General (on by default on
+systems that support it); a specific Linux distribution is then
+enabled for Docker integration under Settings > Resources > WSL
+Integration, which is on by default for the default distribution
+[@dockerdesktopwsl2024]. Installing WSL2 itself, if it is not
+already present, is a single elevated command from Windows:
+`wsl --install`, per Microsoft's own documentation
+[@mswslinstall2024].
+
+The gotcha that costs real time is where the project's files
+live. Microsoft's own guidance is explicit: for the fastest
+performance when working from a Linux command line, store files
+in the WSL Linux filesystem (`/home/<user>/project`), not on a
+mounted Windows drive accessed through `/mnt/c/...`, which the
+same document calls out as measurably slower [@mswslfiles2024].
+A repository cloned from inside Windows Explorer or PowerShell,
+then opened from a WSL2 terminal only by crossing the `/mnt/c`
+mount, pays this cost on every file Docker touches during a
+build. The fix is to run `git clone` from inside the WSL2
+terminal itself, so the repository lands under the Linux
+filesystem from the start, not to move a Windows-cloned copy
+afterward.
+
+A second, quieter hazard travels with the same mount boundary:
+line endings. Git on Windows commonly checks out text files with
+CRLF line endings by default (`core.autocrlf=true`), while this
+book's shell scripts, Dockerfiles, and R scripts assume LF, the
+Linux convention a container's shell expects. A script that
+looks identical in an editor can fail inside a container with an
+`exec format error` or a shebang that silently does not match,
+because a trailing `\r` is part of the first line's interpreter
+path as far as the kernel is concerned. Cloning inside WSL2's own
+filesystem, where Git's Linux default is LF, avoids this
+entirely; cloning on the Windows side and later copying into WSL2
+does not.
+
+## Locked-down institutional laptops
+
+A reader with no administrator rights cannot install Docker
+Desktop at all, a constraint the same expert review named by
+name as common and often treated as an afterthought in course
+materials. This is not a Docker problem to work around locally;
+it is an infrastructure gap to route around, in roughly
+increasing order of how much it is worth asking for:
+
+- **A cloud-hosted development environment.** @sec-backends
+  already covers GitHub Codespaces, built on the Development
+  Containers specification [@devcontainers], as a way to open a
+  pinned environment in an editor without installing anything
+  locally beyond a browser or a thin client; it requires no local
+  Docker Desktop at all, because the container runs on GitHub's
+  infrastructure, not the laptop.
+
+- **A department-provided remote server or HPC login node,**
+  reached over SSH. @sec-backends's HPC worked example already
+  shows the companion half of this: Apptainer, not Docker, is the
+  standard container runtime on a shared cluster, and it runs
+  unprivileged, which is exactly the property that makes it
+  acceptable where a locked-down laptop's Docker daemon is not.
+  A reader who already has cluster access may find the
+  institutional gap is already closed, just not with Docker.
+
+- **A formal request to institutional IT**, when neither of the
+  above is available. The request is answerable only if it is
+  concrete: ask specifically for Docker Desktop, or, if desktop
+  software cannot be approved, for Docker Engine plus the
+  ability to run containers under the requester's own account
+  (not merely 'Docker', which names a product family spanning
+  both). An IT request phrased as 'I need Docker' is easy to
+  deny or stall; one phrased as 'I need to run `docker build` and
+  `docker run` as my own user, without root' is a specification
+  someone can actually approve or substitute for.
+
+## Diagnosing a failed or unexpectedly slow build
+
+When a build fails or crawls, work through this sequence before
+assuming the Dockerfile itself is wrong:
+
+| Check | What it tells you |
+|---|---|
+| `docker info` | Confirms Docker Desktop is actually running and reachable; also reports the server's architecture. |
+| `docker version` | Separates client-only output (Desktop not running) from a full client-and-server response. |
+| Is `--platform` set, and does the base image need it? | An `amd64`-only base on an `arm64` host needs the flag explicitly; a missing flag there is a pull failure, not a slow build. |
+| Docker Desktop's allotted disk and memory (Settings > Resources) | A build that stalls rather than errors often has hit a memory or disk ceiling Docker Desktop itself enforces, independent of the host machine's total resources. |
+| Is the project under `/mnt/c` on WSL2, or on Windows' own filesystem? | Either one is the likely source of a build that is slow specifically on Windows and not elsewhere; moving the clone inside WSL2's Linux filesystem is the fix. |
+
+On the machine this book was written on (Apple Silicon, Docker
+Desktop with the `desktop-linux` context), `docker version`
+reports a `darwin/arm64` client against a `linux/arm64` server
+(verified, run 2026-10-12); a reader instead passing
+`--platform linux/amd64`, as this book's own Dockerfile requires,
+would see the pulled or built image itself report `amd64` under
+`docker image inspect`, even though the daemon underneath is
+`arm64`, which is the signature of emulation working as intended
+rather than a misconfiguration.
