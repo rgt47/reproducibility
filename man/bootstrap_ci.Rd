@@ -21,5 +21,8 @@ of a percentile interval on the odds-ratio scale.
 }
 \description{
 Deterministic given a seed, which is what makes it usable as the
-single-result form of a reproducibility check.
+single-result form of a reproducibility check. The seed is set
+with \code{withr::with_seed()}, which also restores the caller's
+generator state on exit, so calling this function does not
+disturb any random stream the caller was already running.
 }

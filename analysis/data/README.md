@@ -114,6 +114,20 @@ and, where useful, a synthetic stand-in such as this one. Once a
 file has been committed and pushed, deleting it does not remove
 it from the history; treat that as a data incident.
 
+## Test fixture mirror
+
+`inst/testdata/cohort_raw.csv` is a byte-identical copy of
+this extract. It exists because `analysis/` is excluded from
+the built package (`.Rbuildignore`), so a test that only
+looks there finds nothing once the package is installed and
+silently reports zero assertions, which can be mistaken for
+a passing check. `inst/tinytest/test-cohort.R` falls back to
+this mirror as its last resort, so the data-validation tests
+still run under `R CMD check` and `tinytest::test_package()`;
+the two assertions that replay the generator's own code to
+recover ground truth still require the source tree and skip
+cleanly when only the mirror is available.
+
 ## Derived data
 
 `derived_data/` is empty in this repository. Cleaning happens in
