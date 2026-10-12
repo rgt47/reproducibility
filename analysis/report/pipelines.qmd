@@ -14,35 +14,142 @@ Rule 2 (2013)
 ```
 :::
 
-## Learning objectives
+By the end of this chapter you will be able to look at
+a multi-step analysis that someone runs by hand, script
+after script, and replace the running of it with a
+single command whose completeness does not depend on
+anyone's memory: a dependency graph that a tool, not an
+analyst, walks to decide what has gone stale and what
+has not.
 
-By the end of this chapter the reader should be able
-to:
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so the fig-alt option
+# below computes its text from the same call that draws the
+# figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-- Diagnose the failure mode of a manually run,
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 55 minutes.
+
+**Prerequisites.** The determinant stack and the
+capture-versus-validation distinction of Chapter 3
+(@sec-levels), since this chapter's central claim, that
+a pipeline validates re-execution without capturing any
+new layer, is stated entirely in those terms. The sealed,
+reproducible render of Chapter 9 (@sec-literate), since a
+pipeline is what a growing analysis needs once some of
+its computation has moved out of that single document and
+into scripts. Comfort writing an R function with explicit
+arguments and a return value, reading a short shell
+command, and no prior exposure to Make, `targets`, or any
+other build tool.
+
+**By the end of this chapter you will be able to
+answer:**
+
+- Can you diagnose the failure mode of a manually run,
   multi-step analysis: steps run out of order, an
   upstream change leaves a downstream output stale, and
   no one can be sure the whole thing still runs end to
-  end from raw data to report.
-- Express an analysis as a directed acyclic graph of
-  steps, and explain why a single command can then
-  rebuild exactly what is out of date and nothing more.
-- Read and write a GNU Make rule, its target,
+  end from raw data to report?
+- Can you express an analysis as a directed acyclic
+  graph of steps, and explain why a single command can
+  then rebuild exactly what is out of date and nothing
+  more?
+- Can you read and write a GNU Make rule, its target,
   prerequisites, and recipe, explain the timestamp-based
   staleness check, and say why Make's reach is
-  language-agnostic.
-- Build an R-native, function-oriented pipeline with
-  `targets`: the `_targets.R` script, `tar_target`,
-  `tar_make`, and `tar_visnetwork`, and explain how
-  `targets` invalidates exactly the targets that depend
-  on a changed function, object, or package.
-- State, in the book's capture-versus-validation terms,
-  precisely what a pipeline does and does not add to the
-  reproducibility ladder.
-- Judge how heavily the pipeline machinery bears on each
-  research archetype, and name the language-agnostic
-  managers, Snakemake and Nextflow, and `workflowr`, for
-  readers whose work reaches beyond R.
+  language-agnostic?
+- Can you build an R-native, function-oriented pipeline
+  with `targets`, including `_targets.R`, `tar_target()`,
+  `tar_make()`, and `tar_visnetwork()`, and explain how
+  `targets` invalidates exactly the targets that depend on
+  a changed function, object, or package?
+- Can you state, in the book's capture-versus-validation
+  terms, precisely what a pipeline does and does not add
+  to the reproducibility ladder, and judge how heavily the
+  pipeline machinery bears on each research archetype?
+
+**Outline.**
+
+- Where this sits on the stack: a pipeline validates, it
+  does not capture.
+- Orientation: a report stale behind a corrected dataset.
+- The analyst's contribution: granularity, honest
+  dependency declarations, and the level a pipeline does
+  not establish.
+- The analysis as a dependency graph: the DAG, and its
+  cost measured rather than asserted.
+- GNU Make: targets, prerequisites, rules, and the
+  timestamp check.
+- `targets`: a function-oriented pipeline that hashes code
+  and objects, not just file times.
+- What a pipeline does, and does not, add to the ladder.
+- Pipelines across the archetypes.
+- Beyond R: Snakemake, Nextflow, and `workflowr`.
+- Worked example: refactoring four scripts into a
+  `targets` pipeline.
+- The cohort, continued: the compendium's own two-step
+  graph, timed.
+:::
+
+## Where this sits on the stack
+
+This chapter's claim is the sharpest negative result in
+the book so far: the pipeline tools it teaches pin no new
+determinant at all. They do not fix a package version,
+and they do not fix an operating system or an R runtime;
+that is the work of @sec-dependencies and @sec-containers.
+What a pipeline does is confirm, mechanically and on every
+run, that the recorded analysis code and the input data
+currently in hand are the ones a given output reflects,
+which is a check rather than a pin. @fig-stack-pipelines
+therefore marks the analysis-code and input-data layers as
+validated here, not captured, the same reading @sec-testing
+gives its own test suite for the same two layers, though by
+a different mechanism: a test suite checks that the code is
+*correct* on some input, where a pipeline checks only that
+an output is *current* with respect to whatever input it
+was last given, correct or not.
+
+```{r}
+#| label: fig-stack-pipelines
+#| fig-cap: 'The determinant stack of @sec-levels, with the analysis-code and input-data layers marked as validated, not captured, by a pipeline tool. Make and `targets` confirm that a recorded output is current with respect to the code and data that produced it; they do not pin a package version, an operating system, or an R runtime, and they say nothing about whether the code or the data are correct, only whether the output in hand still reflects them.'
+#| fig-alt: !expr determinant_stack_alt(validates = c('Analysis code', 'Input data'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  validates = c('Analysis code', 'Input data'),
+  title = 'A pipeline validates currency; it captures no layer')
+```
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: capture or validation, again
+
+A colleague argues that adding a `_targets.R` pipeline to
+a project must raise its reproducibility level, since the
+project can now be rebuilt with one command instead of
+several remembered ones. Using this chapter's stack
+figure, is the colleague correct?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The pipeline pins no layer of the determinant stack:
+the package versions, the operating system, and the R
+runtime are exactly as pinned, or as unpinned, after
+`_targets.R` is added as before. What changed is that the
+analysis-code and input-data layers are now checked for
+currency on every run rather than trusted to memory. That
+is a validation feature, like continuous integration or a
+baseline test, and it leaves the project's rung on the L0
+to L3 ladder exactly where it was.
+:::
+:::
 
 ## Orientation
 
@@ -104,6 +211,32 @@ the path from raw data to result, precisely because a
 manual path cannot be trusted to have been followed the
 same way twice.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: naming the failure
+
+An analyst corrects a typo in the raw data, re-runs the
+modeling script because that is the step they are
+thinking about, and ships the resulting report. The
+figures were drawn from the model fitted before the
+correction. Which of the orientation's three faces, order,
+staleness, or end-to-end doubt, does this failure
+illustrate, and why does the stale figure give no warning?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+It is staleness: the correction to the raw data left the
+figures, which depend on the model fitted from the old
+data, out of date, and re-running only the modeling script
+did not propagate the change the one additional step
+further. The stale figure gives no warning because a
+stale PNG is a perfectly valid image file; nothing about
+its bytes records what it was computed from, so neither
+the file system nor a glance at the document can
+distinguish it from a current one.
+:::
+:::
+
 ## The analyst's contribution
 
 Three judgments in this chapter are the analyst's own,
@@ -150,6 +283,29 @@ and no pipeline tool makes them.
    of re-running; the level reached is a separate question,
    settled by the lockfile, the container, and the
    verification of the later chapters.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: whose judgment, again
+
+A `targets` pipeline runs green, end to end, on the
+analyst's machine. Which of the three judgments above, if
+any, has the green run settled, and which remain open?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A green run settles none of the three. It says nothing
+about whether the targets were cut at a sensible
+granularity, since a pipeline with one enormous target can
+run green and still cache nothing useful. It says nothing
+about whether the declared dependencies are complete,
+since an undeclared input simply never triggers a rebuild
+and the run stays green regardless. And it says nothing
+about the level reached, since re-execution and pinning
+are different questions entirely. All three judgments stay
+with the analyst no matter how clean the run looks.
+:::
+:::
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -348,6 +504,34 @@ same distinction the verification chapter draws between
 a result worth recording and a measurement worth
 repeating.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: reading the measured ratio
+
+@tbl-pipeline-steps shows the bootstrap costing many times
+more than the model fit. An analyst who changes only the
+color of a figure, then reruns the whole four-step chain
+by hand rather than through a pipeline, pays for which
+step unnecessarily, and why does the ratio, rather than
+the absolute millisecond values, survive a change of
+machine?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The analyst pays for the bootstrap, the most expensive
+step, even though a color change touches nothing the
+bootstrap consumes; a selective rebuild would skip it
+entirely. The absolute timings are properties of the one
+machine that happened to build this chapter and will
+differ, often by a large factor, on another machine or
+even on a repeated run of the same one. The ratio between
+the expensive step and the others is far more stable,
+because both numbers move together with the machine's
+speed, which is why the chapter reports the ratio as the
+figure worth trusting rather than the raw milliseconds.
+:::
+:::
+
 ## GNU Make: targets, prerequisites, and rules
 
 The oldest and most widely used pipeline tool is GNU
@@ -369,7 +553,23 @@ parts: a **target**, the file the rule produces; its
 written after a colon; and a **recipe**, the shell
 command that builds the target from its prerequisites,
 written on the following line and, by an unforgiving
-convention, indented with a literal tab. The analysis of
+convention, indented with a literal tab.
+
+::: {.callout-warning}
+## Pitfall
+
+A text editor set to insert spaces for indentation will
+silently turn that leading tab into spaces, and Make
+responds with `Makefile:2: *** missing separator. Stop.`
+To see it: take the four-rule Makefile below, replace the
+tab before one recipe line with eight spaces, and run
+`make`. To fix it for good rather than once, configure the
+editor to preserve a literal tab inside files named
+`Makefile`, since the error gives a line number but not
+the real cause.
+:::
+
+The analysis of
 @fig-pipeline-dag becomes four rules:
 
 ```makefile
@@ -624,6 +824,24 @@ by listing the targets that a `tar_make()` would rebuild
 without running anything, so that one can ask, at any
 moment, 'what is stale?' and get an exact answer.
 
+::: {.callout-tip icon=false}
+## Verification
+
+To see this hold: in a project with `_targets.R`, run
+`tar_make()` once, then edit the body of any function a
+target calls, change nothing else, and run `tar_outdated()`
+before rebuilding; it should name that target and every
+target downstream of it, and no others. To make it fail on
+purpose, add a line to a function that instead reads a file
+directly with `read.csv()` rather than through a declared
+`format = 'file'` target, change that file's contents, and
+run `tar_outdated()` again; the target that silently reads
+the file will not appear, because `targets` cannot hash a
+dependency it was never told about, which is the same
+discipline failure Make suffers from an undeclared
+prerequisite.
+:::
+
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what `targets` tracks that Make does not
 
@@ -727,19 +945,41 @@ a clean machine rebuilds exactly what the change made
 stale, and the result is checked, with no act of memory
 anywhere in the chain.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the composed claim
+
+A team reports that 'every push rebuilds and tests the
+analysis, so it is reproducible.' Using this section's
+account of what CI and the pipeline each contribute, what
+exactly has been shown, and what rung, if any, has been
+demonstrated?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+What has been shown is that the pipeline's definition of
+'rebuild' runs to completion on an external, clean machine
+on every change, which is strong evidence of re-execution.
+It is not, by itself, evidence of any rung: CI supplies the
+clean trigger and the pipeline supplies the complete
+recipe, but neither pins a package, fixes an environment,
+or compares an output with a recorded baseline. The rung
+actually reached depends entirely on whether a lockfile,
+a container, and a baseline comparison also exist; 'it
+runs on every push' answers a question about re-execution,
+not about level.
+:::
+:::
+
 ::: {.callout-important}
 ## The honest level
 
-A pipeline that runs to completion demonstrates that the
-analysis re-executes as a single act. It does not
-demonstrate that the packages are pinned (L1), that the
-environment is fixed (L2), or that the outputs are correct
-and verified (L3). `tar_make()` succeeding is a statement
-about re-execution, not about level. Match the claim to
-the level actually reached: the pipeline secures the *how*
-of rebuilding, and the lockfile, the container, and the
-verification command secure the *what* that is rebuilt
-into.
+This chapter's own practice runs `tar_make()` and `make`
+to completion on demand, which demonstrates re-execution
+and nothing about the level actually reached, since that
+is settled only by the lockfile, the container, and the
+baseline comparison of the chapters this one does not
+replace.
 :::
 
 ## Pipelines across the archetypes
@@ -832,6 +1072,28 @@ entirely; and the blog runs a pipeline over its documents. Reach
 for the tool where re-execution is frequent or costly, and do
 not impose its overhead where a single render suffices.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: an archetype with no pipeline
+
+A reader building an R package asks why this chapter never
+shows a `_targets.R` for it. What is the answer, and what
+plays the corresponding role?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A package has no chain of data transforms producing a
+report, so there is no dependency graph of the kind a
+pipeline tool rebuilds selectively; its deliverable is a
+library of functions, not a sequence of derived outputs.
+`R CMD check`, together with the test suite, plays the
+corresponding role: it determines what must be re-verified
+given what changed and refuses to accept a stale result,
+which is the same job a pipeline does for a data analysis,
+performed by the package toolchain instead.
+:::
+:::
+
 ## Beyond R: Snakemake, Nextflow, and workflowr
 
 Make and `targets` are the right tools for an R-centric
@@ -884,6 +1146,30 @@ R-native tool that tracks objects and functions; Snakemake and
 Nextflow are the same idea at cluster and cloud scale; and
 `workflowr` is the idea applied to a versioned website. An analyst
 who understands the graph understands all of them.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: choosing among the five tools
+
+A genomics collaborator's analysis chains forty
+command-line tools across a cluster, written in a mix of
+Python and shell. Which of this section's tools fits, and
+why would `targets` be the wrong reach here?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Snakemake or Nextflow fits: both are built for exactly this
+setting, many languages, many steps, and execution spread
+across a cluster or the cloud, with native support for job
+schedulers that Make and `targets` lack. `targets` would be
+the wrong reach because it is R-native: its dependency
+inference works by hashing R function bodies and R objects,
+which has nothing to track in a pipeline whose steps are
+Python scripts and shell commands calling external tools.
+The pipeline idea is the same; the tool must match the
+language and the scale.
+:::
+:::
 
 ## Worked example
 
@@ -958,6 +1244,105 @@ rebuilds exactly the stale targets on a clean machine and the
 machine that is not the author's. The pipeline has added no rung
 to the ladder, but it has made the act of climbing it a single
 reliable command.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the two-target split
+
+The worked example's `_targets.R` declares `raw_file` with
+`format = 'file'` and a separate target `raw_data` that
+reads it, rather than one target that both names the path
+and reads it. Why does the split matter, and what would go
+wrong without it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+`format = 'file'` tells `targets` to hash whatever the
+target's own return value points to, so only a target that
+returns a path, such as the string `'data/raw_data.csv'`,
+can carry that option; `read_raw(raw_file)` returns a data
+frame, not a path, and declaring it `format = 'file'` would
+make `targets` try to hash a data frame as though it were a
+file path and fail. Splitting the tracked file from the
+object read from it is what lets `targets` watch the raw
+file's contents while still storing the loaded data frame
+as an ordinary R object.
+:::
+:::
+
+## The cohort, continued
+
+This chapter has so far reasoned about pipelines through a
+composite analysis. Here is the same two-node graph, raw
+extract to cleaned cohort, applied to this book's own
+compendium, with the cost of each step measured rather than
+asserted, as @tbl-pipeline-steps did for the retinopathy
+example.
+
+```{r}
+#| label: tbl-cohort-pipeline
+#| tbl-cap: 'The two steps `load_cohort()` and `clean_cohort()` perform on the running cohort compendium, with elapsed time measured on one run on the machine that built this chapter; repeated runs vary and should not be read as a stable property of either function.'
+cohort_path <- '../data/raw_data/cohort_raw.csv'
+
+t_load_cohort <- time_it(
+  raw <- load_cohort(cohort_path))
+t_clean_cohort <- time_it(
+  cohort <- clean_cohort(raw))
+
+cohort_steps <- tibble(
+  Step = c('load_cohort()', 'clean_cohort()'),
+  Consumes = c('cohort_raw.csv', 'the raw data frame'),
+  `Elapsed (ms)` = c(t_load_cohort, t_clean_cohort),
+  `Rows out` = c(nrow(raw), nrow(cohort))
+)
+
+kable(cohort_steps, align = 'llrr')
+```
+
+The two functions are already, in effect, a two-rule
+pipeline: `clean_cohort()` consumes what `load_cohort()`
+produces, and nothing downstream exists yet, because no
+later chapter's model or report has been wired to this
+extract through `targets` or a Makefile. Were a correction
+made to `cohort_raw.csv` today, by hand, the only way to
+know that `clean_cohort()`'s output had gone stale would be
+to remember to re-run this cell, which is exactly the
+end-to-end doubt the orientation opened with, now visited
+on the book's own running example rather than a hypothetical
+one. Expressing this pair as a `tar_target(raw, load_cohort(cohort_path))`
+and `tar_target(cleaned, clean_cohort(raw))` would make that
+staleness mechanical rather than remembered, at the cost of
+exactly the two-target scaffold shown in Exercise 3's
+solution below. Doing so would not move this compendium off
+the L0 rung @sec-levels places it at, since a pipeline pins
+no determinant; it would only make the one existing
+transform trustworthy to rebuild without having to recall
+that it exists.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the pipeline would, and would not, fix
+
+Suppose `cohort_raw.csv` is corrected after this chunk was
+last run, and a `targets` pipeline wrapping `load_cohort()`
+and `clean_cohort()` is added. What would `tar_outdated()`
+report, and would adding it change the compendium's rung on
+the L0 to L3 ladder?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+`tar_outdated()` would report both targets, `raw` and
+`cleaned`, as out of date, because the file-tracked target
+hashes the corrected CSV's new contents and the `cleaned`
+target depends on `raw`. No, the rung would not change: the
+pipeline would still pin no package version, no R runtime,
+and no operating system, so the compendium would remain at
+whichever rung the lockfile and the container, both still
+absent at this point in the book, would place it. The
+pipeline only guarantees that a rebuild, once triggered,
+rebuilds the right things.
+:::
+:::
 
 ## Collaborating with an LLM
 
@@ -1090,6 +1475,23 @@ on the ladder.
    is central, modest, or absent, and why. For the archetype in
    which it is absent, name the mechanism that plays the
    corresponding role instead.
+
+7. Run `cohort <- clean_cohort(load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
+   and report `nrow(cohort)`. Then write the two-target
+   `_targets.R` fragment that wraps `load_cohort()` and
+   `clean_cohort()` on this path, following the `raw_file`
+   and `raw` split of Exercise 3's solution, and state what
+   `tar_outdated()` would report immediately after the first
+   `tar_make()` and after a second one with no file changed.
+
+8. This exercise returns to the reproducibility ladder of
+   Chapter 3 (@sec-levels). A project has a lockfile, a
+   container, and a `targets` pipeline that runs green on
+   every push, but no test compares a computed quantity with
+   a value recorded earlier. State the single rung of the L0
+   to L3 ladder this project occupies, and name the one
+   artifact, absent here, whose addition would be needed to
+   reach the next rung.
 
 ## Solutions
 
@@ -1320,6 +1722,82 @@ re-verified and doing it. The analogy is closer than it
 looks: both answer 'given what changed, what must be
 recomputed', and both refuse to accept a stale result.
 :::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+cohort <- clean_cohort(
+  load_cohort('analysis/data/raw_data/cohort_raw.csv'))
+nrow(cohort)
+#> [1] 337
+```
+
+The `_targets.R` fragment mirrors Exercise 3's split, one
+target for the tracked file and one for the object read
+from it:
+
+```r
+list(
+  tar_target(
+    raw_file,
+    'analysis/data/raw_data/cohort_raw.csv',
+    format = 'file'
+  ),
+  tar_target(raw, load_cohort(raw_file)),
+  tar_target(cleaned, clean_cohort(raw))
+)
+```
+
+After the first `tar_make()`, both targets build, and a
+second `tar_make()` with no file changed reports both as
+already up to date, which `tar_outdated()` confirms by
+returning an empty result: `raw_file`'s hash of the CSV's
+contents has not changed, so `raw` and `cleaned` are not
+re-triggered, and the 337-row result is reused rather than
+recomputed.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+The project is at **L2, pinned environment**, and no
+further. The lockfile and the container pin the packages
+and the environment, and a `targets` pipeline that runs
+green on every push demonstrates that the analysis
+re-executes completely and reliably in that pinned
+environment. None of this is a baseline comparison: a
+green pipeline run shows that the code ran without error,
+not that any reported quantity still matches a value
+recorded earlier, which is exactly the L2-versus-L3
+distinction Chapter 3 draws for a test suite with no
+baseline test.
+
+The missing artifact for L3 is a baseline test, a test that
+recomputes a reported quantity and compares it with a value
+committed to the repository within a stated tolerance.
+Adding the pipeline run as the step that triggers that test
+inside continuous integration, as this chapter's worked
+example does, is what turns the green run from a statement
+about re-execution into evidence for L3.
+:::
+
+## Cheat sheet
+
+| Command or rule | What it means or checks |
+|---|---|
+| Rule: `target: prerequisites` | Declares a Make target and the files it depends on |
+| Make recipe line | Indented with a literal tab, never spaces (Pitfall above) |
+| `make` | Rebuilds every target older than one of its prerequisites |
+| `touch file` | Advances a file's timestamp without changing its contents; triggers Make, not `targets` |
+| `tar_target(x, expr)` | Declares a `targets` target; the dependency graph is inferred from `expr` |
+| `tar_target(x, path, format = 'file')` | Tracks `x` as a file, by content hash, not by R object |
+| `tar_make()` | Builds every out-of-date target, in order, and skips the rest |
+| `tar_outdated()` | Lists what a `tar_make()` would rebuild, without running anything |
+| `tar_visnetwork()` | Draws the dependency graph, colored by up to date or out of date |
+| `tar_render()` / `tar_quarto()` | Tracks a report's own source as well as the targets it reads |
+| Capture vs. validation | A pipeline captures no determinant; it validates that an output is current (habit 5) |
+| Honest claim | 'The pipeline re-executes reliably' is not 'the analysis is reproducible'; name the rung separately |
 
 ## Further reading
 

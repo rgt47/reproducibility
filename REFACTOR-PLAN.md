@@ -2382,6 +2382,65 @@ literal HTML entities [V]. Repository test suite 260/260 (up from
 batch (+30 pages, +6.2%). Since before Phase 6: 398 to 514 pages,
 +29.1%. 8 of 13 chapters now carry the full template.
 
+**Phase 9 rollout batch 3, 2026-10-11, completing the template
+rollout.** The last four chapters: 07-literate-programming,
+pipelines, 09-continuous-integration, and 10-archiving-sharing, the
+book's closing chapter. Same branch, one commit. All 13 chapters now
+carry the revised template (00-intro is deliberately excluded, since
+it does not follow the standard 'Learning objectives' structure and
+is pending its own restructuring in a later phase).
+
+| Item | Result | Evidence |
+|---|---|---|
+| Stack figures | ch07 `validates = c('Analysis code')` (a sealed render confirms, pins nothing); pipelines `validates = c('Analysis code', 'Input data')` (a pipeline checks currency, pins nothing); ch09 `validates = c('Package versions', 'Analysis code', 'Input data')`, the broadest in the book, matching its three gates; ch10 `captures = c('Input data')` (archiving is the first chapter to make data durably findable, not merely locatable), `validates = c('Package versions', 'Operating system, system libraries')` (stewardship confirms earlier pins still resolve) | V lead: all four alt texts reproduced exactly from rendered HTML |
+| `@sec-conventions` crossref | Zero remaining instances (three were found and fixed across batches 1 and 2) | V lead: grepped all 13 chapters, confirmed none |
+| ch10's closing structure | The 'In conclusion' section and the `{{< include _habits.qmd >}}` line, in that order, with the habits include remaining the last thing in the book | V lead: confirmed the section order in source and that the motto text renders exactly once in ch10's standalone output |
+| ch09's cohort demonstration | A mock dependency-manifest gate run against the real `R/cohort.R`, shown passing, then shown failing when an undeclared `sandwich` dependency is injected, without needing real CI infrastructure | V lead: ran the exact chunk code independently, reproduced 'gate passed' with the real cohort code |
+| ch09's full-book render side effect | The converting agent ran a full-book render mid-task to determine true chapter numbers (a reasonable response to the cross-chapter numbering inconsistency flagged in batch 2), which touched other chapters' freeze caches; it reverted those via `git checkout` | V lead: confirmed via `git status` that only ch09's own files were left modified; one freeze artifact (`tex.json`) was left deleted rather than restored, not consequential since the final combined render regenerates it, which it did |
+
+Render: freeze cleared for all four chapters; HTML and PDF exit 0,
+no warnings, no unresolved references or missing citations, no
+literal HTML entities [V]. Repository test suite 305/305.
+
+**Length report, final.** PDF is now 560 pages, up from 514 before
+this batch (+46 pages, +9.0%). Since before Phase 6: 398 to 560
+pages, **+40.7%**. This is well past the 20 percent threshold that
+triggers a report under the house rules; Decision D10 already chose
+'accept growth' over a 5 percent cap, so this is reported, not
+treated as a stop, but it is now a large enough change that the
+author may want to revisit D10 before Phase 11 adds the approved
+topic sections on top of it.
+
+**Two findings surfaced during this phase's verification, outside
+the chapter-conversion work itself, from independently checking a
+deep-review agent's report comparing this book with *R Packages*
+(2e):**
+
+- **`bootstrap_ci()` in `R/cohort.R:95-103` still calls bare
+  `set.seed()` with no restoration of the caller's RNG state**, even
+  though `08-testing-quality.qmd` was corrected in Phase 6 to teach
+  `withr::with_seed()` as the right pattern. The prose and the code
+  it describes have diverged: the book now correctly warns against a
+  mistake its own shipped function still makes [V, lead read the
+  function directly].
+- **The repository's own tests silently report false success under
+  the conditions `R CMD check` actually uses.** Building the package,
+  installing it to a scratch library, and running
+  `tinytest::test_package()` from outside the repository (exactly
+  how a check runs it) gives **0 tests, 0 fails**, not a visible skip
+  [V, lead reproduced this directly with a fresh build and install].
+  This sharpens Finding 25 and the T1-10/Decision D12 deferral: the
+  problem is not only that this repository's CI never invokes tests,
+  it is that the tests themselves cannot find their fixtures once
+  run the way a real check or CI job would run them, so wiring CI to
+  call them, without first fixing the path discovery, would produce
+  a passing badge that means nothing.
+
+Both are candidates for Phase 8-style Tier 1/2 correctness work, not
+addressed in this phase since they fall outside its scope (template
+structure, not the running example's own code or this repository's
+test harness).
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their

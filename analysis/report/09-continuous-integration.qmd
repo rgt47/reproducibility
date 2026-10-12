@@ -14,32 +14,95 @@ Rule 10 (2013)
 ```
 :::
 
-## Learning objectives
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so the fig-alt option
+# below computes its text from the same call that draws the
+# figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-By the end of this chapter the reader should be able
-to:
+A lockfile that has not been rebuilt since it was
+committed, and a Dockerfile that has not been rebuilt
+since it was written, are claims, not demonstrations. By
+the end of this chapter you will be able to look at a
+green build and say exactly what it has shown: which of
+three automated gates ran, what each one would have
+caught had it been absent, and what a missing baseline
+test still lets through unnoticed even when every gate is
+green. You will also know how to turn each gate red on
+purpose, because a check that has never been seen to fail
+has not been shown to work.
 
-- Explain why a continuous-integration service, by
-  rebuilding a compendium on a machine that carries
-  none of the author's undeclared state, catches the
-  'works on my machine' failure at its source.
-- Name the three automated gates a
-  continuous-integration workflow runs on every change,
-  state what each one proves, and make each one fail
-  once on purpose.
-- Distinguish verification (level L3) from the capture
-  levels below it, and explain why verification compares
-  computational outputs with a committed baseline, within
-  a stated tolerance, rather than the rendered report.
-- Read and adapt a checksum manifest that guards the
-  integrity of raw input data.
-- Describe how a continuous-integration workflow adapts
-  to the research archetype, so that a package, a
-  manuscript, and a simulation each run the gates
-  appropriate to them.
-- Relate automated in-house checking to independent
-  external verification schemes such as CODECHECK and
-  artifact badging.
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 50 minutes.
+
+**Prerequisites.** Chapter 11 (@sec-testing), for
+`tinytest`, the four kinds of test, and the baseline test
+this chapter's verification gate runs; Chapter 3
+(@sec-levels), for the L0-L3 ladder and the
+capture-versus-validation vocabulary this chapter makes
+operational; Chapter 6 (@sec-dependencies), for the
+dependency invariant the dependency-manifest gate
+automates; and Chapter 7 (@sec-containers), for the
+Dockerfile the verify job rebuilds. R knowledge assumed:
+writing and calling a function, and enough comfort
+reading YAML to follow a workflow file line by line; no
+YAML is written from scratch here.
+
+**Objectives.** By the end of this chapter, can you:
+
+- explain why a CI runner, carrying none of the author's
+  undeclared state, catches a 'works on my machine'
+  failure that no test run on the author's own machine
+  can?
+- name the three automated gates a CI workflow runs,
+  state what each one proves, and demonstrate how to make
+  each one fail on purpose?
+- say why verification (L3) compares computational
+  outputs against a committed baseline, within a stated
+  tolerance, rather than comparing rendered PDFs or HTML?
+- read and extend a checksum manifest that guards the
+  integrity of raw input data?
+- match the three gates, plus verification, to a
+  compendium's archetype, so that a package, a
+  manuscript, and a simulation each run only the checks
+  appropriate to them?
+
+**Outline.** The analyst's three irreplaceable judgments;
+where CI sits on the stack; the machine that is not
+yours; the three gates, and where their bugs hide; two CI
+dialects; verification and level L3; the checksum
+manifest; the framework's own capture test matrix; how CI
+adapts to five archetypes; independent external
+verification; a worked example; a gate demonstrated on
+this book's own cohort compendium; collaborating with an
+LLM; exercises, a cheat sheet, and further reading.
+:::
+
+## Where this sits on the stack
+
+Continuous integration pins nothing. @fig-stack-ci marks
+that explicitly: the three layers its gates touch,
+package versions, analysis code, and input data, are
+validated here, not captured, because the lockfile, the
+scripts, and the raw extract were already pinned or
+written by the chapters that came before. This chapter's
+whole contribution is confirming, on a machine that is
+not the author's, that those captures still hold.
+
+```{r}
+#| label: fig-stack-ci
+#| fig-cap: 'The determinant stack of @sec-levels, with package versions, analysis code, and input data marked as validated rather than captured. CI pins no new layer: the dependency-manifest gate confirms packages are still pinned, `R CMD check` and the render gate confirm the analysis code still runs, and the checksum manifest confirms the input data is unchanged, which applies the capture-versus-validation distinction to the three gates of this chapter.'
+#| fig-alt: !expr determinant_stack_alt(validates = c('Package versions', 'Analysis code', 'Input data'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  validates = c('Package versions', 'Analysis code', 'Input data'),
+  title = 'CI captures nothing; it validates three layers already captured')
+```
 
 ## Orientation
 
@@ -97,6 +160,31 @@ that defeat a naive comparison. We close with the
 schemes by which reproducibility is checked from
 outside the author's own project entirely, during peer
 review.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what CI does not know
+
+An author claims their compendium is at level L2 because
+a `Dockerfile` is committed and builds on their laptop.
+Does a green CI run of that same `Dockerfile` raise the
+compendium's level? What, precisely, does the green run
+add?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No; the level was already L2 the moment the `Dockerfile`
+was committed and shown to produce a working environment,
+because the level is set by what is captured, not by who
+rebuilds it. The green CI run adds assurance rather than
+capture: it shows the same `Dockerfile` also builds on a
+machine that carries none of the author's undeclared
+state, which the laptop build alone cannot show. A build
+that only ever succeeds on the author's own machine is
+exactly the 'works on my machine' pattern this chapter
+opened with.
+:::
+:::
 
 ## The analyst's contribution
 
@@ -193,6 +281,28 @@ decisions remain the analyst's, and no tool makes them.
   environment.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the analyst's irreplaceable judgments
+
+Name the one of the three analyst judgments that a
+workflow file, however carefully written, cannot make for
+itself, and say why.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Any of the three qualifies, but the clearest is the
+first: deciding what counts as a correct output and
+recording the baseline. A workflow can run a comparison
+and report its result, but it has no way to decide which
+quantity matters, which the comparison, or what tolerance
+distinguishes a real change from floating-point noise;
+that is a scientific judgment about the analysis, not a
+property of the CI configuration, and no amount of YAML
+substitutes for it.
+:::
+:::
+
 ## The machine that is not yours
 
 We begin with the single idea from which everything in
@@ -240,6 +350,28 @@ that would notice. Removing CI from a repository lowers
 no level on the ladder; the compendium is exactly as
 reconstructable as before. It simply stops being
 checked, and becomes trusted rather than tested.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why the runner is generous nowhere
+
+Explain, in one or two sentences, why a freshly
+provisioned CI runner cannot supply the undeclared state
+that makes an analysis 'work on my machine', and why this
+is close to a tautology rather than a clever design
+feature.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The runner cannot supply undeclared state because it has
+none to supply: it was created moments ago from a clean
+image and has never run anything else. It is almost a
+tautology because the property that makes it useful,
+carrying nothing of the author's, is simply what 'fresh'
+means; no engineering insight is required to make a
+runner forget what it never knew.
+:::
+:::
 
 ## What the checks are: the three gates
 
@@ -660,6 +792,32 @@ notice, since a misnamed file switches the step off and
 the run stays green. A workflow that adapts should
 therefore print which gates it ran and which it skipped.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the presence-driven trap
+
+A presence-driven workflow skips the render gate when
+`if: hashFiles('report.Rmd') != ''` evaluates to false.
+Describe a concrete way this condition can silently
+disable the gate without anyone intending it to, and what
+single habit of the workflow catches the problem.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A rename, for instance moving `report.Rmd` to
+`analysis-report.Rmd` during a reorganization, or a typo
+in the condition itself, makes `hashFiles()` return an
+empty string, the condition evaluates to false, the step
+is skipped, and the job still reports success because a
+skipped step is not a failed one. Nothing in the build
+output distinguishes 'rendered successfully' from 'did
+not try to render'. The habit that catches it is having
+the workflow print, for every conditional step, whether it
+ran or was skipped, so that a silent skip is visible in
+the log even though it does not turn the build red.
+:::
+:::
+
 ## Verification and level L3
 
 We have reached the top of the ladder. The first three
@@ -803,19 +961,36 @@ gate.
 ::: {.callout-important}
 ## The honest level
 
-Verification is the one rung of the ladder that cannot be
-claimed on trust. An analyst may reasonably state that a
-compendium is at L1 by pointing to a lockfile, or at L2 by
-pointing to a pinned image, because those artifacts exist
-and can be inspected. But a claim of L3 asserts that the
-outputs have been regenerated in a clean rebuild and shown
-to match a committed baseline within a stated tolerance,
-and that claim is only as good as an actual, recent,
-successful verification run that included a baseline test. A `verified` stamp that predates the
-last change to the environment is not an L3 claim; it is a
-stale one. Match the claim to the level actually reached,
-and let the stamp expire when the environment moves beneath
-it.
+This chapter's own gates reach L3, the top rung, but only
+at the moment they last ran successfully against a
+baseline test; a `verified` stamp that predates the last
+change to the lockfile, the Dockerfile, or the code is not
+an L3 claim but a stale one, and CI establishes nothing at
+all about the data's own integrity, which is the next
+section's job.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: trusting a stamp
+
+A compendium was stamped `verified` three months ago. Last
+week its `renv.lock` was updated to pin a new package
+version, and CI has not run since. Is the `verified` stamp
+still an honest L3 claim? Why or why not?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The stamp certifies that a specific, now-superseded
+environment reproduced the baseline, not that the
+environment as it currently stands does. Because the
+lockfile changed after the last successful verification
+run, the claim is stale: the thing the stamp describes no
+longer exists. The honest statement is that the compendium
+was L3 as of the old lockfile and is unverified now, which
+is exactly why a change to the environment should drop the
+stamp automatically rather than let it carry forward.
+:::
 :::
 
 ## Data integrity: the checksum manifest
@@ -967,6 +1142,29 @@ turning its own machinery on itself, and it is the same
 move, at one level of remove, as a compendium verifying its
 own outputs.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: testing the claim, not just the tool
+
+Why does a responsible framework test the claim 'this
+combination of toggles reaches level L1' rather than
+simply asserting it in documentation?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Because the claim is itself a factual statement about
+behavior, not a design intention, and design intentions
+drift from implementation the same way an undeclared
+dependency drifts from a lockfile: a later change to the
+scaffolding code can silently break the L1 configuration
+while the documentation still describes the old behavior.
+Asserting the claim in prose is exactly the kind of
+trust-without-test this whole chapter argues against; the
+capture test matrix applies the chapter's own standard to
+the framework that makes the claim.
+:::
+:::
+
 ## How continuous integration adapts to the archetype
 
 We have stressed throughout the book that a research
@@ -1030,6 +1228,28 @@ The analyst's contribution, as stated at the outset, is to
 ensure the archetype and its gates are matched, so that CI
 tests what the compendium actually is.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: when a package does need the render gate
+
+An R-package archetype is said to have no report, so no
+render gate. Under what condition does the render gate
+apply to a package archetype after all, and what does it
+render in that case?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The render gate applies whenever the package ships a
+vignette, which is itself a rendered document. The gate
+re-renders `vignettes/intro.Rmd` (or whichever vignette
+files exist) on every push, confirming that the vignette's
+code still runs against the restored library, exactly the
+check a manuscript's report receives. Only a package with
+neither a report nor a vignette has genuinely nothing for
+the render gate to do.
+:::
+:::
+
 ## Independent external verification
 
 The checking we have described so far is the author's own,
@@ -1069,6 +1289,32 @@ yours; independent verification is a person who is not you;
 and both catch, at the last responsible moment before a
 result enters the scientific record, the reproducibility
 failures that the author's own generous machine had hidden.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what independence adds beyond CI
+
+An author's CI pipeline passes every gate, including
+verification against a baseline. Why might a CODECHECK
+reviewer still find something CI did not, given that both
+are described as 'a machine, or a person, that is not
+yours'?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+CI is configured by the author, so it tests what the
+author thought to test, against a baseline the author
+recorded, in an environment the author specified. If the
+author misunderstood what the analysis was supposed to
+produce, or recorded a baseline after a bug had already
+entered it, CI will faithfully and indefinitely confirm
+the misunderstanding. A codechecker reads the paper, forms
+an independent judgment of what the analysis should
+produce, and checks the artifacts against that judgment
+rather than against the author's own configuration, which
+is a check CI structurally cannot perform on itself.
+:::
+:::
 
 ## Worked example
 
@@ -1125,6 +1371,112 @@ on the author's machine, it was caught only by a gate that
 looks where the defect was, and it was caught by a machine
 that was not the author's, at the last moment before the
 incomplete compendium could reach anyone else.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which gate, and why
+
+In the worked example, `R CMD check` passes even though
+`sandwich` is genuinely unpinned. Why does this gate miss
+the defect that the dependency-manifest gate catches,
+and is that a flaw in `R CMD check`?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+It is not a flaw; it is a scope limit stated earlier in
+the chapter. `R CMD check` runs on the package `R CMD
+build` produces, and `.Rbuildignore` excludes
+`analysis/`, so the check never parses, runs, or scans the
+script that calls `library(sandwich)`. The gate is doing
+exactly what it is specified to do, checking the package
+skin; the defect lives one directory outside that skin,
+which is precisely why a compendium needs a second gate
+that does read `analysis/`.
+:::
+:::
+
+## Demonstrating a gate on the cohort compendium
+
+The three gates are not abstractions; the same logic that
+runs on a CI runner runs, in miniature, on this book's own
+cohort compendium, without any CI infrastructure at all.
+Below, a short script mirrors the dependency-manifest gate
+of the earlier section: it finds every package
+`R/cohort.R` actually uses, compares that list against
+what this compendium currently declares as pinned, and
+reports whether the gate passes.
+
+```{r}
+#| label: ci-cohort-gate
+used <- unique(renv::dependencies('../../R/cohort.R')$Package)
+locked <- c('tibble', 'ggplot2', 'stats', 'utils')
+base_pkgs <- rownames(installed.packages(priority = 'base'))
+
+gate_check <- function(missing) {
+  if (length(missing) > 0) {
+    stop('Used in analysis/ but not pinned: ', toString(missing))
+  }
+  'gate passed'
+}
+
+missing_now <- setdiff(used, c(locked, base_pkgs))
+cat('Packages R/cohort.R uses:', toString(used), '\n')
+cat('Missing from the pinned set:',
+    if (length(missing_now)) toString(missing_now) else '(none)', '\n')
+cat('Result:', gate_check(missing_now), '\n')
+```
+
+The gate passes, because `R/cohort.R` uses only `tibble`,
+`stats`, and `utils`, and all three are accounted for. The
+house rule of this book applies here as well: a gate shown
+only to pass has not been shown to work. The same script,
+run against a `used` list with the chapter's own running
+example of an unpinned dependency added, shows what a real
+CI log would print the moment someone adds
+`library(sandwich)` to a cohort script without
+snapshotting it:
+
+```{r}
+#| label: ci-cohort-gate-broken
+used_broken <- c(used, 'sandwich')
+missing_broken <- setdiff(used_broken, c(locked, base_pkgs))
+result <- tryCatch(gate_check(missing_broken),
+                   error = function(e) conditionMessage(e))
+cat('Missing from the pinned set:', toString(missing_broken), '\n')
+cat('Result:', result, '\n')
+```
+
+The injected package is named, the step would stop with a
+nonzero exit status in real CI, and the failure points
+exactly at the undeclared dependency, which is what the
+dependency-manifest gate is for. Restoring `used` to its
+real value (dropping the injected `sandwich`) returns the
+gate to green, exactly as reverting the offending commit
+would on a real runner.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what this demonstration does and does not show
+
+This section ran the dependency-gate logic locally, inside
+the rendered report, rather than on an actual CI runner.
+What does that leave unverified about the compendium's
+real CI setup, if one exists?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Running the logic locally confirms the gate's *logic* is
+correct, that it finds the right packages and reports the
+right ones as missing, but it says nothing about whether a
+real workflow file invokes that logic correctly, restores
+the right library before running it, or actually stops the
+job on failure rather than printing a warning and
+continuing. Those are exactly the cross-boundary and
+`error_on` pitfalls the chapter described earlier, and only
+an actual CI run, on an actual fresh runner, can confirm
+them.
+:::
+:::
 
 ## Collaborating with an LLM
 
@@ -1272,6 +1624,34 @@ the analyst must verify and cannot delegate.
    reproducibility failure that an independent human
    codechecker would catch and that the author's own CI,
    however well configured, cannot.
+
+7. **Cumulative: gate the cohort compendium.** Using the
+   pattern of 'Demonstrating a gate on the cohort
+   compendium', run
+   `used <- unique(renv::dependencies('R/cohort.R')$Package)`
+   and compute
+   `missing <- setdiff(used, c('tibble', 'ggplot2', 'stats', 'utils', rownames(installed.packages(priority = 'base'))))`.
+   Report the length of `missing` (an autogradable answer:
+   a single integer). Then add the line `library(sandwich)`
+   to a copy of `R/cohort.R` on disk, re-run the same two
+   lines against the copy, and report the exact character
+   vector `missing` now contains (a second autogradable
+   answer: one package name, spelled exactly as it would
+   appear in a real CI log).
+
+8. **Spacing: commit before you compute, revisited.** This
+   exercise returns to the commit discipline of Chapter 4
+   (@sec-version-control). A CI workflow triggers on
+   `push`, so it can only test what has actually been
+   committed; any undeclared state that exists solely in
+   an uncommitted file or an author's working directory is
+   invisible to it in exactly the way it is invisible to a
+   colleague who clones the repository. Explain, in your
+   own words, why this makes 'commit before you compute'
+   (habit 1) a precondition for CI to mean anything at all,
+   and give one concrete example of an uncommitted change
+   that would let a build pass locally and fail the moment
+   it is pushed.
 
 ## Solutions
 
@@ -1571,6 +1951,82 @@ The compact statement: CI answers 'does the analysis still
 do what it did', and a codechecker answers 'does the
 analysis do what the paper says'.
 :::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+used <- unique(renv::dependencies('R/cohort.R')$Package)
+base_pkgs <- rownames(installed.packages(priority = 'base'))
+missing <- setdiff(used, c('tibble', 'ggplot2', 'stats',
+                            'utils', base_pkgs))
+length(missing)   # 0
+```
+
+Against the real file, `used` is `tibble`, `stats`, and
+`utils` (verified on R 4.6.1, `renv` from source, October
+2026), every one of which is already in the pinned set
+plus the base packages, so `missing` is a character vector
+of length 0.
+
+```r
+# after appending `library(sandwich)` to a copy of R/cohort.R
+used2 <- unique(renv::dependencies('cohort_copy.R')$Package)
+missing2 <- setdiff(used2, c('tibble', 'ggplot2', 'stats',
+                             'utils', base_pkgs))
+missing2   # "sandwich"
+```
+
+`renv::dependencies()` finds the new `library(sandwich)`
+call, and `missing2` is exactly `"sandwich"`, named and
+nothing else, which is what a real CI log would print at
+the dependency-manifest gate.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+A CI runner tests only what is checked out from version
+control, which is exactly what is committed, no more. An
+uncommitted change exists solely on the author's own
+machine, so from the runner's point of view it does not
+exist at all; the runner cannot fail on a problem it never
+sees, and it cannot confirm a fix that was never pushed
+either. 'Commit before you compute' is therefore not an
+independent good habit sitting beside CI, it is what makes
+CI's test meaningful in the first place: without it, a
+green build certifies a state of the repository that
+nobody's actual analysis ran against.
+
+**A concrete example.** An analyst fixes a bug in
+`analysis/scripts/02_model.R`, reruns the report locally,
+confirms the figure now looks right, and pushes, but
+forgets to `git add` a second file, a helper function in
+`R/model_utils.R` the fix also depended on. Locally,
+everything passes, because the uncommitted helper is still
+on disk. On push, the runner checks out only what was
+committed, the helper function is missing or stale, and the
+render gate fails at the first chunk that calls it, a
+failure the author cannot reproduce by looking at their own
+unchanged working directory until they notice the file was
+never staged.
+:::
+
+## Cheat sheet
+
+| Command or rule | What it does |
+|---|---|
+| `error-on: '"warning"'` (GitHub) / `error_on = "warning"` (`rcmdcheck`) | Fails `R CMD check` on any WARNING, including an undeclared import; `"error"` lets it through. |
+| `zzrenvcheck::check_packages(strict = TRUE, error_on_fail = TRUE)` | Dependency-manifest gate; `error_on_fail = TRUE` is required to stop the step. |
+| `renv::dependencies('analysis')` | Scans source for packages actually used; the core of a hand-written dependency gate. |
+| `rmarkdown::render(...)` in a CI step | The render gate: fails the job if any chunk errors on a clean restore. |
+| `docker build -t compendium:ci .` | Rebuilds the project image from a clean machine, the L2 rebuild `zzc verify --full` requires. |
+| `test-baseline-*.R` naming | What `zzc verify --full` and `ci/run-tests.R` look for to certify L3. |
+| `digest(x, algo = 'sha256')` | Checksums bytes that should not change (raw data); the wrong tool for a floating-point estimate. |
+| `.Rbuildignore` entry for `analysis/` | Why `R CMD check` never sees analysis scripts or their dependencies. |
+| Rule of thumb | Verify computational outputs within a tolerance; never hash rendered PDF or HTML bytes. |
+| Habit 4 | Make every gate able to fail, and watch it fail once. |
+| Habit 6 | Rebuild from clean, on a machine that is not yours. |
 
 ## Further reading
 

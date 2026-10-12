@@ -17,35 +17,110 @@ want a computer to do.*
 ```
 :::
 
-## Learning objectives
+By the end of this chapter you will be able to write an
+analysis whose every reported number and figure is
+produced by the code sitting beside it, recognize the
+handful of ways that guarantee quietly breaks, and say
+precisely what a successful render does and does not
+establish about an analysis's place on the
+reproducibility ladder.
 
-By the end of this chapter the reader should be able
-to:
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so the fig-alt option
+# below computes its text from the same call that draws the
+# figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-- Explain the idea of literate programming from Knuth,
-  and the reproducibility argument that Buckheit and
-  Donoho drew from it, that the article is only
-  advertising and the scholarship is the code and the
-  instructions.
-- Trace the R lineage of literate tools from Sweave
-  through `knitr` and R Markdown to Quarto, and state
-  what each contributed.
-- Build a sealed render, a document whose every number
-  and figure is regenerated from the code that produces
-  it, and recognize the landmines that quietly break the
-  seal.
-- Choose between HTML and PDF output and name the
-  toolchain each requires, including why a LaTeX
-  distribution belongs in the image rather than on the
-  host.
-- Explain why a rendered PDF or HTML file does not hash
-  identically across renders, and why verification
-  therefore hashes the computational outputs rather than
-  the rendered document.
-- Judge how heavily the literate-programming machinery
-  bears on each research archetype, from the manuscript
-  and the blog to the R package and the simulation
-  study.
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 60 minutes.
+
+**Prerequisites.** @sec-dependencies and @sec-containers,
+for the lockfile and the container, so that the seal this
+chapter develops is not mistaken for either kind of pin.
+@sec-levels, for the L0-L3 ladder and the
+capture-versus-validation vocabulary this chapter applies
+to the literate document itself. Statistically, nothing
+beyond reading a scatter plot and a reported percentage is
+required. R knowledge assumed: calling `library()`, writing
+a short function, and reading a basic `ggplot2` call; no
+prior exposure to `knitr` or Quarto chunk syntax is assumed.
+
+**Objectives.** By the end of this chapter, can you:
+
+- Explain Buckheit and Donoho's reproducibility argument,
+  that a paper is advertising and the code and
+  instructions are the scholarship, and say how a literate
+  document makes the two the same artifact?
+- Build a sealed render in Quarto or `knitr` and recognize
+  each of the five landmines that quietly break the seal?
+- Choose between HTML and PDF output, name the toolchain
+  each requires, and explain why a LaTeX distribution
+  belongs in the image rather than on the host?
+- Explain why two renders of an unchanged document do not
+  hash identically, and say what should be hashed instead?
+- Place a sealed render on the L0-L3 ladder, and state
+  precisely what the seal does and does not establish
+  about an analysis's reproducibility?
+
+**Outline.** Where a sealed render sits on the stack; the
+oldest idea in the book, from Knuth to Buckheit and
+Donoho; the R lineage from Sweave to Quarto; the sealed
+render, and the same seal applied to inline numbers; the
+landmines that break the seal; HTML or PDF and the
+toolchain each needs; why a render will not hash the same
+twice; literate programming across the archetypes; the
+write-as-you-go doctrine; the cohort, continued; a worked
+example; collaborating with an LLM; exercises, a cheat
+sheet, and further reading.
+:::
+
+## Where this sits on the stack
+
+A sealed render is, among this book's chapters, an unusual
+case: it pins nothing new. @fig-stack-literate marks
+analysis code as validated here rather than captured,
+because version control already secures the code at L0;
+what a sealed render adds is the check that the document's
+prose and figures are actually produced by that code,
+rather than pasted in and left to drift.
+
+```{r}
+#| label: fig-stack-literate
+#| fig-cap: 'The determinant stack of @sec-levels, with analysis code marked as validated rather than captured. A sealed render pins no new layer of the stack; it confirms that the numbers and figures a reader sees are the ones the already-committed code actually produces, which is the capture-versus-validation distinction this chapter applies to the rendered document itself.'
+#| fig-alt: !expr determinant_stack_alt(validates = c('Analysis code'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  validates = c('Analysis code'),
+  title = 'A sealed render validates that prose and code agree; it captures nothing new')
+```
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: capture or validation, for a render
+
+A sealed render regenerates every figure and number in a
+document from its own code on every build. Does sealing the
+render raise a project from L0 to L1, and if not, what does
+it do instead?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. Sealing the render pins no new layer of the determinant
+stack: the analysis code it runs was already locatable, at
+L0, because it sits in a version-controlled document.
+Rather than capturing something new, the seal validates that
+the document's prose agrees with that already-committed
+code, by construction, every time the document is built. A
+sealed, unpinned-package document and an unsealed,
+fully-pinned one are both possible, which is exactly why the
+seal and the ladder are different virtues.
+:::
+:::
 
 ## Orientation
 
@@ -145,6 +220,28 @@ and no tool makes them.
    has claimed more than the seal delivers. The honest
    claim names the level actually reached, and we return
    to this below.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the analyst's third judgment
+
+A document renders without error, and every figure in it is
+produced by the code beside it. Why is 'the analysis is
+reproducible' still not a claim the analyst is entitled to
+make on that basis alone?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Because a sealed render matches the claim to what the seal
+actually delivers, which is only that the document agrees
+with its own code. It says nothing about whether the
+packages are pinned, the environment is fixed, or the
+outputs have been shown to regenerate from a clean rebuild.
+The third analyst's judgment named above, matching the
+claim to what the render seals, is exactly the discipline
+that stops a successful render from being overclaimed.
+:::
+:::
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -285,6 +382,29 @@ R analyst the migration from R Markdown to Quarto is
 small, and the two will coexist for years. The important
 point is that all four tools implement the same idea, and
 that the idea, not the tool, is what secures the seal.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: four tools, one idea
+
+Sweave, `knitr`, R Markdown, and Quarto differ in the
+languages and output formats they support. What single
+property do all four share that makes each of them, and not
+merely the latest one, a literate-programming tool in
+Knuth's sense?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Each interleaves narrative prose with executable code in one
+source document and weaves the code's output into the
+rendered result at build time, so the figure or number a
+reader sees is produced by the code beside it rather than
+pasted in. That property, not the particular markup
+language or output format, is what secures the seal; the
+four tools are successive engineerings of the same idea
+Knuth proposed in 1984.
+:::
+:::
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: advertisement and scholarship
@@ -449,6 +569,44 @@ study design, an enrollment target or a protocol
 threshold, are properly typed, because they are inputs
 rather than results.
 
+::: {.callout-tip icon=false}
+## Verification
+
+To see the seal hold on an inline number: change one line
+upstream of `n_eyes`, `n_events`, or `pct` in the
+`seal-inline` chunk above, say by subsetting a different
+treatment arm, and rerender; the sentence that reports them
+updates to match, with no edit to the prose itself. To make
+it fail on purpose, replace one of the inline expressions
+with the literal number it currently evaluates to, change
+the upstream data, and rerender; the hardcoded sentence will
+now silently disagree with the chunk that computed it,
+which is the drift this chapter exists to prevent.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which numbers are sealed
+
+In the retinopathy example above, `n_eyes`, `n_events`, and
+`pct` are each written as inline expressions. Why would it
+be wrong to also write the trial's total enrollment target
+of 400 eyes as an inline expression computed from the data?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Because the enrollment target is a constant of the study
+design, not a result of the analysis: it was fixed by the
+protocol before any data were collected, and no quantity in
+the dataset determines it. Writing it as an inline
+expression would make a design input masquerade as a
+computed result, and would break, or silently misreport, if
+the observed sample size happened to differ from the target.
+Design constants are properly typed; only quantities the
+analysis itself produces belong in an inline expression.
+:::
+:::
+
 ## The landmines that break the seal
 
 A sealed render is fragile in a specific way: it holds
@@ -537,7 +695,7 @@ sealed render reads only committed inputs, and the surest
 test is to render from a fresh clone.
 
 ::: {.callout-warning}
-## Warning
+## Pitfall
 
 Every landmine in this section shares one signature: the
 render succeeds on the author's machine. Local success is
@@ -635,6 +793,32 @@ way to supply LaTeX is to pin it in the image, not to
 install it, fragilely and at render time, on whatever
 machine happens to build the document.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: choosing the profile
+
+A project renders only to HTML today, but a collaborator
+wants to add a `pdf_document2` output to one report next
+month. What, if anything, should change about the project's
+Docker image now, and why might waiting be the wrong call?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Nothing needs to change now; an HTML-only project does not
+need the publishing profile's LaTeX distribution and should
+not pay its build time or image size before it is needed.
+What matters is recognizing, once the PDF output is added,
+that the project must move to the publishing profile (built
+on `rocker/verse`) and confirm any package-specific LaTeX
+dependencies are present, rather than installing `tlmgr`
+packages ad hoc on whichever machine first attempts the PDF
+render. Waiting to decide is fine; waiting to act once the
+YAML declares `pdf_document2` reintroduces exactly the
+render-time, machine-specific fragility this chapter warns
+against.
+:::
+:::
+
 ## Why a rendered document will not hash the same twice
 
 We come now to a subtlety that surprises many analysts
@@ -698,21 +882,34 @@ object of record is the computation.
 ::: {.callout-important}
 ## The honest level
 
-A sealed render is easily mistaken for a reproducibility
-guarantee, and it is not one. The seal establishes that
-the document agrees with the code that produced it, which
-is level-agnostic: a sealed report can sit at L0, running
-only on its author's machine. To claim L1 the packages
-must be pinned in a lockfile; to claim L2 the environment
-must be fixed in a container or a Nix declaration; to
-claim L3 the outputs must have been regenerated from a
-clean rebuild and shown by a baseline test to match their
-recorded values within a stated tolerance. 'The report
-renders' is a claim about the seal,
-not about the level. Match the claim to the level actually
-reached, and state plainly that a render which succeeds on
-one machine has demonstrated the seal and nothing above
-it.
+This chapter's own executed chunks, `fig-simpson`, the
+inline-sealed retinopathy sentence, and the cohort passage
+below, are sealed, every number in them regenerates from
+the code beside it, but that seal alone leaves them at no
+higher than L0, since nothing in this chapter pins the
+packages or the environment that produced them.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: two PDFs, one analysis
+
+Two renders of the same, unchanged `report.Rmd` produce PDF
+files with different checksums. Does this mean the analysis
+is not reproducible?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The checksums differ because of metadata that has
+nothing to do with the analysis, a creation timestamp, a
+document identifier, font-subset names, not because the
+figures or numbers changed. The right question is whether
+the computational outputs, the numbers and figures the
+document presents, regenerate within a stated tolerance, and
+that is answered by hashing the outputs themselves, not the
+typeset file. A rendered document's bytes are not the object
+of record; the computation is.
+:::
 :::
 
 ## Literate programming across the archetypes
@@ -797,6 +994,28 @@ stored results. One should carry the discipline of the
 sealed render into whichever archetype one is building,
 and adjust its weight to the case.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the package that renders nothing
+
+An R package maintainer is told, by a colleague who has read
+only the manuscript archetype's section above, that the
+package needs a `report.Rmd` to be reproducible. Is the
+colleague right?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The R-package archetype has no single analysis to
+report, so it has no `report.Rmd` to seal; its literate
+surface is the vignette and the roxygen-generated help page,
+and its correctness is established by `R CMD check` and the
+test suite rather than by a rendered result. Demanding a
+manuscript-style sealed report of a package applies this
+chapter's heaviest-weight case to the one archetype where
+the machinery is largely absent.
+:::
+:::
+
 ## The write-as-you-go doctrine
 
 There remains a matter of practice rather than mechanism,
@@ -838,6 +1057,31 @@ The number in the paragraph was computed by the chunk
 above it on the very first render, and on every render
 since. The drift that opened this chapter has no moment
 at which to enter.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: why day one, not day thirty
+
+The write-as-you-go doctrine creates `report.Rmd` before any
+analysis exists. What specifically would be lost by instead
+writing the analysis scripts first for a month and only then
+starting the document, even if every number in the eventual
+document were still computed rather than typed?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Nothing would be lost about any individual number's seal, if
+the author were careful. What would be lost is the absence
+of a phase in which copying could occur: a month of
+scripts-first work creates thirty days during which a
+results-in-progress tempts an author to paste a number into
+a slide or an email, and the habit of pasting is exactly
+what later infects the manuscript once it starts. Starting
+the document on day one removes the opportunity for that
+habit to form, rather than merely disciplining the author
+once it already has.
+:::
+:::
 
 ## Worked example
 
@@ -915,29 +1159,109 @@ The result is a document that is sealed by construction. To
 convince oneself that the seal holds, and does not merely
 appear to hold on the author's machine, one renders it from
 a fresh clone of the repository inside the pinned
-environment. If it renders there, with no file missing and
-no package installed on the fly, the seal is real. If it
-fails, one of the landmines catalogued above has been
-stepped on, and the failure names which.
+environment (habit 6). If it renders there, with no file
+missing and no package installed on the fly, the seal is
+real. If it fails, one of the landmines catalogued above has
+been stepped on, and the failure names which.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the header's `date` field buys
+
+The YAML header above sets the `date` field to an inline
+expression that evaluates `Sys.Date()` at render time,
+rather than a fixed string typed on the day the project
+began. What would be lost by typing the date literally
+instead, and is this an instance of the same seal as the
+figure and the inline numbers?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A literal date would freeze at whatever day it was typed,
+so a document rendered months later would still carry its
+first day's date, silently misrepresenting when the reader's
+copy was actually produced. It is the same seal, applied to
+metadata rather than to a result: the date is computed from
+the render itself rather than pasted in, so it cannot drift
+from the moment it claims to describe.
+:::
+:::
+
+## The cohort, continued
+
+The same discipline applies directly to this book's own
+running cohort. The chunk below loads and cleans the extract
+and computes two numbers the way every sealed document
+should, as objects a sentence can cite rather than as values
+copied from a console.
+
+```{r}
+cohort <- clean_cohort(load_cohort(
+  '../data/raw_data/cohort_raw.csv'))
+n_cohort <- nrow(cohort)
+pct_missing_outcome <- round(
+  100 * mean(is.na(cohort$incident_dm)), 1)
+```
+
+The cleaned cohort holds `r n_cohort` records, of which
+`r pct_missing_outcome` percent carry no recorded outcome.
+Both numbers are inline expressions reading `cohort`, not
+literals typed after a console check, so a later edit to
+`clean_cohort()`, or to the raw extract, changes this
+paragraph on the next render rather than leaving it to drift
+the way the orientation's opening story describes. Nothing
+about this passage pins a package or an environment; it is
+the seal, and only the seal, demonstrated on the book's own
+data rather than on a hypothetical one.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the cohort passage does and does not show
+
+The chunk above reports that `r pct_missing_outcome` percent
+of the cleaned cohort is missing an outcome. Does rerunning
+this chunk on a colleague's machine, and getting the
+identical number, tell that colleague anything about whether
+the number is correct?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No, for the same reason @sec-testing presses at length. An
+identical rerun shows that the document's prose agrees with
+its own code and that the code is at least stable across
+the two machines on the one layer this chapter touches; it
+does not show that `clean_cohort()`'s missingness
+calculation is the one the analyst intended. That
+correctness question belongs to a unit or data-validation
+test with an independent oracle, not to the seal, which
+confirms agreement between prose and code and nothing about
+whether the code is right.
+:::
+:::
 
 ## Collaborating with an LLM
 
 A language model is a capable assistant for literate
 documents, and a treacherous one, because its fluency in
 producing chunks that run on the author's machine is
-exactly the fluency that plants landmines. A literate
-document mixes code with data and results, so it is easy
-to paste too much. Never paste or upload protected health
-information, identifiable or agreement-restricted data, or
-outputs derived from them (a rendered table of small cells
-included), into a model unless the endpoint is approved by
-the reader's institution for that data; describe the
-structure instead, with column names, types, and a
-synthetic example. A coding agent asked to render the
-document reads the data it renders, so it belongs only in
-projects whose data it is allowed to see. Three exchanges
+exactly the fluency that plants landmines. Three exchanges
 illustrate the pattern of use and the verification the
 analyst must supply.
+
+::: {.callout-important}
+## Restricted data
+
+A literate document mixes code with data and results, so it
+is easy to paste too much (habit 3). Never paste or upload
+protected health information, identifiable or
+agreement-restricted data, or outputs derived from them (a
+rendered table of small cells included), into a model unless
+the endpoint is approved by the reader's institution for
+that data; describe the structure instead, with column
+names, types, and a synthetic example. A coding agent asked
+to render the document reads the data it renders, so it
+belongs only in projects whose data it is allowed to see.
+:::
 
 **Prompt.** 'Write a `knitr` chunk that loads `dplyr` and
 `survival` and reads the CSV at
@@ -1046,6 +1370,28 @@ the level actually reached and no more.
    that archetype, if anything, and how heavily the
    reproducibility weight rests on the render as opposed to
    elsewhere.
+
+7. On the running cohort compendium, run
+   `clean_cohort(load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
+   and write a one-sentence, inline-sealed report of the
+   cleaned row count and the percentage of rows missing an
+   outcome, in the style of 'The cohort, continued' above.
+   Report the two specific numbers a grading script could
+   check without rendering anything: `nrow(cohort)` and the
+   percentage missing `incident_dm`, rounded to one decimal
+   place.
+
+8. This exercise returns to the dependency-pinning
+   discipline of Chapter 6 (@sec-dependencies). The
+   `fig-simpson` chunk in this chapter loads `dplyr`,
+   `tibble`, and `ggplot2` with explicit `library()` calls.
+   Run `renv::dependencies()` on this chapter's own `.qmd`
+   file, as @sec-dependencies's own cohort exercise runs it
+   on `R/cohort.R`, and report which of those three packages
+   the scan finds referenced. Then explain why a chunk that
+   instead called `pacman::p_load(dplyr, tibble, ggplot2)`
+   would pass this chapter's own render yet be invisible to
+   that scan, tying the two chapters' landmines together.
 
 ## Solutions
 
@@ -1278,6 +1624,87 @@ and that in the two archetypes where it carries least, the
 package and the simulation, a different mechanism, tests
 and seeds respectively, does the binding instead.
 :::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+cohort <- clean_cohort(
+  load_cohort('analysis/data/raw_data/cohort_raw.csv'))
+n_cohort <- nrow(cohort)
+pct_missing <- round(100 * mean(is.na(cohort$incident_dm)), 1)
+```
+
+The sealed sentence reads: 'The cleaned cohort holds
+`r knitr::inline_expr('n_cohort')` records, of which
+`r knitr::inline_expr('pct_missing')` percent carry no
+recorded outcome', with both values inserted as inline
+expressions rather than typed after a console check.
+
+**The two numbers**, run against the extract as committed:
+the cleaned cohort holds 337 rows, and 9.5 percent of them
+are missing `incident_dm`. These are exactly the values
+`nrow(cohort)` and
+`round(100 * mean(is.na(cohort$incident_dm)), 1)` return, so
+a grading script can check them without rendering the
+document at all. A reader who gets different numbers has
+either an edited extract or a different `clean_cohort()`
+than the one this book ships, which is itself a useful
+diagnostic, as the parallel exercise in @sec-testing notes
+for the same two functions.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+```r
+renv::dependencies('analysis/report/07-literate-programming.qmd')
+```
+
+The scan finds `dplyr`, `tibble`, and `ggplot2` all
+referenced, among other packages this chapter's prose and
+worked example load or name (`knitr`, `rmarkdown`,
+`pkgload`, and, from the `tbl-diabetic-arms`-style examples
+elsewhere in the book, `survival`). All three of the
+`fig-simpson` chunk's explicit `library()` calls are
+therefore visible to the scan and would be pinned by
+`renv::snapshot()` and checked by `make check-renv`.
+
+**Why `pacman::p_load()` would be invisible to it.**
+`renv::dependencies()` finds packages by recognizing the
+syntactic forms `library(pkg)`, `require(pkg)`, and
+`pkg::fun()`, the same forms @sec-dependencies's
+dependency-triad check looks for. A call to
+`pacman::p_load(dplyr, tibble, ggplot2)` recognizes `pacman`
+itself, because that is a namespaced call, but the three
+packages named as bare arguments inside it are not calls of
+any of those three recognized forms, so the scan does not
+see them. The chunk would still run, and would still render,
+on a machine where those packages happened to be installed,
+which is exactly this chapter's warning about
+`pacman::p_load()`: it reaches outside the committed
+lockfile at render time, and @sec-dependencies's own gate,
+built on the same kind of syntactic scan as
+`renv::dependencies()`, cannot catch what it cannot see
+either. The two chapters' landmines are the same landmine,
+met twice: once as a render-time install, once as an
+invisible, unpinned dependency.
+:::
+
+## Cheat sheet
+
+| Command or rule | What it does |
+|---|---|
+| `library(pkg)`, one per package | Names a dependency explicitly so `renv` can find it; never `pacman::p_load()`. |
+| An inline R expression in prose | Seals a number in prose to the code that computes it (habit 2). |
+| `knitr::opts_chunk$set(...)` | Sets chunk defaults, `echo`, `message`, `warning`, `fig.path`, once near the top. |
+| `SOURCE_DATE_EPOCH` | Fixes the embedded build timestamp, so two renders agree on that one field. |
+| `make docker-render` | Renders inside the pinned container and stamps the provenance footer (habit 6). |
+| Five landmines | Installing at render time; `pacman::p_load()`; an absolute host path; hidden cross-chunk state; reading an uncommitted file. |
+| Rule of thumb | A sealed render binds prose to code; it pins no package, no environment, and proves nothing correct. |
+| Rule of thumb | Hash the computational outputs, not the rendered PDF or HTML; the render's bytes are not the object of record. |
+| Habit 6 | Rebuild from clean, on a machine that is not yours, to test whether the seal actually holds. |
+| Habit 7 | Write the honest level down; 'it renders' is a claim about the seal, not about L1, L2, or L3. |
 
 ## Further reading
 
