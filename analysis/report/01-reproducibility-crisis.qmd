@@ -540,9 +540,15 @@ for reproducibility is direct. Code that set a seed and
 drew a sample obtained one sequence of draws before
 the release and a different sequence after it, with
 identical code and an identical seed [@rcoreteam2019].
-Every bootstrap, every cross-validation fold, every
-permutation test, and every simulation written under
-the old default draws differently under the new one.
+Every bootstrap resample, every cross-validation fold
+assignment, and every permutation test built on
+`sample()`, directly or through a function that calls
+it, draws differently under the new default than under
+the old one. A simulation that draws from `rnorm()`,
+`rpois()`, or another generator that does not route
+through `sample()` is unaffected; the 2019 correction
+touched one generator, not every source of randomness
+in R.
 Then, in R 4.0.0, released in 2020, the
 `stringsAsFactors` default flipped from `TRUE` to
 `FALSE`. Reading a data frame now silently produced

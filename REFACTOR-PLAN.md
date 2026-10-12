@@ -2598,6 +2598,104 @@ incident (a subagent's tree-wide `git stash` catching concurrent
 work) was resolved without data loss and is recorded as a standing
 caution for future phases.
 
+### 10.17a Phase 12: restructure (2026-10-12)
+
+Branch `phase-12-restructure`, from the completed `phase-11-content`
+(606 pages). Three items from this phase's own reconnaissance plus
+two correctness fixes done directly, not as judgment calls. All
+local; nothing pushed.
+
+**Two correctness fixes, done before the restructure itself.**
+
+| Defect | Fix | Evidence |
+|---|---|---|
+| R 3.6.0 overclaim in 01 ('every bootstrap, every cross-validation fold, every permutation test, and every simulation written under the old default draws differently') | Narrowed to name `sample()` and functions built on it, and added an explicit sentence that a generator such as `rnorm()` or `rpois()` that does not route through `sample()` is unaffected | V lead: the 2019 correction (R 3.6.0) changed only the sampler behind `sample()` (@rcoreteam2019); `rnorm()` and the other non-`sample()` generators were untouched. The chapter's own worked example (lines ~707-760) already demonstrated this correctly with `sample()` specifically; only the summary sentence overclaimed to 'every simulation' |
+| Cross-chapter chapter-number citations wrong in seven places | Derived the authoritative chapter-number mapping from a full HTML render's `chapter-number` spans (00-intro=1, 01=2, 02=3, version-control=4, 03=5, 04=6, 05=7, 06=8, 07=9, pipelines=10, 08=11, 09=12, 10=13), then checked every prose 'Chapter N' reference against it. Fixed: 02 (two 'Chapter 5/6' references to 04/05 that should read 6/7; one 'Chapter 1' reference to @sec-crisis that should read 2), 03 (a 'Chapter 2' reference to @sec-levels that should read 3), 06 (two 'Chapter 5' references to @sec-containers that should read 7), shell-primer (two 'Chapter 3' references to content actually in 03-research-compendium, which should read 5; one 'Chapter 9' reference to the CI chapter, which should read 12) | V lead: cleared freeze and rendered HTML for every chapter, grepped each chapter's `chapter-number` span; every reference whose target carries an `@sec-*` crossref was checked against that chapter's actual rendered number; two references with no crossref (shell-primer's `.here` marker and project-oriented-paths mentions) were checked by grepping for the actual topic (`.here`, `relative path`) and confirming it lives in 03-research-compendium, not 02 |
+
+Render: freeze cleared for both touched chapters (01, 02, plus 03,
+06, shell-primer for the numbering fixes); HTML and PDF exit 0, no
+unresolved references or missing citations, no literal HTML
+entities [V]. PDF unchanged at 606 pages, as expected for fixes that
+only reword existing sentences.
+
+**The restructure itself, after three decisions (AskUserQuestion,
+all author choices matched the recommendation).**
+
+| Decision | Author's choice |
+|---|---|
+| Intro's tool-survey and zzcollab-internals block (~2,325 words) | Cut to a one-page map: keep the opening, the scope statement, and the plan of the book; replace the detailed survey and the zzcollab-mechanics walkthrough with a short paragraph pointing to the chapters that develop each part in depth |
+| Six chapters' near-identical archetype sections (~2,391 words total: 02, 07, 08, 09, 10, pipelines) | One shared table, pointer per chapter: consolidate into a new table in 03 (@sec-compendium), replace each chapter's walkthrough with a short pointer plus the one insight specific to that chapter not captured by the table |
+| 02's 'Two numbering schemes' section (451 words) | Keep it; resolves real reader confusion and is not duplicated elsewhere |
+
+**Intro cut.** Replaced '## A survey of the tools' through '## The
+status of tool application' (six subsections: the tool survey, the
+renv/Docker/CI triad, modern alternatives, the integration gap, how
+zzcollab manages the triad, and the status of tool application) with
+one new section, '## The tools, and the framework this book uses',
+that names each tool once, points to the chapter that develops it
+(@sec-dependencies, @sec-containers, @sec-backends, @sec-compendium,
+@sec-pipelines, @sec-testing, @sec-verification), and keeps a
+compressed version of the honesty note about zzcollab's own partial
+coverage of the determinant stack. Verified first, before cutting,
+that none of the specific mechanics being removed (the `.Rprofile`
+auto-lockfile behavior, digest-pinned and dated-snapshot Dockerfile
+generation, the presence-driven adaptive CI workflow) is otherwise
+undocumented: all three are developed in depth in 04-dependencies,
+05-containers, and 09-continuous-integration respectively, so cutting
+the intro's early, compressed version loses no unique content.
+00-intro: 4,408 to 2,202 words (`wc -w`, includes markup).
+
+**Archetype consolidation.** Added a new subsection to 03
+(@sec-compendium), '## How each archetype treats the chapters
+ahead', with one table (`@tbl-archetype-weight`) giving, for each of
+the five archetypes, a one-phrase note on the ladder (@sec-levels),
+literate-programming weight (@sec-literate), testing emphasis
+(@sec-testing), CI-gate configuration (@sec-verification), pipeline
+need (@sec-pipelines), and sharing path (@sec-archiving). Each of the
+six chapters' own archetype section was then cut from a full
+five-archetype walkthrough to a short paragraph pointing at the
+table plus the one case specific to that chapter most likely to be
+misjudged (the simulation archetype's RNG-kind discipline in 02; the
+R-package and simulation contrasts in 07; the data-analysis and
+simulation emphasis in 08; the simulation archetype's reduced-CI-grid
+practice in 09; the archetype-agnostic archiving machinery in 10; the
+R-package's complete absence of a pipeline in `pipelines.qmd`). Every
+chapter's 'Check your understanding' callout after its archetype
+section was kept unchanged, since all six were already self-contained
+and did not depend on the walkthrough text being cut.
+
+Word counts (`wc -w`, before to after): 02, 9,818 to 9,625 (-193); 03,
+11,098 to 11,543 (+445, the new table); 07, 12,162 to 11,724 (-438);
+08, 12,583 to 12,345 (-238); 09, 15,913 to 15,636 (-277); 10, 13,650
+to 13,318 (-332); pipelines, 12,662 to 12,122 (-540). Net across the
+six consolidated chapters plus the new table: -1,573 words, within
+the approved 1,500-1,800 word estimate.
+
+Render: freeze cleared for 00-intro, 02, 03, 07, 08, 09, 10, and
+pipelines; HTML and PDF exit 0, no unresolved references or missing
+citations, no literal HTML entities [V]. Repository test suite
+317/317 (up from 316; the two added tests are from the seeding fix
+merged earlier, not from this phase). Diff checked for em dashes
+(none introduced) and British spellings (none introduced) [V].
+
+**Length report.** PDF is now 598 pages, down from 606 before this
+phase (-8 pages, -1.3%), the first decrease since Phase 6. Since
+before Phase 6: 398 to 598 pages, +50.3%, back under the +52.3% peak
+reached at the end of Phase 11. The net word reduction across the
+intro and the six archetype-bearing chapters was about 3,779 words
+(2,206 from the intro cut, 1,573 net from the archetype
+consolidation); the 8-page reduction is smaller than a naive
+words-per-page estimate would suggest because the new archetype
+table itself adds back some of the space the prose it replaces would
+have used.
+
+**No renumbering was done in this phase.** The intro cut and the
+archetype consolidation both leave chapter order and chapter count
+unchanged, so Phase 12's 'checkpoint before any renumbering' does
+not trigger here. Optional-section marking and the core-path update
+to the preface and instructor guide, also listed under Phase 12 in
+10.13, were not addressed in this pass and remain open.
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their

@@ -914,85 +914,29 @@ of record; the computation is.
 
 ## Literate programming across the archetypes
 
-A recurring theme of this book is that a research
-compendium is not always a manuscript, and the weight the
-literate-programming machinery carries varies more across
-the archetypes than almost any other topic we treat. It
-is worth making the contrast explicit, because a reader
-whose mental image of a compendium is fixed on the
-manuscript will over-apply this chapter.
-
-For the **scholarly manuscript** archetype, the sealed
-render is the center of gravity. The manuscript is the
-product, the `report.Rmd` is created on the first day and
-grows with the analysis, and every table and figure in
-the eventual submission is regenerated from the code
-beside it. The write-as-you-go doctrine we turn to below
-is written for this archetype above all. Here the whole
-apparatus of this chapter applies at full strength.
-
-For the **blog** archetype the machinery is equally
-central but multiplied. A blog is a collection of rendered
-posts rather than a single report, so the compendium
-renders many literate documents rather than one, and the
-discipline of the sealed render, no landmines, committed
-inputs, a pinned environment, applies to each post
-independently. The blog archetype stresses HTML output and
-the automation of rendering many documents, where the
-manuscript stresses PDF and the care of one.
-
-For the **data-analysis** archetype the machinery is
-present but lighter. Such a project produces an internal
-report, an HTML summary for collaborators, a set of
-figures for a decision, rather than a typeset manuscript
-for submission. A sealed render is still the right way to
-produce that summary, and the landmines still apply, but
-the elaborate PDF toolchain is usually unnecessary and the
-document is one artifact among several rather than the
-organizing product.
-
-For the **R-package** archetype the sealed report is
-largely absent, and this is the sharpest contrast. An R
-package's 'document' is not a rendered report at all. It
-is its help pages, generated from the roxygen comments
-above each function, and its vignettes, which are
-themselves literate documents but serve to demonstrate the
-package rather than to report an analysis. A package has
-no `report.Rmd` to seal because it has no single analysis
-to report. Its literate surface is the vignette and the
-example, and its correctness is established by the tests
-and checks of @sec-testing rather than by a rendered
-result. A reader building an R package should not go
-looking for the manuscript machinery of this chapter,
-because there is no manuscript.
-
-For the **simulation-study** archetype the balance tips
-the other way again. A simulation's output is a body of
-stored results, the many runs of a Monte Carlo experiment
-saved to `derived_data/`, together with a short report
-that summarizes them. The heavy computation cannot live in
-the sealed document, because it takes hours or days. It
-lives in `analysis/scripts/`, is run once, seeded with
-care as @sec-levels stressed, and saves its results, and
-the literate report then loads those results and presents
-them. The sealed render here is thin, a presentation layer
-over pre-computed results, and the reproducibility weight
-falls on the seeding and the storage rather than on the
-render. The document seals the summary to the stored
-results; it does not, and cannot, recompute them on each
-build.
-
-The common thread is that all five archetypes share the
-same underlying machinery, `knitr` or Quarto, chunks,
-committed inputs, a pinned environment, and differ only in
-how heavily they lean on it and in what they render. The
-manuscript and the blog render reports and lean hard; the
-data analysis renders a summary and leans moderately; the
-package renders vignettes and help pages and leans on
-tests instead; the simulation renders a thin summary over
-stored results. One should carry the discipline of the
-sealed render into whichever archetype one is building,
-and adjust its weight to the case.
+The weight the sealed render carries varies sharply across
+the five archetypes; @tbl-archetype-weight in
+@sec-compendium is the reference. It is center of gravity
+for the manuscript, multiplied across many posts for the
+blog, and lighter for an internal data-analysis summary.
+The two cases most worth stating here are the ones a reader
+fixed on the manuscript will misjudge. The **R-package**
+archetype has no sealed report at all: its 'document' is
+its help pages and vignettes, generated from roxygen
+comments and demonstrating the package rather than
+reporting an analysis, and its correctness rests on the
+tests of @sec-testing, not on a rendered result. The
+**simulation-study** archetype inverts the usual weight for
+a different reason: the heavy computation, hours or days of
+Monte Carlo replicates, cannot live in the sealed document,
+so it runs once in `analysis/scripts/`, seeded with the care
+@sec-levels stressed, and saves its results to
+`derived_data/`; the literate report then becomes a thin
+presentation layer that loads and presents those results
+rather than recomputing them on each build. In every case
+the underlying machinery, `knitr` or Quarto, chunks,
+committed inputs, a pinned environment, is the same; only
+how heavily an archetype leans on it changes.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the package that renders nothing

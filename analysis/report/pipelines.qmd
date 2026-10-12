@@ -984,93 +984,29 @@ replace.
 
 ## Pipelines across the archetypes
 
-As with every tool in this book, the weight the pipeline
-machinery carries varies sharply across the research
-archetypes, and a reader whose mental image is fixed on
-one archetype will misjudge how much of this chapter
-applies to another.
-
-For the **data-analysis** archetype the pipeline is at its
-most valuable. Such a project is a chain of transforms
-from a raw export to a set of results for a decision, run
-and re-run many times as the data are corrected, the
-cleaning is refined, and the model is adjusted. It is
-exactly the setting the orientation described, and it is
-where the selective rebuild earns its keep on an ordinary
-working day: change the cleaning, and let the tool
-propagate the change downstream without a moment's thought
-about what depends on what. A data-analysis project of any
-size is the archetype that should reach for `targets`
-first.
-
-For the **simulation-study** archetype the case is stronger
-still, and for a specific reason: expense. A simulation
-sweeps a grid of parameter settings, and each cell may be
-a Monte Carlo run of many minutes or hours. The pipeline's
-caching is then not a convenience but a necessity, because
-re-running the entire grid to change one figure is
-intolerable, and re-running it by hand for only the
-affected cells is error-prone. `targets` is particularly
-suited here: its facility for *branching*, creating one
-target per parameter setting from a single declaration,
-maps a whole simulation grid onto the dependency graph, so
-that adding a new setting rebuilds only the new cell, and
-changing the summary rebuilds only the summary. The
-seeding discipline of @sec-levels and the storage of
-results in `derived_data/` that @sec-literate described for
-this archetype are, in a pipelined simulation, exactly the
-targets of the graph. This is the archetype in which the
-pipeline is least optional.
-
-For the **scholarly-manuscript** archetype the pipeline is
-present but modest, and often implicit. A manuscript's
-render is itself a small pipeline: the sealed `report.Rmd`
-of @sec-literate depends on its data and its analysis code,
-and rendering it is a one-target build with a handful of
-prerequisites. Many manuscripts never need more than a
-two- or three-rule Makefile, or a short `targets` pipeline,
-and the writing-as-you-go doctrine keeps the graph small by
-computing most results inside the document. Where a
-manuscript's analysis grows heavy enough that some
-computation moves out of the document into scripts, as
-@sec-literate described, those scripts and their outputs
-become the interior nodes of a pipeline, and the manuscript
-render becomes its final target.
-
-For the **R-package** archetype there is, characteristically,
-no analysis pipeline at all, and the contrast is instructive.
-A package is not a chain of data transforms producing a
-report. It is a library of functions, and its 're-execution'
-is not `tar_make()` but `R CMD check`, the standard gate that
-builds the package, runs its examples, and executes its tests,
-which we take up in @sec-testing. The package archetype
-mechanises its rebuilding through the package toolchain rather
-than through a pipeline tool, and a reader building a package
-should not go looking for a `_targets.R`, because the analysis
-graph that would justify one does not exist. Its dependency
-structure lives in the `DESCRIPTION` and its correctness in
-the check, not in a Makefile.
-
-For the **blog** archetype the pipeline returns, but in a
-different shape: a pipeline over documents rather than over an
-analysis. A blog is a collection of many posts, each a literate
-document to be rendered, and the natural pipeline rebuilds only
-the posts whose sources have changed, leaving the rest
-untouched, which is precisely a selective rebuild with each post
-as a target. This is the role that `workflowr` fills, discussed
-in the next section: it wraps exactly this render-the-changed-
-documents pipeline and binds each rendered post to the
-version-control commit that produced it.
-
-The common thread is that the pipeline machinery is worth its
-overhead in proportion to how many times the analysis is re-run
-and how expensive its steps are. The simulation and the working
-data analysis re-run constantly and cache expensive steps, and
-lean hard on the pipeline; the manuscript renders a small graph
-and leans lightly; the package uses a different mechanism
-entirely; and the blog runs a pipeline over its documents. Reach
-for the tool where re-execution is frequent or costly, and do
-not impose its overhead where a single render suffices.
+The weight a pipeline tool carries varies sharply across
+the research archetypes; @tbl-archetype-weight in
+@sec-compendium is the reference. It is most valuable for
+the **data-analysis** archetype's chain of transforms, run
+and re-run as the cleaning and the model are adjusted, and
+stronger still for a **simulation study**, where `targets`'
+*branching*, creating one target per parameter setting from
+a single declaration, maps a whole parameter grid onto the
+dependency graph, so adding a setting rebuilds only the new
+cell. A **manuscript**'s pipeline is present but modest and
+often implicit, since the sealed `report.Rmd` of
+@sec-literate is itself a small, one-target build. The
+sharpest contrast is the **R-package** archetype, which has
+no analysis pipeline at all: a package is a library of
+functions, not a chain of data transforms producing a
+report, and its 're-execution' is `R CMD check`
+(@sec-testing), not `tar_make()`. The **blog** archetype
+returns to a pipeline, but over documents rather than an
+analysis: the natural rebuild touches only the posts whose
+sources changed, the role `workflowr` fills in the next
+section. Reach for the tool where re-execution is frequent
+or costly, and do not impose its overhead where a single
+render suffices.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: an archetype with no pipeline

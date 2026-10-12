@@ -1365,64 +1365,27 @@ single point in time.
 
 ## Testing across the archetypes
 
-The four kinds of test are the same in every
-compendium, but their relative weight shifts with
-the archetype, and it is worth making the shift
-explicit, because a student who has met testing only
-in the context of R packages may wrongly conclude
-that a data analysis has nothing to test.
-
-Testing is native to the **R-package** archetype.
-The package is the setting in which the machinery
-grew up: tests live in a conventional directory,
-`R CMD check` runs them as a matter of course, and
-the whole apparatus of unit testing was designed
-around functions with clean inputs and outputs. A
-package's suite is dominated by unit tests, because
-a package is mostly a collection of functions, and
-the universal gate that @sec-compendium described,
-`R CMD check`, exercises them on every build.
-
-The **data-analysis** and **simulation** archetypes
-are where testing is less conventional and, for that
-reason, most in need of emphasis. Such a compendium
-may contain few reusable functions and no exported
-interface, so the unit-test surface is small. Its
-risk lives elsewhere: in the data, which may be
-malformed, and in the result, which must
-regenerate. Here the data-validation tests and the
-reproducibility tests carry the weight. A simulation
-archetype in particular leans on the reproducibility
-test, because its entire output is a function of a
-seed, and a baseline test that fixes the seed and
-compares the result with the committed baseline is the
-guarantee that the reported numbers can be recovered.
-The point developed at length in
-@sec-verification, that seeding is the load-bearing
-determinant of a simulation, has its testing
-counterpart exactly here.
-
-The **manuscript** archetype adds one further
-concern, that the rendered report itself continues
-to build, which sits between testing and the
-literate-programming machinery of @sec-literate; a
-test that the report renders, and that its headline
-numbers match a baseline, guards the paradox at the
-level of the whole document.
-
-The **blog** archetype tests the code that its posts
-depend on. A teaching blog whose posts contain
-runnable examples has a reproducibility obligation
-to its readers no smaller than a manuscript's to its
-reviewers: a code snippet that no longer runs, or
-that now returns a different number than the prose
-around it claims, is a published error. Testing the
-functions and the example computations that the
-posts rely on is how a blog keeps that promise
-across the many posts it renders. In every
-archetype, then, the tests are drawn from the same
-four kinds; what changes is which kinds bear the
-load.
+The four kinds of test are the same in every compendium,
+but their relative weight shifts with the archetype;
+@tbl-archetype-weight in @sec-compendium is the reference,
+so that a student who has met testing only in the context
+of R packages does not wrongly conclude that a data
+analysis has nothing to test. Testing is native to the
+**R-package** archetype, whose suite is dominated by unit
+tests that `R CMD check` runs as a matter of course. The
+**data-analysis** and **simulation** archetypes, by
+contrast, may have few reusable functions and no exported
+interface, so the data-validation and reproducibility
+tests carry the weight instead; a simulation in particular
+leans on a baseline test that fixes the seed and compares
+the result with a committed value, since its entire output
+is a function of that seed, the point @sec-verification
+develops at length. The **manuscript** archetype adds a
+test that the report renders and that its headline numbers
+match a baseline, and the **blog** archetype tests the
+functions and example computations its posts depend on, a
+reproducibility obligation to readers no smaller than a
+manuscript's to its reviewers.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: shifting weight

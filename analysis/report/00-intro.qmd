@@ -197,353 +197,62 @@ reproducibility toolchain is to close that gap, layer by
 layer, and the organizing question of this book is how far
 down the stack a given effort has actually reached.
 
-## A survey of the tools
+## The tools, and the framework this book uses
 
-The R ecosystem has, over two decades, produced a mature
-tool for almost every layer of that stack. Surveying them
-is the necessary preliminary to explaining why, despite
-their maturity, the problem persists.
+The R ecosystem has, over two decades, produced mature
+tools for nearly every layer of that stack. Literate
+programming, `knitr`, R Markdown, and now Quarto
+[@allaire2024], binds prose to the code that produces it.
+`renv` [@ushey2020] pins package versions in a lockfile.
+Docker, through Rocker's R-specific base images
+[@boettiger2015; @nust2020rockerverse], pins the operating
+system and its libraries. Continuous integration re-runs
+the whole compendium on a clean machine to confirm that the
+pinned layers actually suffice. Alternatives exist at every
+layer, Nix and its R front-end `rix` in place of `renv`
+[@dolstra2004; @rodrigues2024rix], Podman or Apptainer in
+place of Docker [@kurtzer2017], GitLab in place of GitHub,
+and this book introduces each tool where the chapter ahead
+needs it rather than in one early catalog: @sec-dependencies
+for package pinning, @sec-containers and @sec-backends for
+the environment and its alternatives, @sec-compendium for
+the compendium structure that @gentleman2007 and
+@marwick2018's `rrtools` established, and @sec-pipelines,
+@sec-testing, and @sec-verification for the workflow,
+quality, and validation layer.
 
-At the top of the stack, **literate programming** binds
-prose to the code that produces the numbers, so that a
-document cannot drift out of step with its analysis. The
-idea is Knuth's [@knuth1984]. Its modern R realizations are
-`knitr`, R Markdown, and now Quarto [@allaire2024], and
-they are the reason a figure in a well-built compendium is
-never pasted in by hand but regenerated on every render.
+None of this tooling is the problem; composing it by hand
+is. `renv` says nothing about the operating system, Docker
+says nothing about which package versions are installed
+inside it, and neither says anything about session
+configuration, so a researcher who wants a genuinely
+reproducible analysis must assemble all of it correctly,
+for every project, by hand. This book's running example
+uses `zzcollab`, a framework that assembles the triad,
+`renv` for packages, Docker for the environment, continuous
+integration for validation, into one coherent workflow, so
+that a biostatistician obtains the composition without
+building it from scratch. Each chapter ahead develops the
+part of `zzcollab` relevant to its own layer against the
+concept it has just introduced, rather than all at once
+here.
 
-For **package versions**, the pinning problem, `renv`
-[@ushey2020] records the exact version of every package an
-analysis uses in a lockfile, and can later restore that
-exact set. It is the successor to `packrat` and the direct
-answer to the package-churn failure mode; its lockfile is
-the artifact that lifts an analysis from merely locatable
-to version-pinned.
-
-For the **computational environment**, the operating
-system, the system libraries, and the R version itself,
-none of which `renv` touches, the answer has been
-containerization. Docker packages an entire environment
-into an image that runs identically wherever Docker runs.
-The Rocker project supplies R-specific base images that
-have become the community standard [@boettiger2015;
-@nust2020rockerverse].
-Where Docker's learning curve is the obstacle, Binder runs a
-compendium's container in the browser with nothing to
-install [@jupyter2018]; where a container model is unwanted,
-Nix offers content-addressed, bit-reproducible environments
-without one [@dolstra2004]; and where the destination is a
-high-performance cluster, Apptainer runs the same image
-under a scheduler and packages it as a single archival file
-[@kurtzer2017].
-
-For the **compendium** itself, the container that holds all
-of the above, the lineage runs from @gentleman2007, who
-argued that a statistical analysis should travel as a
-single self-describing bundle of code, data, and text, to
-@marwick2018, whose `rrtools` operationalized that idea by
-packaging an analysis as an R package with a conventional
-directory layout. The R-package structure is not incidental:
-it makes `R CMD check` a universal gate on the compendium's
-integrity.
-
-Around these sit further tools for the **workflow** (the
-`targets` and `drake` pipeline systems, and `workflowr`
-for versioned reproducible websites [@blischak2019]), for
-**archiving and identity** (deposition in Zenodo, and the
-FAIR principles for findable, accessible, interoperable,
-and reusable data and software [@wilkinson2016;
-@barker2022]), and for **verification and credit** (the
-artifact-review and badging schemes now run by major
-computer-science venues [@acm2020]). The
-practices-and-rules literature, from @sandve2013 to
-@wilson2014 and @wilson2017, ties the tools to habits, and
-the Turing Way collects the whole into a community handbook
-[@turingway2022].
-
-## Enforcing reproducibility with renv, Docker, and CI
-
-Three of the tools just surveyed have come, in the R
-world, to form the canonical apparatus for enforcing
-computational reproducibility, and it is worth stating
-precisely what each enforces, because the division of
-labor among them is the conceptual heart of this book.
-
-**`renv` enforces the package layer.** When an analysis is
-developed, `renv` records in a lockfile, `renv.lock`, the
-exact version of every R package the analysis loaded,
-together with the repository each came from
-[@ushey2020]. On another machine, `renv::restore()`
-reinstalls that precise set. The lockfile is therefore the
-instrument that lifts an analysis from merely locatable to
-package-pinned, the L0-to-L1 transition of the ladder. Its
-limit is equally precise, and equally important: `renv`
-pins the R packages but not the R interpreter, the
-operating system, or the system libraries such as GDAL or
-`libxml2` that many packages link against. A lockfile
-restored under a different R version, or on an operating
-system missing a required system library, may fail to
-install or, more insidiously, may install and behave
-differently. `renv` is necessary and, by itself,
-insufficient.
-
-**Docker enforces the environment layer.** A container
-image fixes exactly what `renv` cannot: the operating
-system, the system libraries, and the R interpreter
-itself, packaged so that the same image runs identically
-wherever a container runtime runs [@boettiger2015]. The
-Rocker project supplies R-specific base images that are the
-community standard [@nust2020rockerverse]. Two refinements
-make the image itself reproducible rather than merely
-convenient: pinning the base image by its immutable content
-digest (`FROM rocker/tidyverse@sha256:...`) rather than a
-mutable tag, and pointing the in-image package installer at
-a dated snapshot of a package repository rather than at
-whatever is current. With these, the environment is fixed;
-an image built today and an image built next year from the
-same recipe are the same image. This is the L1-to-L2
-transition. Docker's own limit mirrors `renv`'s: an image
-fixes the environment but says nothing about which package
-versions are installed inside it, nor about the session
-configuration that governs their behavior. The two tools
-are complements, not substitutes, and a genuinely
-pinned-environment analysis uses both, or uses one of the
-alternatives below that subsumes both.
-
-**Continuous integration enforces nothing new, and that is
-the point.** A continuous-integration service rebuilds the
-compendium from its captured inputs on every change, in a
-clean environment that carries none of the developer's
-accumulated and undeclared state, and runs a battery of
-checks: that the package builds and passes `R CMD check`,
-that the report renders, and that the code's stated
-dependencies agree with the lockfile and the package
-description. Continuous integration captures no new layer;
-it *validates* that the layers already captured actually
-suffice, catching the silent decay that a
-captured-but-never-retested analysis suffers, and catching
-the 'works on my machine' failure at its source, since the
-CI machine is, by construction, not the author's. This is
-the distinction, between capturing reproducibility and
-validating it, that we return to in every chapter.
-
-## Modern alternatives to the triad
-
-None of the three tools is the only answer to the layer it
-addresses, and a reader should know the alternatives,
-because some are better suited to particular settings and
-because the framework this book uses treats several of them
-as first-class options.
-
-**Alternatives to `renv`, the package layer.** The most
-important is a change of idiom, from capturing the packages
-that were installed to declaring the environment that
-should exist. Nix is a purely functional package manager
-whose builds are content-addressed, so that the same
-declaration yields a bit-identical result, and its R
-front-end `rix` writes that declaration from R, pinning the
-R version, the packages, and the system libraries in a
-single mechanism [@dolstra2004; @rodrigues2024rix].
-Because Nix fixes the system layer too, it reaches the
-pinned-environment level without a container at all, which
-is its principal attraction and the reason we treat it as a
-peer of the container rather than a supplement to it. Guix
-is its close sibling; conda, with the faster `mamba` and
-the lockfile-oriented `pixi`, occupies a middle ground that
-reproduces natively on Windows and spans R and Python but
-pins less rigorously. Lighter approaches stay within the
-capture idiom: `rang` reconstructs a historical environment
-from a date rather than a preserved lockfile.
-
-**Alternatives to Docker, the environment runtime.** All of
-these run the same image; only the runner changes. Podman
-is a daemonless, rootless, Docker-compatible runtime that
-sidesteps Docker Desktop's licensing terms, which apply at
-many universities. Apptainer, the high-performance-computing
-runtime formerly called Singularity, runs unprivileged on
-shared clusters and packages an image as a single file that
-is itself an archival deposit [@kurtzer2017]. Binder runs
-the container in a browser so that a reviewer installs
-nothing [@jupyter2018], and development containers bring the
-same environment into an editor. Nix, again, is the
-alternative that dispenses with the container entirely.
-
-**Alternatives to a hosted CI service, the validation
-harness.** GitHub Actions is one continuous-integration
-dialect; GitLab CI is another, and matters because research
-compendia are disproportionately authored on institutional,
-often self-hosted, GitLab. Beyond the hosted services, two
-further families mechanize re-execution. Pipeline tools
-build a dependency graph over the analysis steps and re-run
-only what has gone stale: `make`, and in R the
-function-oriented `targets` [@landau2021], with `workflowr`
-binding each rendered result to a version-control commit
-[@blischak2019]; in bioinformatics, Snakemake and Nextflow
-serve the same role at scale. And independent-verification
-schemes close the loop from outside: journals and venues
-increasingly run artifact-review and badging, and
-initiatives such as CODECHECK re-execute an analysis during
-peer review. These validate; they do not capture.
-
-## The integration gap: why new tools are needed
-
-Given this abundance, one might expect the problem to be
-solved. It is not, and the reason is the subject of this
-book. Each tool captures one or two layers of the
-determinant stack and leaves the rest. `renv` pins the
-packages but not the R version, the operating system, or
-the system libraries. Docker pins the environment but says
-nothing about which package versions are installed inside
-it, nor about the session configuration that shapes their
-behavior. `rrtools` fixes the structure but not the
-environment. A literate document seals the prose to the
-code but not the code to its dependencies. Each is
-necessary; none is sufficient; and, crucially, composing
-them is not automatic. A researcher who wants a genuinely
-reproducible analysis must assemble Docker, `renv`, a
-compendium structure, continuous integration, and testing
-into a single coherent workflow by hand, resolving the
-frictions where they meet, and must do so correctly for
-every project.
-
-This is the integration gap, and it is where new tooling
-earns its place. The argument is not that the field lacks
-tools; it is that the field lacks a composition of them
-that an ordinary analyst, without a systems-administration
-background, can adopt as a matter of course. A framework
-that closes the gap does not replace `renv` or Docker or
-`rrtools`; it orchestrates them, enforces the invariants
-that each leaves to convention, and, ideally, is honest
-about which layers it has and has not secured. The
-framework this book uses, `zzcollab`, is one such
-composition, presented as a strict, additive extension of
-`rrtools`: where `rrtools` scaffolds a compendium with a
-lockfile and a Dockerfile, `zzcollab` adds the automated
-environment generation, the dependency-consistency
-checking, the continuous integration, the testing, the
-data-integrity hashing, and the team-collaboration model,
-and it organizes the result on the reproducibility-levels
-ladder that structures the chapters ahead.
-
-## How zzcollab manages renv, Docker, and CI
-
-Because the triad and its alternatives recur throughout the
-book, it helps to see, at the outset, how the framework
-composes them, so that later chapters can develop each part
-against a picture already in view. The organizing principle
-is the one named above: `renv` and Docker capture, and
-continuous integration validates. `zzcollab` manages all
-three so that a biostatistician obtains the composition
-without assembling it by hand.
-
-For the **package layer**, `zzcollab` uses `renv` but wraps
-it to remove the failure modes that trip an unaided user. A
-project's `.Rprofile`, generated by the framework, records
-the lockfile on exit from an interactive session, so that a
-package installed during analysis is captured rather than
-forgotten; the container's package library is kept
-authoritative and placed outside the mounted working tree,
-so that the mount cannot silently shadow the frozen
-library; and a consistency check enforces an invariant we
-develop in @sec-dependencies, that every package the code
-uses is declared in the package description and locked in
-`renv.lock`. The lockfile remains the source of truth, but
-it is now kept honest automatically.
-
-For the **environment layer**, `zzcollab` does not ship a
-static Dockerfile; it generates one, from a chosen Rocker
-base image pinned to its content digest and a dated package
-snapshot, so that the two refinements that make an image
-reproducible are applied by default rather than left to the
-user's diligence. The base image is selected from a short
-menu of profiles (a minimal base, a tidyverse base, an
-RStudio base, a publishing base carrying a LaTeX toolchain)
-or from any custom image a team maintains, and the choice
-is recorded so that the framework can report it and rebuild
-against it.
-
-For the **validation layer**, `zzcollab` writes
-continuous-integration workflows that adapt themselves to
-what the project contains: if a lockfile is present the
-workflow restores from it, and otherwise installs from the
-package description; if a Dockerfile is present the workflow
-builds and runs inside the image, and otherwise runs on the
-host. On every push the workflow runs `R CMD check`,
-renders the report, and runs the dependency-consistency
-gate, so that a claim of reproducibility is re-tested
-continuously rather than asserted once. A separate command,
-`zzc verify --full`, rebuilds the image from clean, runs the
-test suite, and requires at least one baseline test: a test
-that compares the regenerated outputs with values recorded
-in a committed baseline file, within a stated tolerance. It
-records L3 only when all three succeed; a project with no
-baseline test is reported as rebuilt and tested, which is
-L2, and not as L3. That is what the ladder calls
-verification: recorded outputs shown to regenerate within a
-stated tolerance from a clean rebuild, checked by a
-baseline test (@sec-levels).
-
-The alternatives of the previous section are not bolted on
-but built in: the package backend may be Nix instead of
-`renv`, the container runtime may be Podman or Apptainer
-instead of Docker, and the forge may be GitLab instead of
-GitHub, each selected as an option rather than requiring a
-different workflow. The mechanism that makes this uniform,
-a feature is present exactly when its defining file exists,
-and generated files adapt to what they find, is developed
-in @sec-verification.
-
-We end this section as we began the chapter, with a
-caution. That `zzcollab` manages the triad does not mean it
-closes the entire determinant stack; by its own accounting
-it firmly pins something like four of the ten determinants
-and leaves others to the base image or to convention. What
-it offers is a composition that is correct as far as it
-reaches, and honest about where it stops. That combination,
-reach plus honesty, is the standard this book holds every
-reproducibility effort to, including its own.
-
-## The status of tool application
-
-Two questions about status must be answered honestly, and
-they cut in opposite directions.
-
-The first is the state of practice in the wild, and it is
-poor. The tools surveyed above are mature, free, and
-documented, yet the empirical studies already cited show
-that most deposited analyses use almost none of them:
-recall that @saju2025 found the large majority of code
-supplements carried no dependency description whatever. The
-gap here is not between the available and the possible but
-between the available and the applied. Reproducibility
-tooling has an adoption problem more than a capability
-problem, and the diagnosis matters for a textbook: our task
-is less to invent than to make the existing capability
-teachable and routine, which is precisely the case for an
-integrated, low-friction workflow over a drawer full of
-separate tools.
-
-The second question is the maturity of the integrative
-frameworks themselves, and here the honest answer is
-tempering. Frameworks that compose the whole stack,
-`zzcollab` among them, are young. By its own accounting,
-`zzcollab` robustly pins roughly four of the ten
-determinants named above (the environment, the packages,
-the source, and the locale and time zone) and
-leaves others (the numerical libraries, the random-number
-discipline, the graphics device and fonts, intrinsic
-non-determinism) to convention
-or to the base image; its authors describe it candidly as
-a strong scaffolding tool rather than a finished guarantor
-of reproducibility. We adopt this candor as a feature of
-the book, not a caveat to be hidden. A central lesson of
-what follows is that a reproducibility claim must be
-matched to the level actually reached and never asserted
-above it, and it would be incoherent to teach that lesson
-while overstating the reach of our own instrument. The
-reader will therefore find, at each level of the ladder, an
-explicit account of what is secured and what remains
-exposed.
+Like every tool this book covers, `zzcollab` is held to the
+standard it teaches. By its own accounting it firmly pins a
+part of the determinant stack, the environment, the
+packages, the source, and the locale and time zone, and
+leaves the rest, the numerical libraries, the random-number
+discipline, the graphics device, intrinsic non-determinism,
+to the base image or to convention. Reproducibility tooling
+in general has an adoption problem more than a capability
+problem: @saju2025 found that most deposited code
+supplements carry no dependency description at all, even
+though mature, free, documented tools for that exact
+problem have existed for years. The book's task is
+therefore less to invent than to make existing capability
+teachable and routine, and to state plainly, at each level
+of the ladder, what a given effort has secured and what
+remains exposed, including its own.
 
 ## The plan of this book
 

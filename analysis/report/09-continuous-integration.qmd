@@ -1267,66 +1267,32 @@ the framework that makes the claim.
 
 ## How continuous integration adapts to the archetype
 
-We have stressed throughout the book that a research
-compendium is not only a manuscript. It comes in several
-archetypes, and continuous integration adapts to each,
-because the gates that make sense depend on what the
-compendium is for. Of the three gates of this chapter, two
-are universal and one is archetype-conditional. `R CMD
-check` is universal, inherited by every archetype by virtue
-of the R-package skin they all share. The
-dependency-manifest gate is likewise run everywhere, though
-in its archetype-conditional form: the strict
-`DESCRIPTION`-inclusion check applies to the R-package
-archetype, while a compendium enforces only the weaker
-$\mathrm{Code} \subseteq \mathrm{renv.lock}$ inclusion, as
-the first section established. The render gate is the
-conditional one, added wherever the compendium carries a
-report and omitted where it does not. Verification, the L3
-step of the previous section, is not one of the three
-build-time gates but a further act layered on top wherever
-a recorded numeric baseline exists.
-
-An **R-package archetype**, a reusable set of functions
-destined perhaps for CRAN, has no report to render. Its CI
-runs `R CMD check` and the unit-test suite (@sec-testing),
-and that is the whole of it; imposing a render gate on it
-would be imposing a gate on a document that does not exist.
-
-A **manuscript archetype** and a **blog archetype** both
-add the render gate, because both center on a rendered
-document, a `report.Rmd` for the manuscript, a set of
-posts for the blog. The blog case merely renders many
-documents rather than one; the render gate iterates over
-every post under the posts directory. For these archetypes
-the render gate is not optional decoration but the check
-that the reader-facing artifact still regenerates from its
-source.
-
-A **data-analysis archetype** sits between them: it may
-carry a report or may organize its work as scripts and
-figures with no single manuscript, and its CI is
-configured accordingly. A **simulation archetype** raises
-a distinct concern of cost. A simulation study whose full
-run takes hours or days cannot run in its entirety on every
-push. The idiomatic arrangement is to run a *reduced*
-pipeline under CI, a handful of iterations with a fixed
-seed, enough to confirm that the pipeline executes and the
-outputs have the right shape, and to run the full pipeline
-elsewhere, on a cluster or a scheduled long-running job,
-with its results verified against a baseline separately.
-The seeding discipline of @sec-testing is what makes the
+Continuous integration adapts its gates to the archetype;
+@tbl-archetype-weight in @sec-compendium is the reference.
+Of the three gates of this chapter, `R CMD check` and the
+dependency-manifest gate are universal, run by every
+archetype though the latter in an archetype-conditional
+form (the strict `DESCRIPTION`-inclusion check for an
+R package, the weaker
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$ inclusion for
+a compendium, as the first section established); the render
+gate is the conditional one, present wherever a report
+exists and absent from an **R-package archetype**, which
+has none. The case most worth stating here is the
+**simulation archetype**, which raises a distinct concern
+of cost: a full run can take hours or days, so the
+idiomatic arrangement runs a *reduced* pipeline under CI, a
+handful of iterations with a fixed seed, enough to confirm
+the pipeline executes and the outputs have the right shape,
+and runs the full pipeline elsewhere, on a cluster or a
+scheduled job, verified against a baseline separately. The
+seeding discipline of @sec-testing is what makes the
 reduced run meaningful: a fixed seed makes even a short run
-reproducible, so that CI checks reproducibility rather than
-merely execution.
-
-The general principle is that the archetype selects the
-gates, and the presence-driven workflow discovers the
-archetype from what the repository contains. A report file
-present means the render gate applies; absent, it does not.
-The analyst's contribution, as stated at the outset, is to
-ensure the archetype and its gates are matched, so that CI
-tests what the compendium actually is.
+reproducible, so CI checks reproducibility rather than
+merely execution. The presence-driven workflow discovers
+the archetype from what the repository contains, so the
+analyst's contribution is to ensure the archetype and its
+gates are matched.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: when a package does need the render gate

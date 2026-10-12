@@ -36,7 +36,7 @@ ls analysis
 ```
 
 Plain `ls` hides entries whose name starts with a dot, such as
-`.gitignore` or the `.here` marker Chapter 3 relies on. `ls -a`
+`.gitignore` or the `.here` marker Chapter 5 relies on. `ls -a`
 ('all') shows them, along with the two special entries every
 directory has, `.` for itself and `..` for its parent:
 
@@ -59,7 +59,7 @@ The distinction between a relative path (`analysis/report`,
 `../data`) and an absolute path (`/Users/jane/project`) matters
 throughout this book. A relative path resolves differently
 depending on the working directory the shell happens to be in
-when the command runs, which is exactly the fragility Chapter 3
+when the command runs, which is exactly the fragility Chapter 5
 examines in its section on project-oriented paths: a script
 that is correct when launched from the project root can be
 wrong when launched from `analysis/report/`, because a relative
@@ -197,7 +197,7 @@ Without `export`, a variable assignment (`MYVAR=hello`, no
 it starts. This is the mechanism behind an instruction this book
 gives more than once without naming it: setting
 `RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` before an R session, as
-Chapter 9's continuous-integration examples do, works because
+Chapter 12's continuous-integration examples do, works because
 the shell exports it into the environment that `R` or `Rscript`
 then reads when it starts. The variable is not an R setting; it
 is a value the shell handed to the R process at launch, and any

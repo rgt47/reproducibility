@@ -705,46 +705,22 @@ always mean the architectural rung.
 ## The ladder grades every archetype
 
 It would be a mistake to read the ladder as a scale for
-manuscripts alone. A research compendium, as
-@sec-compendium develops in full, comes in several
-archetypes, and the ladder grades each of them by the same
-means and to the same rungs.
-
-A **data-analysis project** and a **scholarly manuscript**
-are the familiar cases, and for them the reading is the
-one given above: the lockfile lifts to L1, and the container
-lifts to L2. The verification run, for a manuscript,
-rebuilds from clean and compares the numbers behind its
-tables and figures with recorded baseline values, within a
-stated tolerance, and this is what lifts it to L3. An **R
-package**, by contrast, has no report to render. Passing
-`R CMD check` and its test suite in a clean environment
-shows that it builds and runs, which is L2 confirmed; its
-L3 baseline test compares the outputs of its key functions
-on fixed inputs with recorded reference values, within a
-tolerance. The pinning of its packages and its environment
-is otherwise identical. A
-**simulation study** reaches the same rungs by the same
-artifacts, but its exposure on the session-configuration
-layer is acute, because its outputs are functions of the
-random-number stream. An unseeded or wrongly seeded
-simulation can sit at L2, with a perfectly pinned
-environment, and still fail to reproduce. For this
-archetype, the discipline of fixing the RNG kind and the
-seed is the difference between a nominal L2 and a real
-one. A **blog** renders many posts rather than one report.
-A successful rebuild of the whole site from its pinned
-environment shows that every post still runs; L3 needs, in
-addition, a baseline comparison of the computed values each
-post reports, and the ladder applies post by post exactly
-as it applies to a single manuscript.
-
-The lesson is that the ladder is a property of the
-determinant stack, which every archetype shares, and not of
-any particular directory layout. A package or a blog reaches
-L2 by the same container that an analysis project does, and
-reaches L3 by a baseline comparison appropriate to what it
-produces.
+manuscripts alone. @tbl-archetype-weight in @sec-compendium
+is the reference: a data-analysis project and a manuscript
+read the ladder the same way, an R package reaches L2 by
+`R CMD check` and L3 by a baseline on its function outputs,
+and a blog applies the ladder post by post. The one case
+that most needs stating here, because it is easy to miss,
+is the **simulation study**: its exposure on the
+session-configuration layer is acute, because its outputs
+are functions of the random-number stream, and an unseeded
+or wrongly seeded simulation can sit at L2, with a
+perfectly pinned environment, and still fail to reproduce.
+For this archetype the discipline of fixing the RNG kind and
+the seed is the difference between a nominal L2 and a real
+one. The ladder is a property of the determinant stack,
+which every archetype shares, and not of any particular
+directory layout.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: grading an R package
@@ -967,8 +943,8 @@ version control and a reader can find and read it, but
 nothing computational is pinned. The missing artifact for
 the next rung, L1, is a lockfile, `renv.lock`, recording
 the exact version of `tibble`, `utils`, and every other
-package the two functions call. Chapter 5 adds exactly
-that artifact; chapter 6 adds the container that closes
+package the two functions call. Chapter 6 adds exactly
+that artifact; chapter 7 adds the container that closes
 the following gap to L2.
 :::
 :::
@@ -1093,7 +1069,7 @@ inference at hand.
    now, that would be needed to lift it to the next rung.
 
 8. This exercise returns to the computational-versus-statistical
-   distinction of Chapter 1 (@sec-crisis). That chapter shows
+   distinction of Chapter 2 (@sec-crisis). That chapter shows
    that the R 3.6.0 sampler correction changed the draws a
    seeded `sample()` call produces, with identical code and an
    identical seed. Name the exact layer of this chapter's

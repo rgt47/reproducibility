@@ -1113,7 +1113,7 @@ where each stands.
    could lift the cohort compendium to L2 without requiring
    any of the three missing artifacts to be built first.
 
-8. This exercise returns to the digest pinning of Chapter 5
+8. This exercise returns to the digest pinning of Chapter 7
    (@sec-containers). Take a `FROM rocker/verse@sha256:...`
    line from that chapter's Dockerfile and write (a) the
    `apptainer build` command that would convert the image it
@@ -1361,7 +1361,7 @@ environment, not this compendium's.
 
 ```bash
 apptainer build cohort-env.sif \
-  docker://rocker/verse@sha256:<the digest from Chapter 5>
+  docker://rocker/verse@sha256:<the digest from Chapter 7>
 ```
 
 (b) The SIF's checksum is computed over the bytes of the

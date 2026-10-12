@@ -986,6 +986,29 @@ not of rendering.
 :::
 :::
 
+## How each archetype treats the chapters ahead
+
+The reproducibility machinery is identical across the five
+archetypes; only its weight shifts. @tbl-archetype-weight
+is the reference every later chapter points back to rather
+than restates: for each archetype, how the ladder reads it
+(@sec-levels), how heavily it leans on a sealed render
+(@sec-literate), which kind of test carries its weight
+(@sec-testing), how its continuous-integration gates are
+configured (@sec-verification), how much a pipeline tool
+earns its keep (@sec-pipelines), and how it is ultimately
+shared (@sec-archiving).
+
+| Archetype | Ladder (@sec-levels) | Literate programming (@sec-literate) | Testing (@sec-testing) | CI gates (@sec-verification) | Pipeline (@sec-pipelines) | Sharing (@sec-archiving) |
+|---|---|---|---|---|---|---|
+| Data analysis | Same rungs as a manuscript; L3 via a baseline on a derived rate | Light; an internal HTML summary, not a typeset report | Leans on data-validation and reproducibility tests | Render gate only if a report exists | Most valuable case for `targets`; re-run constantly | Deposited as itself |
+| Scholarly manuscript | Full apparatus; L3 compares tables and figures with recorded baselines | Center of gravity; the sealed render this chapter is built around | Adds a report-renders-and-matches-baseline test | Render gate is central, not optional | Modest; often a one-target build around the sealed report | Deposited beside the article it supports |
+| R package | L2 via `R CMD check` and tests in a clean rebuild; L3 via a baseline on function output | Largely absent; help pages and vignettes stand in | Native home of unit testing; `R CMD check` runs the suite | No render gate unless a vignette exists | None; `R CMD check` plays the corresponding role | Also released to CRAN or an R-universe, not only archived |
+| Simulation study | L2 is nominal without the seed discipline; RNG kind is the load-bearing determinant | Thin; a presentation layer over pre-computed, stored results | Leans hardest on the seed-determinism test | A reduced, fixed-seed grid runs under CI; the full grid runs elsewhere | Strongest case; `targets` branching maps the parameter grid | Recorded seeds and the union lockfile are what a re-runner needs |
+| Blog | Applies post by post; L3 needs a baseline per post | Central but multiplied across many rendered posts | Tests the code each post's examples depend on | Render gate iterates over every post | Rebuilds only the posts whose sources changed | Deployed as a website; the compendium behind it is still deposited |
+
+: How each archetype treats the topics of the chapters ahead. The reproducibility machinery under every cell is the same; the table records only where the emphasis falls. {#tbl-archetype-weight}
+
 ## Progressive disclosure
 
 The five archetypes are not walls between separate kinds
@@ -1324,7 +1347,7 @@ changed, so it does not test this.
    this repository.
 
 8. This exercise returns to the reproducibility ladder of
-   Chapter 2 (@sec-levels). Using the pillar count from
+   Chapter 3 (@sec-levels). Using the pillar count from
    Exercise 7, state which single rung of the L0-L3 ladder
    this book's own cohort compendium occupies today, and
    explain why having three of the five pillars captured does
