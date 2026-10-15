@@ -1208,30 +1208,27 @@ description_present
 raw_data_ignored
 ```
 
-Two of the three are already in place. A `LICENSE` file is
-present and dual: the prose is CC BY-NC-SA 4.0 and the code,
-including every script that builds the cohort, is CC0,
-which is the explicit license FAIR's reusability principle
-asks for and which @sec-restricted-deposit's deposit example
-above was silent about. A `DESCRIPTION` file is present and
-records `License: CC0`, matching the code half of the
-`LICENSE` file, so a package repository or an automated
-check reading `DESCRIPTION` would see the same answer a
-human reading `LICENSE` would. The third check returns
-`FALSE`: `analysis/data/raw_data/` is not listed in
-`.gitignore`, and `cohort_raw.csv` is tracked in version
-control. For patient-level data that would be the single
-most urgent finding in this chapter, the exact failure
-@sec-restricted-deposit exists to prevent. Here it is the
-correct state of affairs, precisely because the cohort is
-synthetic, generated from stated parameters by a committed
-script, and carries no participant to protect; the chunk
-cannot tell the difference between 'correctly untracked'
-and 'incorrectly tracked' on its own, which is itself worth
-noting; that judgment is the analyst's, informed by what
-the data actually are, not something a `.gitignore` audit
-can certify by itself. What the compendium still lacks for
-an archival deposit proper is the part no file-system check
+All three are now in place. A `LICENSE` file is present and
+dual: the prose is CC BY-NC-SA 4.0 and the code, including
+every script that builds the cohort, is CC0, which is the
+explicit license FAIR's reusability principle asks for and
+which @sec-restricted-deposit's deposit example above was
+silent about. A `DESCRIPTION` file is present and records
+`License: CC0`, matching the code half of the `LICENSE`
+file, so a package repository or an automated check reading
+`DESCRIPTION` would see the same answer a human reading
+`LICENSE` would. The third check returns `TRUE`:
+`analysis/data/raw_data/cohort_raw.csv` is listed in
+`.gitignore`, and the CSV is generated from a committed
+script rather than tracked directly -- the exact practice
+the version-control chapter (@sec-version-control) and
+@sec-restricted-deposit both prescribe for data with
+identifier-shaped columns. The chunk cannot certify whether
+the data are actually sensitive, only that the directory is
+excluded; that judgment is the analyst's, informed by what
+the data are, not something a `.gitignore` audit can
+provide by itself. What the compendium still lacks for an
+archival deposit proper is the part no file-system check
 can see: a minted DOI, an archived container image, and a
 written statement of the level this compendium has reached
 at the time of deposit.
@@ -1690,34 +1687,12 @@ verify the machinery without paying for the study.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-Run from the repository root:
-
-```r
-file.exists('LICENSE')
-#> [1] TRUE
-file.exists('DESCRIPTION')
-#> [1] TRUE
-any(grepl('raw_data', readLines('.gitignore')))
-#> [1] FALSE
-```
-
-The three booleans are `TRUE`, `TRUE`, `FALSE`, matching
-'The cohort, continued' above (there, run from
-`analysis/report/`, with paths adjusted accordingly).
-
-**What would need to change for real patient-level data.**
-The third finding. `FALSE` means
-`analysis/data/raw_data/cohort_raw.csv` is tracked in
-version control, which is correct only because the file is
-synthetic. Were it a real extract, this is precisely the
-commit-rule violation @sec-restricted-deposit and the
-version-control chapter (@sec-version-control) both warn
-against: once committed, the file is in the repository's
-history forever, recoverable from any clone even after
-later deletion. The license and `DESCRIPTION` findings
-would not need to change; a license and a package
-description are needed whether the data are real or
-synthetic.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch10),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+three autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

@@ -1602,30 +1602,12 @@ and seeds respectively, does the binding instead.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-cohort <- clean_cohort(
-  load_cohort('analysis/data/raw_data/cohort_raw.csv'))
-n_cohort <- nrow(cohort)
-pct_missing <- round(100 * mean(is.na(cohort$incident_dm)), 1)
-```
-
-The sealed sentence reads: 'The cleaned cohort holds
-`r knitr::inline_expr('n_cohort')` records, of which
-`r knitr::inline_expr('pct_missing')` percent carry no
-recorded outcome', with both values inserted as inline
-expressions rather than typed after a console check.
-
-**The two numbers**, run against the extract as committed:
-the cleaned cohort holds 337 rows, and 9.5 percent of them
-are missing `incident_dm`. These are exactly the values
-`nrow(cohort)` and
-`round(100 * mean(is.na(cohort$incident_dm)), 1)` return, so
-a grading script can check them without rendering the
-document at all. A reader who gets different numbers has
-either an edited extract or a different `clean_cohort()`
-than the one this book ships, which is itself a useful
-diagnostic, as the parallel exercise in @sec-testing notes
-for the same two functions.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch07),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+two autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

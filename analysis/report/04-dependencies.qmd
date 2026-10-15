@@ -1558,30 +1558,12 @@ tie and can therefore change a reported result through a
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-deps <- renv::dependencies(
-  c('R/cohort.R', 'analysis/scripts/simulate_cohort.R')
-)
-unique(deps$Package)
-#> [1] "stats"  "tibble" "utils"
-```
-
-The scan finds three packages referenced, but only
-**one** is a contributed package a lockfile would need
-to pin: `tibble`. `stats` and `utils` are base packages,
-bundled with every R installation, so they carry no
-version to drift and `renv::snapshot()` excludes them
-from the lockfile's own accounting in just the same way.
-
-`simulate_cohort.R` contributes zero rows because every
-function it calls, `rnorm()`, `sample()`, `as.Date()`,
-and the rest, is either a base-package function or a
-primitive, and the scan reports contributed-package
-references, not every function call. A reader need not
-open the file to reach this conclusion: the absence of
-any row for it in the scan's own output is the evidence,
-read correctly, that nothing in it depends on a package
-whose version could change.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch04),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+autogradable values against those reported in the chapter's
+own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

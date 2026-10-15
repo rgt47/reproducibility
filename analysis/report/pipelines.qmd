@@ -1667,36 +1667,13 @@ recomputed', and both refuse to accept a stale result.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-cohort <- clean_cohort(
-  load_cohort('analysis/data/raw_data/cohort_raw.csv'))
-nrow(cohort)
-#> [1] 337
-```
-
-The `_targets.R` fragment mirrors Exercise 3's split, one
-target for the tracked file and one for the object read
-from it:
-
-```r
-list(
-  tar_target(
-    raw_file,
-    'analysis/data/raw_data/cohort_raw.csv',
-    format = 'file'
-  ),
-  tar_target(raw, load_cohort(raw_file)),
-  tar_target(cleaned, clean_cohort(raw))
-)
-```
-
-After the first `tar_make()`, both targets build, and a
-second `tar_make()` with no file changed reports both as
-already up to date, which `tar_outdated()` confirms by
-returning an empty result: `raw_file`'s hash of the CSV's
-contents has not changed, so `raw` and `cleaned` are not
-re-triggered, and the 337-row result is reused rather than
-recomputed.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-pipelines),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+autogradable value and the `_targets.R` fragment against
+those reported in the chapter's own 'The cohort,
+continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

@@ -2157,32 +2157,12 @@ analysis do what the paper says'.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-used <- unique(renv::dependencies('R/cohort.R')$Package)
-base_pkgs <- rownames(installed.packages(priority = 'base'))
-missing <- setdiff(used, c('tibble', 'ggplot2', 'stats',
-                            'utils', base_pkgs))
-length(missing)   # 0
-```
-
-Against the real file, `used` is `tibble`, `stats`, and
-`utils` (verified on R 4.6.1, `renv` from source, October
-2026), every one of which is already in the pinned set
-plus the base packages, so `missing` is a character vector
-of length 0.
-
-```r
-# after appending `library(sandwich)` to a copy of R/cohort.R
-used2 <- unique(renv::dependencies('cohort_copy.R')$Package)
-missing2 <- setdiff(used2, c('tibble', 'ggplot2', 'stats',
-                             'utils', base_pkgs))
-missing2   # "sandwich"
-```
-
-`renv::dependencies()` finds the new `library(sandwich)`
-call, and `missing2` is exactly `"sandwich"`, named and
-nothing else, which is what a real CI log would print at
-the dependency-manifest gate.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch09),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+two autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

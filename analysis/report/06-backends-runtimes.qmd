@@ -1330,28 +1330,12 @@ pinned thing in different places.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-repo_root <- '.'
-c(
-  renv.lock = file.exists(file.path(repo_root, 'renv.lock')),
-  Dockerfile = file.exists(file.path(repo_root, 'Dockerfile')),
-  default.nix = file.exists(file.path(repo_root, 'default.nix')),
-  devcontainer = file.exists(
-    file.path(repo_root, '.devcontainer', 'devcontainer.json')))
-```
-
-At the time this chapter was written: `FALSE, FALSE, FALSE,
-TRUE`, in that order. Only the devcontainer file exists, and
-it points at a generic image rather than one built from this
-compendium's own recipe.
-
-**The axis that could lift the compendium today.** Axis
-two, Nix through `rix`. It pins the whole environment,
-R, packages, and system libraries, directly from a
-declaration, with no Docker image required first. Axis one
-needs an image to swap the runtime on, and there is none
-yet; axis three's one existing artifact pins a generic
-environment, not this compendium's.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch06),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+file-existence results against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

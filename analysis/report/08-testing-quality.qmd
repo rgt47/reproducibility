@@ -1942,28 +1942,12 @@ nobody can skip.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
-cohort <- clean_cohort(raw)
-
-expect_true(all(c('mrn', 'age_at_enroll', 'sex', 'incident_dm')
-                %in% names(raw)))
-expect_true(all(cohort$age_at_enroll >= 18 &
-                cohort$age_at_enroll <= 105, na.rm = TRUE))
-expect_true(all(cohort$sex %in% c('F', 'M')))
-expect_true(mean(is.na(cohort$incident_dm)) < 0.15)
-```
-
-**The three numbers**, run against the extract as
-committed: the raw extract holds 338 rows; the cleaned
-cohort holds 337; one row was removed as a duplicate
-`mrn`. These are exactly the row counts `nrow(raw)`,
-`nrow(cohort)`, and `sum(duplicated(raw$mrn))` return, so
-a grading script can check them without touching the
-model layer at all. A reader who gets different counts
-has either an edited extract or a different `clean_cohort`
-than the one shipped with this book, which is itself a
-useful diagnostic.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch08),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+three autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

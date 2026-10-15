@@ -1846,30 +1846,12 @@ L3 by implication.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
-nrow(raw)
-#> [1] 338
-intersect(c('mrn', 'patient_name', 'dob'), names(raw))
-#> [1] "mrn"          "patient_name" "dob"
-```
-
-The raw extract holds 338 rows, and all three of `mrn`,
-`patient_name`, and `dob` are present by name. In a real
-project any one of them would be enough to force the file
-behind `analysis/data/raw_data/*`; having all three is not
-a worse case, only a more obvious one.
-
-The one fact that makes this book's own copy an exception
-is that the extract is synthetic: it is written by
-`analysis/scripts/simulate_cohort.R` from a fixed seed and
-describes no real person, which is exactly what the
-[Conventions](conventions.qmd) page states and what
-@sec-levels's L0 placement of this same compendium
-presupposes. A reader who finds
-different values has either edited the extract or is
-running a different `clean_cohort()` than the one this
-book ships, which is itself a useful diagnostic.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-vc),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+autogradable values against those reported in the chapter's
+own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

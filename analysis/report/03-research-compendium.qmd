@@ -1615,35 +1615,12 @@ artifact rather than the only one.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
-cohort <- clean_cohort(raw)
-nrow(raw)
-#> [1] 338
-nrow(cohort)
-#> [1] 337
-pillars <- c(
-  file.exists('Dockerfile'),
-  file.exists('renv.lock'),
-  file.exists('.Rprofile')
-)
-sum(pillars)
-#> [1] 1
-```
-
-**The three numbers**, run against the extract and the
-repository as committed: the raw extract holds 338 rows;
-the cleaned cohort holds 337; and of the three pillars
-checked directly by this script, only `.Rprofile` is
-present, so one of three. Counting the source-code pillar
-(satisfied by `R/cohort.R` under version control) and the
-data pillar (satisfied by the committed raw extract) as
-also present, which the script above does not check but
-'The cohort, continued' does, brings the total to three of
-the Five Pillars, with `Dockerfile` and `renv.lock` absent.
-A reader who gets a different row count has either an
-edited extract or a different `clean_cohort()` than the
-one shipped with this book.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch03),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+three autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

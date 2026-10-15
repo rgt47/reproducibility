@@ -1258,28 +1258,12 @@ original analysis actually did.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
-class(raw$sex)
-#> [1] "character"
-
-legacy <- utils::read.csv(
-  'analysis/data/raw_data/cohort_raw.csv',
-  stringsAsFactors = TRUE)
-class(legacy$sex)
-#> [1] "factor"
-```
-
-The two values a grading script can check are exactly
-these two class strings, `'character'` and `'factor'`,
-from the identical file read two ways. The difference
-demonstrates the **R-runtime** layer: `stringsAsFactors`
-is an R default, not a package default or a property of
-the data, and its value flipped between R releases
-[@rcoreteam2020]. `load_cohort()` closes the exposure at
-the analysis-code layer, by stating the choice explicitly,
-rather than at the runtime layer, which remains unpinned
-until a container fixes the R version itself.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch01),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+two autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

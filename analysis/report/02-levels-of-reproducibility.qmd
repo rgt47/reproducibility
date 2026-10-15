@@ -1308,22 +1308,12 @@ code rather than part of the environment.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-cohort <- clean_cohort(
-  load_cohort('analysis/data/raw_data/cohort_raw.csv'))
-nrow(cohort)
-#> [1] 337
-```
-
-The compendium is at **L0, locatable**: the loading and
-cleaning functions, and the raw extract itself, are under
-version control and a reader can find and read them, but
-nothing computational beyond the source and the data is
-pinned. The missing artifact for the next rung, L1, is a
-lockfile, `renv.lock`, recording the exact version of
-`tibble`, `utils`, and every other package `load_cohort()`
-and `clean_cohort()` call; @sec-dependencies adds exactly
-that artifact.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch02),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+autogradable value against those reported in the chapter's
+own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

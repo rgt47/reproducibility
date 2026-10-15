@@ -1792,31 +1792,12 @@ an analysis needs both.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-```r
-raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
-cohort <- clean_cohort(raw)
-nrow(cohort)
-#> [1] 337
-length(unique(cohort$sex))
-#> [1] 2
-file.exists('Dockerfile')
-#> [1] FALSE
-```
-
-`nrow(cohort)` is 337, after `clean_cohort()` drops the
-one duplicated `mrn`; `cohort$sex` takes exactly 2 distinct
-values, `'F'` and `'M'`, after the inconsistent coding is
-repaired; and `file.exists('Dockerfile')` is `FALSE`,
-because the compendium has no Dockerfile yet, as 'The
-cohort, continued' above found.
-
-The one line the showcase Dockerfile would need to add for
-the thread count is the `ENV` line already shown in that
-Dockerfile: `OMP_NUM_THREADS=1` together with
-`OPENBLAS_NUM_THREADS=1`, since `rocker/r-ver` links R
-against multithreaded OpenBLAS and the cohort's bootstrap
-sums partial results whose order depends on the thread
-count.
+The solution for this exercise is in the
+[Instructor Guide](instructor-guide.qmd#sec-ig-ch05),
+which is available to course instructors. Self-study
+readers who want to check their answer can compare the
+three autogradable values against those reported in the
+chapter's own 'The cohort, continued' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

@@ -64,6 +64,7 @@ book:
     - shell-primer.qmd
     - setup-appendix.qmd
     - cheat-sheet-index.qmd
+    - instructor-guide.qmd
     - glossary.qmd
     - credits.qmd
     - colophon.qmd
