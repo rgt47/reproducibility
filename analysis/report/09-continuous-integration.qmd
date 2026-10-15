@@ -1610,7 +1610,7 @@ reports whether the gate passes.
 ```{r}
 #| label: ci-cohort-gate
 used <- unique(renv::dependencies('../../R/cohort.R')$Package)
-locked <- c('tibble', 'ggplot2', 'stats', 'utils', 'withr')
+locked <- c('tibble', 'ggplot2', 'stats', 'utils', 'withr', 'survival')
 base_pkgs <- rownames(installed.packages(priority = 'base'))
 
 gate_check <- function(missing) {
@@ -1627,9 +1627,9 @@ cat('Missing from the pinned set:',
 cat('Result:', gate_check(missing_now), '\n')
 ```
 
-The gate passes, because `R/cohort.R` uses only `tibble`,
-`stats`, `utils`, and `withr`, and all four are accounted
-for. The
+The gate passes, because `R/cohort.R` uses `tibble`,
+`stats`, `utils`, `withr`, and `survival`, and all five
+are accounted for. The
 house rule of this book applies here as well: a gate shown
 only to pass has not been shown to work. The same script,
 run against a `used` list with the chapter's own running
