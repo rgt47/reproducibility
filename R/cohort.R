@@ -126,3 +126,100 @@ run_primary_analysis <- function(
     estimate = tidy$odds_ratio[tidy$term == 'hba1c']
   )
 }
+
+#' Fit the canonical Cox proportional-hazards model
+#'
+#' Primary analysis: time to incident diabetes on BMI per 5 kg/m^2,
+#' adjusted for age and sex. Rows with a missing outcome or a missing
+#' covariate are dropped; the cohort's `incident_dm` missingness is a
+#' planted pathology that `clean_cohort()` deliberately leaves in
+#' place.
+#'
+#' @param x A cleaned cohort, as returned by [clean_cohort()].
+#' @return A `coxph` object.
+#' @export
+fit_cox <- function(x) {
+  stopifnot(
+    'followup_days' %in% names(x),
+    'incident_dm' %in% names(x),
+    'bmi' %in% names(x),
+    'age_at_enroll' %in% names(x),
+    'sex' %in% names(x)
+  )
+  dat <- x[!is.na(x$incident_dm) &
+             !is.na(x$age_at_enroll) &
+             !is.na(x$sex), , drop = FALSE]
+  survival::coxph(
+    survival::Surv(followup_days, incident_dm) ~
+      I(bmi / 5) + age_at_enroll + sex,
+    data = dat
+  )
+}
+
+#' Extract the canonical result summary from a Cox fit
+#'
+#' @param fit A `coxph` object as returned by [fit_cox()].
+#' @return A list with `hr` (hazard ratio for BMI per 5 kg/m^2),
+#'   `lower` and `upper` (95 percent confidence limits), and
+#'   `n_events` (number of observed events).
+#' @export
+summarise_cox <- function(fit) {
+  ci <- summary(fit)$conf.int['I(bmi/5)', , drop = FALSE]
+  list(
+    hr    = unname(ci[, 'exp(coef)']),
+    lower = unname(ci[, 'lower .95']),
+    upper = unname(ci[, 'upper .95']),
+    n_events = fit$nevent
+  )
+}
+
+#' Bootstrap a confidence interval for the Cox BMI hazard ratio
+#'
+#' Resamples the analysis dataset (complete cases only) and refits the
+#' Cox model on each resample. The seed is set with
+#' `withr::with_seed()` so the caller's RNG state is restored on
+#' exit.
+#'
+#' @param x A cleaned cohort.
+#' @param n Number of bootstrap replicates.
+#' @param seed Seed for the resampler. Must be recorded alongside the
+#'   result; changing it changes the interval.
+#' @return A named numeric vector with `lower` and `upper` bounds of
+#'   a percentile interval on the hazard-ratio scale.
+#' @export
+bootstrap_cox_ci <- function(x, n = 1000, seed = 20260908) {
+  dat <- x[!is.na(x$incident_dm) &
+             !is.na(x$age_at_enroll) &
+             !is.na(x$sex), , drop = FALSE]
+  reps <- withr::with_seed(seed, {
+    vapply(seq_len(n), function(i) {
+      idx <- sample(nrow(dat), replace = TRUE)
+      fit_i <- survival::coxph(
+        survival::Surv(followup_days, incident_dm) ~
+          I(bmi / 5) + age_at_enroll + sex,
+        data = dat[idx, , drop = FALSE]
+      )
+      unname(exp(stats::coef(fit_i)['I(bmi/5)']))
+    }, numeric(1))
+  })
+  stats::quantile(reps, c(0.025, 0.975), names = FALSE) |>
+    stats::setNames(c('lower', 'upper'))
+}
+
+#' Run the canonical analysis end to end
+#'
+#' Loads the raw extract, cleans it, fits the Cox model, and returns
+#' the result list. This is the function a baseline test calls; its
+#' output is compared with the committed baseline file.
+#'
+#' @param path Path to the raw extract.
+#' @return A list with `n_rows` (cleaned row count), `hr`, `lower`,
+#'   `upper` (from [summarise_cox()]), and `n_events`.
+#' @export
+run_canonical_analysis <- function(
+    path = file.path('analysis', 'data', 'raw_data', 'cohort_raw.csv')) {
+  cohort <- path |> load_cohort() |> clean_cohort()
+  fit <- fit_cox(cohort)
+  res <- summarise_cox(fit)
+  c(list(n_rows = nrow(cohort)), res)
+}

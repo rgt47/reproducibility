@@ -1616,6 +1616,127 @@ silence a failing test by editing its expected value
 to whatever the code currently returns; that
 converts a test into a tautology.
 
+## The cohort, continued {#sec-cohort-continued-testing}
+
+The chapter has introduced four kinds of test. This
+section applies all four to the running cohort
+compendium, using the canonical Cox analysis as the
+analysis under test.
+
+**The canonical analysis.** The primary question is:
+does BMI predict time to incident diabetes after
+adjusting for age and sex? The model is a Cox
+proportional-hazards model fit to the cleaned extract,
+with BMI expressed per 5 kg/m^2 so that the hazard
+ratio has a clinically natural scale. The analysis
+runs clean only after `clean_cohort()` has repaired
+the four planted defects; uncleaned, it would still
+run, but it would fit a different model on 338 rows
+with the duplicate and the miscoded sex included.
+
+```{r}
+#| label: cohort-canonical-fit
+library(survival)
+cohort_path <- file.path(
+  '..', '..', 'analysis', 'data', 'raw_data',
+  'cohort_raw.csv')
+raw    <- load_cohort(cohort_path)
+cohort <- clean_cohort(raw)
+fit    <- fit_cox(cohort)
+res    <- summarise_cox(fit)
+```
+
+The hazard ratio for BMI per 5 kg/m^2 is
+`r round(res$hr, 2)` (95% CI
+`r round(res$lower, 2)`--`r round(res$upper, 2)`),
+based on `r res$n_events` events from
+`r nrow(cohort)` cleaned rows.
+
+**Unit tests of `fit_cox()`.** A unit test checks
+the contract of one function in isolation. For
+`fit_cox()` the contract is: return a `coxph` object
+whose coefficient for `I(bmi/5)` is finite, and
+whose event count equals the number of non-missing
+outcomes in the input.
+
+```r
+expect_true(inherits(fit, 'coxph'),
+  info = 'fit_cox returns a coxph object')
+expect_true(is.finite(coef(fit)['I(bmi/5)']),
+  info = 'BMI coefficient is finite')
+expect_equal(fit$nevent,
+             sum(!is.na(cohort$incident_dm)),
+  info = 'event count equals non-missing outcomes')
+```
+
+**Integration test of the pipeline.** An integration
+test checks that the pipeline stages compose
+correctly end to end: `load_cohort` feeds
+`clean_cohort` feeds `fit_cox` feeds `summarise_cox`,
+and the final result is a list with the expected
+names and no `NA` values.
+
+```r
+result <- run_canonical_analysis(cohort_path)
+expect_true(all(c('n_rows', 'hr', 'lower',
+                   'upper', 'n_events')
+                %in% names(result)),
+  info = 'canonical result has expected names')
+expect_true(all(!is.na(unlist(result))),
+  info = 'canonical result contains no NA values')
+```
+
+**Data-validation tests.** The planted pathologies
+give the data-validation suite something real to
+catch. The test file checks each defect before and
+after cleaning, so a change to `clean_cohort()` that
+accidentally fixes or breaks a defect fails a test
+rather than silently altering the baseline.
+
+```r
+# Duplicate before cleaning, gone after
+expect_equal(sum(duplicated(raw$mrn)), 1,
+  info = 'raw extract has exactly one duplicated MRN')
+expect_equal(sum(duplicated(cohort$mrn)), 0,
+  info = 'cleaned cohort has no duplicated MRN')
+
+# Implausible age before cleaning
+expect_true(any(raw$age_at_enroll > 105, na.rm = TRUE),
+  info = 'raw extract has at least one implausible age')
+expect_true(all(is.na(cohort$age_at_enroll) |
+                cohort$age_at_enroll <= 105),
+  info = 'cleaned cohort has no age above 105')
+```
+
+**Reproducibility (baseline) test.** The baseline
+test is the L3 step. It reruns `run_canonical_analysis()`
+and compares the hazard ratio and confidence limits
+with values in `inst/baseline/cohort_baseline.rds`,
+within a relative tolerance of `1e-8`.
+
+```r
+baseline <- readRDS(
+  system.file('baseline', 'cohort_baseline.rds',
+              package = 'reproducibility'))
+result   <- run_canonical_analysis(cohort_path)
+
+expect_equal(result$hr, baseline$hr,
+  tolerance = 1e-8,
+  info = 'Cox HR matches committed baseline')
+expect_equal(result$lower, baseline$lower,
+  tolerance = 1e-8,
+  info = 'lower CI bound matches committed baseline')
+```
+
+A failure here means either the extract changed
+(check `md5sum cohort_raw.csv`), the `survival`
+package version changed (check `renv.lock`), the R
+version changed (check `sessionInfo()`), or the
+model specification changed (check the diff of
+`R/cohort.R`). Each cause has a different fix; the
+baseline test names the symptom and the diagnosis
+follows from the audit.
+
 ## Exercises
 
 1. Take a function you have written for a current
