@@ -591,7 +591,7 @@ commit_history <- tibble::tibble(
              'a.okafor', 'r.thomas', 'a.okafor',
              'r.thomas'),
   message = c(
-    'Initialise compendium and .gitignore',
+    'Initialize compendium and .gitignore',
     'Add cleaning script for registry extract',
     'Build analysis-ready cohort table',
     'Fit Cox model for 30-day readmission',
@@ -1388,7 +1388,7 @@ that lifts the folder to L0, locatable.
 
 ```bash
 git add .gitignore analysis/scripts/ DESCRIPTION
-git commit -m "Initialise compendium and .gitignore"
+git commit -m "Initialize compendium and .gitignore"
 ```
 
 Work proceeds as a sequence of small, message-bearing
