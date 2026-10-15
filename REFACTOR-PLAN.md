@@ -2732,6 +2732,63 @@ suite 317/317, unaffected (no executed content changed).
 (intro cut, archetype consolidation, optional marking, core path in
 the preface and instructor guide) are done.
 
+### 10.17b Phase 13 (J): Apparatus (2026-10-15)
+
+Branch `phase-13-apparatus`. Three items from 10.13's phase table.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Render-time colophon | `colophon.qmd` replaced static placeholder with a knitr chunk that reads R version, platform, key package versions, and `renv.lock` presence at render time; renv.lock row reports 'no' honestly until the lockfile exists | V lead: rendered HTML; table values match `R.version`, `packageVersion()` calls at render time |
+| Cheat-sheet index | `cheat-sheet-index.qmd` created with one-paragraph pointers per chapter's Cheat sheet section; `{#sec-cheat-*}` anchors added to all 12 chapters; registered in `_quarto.yml` | V lead: HTML renders with zero unresolved cross-references |
+| Glossary anchors and first-use links | `[]{#gloss-SLUG}` anchors added to all 157 glossary entries; 15 high-value terms linked on first occurrence across the index, preface, and chapters 00, 01, 03 | V lead: HTML renders with zero unresolved cross-references |
+
+Phase 13 did not include the setup appendix (Apple Silicon, Windows, WSL2): that was completed in Phase 11 batch 3 (see 10.17 above). The accessibility check (Finding 27, `fig-gates`) was deferred; fixed in post-merge corrections below (2026-10-15).
+
+Render: HTML and PDF exit 0, no warnings, no unresolved references or missing citations [V]. Repository test suite 318/318.
+
+**Phase 7 (E1b): Repository to L3 (2026-10-15).** Branch `phase-13-apparatus`, committed after Phase 13. `renv.lock` generated with `renv::snapshot(library = .libPaths(), type = 'implicit')`, capturing 59 packages at R 4.6.1 (ggplot2 4.0.3, tibble 3.3.1, knitr 1.51, rmarkdown 2.31, withr 3.0.3, tinytest 1.4.3, and deps). `renv/activate.R` and `renv/settings.json` added. `.github/workflows/render-book.yml` updated with a 'Run R package tests' step (tinytest via pkgload) before the render gate. Freeze cache refreshed for all chapters. T1-10 (vacuous repository CI) resolved. Repository is now at L3: CI executes code, runs tinytest so that a failure fails the build, and renders HTML.
+
+### 10.17c Phase 14: Verification pass (2026-10-15)
+
+Branch `phase-13-apparatus`, committed after Phase 7.
+
+| Claim | Result | Evidence |
+|---|---|---|
+| Trisovic 2022 success rate (`00:fig-failure-rates`) | 'fewer than one in four' -> 'roughly one in four'; figure rate updated 24 -> 26; fig-alt updated | V: secondary sources citing the paper report 26% |
+| Trisovic temporal attribution (`01`) | 'ceased to run within a few years' -> 'did not run when tested years after the original deposit'; cross-sectional vs. longitudinal distinction | I: study design; V lead reading |
+| ACM 2020 badge definitions (`02`) | ACM 'Results Reproduced' requires a different team from the original authors; NAS definition does not; passage rewritten to state where the two agree and where they differ | V lead: ACM artifact-review-and-badging-current page at acm.org/publications/policies/artifact-review-and-badging-current |
+
+### 10.17d Post-merge corrections (2026-10-15)
+
+Three correction branches applied after `phase-13-apparatus` merged to `main`.
+
+**Phase 16 (ch08/ch09 corrections).** Branch `phase-16-corrections`.
+
+| Item | Result | Evidence |
+|---|---|---|
+| ch08 integration-test example | `expect_inherits(fit, 'lm')` -> `expect_true(is.numeric(coef(fit)))`; `coxph` does not inherit from `lm` | V lead: `inherits(coxph(...), 'lm')` is FALSE |
+| ch08 display code blocks | `record_baseline.R` / `test-baseline-estimates.R` placeholders replaced with Phase 10 implementation (`run_canonical_analysis()`, `inst/baseline/cohort_baseline.rds`, `test-baseline-cohort.R`) | A-I: matched Phase 10 R source and test file |
+| ch09 `actions/checkout@v7` | Four occurrences (lines 480, 504, 732, 957) corrected to `@v4`; v7 does not exist | A-I: GitHub Actions changelog |
+
+Tests: 324/324.
+
+**Phase 17 (repository cleanup).** Branch `phase-17-repo-cleanup`.
+
+| Item | Result | Evidence |
+|---|---|---|
+| `fig-gates` palette (Finding 27) | Colors replaced: `#2c7fb8`/`#7fcdbb`/`#edf2f4` -> `#1a5c8c`/`#1e7a50`/`#7a8a9c`; filled-circle markers added to active cells via `geom_text`; fig-alt updated to describe the symbol encoding | A-V: WCAG relative luminance formula; new contrast ratios: 7.0:1 / 5.3:1 / 3.5:1, all >= 3:1 |
+| Stray conflicted-copy log | `analysis/report/index (Rg Thomas's conflicted copy 2026-09-19).log` deleted (untracked; not in git history) | I |
+
+**Phase 18 (spelling and Phase 14 supplement).** Branch `phase-18-corrections2`.
+
+| Item | Result | Evidence |
+|---|---|---|
+| 'Initialise' spelling (`version-control`, two occurrences) | -> 'Initialize'; example commit messages are constructed strings, not verbatim quotations | I: US English rule |
+| ch06 SIF hash claim | 'built deterministically from that one pinned digest' removed; claim now simply 'the two checksums differ'; secondary source (scrapbox.io) indicates SIF hashes are not reproducible across pulls | A-I: scrapbox secondary source; secondary evidence only, claim hedged |
+| ch06 Apptainer `$HOME` mounting | 'expert knowledge, not verified' replaced with `[@apptainer_bind]` citation | A-I: Apptainer 1.3 Bind Paths and Mounts docs; URL verified 2026-10-15 |
+
+Tests after each branch: 324/324. All merges clean with no unresolved references.
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their
