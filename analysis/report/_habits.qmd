@@ -1,0 +1,13 @@
+::: {.callout-note icon=false}
+## Seven habits, and a motto
+
+*Claim only the level you have verified.*
+
+1. Commit before you compute.
+2. Pin what you ran, not what is current.
+3. Never commit, deposit, or paste restricted data.
+4. Make every gate able to fail, and watch it fail once.
+5. Compare against a recorded baseline, with a stated tolerance.
+6. Rebuild from clean, on a machine that is not yours.
+7. Write the honest level down.
+:::

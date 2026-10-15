@@ -82,7 +82,10 @@ summarise_fit <- function(fit) {
 #' Bootstrap a confidence interval for the HbA1c odds ratio
 #'
 #' Deterministic given a seed, which is what makes it usable as the
-#' single-result form of a reproducibility check.
+#' single-result form of a reproducibility check. The seed is set
+#' with `withr::with_seed()`, which also restores the caller's
+#' generator state on exit, so calling this function does not
+#' disturb any random stream the caller was already running.
 #'
 #' @param x A cleaned cohort.
 #' @param n Number of bootstrap replicates.
@@ -94,11 +97,12 @@ summarise_fit <- function(fit) {
 #' @export
 bootstrap_ci <- function(x, n = 1000, seed = 20260908) {
   dat <- x[!is.na(x$incident_dm), , drop = FALSE]
-  set.seed(seed)
-  reps <- vapply(seq_len(n), function(i) {
-    idx <- sample(nrow(dat), replace = TRUE)
-    unname(stats::coef(fit_model(dat[idx, , drop = FALSE]))['hba1c'])
-  }, numeric(1))
+  reps <- withr::with_seed(seed, {
+    vapply(seq_len(n), function(i) {
+      idx <- sample(nrow(dat), replace = TRUE)
+      unname(stats::coef(fit_model(dat[idx, , drop = FALSE]))['hba1c'])
+    }, numeric(1))
+  })
   exp(stats::quantile(reps, c(0.025, 0.975), names = FALSE)) |>
     stats::setNames(c('lower', 'upper'))
 }

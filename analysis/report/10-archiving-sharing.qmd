@@ -15,39 +15,125 @@ Principles for Scientific Data Management and Stewardship*
 ```
 :::
 
-## Learning objectives
+By the end of this chapter you will be able to decide
+what belongs in a team's slow-moving environment layer
+versus its fast-moving package layer, state plainly why
+the committed Dockerfile rather than the pushed image is
+the reproducibility guarantee, and deposit a compendium so
+that it outlives the laptop, the registry, and the forge
+it was built on.
 
-By the end of this chapter the reader should be able
-to:
+```{r}
+#| include: false
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-- Explain the two-layer team model, distinguishing the
-  slow-moving environment layer a team lead fixes once
-  from the fast-moving package layer that every
-  contributor extends under the renv union model.
-- State why the Dockerfile, and not the pushed image,
-  is the reproducibility guarantee, and choose a
-  registry and a forge with vendor independence in
-  view.
-- Deposit a research compendium for the long term,
-  minting a persistent identifier and archiving the
-  environment as a single file, and relate these steps
-  to the FAIR principles.
-- Recover a decayed environment from a date when the
-  original pins are no longer resolvable, and describe
-  the sustainability limits of any young framework
-  honestly.
-- Adapt the sharing and archiving workflow to each
-  research archetype: a package published to a
-  repository, a blog deployed as a website, a
-  manuscript deposited beside its compendium.
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 55 minutes.
+
+**Prerequisites.** Chapter 6 (@sec-dependencies), for the
+renv lockfile and the union model this chapter extends to
+a team, and Chapter 7 (@sec-containers), for the
+digest-pinned Docker image this chapter archives and whose
+guarantee it relocates from the image to the Dockerfile.
+Chapter 3 (@sec-levels), for the L0-L3 ladder every honest
+claim in this chapter is stated against. Chapter 4
+(@sec-version-control), for the commit rule this chapter's
+restricted-data section makes stricter. No new statistical
+knowledge is assumed; reading a Dockerfile and a short
+shell session is.
+
+**By the end of this chapter you will be able to
+answer:**
+
+- Can you explain the two-layer team model and decide
+  which layer a given package decision belongs to under
+  the renv union model?
+- Can you state why the committed Dockerfile, and not the
+  pushed image, is the reproducibility guarantee, and
+  choose a registry and a forge with vendor independence
+  in view?
+- Can you deposit a research compendium for the long
+  term, minting a persistent identifier and archiving the
+  environment as a single file, and relate the steps to
+  the FAIR principles?
+- Can you recover a decayed environment from the date an
+  analysis was run, and state the sustainability limits
+  of a young framework honestly rather than papering over
+  them?
+- Can you adapt the sharing-and-archiving workflow to a
+  package, a blog, and a manuscript, naming what varies
+  and what does not?
+
+**Outline.**
+
+- Orientation: a laboratory whose environment nobody can
+  reconstruct two years later.
+- The analyst's contribution: three judgments no tool
+  automates.
+- Where this sits on the stack: what archiving captures
+  and what it only validates.
+- Sharing with a team: the two-layer model.
+- Sharing with the world: archiving, and what changes
+  when the data are restricted.
+- Stewardship over time: recovering a decayed
+  environment.
+- Across the archetypes: package, blog, manuscript.
+- Worked example: one laboratory's quarter of
+  collaboration and one deposit.
+- The cohort, continued: checking this book's own
+  compendium against a deposit checklist, today.
+- Collaborating with an LLM.
+:::
+
+## Where this sits on the stack
+
+This chapter pins no layer of the determinant stack for
+the first time; both of its halves, sharing with a team
+and archiving with the world, are stated as adding no new
+rung. Yet it is not neutral with respect to the stack
+either, and the two things it does are different in kind.
+
+@fig-stack-archiving marks both. Archiving is the first
+point in the book where the *input data* layer moves from
+merely locatable in a team's repository, which a forge
+outage or a departed contributor can erase, to durably
+findable under a persistent identifier that continues to
+resolve after the project ends. No earlier chapter made
+that move, so it is marked as captured here even though it
+pins no new version and fixes no new byte. Stewardship, by
+contrast, pins nothing new about the packages or the
+operating system; the union lockfile and the digest-pinned
+image already did that capturing in @sec-dependencies and
+@sec-containers. What stewardship does is confirm, using
+`rang` or an archived image, that those pins can still be
+resolved after they have aged, which is validation of a
+layer already captured elsewhere rather than a fresh
+capture of its own.
+
+```{r}
+#| label: fig-stack-archiving
+#| fig-cap: 'The determinant stack of @sec-levels, with input data marked as captured here and the package-version and operating-system layers marked as validated. This chapter pins no new byte: the packages are captured in @sec-dependencies and the operating system in @sec-containers. What it adds to the data layer is durability, lifting it from merely locatable on a forge to findable under a persistent identifier, which is why input data is captured rather than validated here; what it adds to the package and system layers is the stewardship check, using an archived image or a date-based reconstruction, that those earlier pins still resolve, which is why they are validated rather than captured again.'
+#| fig-alt: !expr determinant_stack_alt(captures = c('Input data'), validates = c('Package versions', 'Operating system, system libraries'))
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  captures = c('Input data'),
+  validates = c('Package versions',
+                'Operating system, system libraries'),
+  title = 'Where archiving and stewardship sit on the stack'
+)
+```
 
 ## Orientation
 
 We arrive at the last question a reproducible analysis
 must answer, and it is not a technical question but a
-social and temporal one. The nine chapters preceding
-this one were concerned with a single machine and a
-single analyst: how to pin the packages (@sec-dependencies),
+social and temporal one. Every earlier chapter was
+concerned with a single machine and a single analyst:
+how to pin the packages (@sec-dependencies),
 fix the environment (@sec-containers), render the
 report (@sec-literate), and validate the whole with
 tests and continuous integration (@sec-verification).
@@ -95,6 +181,31 @@ passage of time. That assurance is the subject of this
 chapter, and, being the last chapter, it is also where
 we draw the threads of the whole book together.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: two problems, not one
+
+The laboratory's L2 compendium is shared with a new
+contributor, who extends the package layer, and is later
+deposited in Zenodo. Does either event change the level
+the compendium has reached? What does each event add if
+not a level?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Neither event changes the level. Sharing the compendium
+with a new contributor, and depositing it with a DOI, are
+both social and temporal acts, not capture acts: the
+compendium was L2 before either happened and remains L2
+afterward. What sharing adds is that the fixed environment
+survives contact with a second person without drifting;
+what archiving adds is that the fixed environment survives
+the passage of time and the disappearance of the original
+machine. Both are about the level already reached
+surviving, not about reaching a new one.
+:::
+:::
+
 ## The analyst's contribution
 
 Three judgments in this chapter are the analyst's own,
@@ -124,8 +235,10 @@ and no tool makes them.
    been verified, or whether the environment was pinned
    by digest or merely by tag, misrepresents the work.
    The analyst decides when the compendium is ready,
-   which artifacts accompany it, and, above all, what
-   the accompanying claim honestly says.
+   which artifacts accompany it, which data the consent
+   and the data-use agreement allow to accompany it,
+   and, above all, what the accompanying claim honestly
+   says.
 
 3. **Where the work lives, and how dependent that
    choice makes it.** A registry and a forge are
@@ -172,6 +285,35 @@ and no tool makes them.
 - **Zenodo.** A general-purpose research repository,
   operated at CERN, that mints a DOI for any deposited
   file set.
+- **Controlled access.** A repository arrangement in
+  which data are released only to approved users under
+  an agreement, rather than to anyone who downloads.
+- **Data-availability statement.** The statement in an
+  article or README of what was deposited, where, and
+  how any data not deposited may be obtained.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: whose judgment, again
+
+A compendium is ready to deposit, by every mechanical
+check: the tests pass, the lockfile is current, the image
+builds. Name one judgment from this section that a
+checklist still cannot make, and say why it cannot.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A checklist cannot decide what level to claim in the
+accompanying statement. It can confirm that a lockfile and
+a Dockerfile exist, which is mechanical, but it cannot
+decide whether the analyst has actually re-run the
+pipeline from a clean rebuild and compared the outputs, nor
+can it know what the consent and data-use agreement permit
+to accompany the deposit. Those are judgments about this
+specific project's history and its governing documents,
+and no tool has access to either.
+:::
 :::
 
 ## Sharing with a team: the two-layer model
@@ -266,15 +408,23 @@ that is worth restating in our terms: pushing the image
 to a registry is optional, and if the image is not
 available, building from the Dockerfile reproduces the
 environment. We should qualify that claim, in keeping
-with this chapter's own discipline: a rebuild is
-byte-for-byte identical only when the base image is
-pinned by content digest and the package snapshot is
-dated, as @sec-containers urged; a recipe pinned by a
-mutable tag, or drawing on a rolling snapshot,
-reconstructs a functionally equivalent environment
-rather than a bit-identical one. The image is the fast
-path; the recipe is the guarantee. A team that treats the pushed
-image as authoritative, and lets the Dockerfile drift
+with this chapter's own discipline: a rebuild reproduces
+the same content, the same base image, R version, and
+package versions, only when the base image is pinned by
+content digest and the package snapshot is dated, as
+@sec-containers urged; a recipe pinned by a mutable tag,
+or drawing on a rolling snapshot, reconstructs at best a
+functionally equivalent environment whose content may
+have drifted. Even a correctly digest-pinned,
+dated-snapshot rebuild is not guaranteed byte-for-byte
+identical at the image level, because per-layer
+timestamps ordinarily differ between builds; matching
+content is the guarantee a pinned recipe gives, and
+bit-identical bytes require separate reproducible-build
+tooling (@sec-containers). The image is the fast path;
+the recipe is the guarantee of content, not of bytes.
+A team that treats the pushed image as authoritative,
+and lets the Dockerfile drift
 out of step with it, has quietly converted its
 compendium from something reconstructable into something
 that merely happens to exist, which is exactly the
@@ -388,7 +538,13 @@ single file is reproducible by two independent routes: a
 reader may rebuild from the recipe, or, if the recipe's
 inputs have decayed, may run the archived environment
 directly. Depositing both is belt and braces, and for a
-result that matters it is worth the disk.
+result that matters it is worth the disk. What a deposit
+may carry of the *data* is a separate question, governed
+by the terms under which the data were obtained rather
+than by the analyst's wish to be reproducible; for
+patient-level data the usual answer is that the data stay
+out of an open deposit, and @sec-restricted-deposit
+treats what is deposited in their place.
 
 These practices realize a set of principles that the
 community has crystallized under the acronym FAIR.
@@ -398,13 +554,91 @@ Reusable, and framed the principles for research data
 [@wilkinson2016]. Barker and colleagues subsequently
 adapted them for research software, whose reuse involves
 execution and not only reading [@barker2022]. A DOI
-serves findability; an open repository serves
-accessibility; a documented, standard container format
+serves findability; a repository with a stated access
+procedure serves accessibility, which for restricted
+data means a controlled route rather than an open
+download; a documented, standard container format
 serves interoperability; and a pinned, rebuildable
-environment serves reusability. The archetype-agnostic
-compendium of @sec-compendium is, in this light, a FAIR
-object almost by construction, provided it is deposited
-rather than merely committed.
+environment serves part of reusability. Reusability
+also requires a clear usage license (R1.1 in the
+original principles), which a pinned environment does
+not by itself supply. The archetype-agnostic compendium
+of @sec-compendium is, in this light, most of the way to
+a FAIR object by construction, provided it is deposited
+rather than merely committed and carries an explicit
+license; licensing practice is treated separately.
+
+### Licensing, CITATION.cff, and Software Heritage
+
+A pinned environment and a minted DOI satisfy three of
+FAIR's four letters without touching the fourth's hardest
+requirement. Reusability, principle R1.1 in the original
+statement, asks for 'a clear and accessible data usage
+license' [@wilkinson2016], and nothing about findability,
+accessibility, or interoperability supplies one: a
+compendium can be perfectly findable and still carry no
+statement of what a reader is permitted to do with it,
+which in the absence of a license defaults, under
+copyright, to nothing. 'The cohort, continued' below
+returns to what license this book's own compendium
+carries.
+
+Two further instruments round out what a deposit should
+carry, beyond the license file itself.
+
+**CITATION.cff.** A `CITATION.cff` file is a plain-text,
+machine-readable citation record placed at a repository's
+root, using a small set of `key: value` fields
+(`cff-version`, `authors`, `title`, `version`, and
+`date-released` among them) [@githubcitationfiles2024].
+GitHub parses the file, when it sits on the default branch,
+into a 'Cite this repository' link on the repository page
+that generates an APA or BibTeX citation on request
+[@githubcitationfiles2024]. Zenodo reads the same file on
+deposit and uses it to pre-fill the deposit's own citation
+metadata, so a `CITATION.cff` written once serves both the
+forge and the archive. Without it, a reader who wants to
+cite the compendium constructs a citation by hand from
+whatever metadata happens to be visible on the page, which
+is the same fragility that motivated the DOI in the first
+place.
+
+**Software Heritage.** Zenodo is a deposit repository: an
+institution, CERN, operates it, and while its continuation
+is a reasonable expectation, it is an expectation and not a
+guarantee, since a deposit repository could in principle be
+discontinued by the institution that runs it. Software
+Heritage undertakes something narrower and more absolute
+for source code specifically: its stated mission is a
+permanent, universal archive of publicly available source
+code, with no depositor-facing mechanism to remove
+something once archived. The project's own scale and its
+SWHID identifier scheme were formalized as an ISO/IEC
+standard in 2025 [@swhiso2025]. Every archived
+object, whether a file, a directory, a commit, or a full
+repository snapshot, receives a SoftWare Hash IDentifier of
+the form `swh:1:<type>:<hash>`, where `<type>` names the
+kind of object (`cnt` for a file's content, `dir` for a
+directory, among others) and `<hash>` is a 40-character
+value computed from the object's own bytes
+[@swhmodeldocs2024]. Because the identifier is computed
+from the content rather than assigned by a registry, two
+copies of the same file anywhere in the archive resolve to
+the same SWHID, which is a different kind of guarantee from
+a DOI: a DOI names a deposit, and a SWHID names the bytes.
+
+This book's own repository illustrates the gap between
+having these instruments and using them well. A
+`CITATION.cff` is present at the repository root, generated
+by zzcollab when the project was created, but it still
+carries an empty `orcid` field and the placeholder
+affiliation `Your Institution`, unfilled at the time of
+this writing. The file's presence is enough for GitHub to
+render the 'Cite this repository' link and for Zenodo to
+read it on deposit; its content is not yet enough to tell a
+reader whom, exactly, to credit. Filling it in is a
+five-minute task left to the lead, not a content addition
+this chapter needs to make.
 
 Two broader efforts are worth the analyst's attention.
 The Whole Tale platform, described by Brinckman and
@@ -421,6 +655,228 @@ the social side of collaboration, from code review to
 project governance to credit, in more depth than a
 single chapter allows, should begin there.
 
+### When the data are restricted {#sec-restricted-deposit}
+
+Everything said so far about depositing assumes that every
+file in the compendium may be published. In health
+research that assumption is usually false. A compendium
+built on patient records contains, or was built from, data
+whose release is governed by law, by the consent the
+participants gave, and by the data-use agreement under
+which the analyst received the extract. A deposit in an
+open repository is a publication to anyone, indefinitely,
+and a file placed there cannot be recalled.
+
+::: {.callout-important}
+## Restricted data
+
+The rule is the commit rule of @sec-version-control, made
+stricter: patient-level data do not go into an open
+deposit unless they have been formally de-identified, the
+consent and the agreement both permit public release, and
+the responsible data steward or IRB has confirmed it in
+writing. In their place, a deposit may carry the code, the
+tests, the lockfile, the Dockerfile, and the archived
+image, always; de-identified data, only where the data's
+steward has made that determination; a synthetic stand-in,
+labeled as such; or, for data that may be shared under
+agreement but not opened to the world, a citation to a
+controlled-access repository such as dbGaP. None of these
+substitutes removes the obligation to read the consent
+form and the data-use agreement first, and the deposit's
+data-availability statement must say, exactly, which of
+these routes was taken.
+:::
+
+What remains is to work through each of the five routes
+named above in enough detail to act on. There are five
+parts to the answer.
+
+**The code and the environment, always.** The analysis
+code, the tests, the lockfile, the Dockerfile, and the
+archived image carry no participant data, and depositing
+them openly lets anyone inspect the analysis and lets
+anyone who obtains the data by the legitimate route re-run
+it. Two checks come first. The archived image must not
+contain the data: a `COPY . .` executed while the extract
+sat in the build context places it inside the image, so
+a `.dockerignore` that excludes the data directory and an
+inspection of the built image's file system are part of
+the deposit. And the other artifacts must not carry
+individual-level rows by another route: rendered reports,
+cached chunk output, saved workspaces, logs, and test
+fixtures are all places where records leak, and tables
+with very small cell counts can disclose as surely as a
+row does.
+
+**De-identified data, where permitted.** Under the HIPAA
+Privacy Rule, health information ceases to be
+individually identifiable by one of two routes: a
+qualified expert applies statistical methods and
+documents that the risk of identification is very small,
+or the eighteen listed identifiers are removed and the
+covered entity has no actual knowledge that the remainder
+could identify anyone [@cfr164514]. A limited data set,
+which keeps dates and some geography, is not
+de-identified and may be shared only under a data-use
+agreement [@cfr164514]. NIH guidance adds that data
+de-identified in the legal sense may still warrant
+controlled access [@nihprivacy2026]. De-identification is
+a determination made by the data's steward, not something
+an analyst achieves by deleting the name column.
+
+**Synthetic data, as a stand-in.** A synthetic file with
+the same columns, types, and plausible ranges as the
+analysis data lets a reader run the pipeline from end to
+end and confirm that the code executes, though not that
+the published estimates regenerate. It should be labeled
+synthetic in the file and in the README, with the script
+that generated it. A synthetic file produced by a model
+fitted to the real records needs the same disclosure
+review as the records themselves, since such a model can
+reproduce rare individuals; one simulated from stated
+parameters, as this book's running cohort is, does not.
+
+**Controlled-access repositories.** When data may be
+shared but not publicly, a controlled-access repository
+holds them and releases them only to approved users under
+an agreement. NIH's dbGaP, for genotype and phenotype
+data, is an example: public study descriptions sit beside
+an authorized-access route with its own security
+procedures and code of conduct [@dbgap]. The open deposit
+of code then cites the controlled-access accession, so
+that the two halves are linked by identifier. The NIH Data
+Management and Sharing Policy, in force since 25 January
+2023, expects controlled access for data with explicit
+limits on later use and asks that those limits be passed
+to the repository that holds the data [@nihdms2020].
+
+**Consent and agreement terms, read before the analysis
+begins.** What may be deposited is settled by documents
+signed long before the deposit: the consent form, the IRB
+protocol, and the data-use agreement. The analyst reads
+them for redistribution, derived data, public posting,
+and retention. An agreement that requires the extract to
+be destroyed at the end of the project governs every copy
+of it, including those in backups, caches, and container
+images. NIH guidance asks that consent explain how data
+will be shared and that use agreements carry their
+restrictions with the data [@nihdms2020; @nihprivacy2026].
+
+**The data-availability statement.** The article and the
+README state what was deposited, where, and how the rest
+may be obtained, with the same exactness the honest-level
+claim demands. A statement of the following form is
+typical:
+
+> The analysis code, package lockfile, container recipe,
+> and archived container image are openly available at
+> [DOI], with a synthetic dataset of the same structure
+> on which the pipeline runs from end to end. The
+> patient-level data were obtained from [registry] under
+> a data-use agreement that does not permit
+> redistribution; qualified researchers may apply to
+> [data steward] for access. The synthetic data do not
+> reproduce the reported estimates.
+
+The last sentence matters for the level. A reader without
+access to the data can confirm that the pipeline executes;
+only someone with access can confirm that it regenerates
+the published numbers, so an L3 claim must say who
+performed the comparison and on what data.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which route, and why not the obvious one
+
+A colleague proposes removing the name and medical record
+number columns from a patient-level extract and depositing
+the rest openly, calling the result 'de-identified.' What
+is wrong with this plan, and which of the five routes
+above should be used instead?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Deleting two columns is not de-identification in the
+regulatory sense: dates, small geography, and rare
+combinations of remaining variables can still re-identify
+a person, and a determination that the risk is very small
+must be made by a qualified expert or by removing all
+eighteen HIPAA identifiers, not by the analyst's own
+judgment. Absent that determination in writing from the
+data steward or IRB, the extract stays out of an open
+deposit. The appropriate route is a synthetic stand-in with
+the same structure, deposited openly and labeled as
+synthetic, with the real extract made available, if the
+agreement allows it at all, only through a controlled-access
+repository or a direct request to the data steward.
+:::
+:::
+
+### Funder and journal obligations
+
+Everything the five routes above implement is a response
+to an obligation that exists before the analysis begins: a
+funder's data-sharing policy, and later, a journal's
+reporting requirement. Both predate the deposit and shape
+what the deposit must contain.
+
+**The funder side.** The NIH Data Management and Sharing
+Policy requires that, for proposals due on or after 25
+January 2023, an applicant submit a Data Management and
+Sharing Plan as part of the budget justification at the
+time of application, not drafted after data collection is
+underway [@nihdms2020]. NIH program staff review the Plan
+for completeness rather than scoring it, but once an award
+is made, the approved Plan becomes a term and condition of
+that award: noncompliance can bring added special terms,
+withheld funds, or termination, and can affect future
+funding decisions [@nihdms2020]. The practical consequence
+for the analyst is that the choice among the five routes
+above is not a free one, made at deposit time. It was made,
+in outline, when the grant was written, and the deposit is
+the Plan's execution rather than a fresh decision.
+
+**The journal side.** A code-availability statement is a
+narrower instrument than the data-availability statement
+of this section, above: it says where the *analysis code*
+lives, under what license, at what version, and what it
+does not include, independent of whatever the
+data-availability statement says about the data. The two
+statements answer different questions, and a manuscript
+needs both; a reader who wants to re-run the pipeline reads
+the code statement, and a reader who wants to obtain the
+inputs reads the data statement.
+
+Some reporting guidelines now name code availability as a
+checklist item rather than leaving it to a journal's
+general policy. TRIPOD+AI, the 2024 extension of the TRIPOD
+reporting guideline to prediction models built with
+regression or machine learning, lists item 18f under its
+'Open science' section: 'Provide details of the
+availability of the analytical code,' with a footnote
+specifying that this covers the analysis code, including
+any data cleaning, feature engineering, model building, and
+evaluation [@collinstripodai2024]. A separate item, 18e,
+asks the same question of the data. Naming code
+availability as its own item, distinct from data
+availability, is what makes TRIPOD+AI concrete where a
+general journal policy is often vague: an author completing
+the checklist cannot satisfy 18f by describing only the
+data.
+
+A code-availability statement that meets this bar states
+four things: where the code is deposited, with a persistent
+identifier if one was minted; under what license it is
+released; which version, commit, or tagged release
+corresponds to the reported results, since a repository's
+default branch moves on after publication; and what, if
+anything, the deposit withholds, and why (a proprietary
+dependency, institution-licensed software, or data
+referenced only by an accession number). 'Available on
+GitHub,' without a version and a license, answers none of
+the four.
+
 ## Stewardship over time
 
 Archiving preserves the artifacts; stewardship is the
@@ -434,42 +890,39 @@ question stewardship answers is: when the pins have
 decayed and the archived image was lost or never built,
 can the environment still be recovered?
 
-For the R ecosystem the most useful recovery tool is
-`rang`, described by Chan and colleagues [@chan2023].
-Where the ordinary workflow pins prospectively, by
-recording a lockfile at development time and restoring
-from it, `rang` reconstructs an environment
-retrospectively, from a *date*. Given the date an
-analysis was run, it resolves the package versions
-current on the archives at that date and generates a
-Dockerfile that can often reconstruct a period-correct
-environment even when no original lockfile survives. The two approaches are complementary on a time
-axis: the framework of this book enforces consistency
-prospectively over a project's active life, and `rang`
-provides a recovery path retrospectively when that
-consistency has lapsed. A prudent steward records the
+For the R ecosystem a useful recovery tool is `rang`,
+described by Chan and colleagues [@chan2023]. (`rang`
+was archived on CRAN on 2026-08-22; the historical
+versions remain installable from the CRAN archive or
+from its GitHub repository, and the technique it
+illustrates is worth knowing even if the package itself
+needs an alternative source or a successor tool by the
+time a reader needs it.) Where the ordinary workflow
+pins prospectively, by recording a lockfile at
+development time and restoring from it, `rang`
+reconstructs an environment retrospectively, from a
+*date*. Given the date an analysis was run, it resolves
+the package versions current on the archives at that
+date and generates a Dockerfile that can often
+reconstruct a period-correct environment even when no
+original lockfile survives. The two approaches are
+complementary on a time axis: the framework of this book
+enforces consistency prospectively over a project's
+active life, and `rang` provides a recovery path
+retrospectively when that consistency has lapsed. A
+prudent steward records the
 run date in the compendium precisely so that this
 recovery path stays open.
 
 ::: {.callout-important}
 ## The honest level
 
-An archival deposit is where a reproducibility claim
-becomes public and permanent, and it is therefore where
-honesty about the level matters most. A compendium
-deposited with a DOI and a rebuildable, digest-pinned
-environment, whose outputs have been regenerated and
-shown to match, may honestly be described as verified,
-L3. A compendium deposited with a lockfile and a
-Dockerfile but never re-run from scratch is pinned, L2,
-and should say so. A compendium deposited as source and
-data alone, however carefully organized, is locatable,
-L0, and calling it 'fully reproducible' in the
-accompanying article is a misstatement the reader cannot
-easily detect. State the level reached; never assert
-above it. The deposit outlives the memory of what was
-actually done, so the recorded claim must be the true
-one.
+Sharing and archiving themselves reach no rung, since
+preserving a level is not capturing or verifying one; the
+single failure this chapter exists to prevent is depositing
+a compendium no better than locatable, with a DOI and a
+tidy README, and calling it 'fully reproducible' in the
+article the deposit outlives.
 :::
 
 We must extend the same honesty to the tools this book
@@ -534,66 +987,53 @@ distinct obligations.
 
 ## Across the archetypes
 
-The team and archiving machinery applies to every
-research archetype, because all archetypes share the
-same compendium structure and the same reproducibility
-pillars (@sec-compendium). The two-layer model, the
+The team and archiving machinery, the two-layer model, the
 union lockfile, the registry and forge choices, the DOI
-deposit, and the `rang` recovery path are archetype-
-agnostic. What varies is the final act of publication,
-and it is worth naming the variation explicitly so that
-the reader does not mistake the manuscript case for the
-only case.
+deposit, and the `rang` recovery path, is
+archetype-agnostic; @tbl-archetype-weight in
+@sec-compendium is the reference. What varies is the final
+act of publication. A **data-analysis** or **simulation**
+compendium is deposited as itself, the compendium with its
+DOI *is* the published object; a **manuscript** compendium
+is deposited *beside* the article it supports, cited by DOI
+from its data-availability statement; a **package**
+compendium has a further, ecosystem-native channel, release
+to CRAN or an R-universe, whose incoming checks are
+themselves a validation gate; and a **blog** compendium is
+deployed as a website, with tools such as `workflowr`
+[@blischak2019] binding each rendered page to the commit
+that produced it, though the archival obligation still
+applies to the compendium behind the posts. In every case
+the underlying discipline, fix the environment, govern it
+as a team, deposit with a persistent identifier, and state
+the level honestly, is identical; only the last mile
+differs.
 
-A **data-analysis** or **simulation** compendium is
-typically deposited as itself: the compendium, with its
-DOI, *is* the published object, and for a simulation the
-recorded seeds and the union lockfile together are what
-a re-runner needs.
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the archetype that changes nothing
 
-A **manuscript** compendium is deposited *beside* the
-article it supports. The article carries the narrative;
-the compendium, cited by DOI from the article's
-data-availability statement, carries the code, the data,
-and the environment that regenerate every figure and
-table. The two are separate deposits linked by
-identifier, and the honest-level claim belongs in the
-article's reproducibility statement.
+A simulation study, built entirely from its own generated
+data, is being prepared for deposit. Which part of this
+chapter's archiving machinery does it need, and which
+part, unlike the manuscript and package archetypes, does
+it not need to worry about?
 
-A **package** compendium has a further, ecosystem-native
-channel: it is published to a package repository. Beyond
-the archival deposit, an R package is released to CRAN,
-whose incoming checks are themselves a validation gate,
-or to an R-universe, which builds and serves a package
-repository from a set of source repositories. Here the
-'sharing with the world' step is a package submission
-rather than only a file deposit, and the same R-package
-skin that makes `R CMD check` a universal gate on the
-compendium is what makes the package installable by
-`install.packages()`.
+::: {.callout-note icon=false collapse=true}
+## Answer
 
-A **blog** compendium is deployed as a website. Rather
-than a single rendered report, a blog renders many
-posts, and 'sharing with the world' means publishing the
-rendered site to a hosting service, whether a forge's
-pages service or a general-purpose host. Tools built for
-this case, such as `workflowr` described by Blischak and
-colleagues [@blischak2019], bind each rendered page to
-the version-control commit that produced it, so that the
-published site carries its own provenance. The archival
-obligation still applies: a blog that documents an
-analysis should deposit the compendium behind the posts,
-not only the rendered pages, since the pages are output
-and the compendium is the reproducible source.
-
-In every case the underlying discipline is identical.
-Fix the environment once and govern it as a team; extend
-the packages under the union model; keep the Dockerfile
-as the guarantee; deposit with a persistent identifier
-and an archived environment; record the run date against
-future decay; and state the level honestly. Only the
-last mile, package submission, website deployment, or a
-deposit beside an article, differs.
+It needs everything archetype-agnostic: the two-layer
+model while the study was developed by a team, the
+committed Dockerfile as the guarantee, a DOI-minting
+deposit carrying the code and the archived environment,
+and an honest statement of the level reached. It does not
+need @sec-restricted-deposit's machinery at all, because
+data generated by the study's own code from stated
+parameters carries no participant, no consent, and no
+data-use agreement to honor. The restricted-data callout
+exists for exactly the case a simulation study is exempt
+from.
+:::
+:::
 
 ## Worked example
 
@@ -657,18 +1097,34 @@ quarterly rebuild her environment carries it, because Cai
 did, and the lockfile records the union.
 
 When the manuscript was accepted, the laboratory
-deposited the compendium. The session below, shown as a
-static illustration rather than executed, publishes the
-team image to a registry, records its immutable digest,
-exports the environment as a single archival file, and
-mints a DOI for the whole compendium. The `$` prompt is
-not part of the commands, and lines beginning `#>` are
-output.
+deposited the compendium. The cohort's patient-level
+extract came from the participating sites under a
+data-use agreement that forbids redistribution, so the
+deposit follows @sec-restricted-deposit: it carries the
+code, the tests, the lockfile, the Dockerfile, the
+archived environment, a synthetic extract with the
+structure of the real one, and a README whose
+data-availability statement names the sites' data
+steward as the route to the real data. The extract itself
+is in none of these files. The session below, shown as a
+static illustration rather than executed, checks that the
+image holds no study data, publishes it to a registry,
+records its immutable digest, exports the environment as
+a single archival file, and mints a DOI for the
+compendium. The `$` prompt is not part of the commands,
+and lines beginning `#>` are output.
 
 ```bash
 # Rebuild the team image once, from the pinned
 # Dockerfile and the union lockfile, then publish it.
 $ make docker-build
+
+# Before the image leaves the laboratory, confirm that
+# no study data were copied into it; the expected
+# result is an empty listing.
+$ docker run --rm cohort-env:latest \
+    find / -xdev -path '*raw_data*' -type f
+
 $ docker tag cohort-env:latest \
     ghcr.io/mylab/cohort-env:2026-q3
 $ docker push ghcr.io/mylab/cohort-env:2026-q3
@@ -684,16 +1140,18 @@ $ docker inspect --format '{{index .RepoDigests 0}}' \
 $ apptainer build cohort-env.sif \
     docker://ghcr.io/mylab/cohort-env@sha256:4813816ad695...
 
-# Deposit the compendium plus the archived environment
-# in Zenodo, which mints the persistent identifier the
-# article's data-availability statement will cite. The
-# command below is schematic; real deposition uses the
-# Zenodo REST API or the web upload interface.
+# Deposit the compendium (code, tests, lockfile,
+# Dockerfile, synthetic extract, README; no patient
+# data) plus the archived environment in Zenodo, which
+# mints the persistent identifier the article's
+# data-availability statement will cite. The command is
+# schematic; real deposition uses the Zenodo REST API or
+# the web upload interface, and the DOI is a placeholder.
 $ zenodo-upload cohort-compendium-v1.0.zip cohort-env.sif  # schematic
-#> Deposited. DOI: 10.5281/zenodo.7654321
+#> Deposited. DOI: 10.5281/zenodo.XXXXXXX
 ```
 
-Two features of the session deserve note. First, the
+Three features of the session deserve note. First, the
 image is pushed by a dated tag but *recorded* by digest;
 the tag is convenient for humans, the digest is the
 immutable name a collaborator or a reviewer builds
@@ -701,15 +1159,126 @@ against. Second, the deposit carries both the compendium
 and the archived environment, so that reproduction has
 two independent routes, rebuild-from-recipe and
 run-the-archived-image, and does not depend on the
-registry surviving.
+registry surviving. Third, neither route includes the
+patient data. A reader of the deposit can run the
+pipeline on the synthetic extract and see that it
+executes; regenerating the published estimates requires
+the real extract, obtained under the sites' agreement,
+and the article's level claim says so.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: two routes, one reason
+
+The deposit above includes both a rebuildable Dockerfile
+and an archived SIF file of the same environment. Why
+both, rather than whichever is more convenient?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Because each route can fail independently, and the
+deposit is meant to outlive both failures. The Dockerfile
+route fails if the base image's registry disappears or a
+pinned package is pulled from CRAN before `rang` or a
+successor tool can recover it. The archived-image route
+fails if the SIF or OCI file itself is lost or becomes
+unreadable by a future runtime. Depositing both means a
+reader needs only one of the two to still work, which is
+cheaper insurance than it looks given how little either
+artifact costs to include.
+:::
+:::
+
+## The cohort, continued
+
+The worked example above is a composite laboratory. Here
+is a smaller, real question applied to this book's own
+running cohort compendium: if it had to be deposited
+today, what would already be true, and what would still
+need doing?
+
+```{r}
+license_present <- file.exists('../../LICENSE')
+description_present <- file.exists('../../DESCRIPTION')
+gitignore_lines <- readLines('../../.gitignore')
+raw_data_ignored <- any(grepl('raw_data', gitignore_lines))
+
+license_present
+description_present
+raw_data_ignored
+```
+
+Two of the three are already in place. A `LICENSE` file is
+present and dual: the prose is CC BY-NC-SA 4.0 and the code,
+including every script that builds the cohort, is CC0,
+which is the explicit license FAIR's reusability principle
+asks for and which @sec-restricted-deposit's deposit example
+above was silent about. A `DESCRIPTION` file is present and
+records `License: CC0`, matching the code half of the
+`LICENSE` file, so a package repository or an automated
+check reading `DESCRIPTION` would see the same answer a
+human reading `LICENSE` would. The third check returns
+`FALSE`: `analysis/data/raw_data/` is not listed in
+`.gitignore`, and `cohort_raw.csv` is tracked in version
+control. For patient-level data that would be the single
+most urgent finding in this chapter, the exact failure
+@sec-restricted-deposit exists to prevent. Here it is the
+correct state of affairs, precisely because the cohort is
+synthetic, generated from stated parameters by a committed
+script, and carries no participant to protect; the chunk
+cannot tell the difference between 'correctly untracked'
+and 'incorrectly tracked' on its own, which is itself worth
+noting; that judgment is the analyst's, informed by what
+the data actually are, not something a `.gitignore` audit
+can certify by itself. What the compendium still lacks for
+an archival deposit proper is the part no file-system check
+can see: a minted DOI, an archived container image, and a
+written statement of the level this compendium has reached
+at the time of deposit.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the checks did not check
+
+The three checks above all return favorably (or correctly
+`FALSE`) for this compendium. Does that mean the compendium
+is ready to deposit as L3? Why or why not?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. The three checks are structural: a license file exists,
+a `DESCRIPTION` agrees with it, and the data are tracked
+appropriately for their (synthetic) sensitivity. None of
+them is evidence that the analysis has been rebuilt from a
+clean environment and its outputs compared against recorded
+values, which is what an L3 claim requires. A compendium can
+pass every structural check above and still be no higher
+than L1 or L2, depending on whether its packages and
+environment are pinned. Structural readiness for deposit and
+the level honestly claimed in the deposit are two different
+questions, and this section answers only the first.
+:::
+:::
 
 ## Collaborating with an LLM
 
 A language model is a capable assistant for the
 mechanical parts of sharing and archiving, and an
 unreliable one for the parts that require judgment about
-this specific project. We give three exchanges, each with
-what to watch for and what the analyst must verify.
+this specific project. One rule precedes the exchanges.
+Patient-level, identifiable, or agreement-restricted
+data, and outputs derived from them such as row-level
+logs or small-count tables, are never pasted or uploaded
+into a model unless the endpoint is approved by the
+institution for that data; NIH, for one, forbids sharing
+controlled-access genomic data with public generative AI
+tools through prompts [@nihgenai2025]. A prompt about a
+deposit describes the structure instead: the file names,
+the column names and types, a synthetic example. A coding
+agent that reads the repository reads its data too, so it
+is run only in projects whose data it is allowed to see.
+We give three exchanges, each with what to watch for and
+what the analyst must verify.
 
 **Prompt.** 'Write the shell commands to tag our image,
 push it to GHCR, record its digest, and export it as a
@@ -736,14 +1305,20 @@ deposited compendium.'
 compendium actually reached, and will tend to reach for
 confident language ('fully reproducible', 'all results
 can be regenerated') regardless. It cannot know whether
-you verified the outputs or merely pinned them.
+you verified the outputs or merely pinned them. Nor does
+it know the terms of your data-use agreement, and it will
+often write 'all data are available in the deposited
+compendium' for a deposit that holds none.
 
 *Verification.* Rewrite the level claim yourself against
 the honest-level standard: say verified only if you ran
 `zzc verify` or its equivalent and the outputs matched;
 say pinned if you pinned but did not re-run; name the DOI
-you actually minted, not a placeholder. The claim is the
-analyst's responsibility, not the model's.
+you actually minted, not a placeholder. Check every
+sentence about the data against what the deposit holds
+and against the agreement, and name the access route for
+anything withheld. The claim is the analyst's
+responsibility, not the model's.
 
 **Prompt.** 'Our 2024 analysis has an renv.lock but
 several pinned versions no longer install. How do we
@@ -786,10 +1361,17 @@ not a reproduction.
 
 4. Deposit a small practice compendium in a research
    repository that mints a DOI (Zenodo offers a sandbox
-   for exactly this). Record the DOI, then write a
-   data-availability statement that names the level the
+   for exactly this). The compendium must hold no
+   restricted data: use public or synthetic data only,
+   such as this book's simulated cohort. Record the DOI,
+   then write a data-availability statement that says
+   what the deposit contains and names the level the
    compendium actually reached, defending your level
-   claim against the honest-level standard.
+   claim against the honest-level standard. Then rewrite
+   the statement for the case in which the analysis data
+   were a registry extract held under a data-use
+   agreement, saying what would have been deposited
+   instead and how a reader could obtain the real data.
 
 5. Take a compendium with an `renv.lock` and, using
    `rang`, generate a Dockerfile that reconstructs its
@@ -804,6 +1386,42 @@ not a reproduction.
    'sharing with the world' step it requires beyond the
    archival deposit, and explain what validation gate, if
    any, that step adds.
+
+7. Run the three checks from 'The cohort, continued'
+   yourself: `file.exists('LICENSE')`,
+   `file.exists('DESCRIPTION')`, and whether
+   `analysis/data/raw_data` appears in `.gitignore` (run
+   from the repository root rather than from
+   `analysis/report/`, so adjust the paths). Report the
+   three booleans you get, and state, in one sentence,
+   which of the three findings would need to change before
+   this compendium could hold real patient-level data
+   instead of the synthetic cohort, and why.
+
+8. This exercise returns to the commit rule of Chapter 4
+   (@sec-version-control): never commit restricted data,
+   because `git` keeps every version forever even after a
+   file is deleted. The same rule turns out to apply one
+   layer up. Suppose a `.dockerignore` lists `*.csv` but a
+   teammate's branch adds `analysis/data/raw_data/extra.tsv`
+   the week before a deposit, and nobody updates the
+   ignore patterns. Walk through what happens to that file
+   at each of three points, the `docker build`, the
+   `docker push`, and the Zenodo deposit of the exported
+   SIF, and say which single artifact, if inspected before
+   the deposit, would have caught the leak.
+
+9. Write a code-availability statement, meeting TRIPOD+AI
+   item 18f's standard, for this book's running cohort
+   compendium as it stands today: name the repository, the
+   license (recall 'The cohort, continued' above), the
+   commit or tagged release the statement should point to,
+   and anything withheld. Then write the parallel
+   data-availability statement for a hypothetical version
+   of the same analysis built on a registry extract held
+   under a data-use agreement, and say in one sentence how
+   the code statement would differ from the data statement
+   in that case.
 
 ## Solutions
 
@@ -911,8 +1529,10 @@ GitHub-specific feature: pull-request comment bots,
 **What does not change.** Everything that constitutes the
 reproducibility of the compendium. The Dockerfile, the
 `renv.lock`, the directory structure, the `DESCRIPTION`,
-the tests, the analysis code, the data, and the checks
-themselves are all forge-agnostic. This is the point worth
+the tests, the analysis code, the data dictionary, and the
+checks themselves are all forge-agnostic. (Restricted
+data stay off both forges; moving forges does not change
+where they live.) This is the point worth
 drawing out: the reproducibility machinery is not a
 property of the hosting platform, and a compendium that
 must be substantially rewritten to move forges was coupled
@@ -934,13 +1554,15 @@ adopting even for a project that will never move.
 The deposit and DOI will differ for each reader. The
 substance is the statement and its defense.
 
-For a compendium with a lockfile and a Dockerfile but no
-verification record:
+For a compendium built on simulated data, with a lockfile
+and a Dockerfile but no verification record:
 
 > The complete research compendium, comprising the
-> analysis code, the derived data, the package lockfile,
-> and the container recipe, is archived at
-> https://doi.org/10.5281/zenodo.XXXXXXX. The
+> analysis code, the simulated data and the script that
+> generates them, the package lockfile, and the container
+> recipe, is archived at
+> https://doi.org/10.5281/zenodo.XXXXXXX. The data are
+> synthetic and describe no real person. The
 > computational environment is pinned by a
 > digest-referenced container image and an `renv.lock`
 > lockfile, so the analysis can be re-executed in the
@@ -949,6 +1571,25 @@ verification record:
 > have not independently verified that re-execution
 > regenerates the reported outputs, so no L3 claim is
 > made.
+
+For the registry case, the deposit loses the data and the
+statement gains an access route:
+
+> The analysis code, package lockfile, container recipe,
+> and archived container image are archived at
+> https://doi.org/10.5281/zenodo.XXXXXXX, with a synthetic
+> dataset of the same structure on which the pipeline
+> runs from end to end. The patient-level data were
+> obtained from [registry] under a data-use agreement
+> that does not permit redistribution; qualified
+> researchers may apply to [data steward] for access. The
+> synthetic data do not reproduce the reported estimates.
+> The environment is pinned (L2); re-execution on the
+> registry data has not been independently verified.
+
+A common wrong answer keeps 'the complete research
+compendium' in the second statement. It is not complete,
+and saying so is part of the statement's honesty.
 
 **Defending the claim against the honest-level standard**
 means checking three things and being willing to have the
@@ -969,10 +1610,11 @@ performed.
 ## Exercise 5
 
 ```r
-rang::dockerize_rang(
-  rang::resolve(readLines('renv.lock'), snapshot_date = '2026-06-29'),
-  output_dir = 'rang_build'
-)
+lockfile <- renv::lockfile_read('renv.lock')
+pkg_names <- names(lockfile$Packages)
+
+graph <- rang::resolve(pkg_names, snapshot_date = '2026-06-29')
+rang::dockerize(graph, output_dir = 'rang_build')
 ```
 
 The comparison typically shows most packages matching and
@@ -1045,6 +1687,130 @@ the deposited full results. That is what lets a reader
 verify the machinery without paying for the study.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+Run from the repository root:
+
+```r
+file.exists('LICENSE')
+#> [1] TRUE
+file.exists('DESCRIPTION')
+#> [1] TRUE
+any(grepl('raw_data', readLines('.gitignore')))
+#> [1] FALSE
+```
+
+The three booleans are `TRUE`, `TRUE`, `FALSE`, matching
+'The cohort, continued' above (there, run from
+`analysis/report/`, with paths adjusted accordingly).
+
+**What would need to change for real patient-level data.**
+The third finding. `FALSE` means
+`analysis/data/raw_data/cohort_raw.csv` is tracked in
+version control, which is correct only because the file is
+synthetic. Were it a real extract, this is precisely the
+commit-rule violation @sec-restricted-deposit and the
+version-control chapter (@sec-version-control) both warn
+against: once committed, the file is in the repository's
+history forever, recoverable from any clone even after
+later deletion. The license and `DESCRIPTION` findings
+would not need to change; a license and a package
+description are needed whether the data are real or
+synthetic.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+**At `docker build`.** The build context includes every
+file under the Dockerfile's directory not excluded by
+`.dockerignore`. Because `*.csv` does not match
+`extra.tsv`, the file is copied into the image by any
+`COPY . .` or equivalent instruction, becoming part of
+the image's file system layers.
+
+**At `docker push`.** The image, `.tsv` included, is
+uploaded to the registry as-is. The registry has no
+knowledge of which files are data and which are code; it
+stores the layers it is given. The leak has now left the
+laboratory's own machines.
+
+**At the Zenodo deposit.** `apptainer build` exports the
+pushed image, `.tsv` and all, into the SIF file, which is
+then deposited and assigned a DOI. The leak is now public
+and, per this chapter's own account of archival deposits,
+unrecallable.
+
+**What would have caught it.** An inspection of the built
+image's file system before the push, exactly the check
+this chapter's worked example performs with `docker run
+--rm ... find / -xdev -path '*raw_data*' -type f`, run
+against the actual data directory rather than assumed from
+the `.dockerignore` pattern. A pattern-matching ignore file
+is a plan; a listing of what the built image actually
+contains is a verification, and only the second one catches
+a file the plan did not anticipate. This is the Verification
+callout's own rule, 'how to see a claim actually holds,'
+applied to the narrower claim that no data entered the
+image.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 9
+
+**Code-availability statement.** A statement meeting
+18f's standard, as this book's repository stands:
+
+> The analysis code for this compendium is available at
+> [repository URL], at the commit tagged for this
+> submission (not the default branch, which continues to
+> change). The code is a `CITATION.cff`-bearing R research
+> compendium; the code itself is released under CC0 1.0,
+> and the accompanying prose and figures under CC BY-NC-SA
+> 4.0. The deposit withholds nothing: the cohort analyzed
+> is synthetic, generated by a committed, version-controlled
+> script, and no restricted data were used.
+
+**Data-availability statement, registry-extract version.**
+
+> The patient-level data analyzed were obtained from
+> [registry] under a data-use agreement that does not
+> permit redistribution. Qualified researchers may apply to
+> [data steward] for access under the same agreement terms.
+> A synthetic dataset of the same structure, on which the
+> pipeline runs end to end, is deposited alongside the code
+> and does not reproduce the reported estimates.
+
+**How the two differ.** The code statement answers 'can a
+reader obtain and run what produced these results,' and its
+answer here is simply yes, with a version and a license.
+The data statement answers a harder question, 'can a reader
+obtain what the code was run *on*,' and in the restricted
+case the honest answer is a controlled route rather than a
+download: the two statements can diverge sharply even for
+the same manuscript, which is exactly why a reporting
+guideline that names them as separate checklist items,
+rather than one general sentence about 'availability,' is
+doing real work.
+:::
+
+## Cheat sheet
+
+| Command or rule | What it does or checks |
+|---|---|
+| `docker inspect --format '{{index .RepoDigests 0}}' <img>` | Reports the immutable digest to record, not the mutable tag |
+| `docker run --rm <img> find / -xdev -path '*raw_data*'` | Confirms no restricted data were copied into the built image |
+| `apptainer build out.sif docker://<img>@sha256:...` | Exports a digest-pinned image as a single archival file |
+| `renv.lock` + `Dockerfile`, committed | The reproducibility guarantee; the pushed image is a cache, not the record |
+| Two-layer model | Environment is lead-governed and slow; packages are contributor-governed and fast, under the union model |
+| Union lockfile | Records every contributor's packages cumulatively; never shrinks; rebuild periodically, not on every install |
+| `rang::resolve(pkgs, snapshot_date = ...)` | Reconstructs a period-correct environment from a date when no lockfile survives |
+| Recorded run date | The single fact a retrospective recovery (`rang`) needs most |
+| Restricted data (@sec-restricted-deposit) | Code and environment, always; data only de-identified, synthetic, or controlled-access, per the agreement (habit 3) |
+| DOI deposit | Lifts a compendium from fragile-locatable (a forge URL) to durably findable; changes no rung on the ladder |
+| Honest claim at deposit | State the rung actually reached; the deposit outlives the memory of what was done (habit 7) |
+
 ## Further reading
 
 - Wilkinson and colleagues [@wilkinson2016] formulate
@@ -1078,6 +1844,12 @@ verify the machinery without paying for the study.
   predictor of an actually reproducible artifact, the
   evidence behind this book's insistence on honest
   disclosure over asserted reproducibility.
+- The NIH Data Management and Sharing Policy
+  [@nihdms2020] and NIH's principles for protecting
+  participant privacy [@nihprivacy2026] set out what a
+  funded project must plan for when its data come from
+  human participants; read them before writing a
+  data-availability statement for such a project.
 
 ## In conclusion
 
@@ -1144,3 +1916,9 @@ finishes this book with the judgment to name the level
 a given analysis has reached, across whatever archetype
 the work takes, and the honesty to claim no more, has
 learned the one thing the book most wished to teach.
+
+The introduction named seven habits that recur across
+every chapter since. They are worth gathering here, once
+more, as the book's last word rather than its first.
+
+{{< include _habits.qmd >}}

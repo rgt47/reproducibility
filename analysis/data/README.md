@@ -1,142 +1,135 @@
-# Data Directory
+# Data: the synthetic incident-diabetes cohort
+*2026-10-11 11:22 PDT*
 
-This directory contains all data files for the project, organized by processing stage.
+This directory holds the running example used throughout the
+book: a **synthetic** retrospective cohort of adults followed for
+incident type 2 diabetes. No row describes a real person. The
+file exists so that the book can teach data governance and data
+validation on a concrete extract without exposing anybody.
 
-## Directory Structure
+## Provenance
 
-```
-data/
-├── raw_data/           # Original, untouched data files
-├── derived_data/       # Cleaned and processed data files
-└── README.md          # This file - data documentation
-```
+- **File:** `raw_data/cohort_raw.csv`
+- **Generator:** `analysis/scripts/simulate_cohort.R`, with
+  `set.seed(20260908)` and `n <- 400`.
+- **Regenerate:** from the repository root, run
+  `Rscript analysis/scripts/simulate_cohort.R`. The script uses
+  base R only and overwrites the CSV.
+- **Size:** 338 rows (337 simulated records plus one planted
+  duplicate) and 10 columns. 400 people are screened and those
+  already meeting the diabetes diagnostic threshold at baseline
+  are excluded, so the cohort is genuinely at risk; see 'Baseline
+  exclusion' below.
+- **Checksum:** MD5 `c9c8e19173397c2c2b6ceb073b2ba1cf`, from
+  R 4.6.1 with the default generators (Mersenne-Twister,
+  Inversion, Rejection). Compare `md5sum raw_data/cohort_raw.csv`
+  (`md5` on macOS) after regeneration. A mismatch means the
+  generator, the seed, or the random-number defaults have
+  changed.
 
-## Raw Data (`raw_data/`)
+The file is committed deliberately (plan decision D7): a
+committed generator with a fixed seed has no external
+dependency, no link rot, and no access control, so any reader
+can rebuild the extract and check it against the committed copy.
 
-**Source**: Palmer Station Antarctica LTER and K. Gorman (CSV export)  
-**Date collected**: 2007-2009  
-**Collected by**: Dr. Kristen Gorman, Palmer Station Antarctica LTER
+## Columns
 
-| File | Description | Size | Format |
-|------|-------------|------|---------|
-| `penguins.csv` | Palmer Penguins dataset with morphometric measurements | ~8 KB | CSV |
+| Column | Type in CSV | Meaning |
+|---|---|---|
+| `mrn` | character | Fake medical record number, `MRN-` plus six digits |
+| `patient_name` | character | Fake name drawn from invented given and family name lists |
+| `dob` | date (ISO) | Fake date of birth, 1940 to 2000 |
+| `sex` | character | `F` or `M`, with a planted inconsistency (see below) |
+| `hba1c` | numeric | Baseline HbA1c, percent |
+| `bmi` | numeric | Baseline body mass index, kg/m^2 |
+| `enroll_date` | character | Enrollment date, 2019 to 2021, in two formats (see below) |
+| `age_at_enroll` | integer | Completed years from `dob` to `enroll_date` |
+| `incident_dm` | integer | 1 if incident diabetes was observed, 0 if not, `NA` if missing |
+| `followup_days` | integer | Days of follow-up, drawn from 180 to 1460 |
 
-### Important Notes:
-- **DO NOT MODIFY** files in `raw_data/` - these are the source of truth
-- Original data from palmerpenguins R package, exported as CSV
-- Missing values coded as: `NA`
-- Contains 344 observations of 8 variables
+The outcome is simulated from a logistic model in which risk
+rises with HbA1c and BMI; the coefficients are in the generator.
+`followup_days` is drawn independently of the outcome, so it
+documents how long each person was observed without driving
+whether they developed diabetes; a time-to-event analysis that
+uses `followup_days` as an exposure time, rather than the
+logistic model the book currently fits, is tracked as future
+work (plan Finding 17 and Phase 10).
 
-## Derived Data (`derived_data/`)
+## Baseline exclusion
 
-Processed data files created by analysis scripts. These can be regenerated from raw data.
+400 people are initially simulated; anyone whose baseline HbA1c
+meets the diabetes diagnostic threshold (6.5 percent or higher)
+is excluded before the outcome is drawn, leaving 337 people
+genuinely at risk of incident disease. An earlier version of this
+generator skipped this step, which left 63 of 401 rows already
+diabetic at baseline; that defect is fixed as of 2026-10-11 and
+no longer appears in the committed extract.
 
-| File | Source Script | Description | Created |
-|------|---------------|-------------|---------|
-| `penguins_subset.csv` | `scripts/01_data_preparation.R` | First 50 records with log-transformed body mass | [Date] |
+## Planted pathologies
 
-### Processing Steps Applied:
-- Selected first 50 records from original dataset
-- Created log-transformed body mass variable (`log_body_mass_g`)
-- Retained all original variables for reference
-- Filtered out any records with missing body mass values
+The extract is dirty on purpose, so that the data-validation
+tests in `inst/tinytest/test-cohort.R` have something to catch.
+Each defect is introduced by a numbered step in the generator:
 
-## Data Dictionary
+1. **Missing outcomes.** 32 values of `incident_dm` are `NA`.
+2. **Mixed date formats.** About one fifth of `enroll_date`
+   values are written day first (`%d/%m/%Y`); the rest are ISO
+   (`%Y-%m-%d`). The column is stored as character, as a CSV
+   export would be.
+3. **One duplicated record.** Row 7 is appended again as the
+   last row, with the same `mrn`. In the current draw, step 5
+   happens to recode row 7, so the two copies differ only in how
+   `sex` is written (`Female` and `F`), as a re-export might.
+4. **One implausible age.** Row 13 has `age_at_enroll` of 400.
+5. **Inconsistent sex coding.** 18 rows read `Female` instead of
+   `F`. The recoding is applied only to rows whose true value is
+   `F`, so that `clean_cohort()` in `R/cohort.R` recovers the
+   true sex for every row; the test file checks this by replaying
+   the generator up to step 5 and comparing.
 
-### Raw Penguin Data Fields (`penguins.csv`)
-| Column | Type | Description | Valid Values | Missing Code |
-|--------|------|-------------|--------------|--------------|
-| `species` | character | Penguin species | Adelie, Chinstrap, Gentoo | NA |
-| `island` | character | Island in Palmer Archipelago | Biscoe, Dream, Torgersen | NA |
-| `bill_length_mm` | numeric | Bill length in millimeters | 32.1-59.6 | NA |
-| `bill_depth_mm` | numeric | Bill depth in millimeters | 13.1-21.5 | NA |
-| `flipper_length_mm` | integer | Flipper length in millimeters | 172-231 | NA |
-| `body_mass_g` | integer | Body mass in grams | 2700-6300 | NA |
-| `sex` | character | Penguin sex | male, female | NA |
-| `year` | integer | Study year | 2007, 2008, 2009 | None |
+`clean_cohort()` repairs defects 2 to 5 and leaves missing
+outcomes in place, because dropping them is an analytic decision.
 
-### Derived Penguin Data Fields (`penguins_subset.csv`)
-| Column | Type | Description | Units | Range | Missing Code |
-|--------|------|-------------|-------|-------|--------------|
-| `species` | character | Penguin species (unchanged) | - | Adelie, Chinstrap, Gentoo | NA |
-| `island` | character | Island location (unchanged) | - | Biscoe, Dream, Torgersen | NA |
-| `bill_length_mm` | numeric | Bill length (unchanged) | mm | 32.1-59.6 | NA |
-| `bill_depth_mm` | numeric | Bill depth (unchanged) | mm | 13.1-21.5 | NA |
-| `flipper_length_mm` | integer | Flipper length (unchanged) | mm | 172-231 | NA |
-| `body_mass_g` | integer | Body mass (unchanged) | g | 2700-6300 | NA |
-| `log_body_mass_g` | numeric | Natural log of body mass | log(g) | ~7.9-8.7 | NA |
-| `sex` | character | Penguin sex (unchanged) | - | male, female | NA |
-| `year` | integer | Study year (unchanged) | - | 2007, 2008, 2009 | None |
+## Why the identifier columns exist
 
-## Data Quality Notes
+`mrn`, `patient_name`, and `dob` have the shape of protected
+health information but are invented: record numbers are random
+six-digit integers and names are random pairings from short
+invented lists. They exist so that the version-control and
+archiving chapters can show a file that, were it real, must
+never enter a repository's history, a deposit, or a prompt to a
+language model, and can do so without exposing anyone. No public
+dataset contains protected information, so this lesson requires
+an invented one.
 
-### Known Issues:
-- Original dataset has some missing values in `bill_length_mm`, `bill_depth_mm`, `flipper_length_mm`, and `sex` variables
-- Missing body mass values are excluded from subset (log transformation requires non-missing, positive values)
-- Subset represents only first 50 records, may not be representative of full dataset
+## Real projects must not do this
 
-### Quality Checks Performed:
-- Verified all body mass values are positive before log transformation
-- Confirmed subset maintains original data types and relationships
-- Validated log transformation produces reasonable values (7.9-8.7 range)
+In a real project the raw extract does **not** belong in the
+repository. Raw data that carries identifiers, or that is
+governed by a data use agreement, stays in the access-controlled
+location the agreement names. The repository holds the code that
+reads it, a `.gitignore` entry for `raw_data/`, a data dictionary,
+and, where useful, a synthetic stand-in such as this one. Once a
+file has been committed and pushed, deleting it does not remove
+it from the history; treat that as a data incident.
 
-## Example Usage
+## Test fixture mirror
 
-### Load and explore subset data:
-```r
-library(here)
-library(dplyr)
+`inst/testdata/cohort_raw.csv` is a byte-identical copy of
+this extract. It exists because `analysis/` is excluded from
+the built package (`.Rbuildignore`), so a test that only
+looks there finds nothing once the package is installed and
+silently reports zero assertions, which can be mistaken for
+a passing check. `inst/tinytest/test-cohort.R` falls back to
+this mirror as its last resort, so the data-validation tests
+still run under `R CMD check` and `tinytest::test_package()`;
+the two assertions that replay the generator's own code to
+recover ground truth still require the source tree and skip
+cleanly when only the mirror is available.
 
-# Load processed data
-penguins_subset <- read.csv(here("data", "derived_data", "penguins_subset.csv"))
+## Derived data
 
-# Quick summary
-summary(penguins_subset$log_body_mass_g)
-
-# Compare original vs log-transformed
-plot(penguins_subset$body_mass_g, penguins_subset$log_body_mass_g)
-```
-
-## Reproducibility
-
-To regenerate all derived data:
-```r
-source("scripts/01_data_preparation.R")
-```
-
-Example data preparation script:
-```r
-# scripts/01_data_preparation.R
-library(here)
-library(dplyr)
-
-# Read raw penguins data
-penguins_raw <- read.csv(here("data", "raw_data", "penguins.csv"))
-
-# Create subset with first 50 records and log transformation
-penguins_subset <- penguins_raw %>%
-  slice_head(n = 50) %>%                    # First 50 records
-  filter(!is.na(body_mass_g)) %>%           # Remove missing body mass
-  mutate(log_body_mass_g = log(body_mass_g)) # Add log transformation
-
-# Save processed data
-write.csv(penguins_subset, 
-         here("data", "derived_data", "penguins_subset.csv"),
-         row.names = FALSE)
-```
-
-## References
-
-- Gorman KB, Williams TD, Fraser WR (2014). Ecological sexual dimorphism and environmental variability within a community of Antarctic penguins (genus Pygoscelis). PLoS ONE 9(3):e90081. https://doi.org/10.1371/journal.pone.0090081
-- Horst AM, Hill AP, Gorman KB (2020). palmerpenguins: Palmer Archipelago (Antarctica) penguin data. R package version 0.1.0. https://allisonhorst.github.io/palmerpenguins/
-
-## Contact
-
-For questions about this data, contact:
-- **Original data source**: Dr. Kristen Gorman, kgorman@ucsd.edu  
-- **Data analyst**: [Your name, email]
-- **Project lead**: [Your name, email]
-
----
-*Last updated*: [YYYY-MM-DD]  
-*Generated by*: [Your name]
+`derived_data/` is empty in this repository. Cleaning happens in
+memory through `load_cohort()` and `clean_cohort()`; nothing
+derived from the extract is written to disk.

@@ -61,6 +61,8 @@ book:
     - references.qmd
 
   appendices:
+    - shell-primer.qmd
+    - setup-appendix.qmd
     - glossary.qmd
     - credits.qmd
     - colophon.qmd
@@ -106,6 +108,8 @@ format:
         \usepackage{fontspec}
         \usepackage{graphicx}
         \setmonofont{DejaVu Sans Mono}[Scale=0.9]
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,breaknonspaceingroup,commandchars=\\\{\}}
     template-partials:
       - partials/before-body.tex
 

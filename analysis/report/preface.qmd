@@ -106,6 +106,21 @@ same conclusion on new data. That is a vital matter, but a
 different one. We are careful throughout to keep the
 computational question of re-execution distinct from it.
 
+## Reading it in one quarter
+
+The book is written for a one-quarter, ten-week course, but
+not every chapter fits that schedule. The
+[Conventions](conventions.qmd) page marks a core path
+through the thirteen chapters and names
+the material a ten-week offering has no room for, Backends
+and Runtimes in full and the latter half of Automating the
+Analysis; an instructor teaching to that pace will find a
+week-by-week table built from the same core path in the
+instructor guide. A reader with more time, or working
+alone, can simply read the book in order; nothing marked
+optional is weaker material, only material a shorter term
+cannot fit.
+
 ## Chapter template
 
 Each content chapter follows the same sequence: learning

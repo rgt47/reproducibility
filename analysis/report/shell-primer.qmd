@@ -1,0 +1,276 @@
+# Shell Primer {#sec-shell .unnumbered}
+
+Every chapter in this book runs commands at a shell prompt:
+`docker build`, `git commit`, `Rscript`, `quarto render`. The
+book assumes a reader can already type these and read what
+comes back, but a 2026 syllabi comparison found that only 7 of
+30 comparable reproducibility courses actually teach the shell;
+the rest, like this book until now, assume it. This appendix is
+the missing prerequisite: enough of the Unix shell to follow
+every command shown elsewhere in the book, in the order those
+commands are needed, with nothing beyond that scope [the
+treatment below follows the scope and sequencing of
+@swcarpentry2024shell, a widely used open lesson covering the
+same ground].
+
+## Where you are: `pwd`, `ls`, `cd`
+
+A shell session has a current working directory, the folder
+commands act on by default. `pwd` ('print working directory')
+reports it as an absolute path, one that starts from the
+filesystem root and names every folder down to the current one:
+
+```bash
+pwd
+#> /Users/jane/project
+```
+
+`ls` lists the contents of the working directory, or of a path
+given as an argument:
+
+```bash
+ls
+#> analysis  R  DESCRIPTION  renv.lock
+ls analysis
+#> data  report
+```
+
+Plain `ls` hides entries whose name starts with a dot, such as
+`.gitignore` or the `.here` marker Chapter 5 relies on. `ls -a`
+('all') shows them, along with the two special entries every
+directory has, `.` for itself and `..` for its parent:
+
+```bash
+ls -a
+#> .  ..  .gitignore  .here  analysis  R  DESCRIPTION  renv.lock
+```
+
+`cd` ('change directory') moves the working directory. `cd
+analysis/report` moves into a subfolder named relative to where
+you already are; `cd /Users/jane/project` moves to an absolute
+path regardless of where you started; `cd ..` moves up one
+level, to the parent of the current directory; and `cd` with no
+argument returns to the home directory. `cd ../..` chains two
+steps up, and `cd ../report` moves up one level and back down
+into a sibling folder, without ever returning to the project
+root by name.
+
+The distinction between a relative path (`analysis/report`,
+`../data`) and an absolute path (`/Users/jane/project`) matters
+throughout this book. A relative path resolves differently
+depending on the working directory the shell happens to be in
+when the command runs, which is exactly the fragility Chapter 5
+examines in its section on project-oriented paths: a script
+that is correct when launched from the project root can be
+wrong when launched from `analysis/report/`, because a relative
+path has no fixed meaning on its own. `here::here()` fixes this
+inside R by computing an absolute path from a marker file, but
+the underlying hazard, that a relative path depends on where you
+started, is a shell concept first and an R concept second.
+
+## File operations: `cp`, `mv`, `rm`
+
+`cp source destination` copies a file, leaving the original in
+place. `mv source destination` moves or renames a file; the
+file at `source` no longer exists afterward, only the one at
+`destination` does. Both accept a directory as the destination
+to copy or move a file into it, keeping its name:
+
+```bash
+cp cohort_raw.csv backup/cohort_raw.csv
+mv draft.qmd final.qmd
+```
+
+A single asterisk, `*`, is a wildcard the shell expands to
+every matching file name before the command ever runs it:
+
+```bash
+ls *.csv
+#> cohort_raw.csv  cohort_clean.csv
+```
+
+`rm *.csv` therefore does not pass the literal text `*.csv` to
+`rm`; the shell expands it first, into the list of matching
+file names, and `rm` deletes each one named in that list. The
+distinction matters because the expansion happens silently
+before the command runs, so `*.csv` in the wrong directory
+deletes a different, unintended set of files, not nothing.
+
+`rm file` deletes a file. This is the one command in this
+section that deserves a direct warning: unlike `git`, the shell
+has no undo. A commit can be reverted, a branch can be
+recovered from the reflog, but a file removed with `rm` is
+simply gone; it does not pass through a trash folder, and no
+earlier chapter's recovery techniques apply to it. Running `rm
+*.csv` in the wrong directory, or `rm -rf` on the wrong path,
+destroys exactly what it is told to destroy, correctly and
+irreversibly. Treat `rm` as one-way, and prefer moving a file to
+an explicitly named `trash/` folder over deleting it outright
+when the cost of being wrong is high.
+
+## Redirection and pipes: `>`, `>>`, `|`
+
+Every command in a shell produces output on a stream called
+standard output, which prints to the terminal by default.
+Redirection sends that stream somewhere else instead. `>`
+writes standard output to a file, replacing the file's entire
+contents if it already exists:
+
+```bash
+echo 'first line' > out.txt
+cat out.txt
+#> first line
+echo 'second line' > out.txt
+cat out.txt
+#> second line
+```
+
+The second `>` above did not add a line; it overwrote the file,
+and `first line` is gone. `>>` appends instead of overwriting,
+adding its output after whatever is already in the file:
+
+```bash
+echo 'third line' >> out.txt
+cat out.txt
+#> second line
+#> third line
+```
+
+This single character, `>` versus `>>`, is the difference
+between replacing a log file and growing one, and it is worth
+checking deliberately rather than guessing, because the failure
+mode of using `>` by mistake is silent: the file exists, it
+has content, and nothing in the command's own output signals
+that the previous content was discarded.
+
+A pipe, `|`, sends one command's standard output directly into
+the next command's standard input, without an intermediate
+file:
+
+```bash
+printf 'apple\nbanana\ncherry\n' | grep an | wc -l
+#> 1
+```
+
+Here `printf` produces three lines, `grep an` keeps only the
+lines containing `an` (just `banana`), and `wc -l` counts the
+lines that survive, reporting 1. Chains like this appear
+throughout the book's CI configuration and `Makefile` targets,
+where a build step's output is filtered or counted without ever
+being written to disk.
+
+A command has a second stream, standard error, for diagnostics
+and failures, kept separate from standard output so that
+redirecting one does not silently swallow the other. `2>`
+redirects standard error alone:
+
+```bash
+cat does_not_exist.txt 2> err.txt
+cat err.txt
+#> cat: does_not_exist.txt: No such file or directory
+```
+
+Without the `2>`, that same error message prints to the
+terminal as usual; a plain `>` on its own redirects only
+standard output and leaves error messages visible, which is why
+a redirected command can still fail loudly even though its
+output file is empty.
+
+## Environment variables and `PATH`
+
+An environment variable is a named value the shell makes
+available to every program it runs, not just to the shell
+itself. `export NAME=value` sets one and marks it for export,
+meaning child processes, programs the shell launches, inherit
+it too:
+
+```bash
+export MYVAR=hello
+echo "$MYVAR"
+#> hello
+bash -c 'echo "in subshell: $MYVAR"'
+#> in subshell: hello
+```
+
+Without `export`, a variable assignment (`MYVAR=hello`, no
+`export`) is visible only to the current shell, not to programs
+it starts. This is the mechanism behind an instruction this book
+gives more than once without naming it: setting
+`RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` before an R session, as
+Chapter 12's continuous-integration examples do, works because
+the shell exports it into the environment that `R` or `Rscript`
+then reads when it starts. The variable is not an R setting; it
+is a value the shell handed to the R process at launch, and any
+process the shell starts can read it with its own language's
+equivalent of `echo $VAR` (`Sys.getenv('RENV_CONFIG_AUTOLOADER_ENABLED')`
+in R).
+
+`PATH` is a particular environment variable, a colon-separated
+list of directories the shell searches, in order, when it looks
+up a command name. Typing `Rscript` works because some directory
+in `PATH` contains a program named `Rscript`; `echo $PATH` shows
+the search list, and prepending a directory to it (`export
+PATH="$HOME/bin:$PATH"`) makes programs placed there runnable by
+name without typing their full path.
+
+## Permissions and the execute bit
+
+`ls -l` shows a permissions string before each file name, such
+as `-rw-r--r--`. The first character marks the entry type (`-`
+for a plain file, `d` for a directory); the next nine are three
+groups of three, read, write, and execute permission for the
+file's owner, its group, and everyone else.
+
+A script with no execute permission cannot be run directly, even
+if the file itself is readable text:
+
+```bash
+ls -l greet.sh
+#> -rw-r--r--  1 jane  staff  37 Oct 12 07:48 greet.sh
+./greet.sh
+#> permission denied: ./greet.sh
+```
+
+`chmod +x greet.sh` adds execute permission for the owner, the
+group, and others, after which the same command runs:
+
+```bash
+chmod +x greet.sh
+ls -l greet.sh
+#> -rwxr-xr-x  1 jane  staff  37 Oct 12 07:48 greet.sh
+./greet.sh
+#> hello from script
+```
+
+The `x` bit is what separates 'this file contains runnable
+instructions' from 'this file is runnable right now'; a shell
+script downloaded or generated by a template typically starts
+without it, and `chmod +x` is the usual fix.
+
+`chmod` also accepts a three-digit numeric mode, one digit per
+group (owner, group, other), each digit the sum of read (4),
+write (2), and execute (1) for that group. `chmod 644 greet.sh`
+sets `-rw-r--r--`, read and write for the owner and read-only
+for everyone else, with no execute bit anywhere; `chmod 755
+greet.sh` sets `-rwxr-xr-x`, the common mode for a script meant
+to be run by its owner and read and executed, but not modified,
+by anyone else. The symbolic form (`+x`, `-w`) changes one bit
+at a time without needing to know the rest; the numeric form
+sets all nine bits in one command.
+
+## A note on bash versus zsh
+
+The commands above work the same way in bash and in zsh, the
+two shells most readers will encounter, and this book's own
+examples assume bash-compatible syntax throughout. This matters
+on macOS specifically: Apple switched the default shell from
+bash to zsh in macOS Catalina (2019), so a reader following this
+book on a current Mac is, by default, typing these commands into
+zsh, not bash. The everyday commands in this appendix, `pwd`,
+`ls`, `cd`, `cp`, `mv`, `rm`, redirection, pipes, `export`,
+`chmod`, behave identically in both. Differences surface only in
+more advanced scripting, array syntax and certain glob options
+differ, which this book does not otherwise rely on. A reader who
+hits a syntax error on a book command that looks exactly as
+written should suspect a shell difference before suspecting a
+typo, and can check which shell is running with `echo $SHELL`.

@@ -15,33 +15,75 @@ Computational Science* (2011)
 ```
 :::
 
-## Learning objectives
+By the end of this chapter you will be able to look at
+any repository, your own or someone else's, and say
+exactly which of four rungs it has reached and what
+still stands between it and the next one, rather than
+reach for the unfalsifiable claim 'fully reproducible.'
 
-By the end of this chapter the reader should be able
-to:
+```{r}
+#| include: false
+# Loads the shared stack-diagram function so a later chunk's
+# `fig-alt` option can compute its text from the same call that
+# draws the figure, rather than risk the two drifting apart.
+pkgload::load_all('../..', quiet = TRUE)
+```
 
-- Enumerate the layers of the determinant stack on
-  which a computational result stands, from the
-  hardware at its base to the data at its top, and say
-  which layers common practice pins and which it
-  leaves to chance.
-- Place an analysis on the four-rung ladder of this
-  book (L0 locatable, L1 pinned packages, L2 pinned
+::: {.callout-note icon=false}
+## Before you start
+
+**Reading time.** About 45 minutes.
+
+**Prerequisites.** Chapter 1 (the introduction), for the
+first, informal pass at the determinant stack this
+chapter makes precise; no other chapter is assumed.
+Statistically, nothing beyond reading a regression
+output, a hazard ratio or an odds ratio with its
+confidence interval, is required. No R fluency beyond
+reading a short script is assumed; the chapter's own
+code chunks are simple enough to follow without having
+written R before.
+
+**By the end of this chapter you will be able to
+answer:**
+
+- Can you enumerate the layers of the determinant stack
+  on which a computational result stands, and say which
+  layers common practice pins and which it leaves to
+  chance?
+- Can you place an analysis on the four-rung ladder of
+  this book (L0 locatable, L1 pinned packages, L2 pinned
   environment, L3 verified) and name the artifact that
-  marks each transition.
-- Distinguish capturing reproducibility from
-  validating it, and explain why continuous
-  integration adds no new pinned layer.
-- Distinguish a result that is reproduced from one
-  that is replicated, and navigate the shifting use of
-  those two words across the literature.
-- Recognize that the ladder grades every archetype of
-  research compendium, a manuscript, an analysis
-  project, an R package, a simulation study, and a
-  blog, by the same means.
-- State plainly the level an analysis has reached, and
-  no higher, including the candid admission that no
-  present framework pins the whole stack.
+  marks each transition?
+- Can you distinguish capturing reproducibility from
+  validating it, and explain why continuous integration
+  adds no new pinned layer?
+- Can you distinguish a result that is reproduced from
+  one that is replicated, and navigate the shifting use
+  of those two words across the literature?
+- Can you state plainly the level an analysis has
+  reached, and no higher, including the candid
+  admission that no present framework pins the whole
+  stack?
+
+**Outline.**
+
+- Orientation: a result that silently changed on a
+  second machine.
+- The analyst's contribution: the three judgments no
+  tool automates.
+- The stack a result stands on: the nine layers, and
+  which rungs secure which.
+- The ladder: capture sets the level, validation
+  confirms it.
+- The cohort, continued: placing this book's own
+  compendium on the ladder, today.
+- Reproduced, replicated, and a warning about the words.
+- Two numbering schemes, and which this book uses.
+- The ladder grades every archetype.
+- No framework pins the whole stack.
+- Worked example: one analysis walked up all four rungs.
+:::
 
 ## Orientation
 
@@ -82,6 +124,29 @@ Before we can teach the climbing we need the ladder
 itself, together with the discipline of naming, without
 flinching, the rung one has actually reached.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what changed, and what did not
+
+In the registry-study story above, the code and the data
+were unchanged between the two runs. What changed, and
+why does calling the discrepancy 'statistical' mischaracterize it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A package the analysis depended on changed its default
+optimizer between the two runs, which sits on the
+package-versions layer of the determinant stack, not on
+the analysis code or the data. The statistics performed
+were identical on both machines; what differed was an
+unpinned determinant beneath them. Calling it
+'statistical' hides a computational failure behind a
+word that belongs to a different kind of disagreement,
+one about the data or the model, not about what version
+of software ran.
+:::
+:::
+
 ## The analyst's contribution
 
 Three judgments at the center of this chapter belong
@@ -117,6 +182,31 @@ them.
    must be closed by hand. Recognizing a live exposure
    from an inert one is a matter of subject-matter
    judgment.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: whose judgment is it?
+
+A vendor's reproducibility dashboard reports that a
+project has reached 'L2'. Which of the three judgments
+above, if any, has the dashboard made for the analyst,
+and which remain the analyst's alone?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The dashboard can detect the capture artifacts, a
+lockfile and a container recipe, and so can compute the
+rung mechanically; that much is automatable. It cannot
+decide whether L2 was the right level to target for this
+analysis given its stakes, and it cannot know which
+unpinned layers, among the numerical libraries, the RNG
+kind, or an external data source, are live exposures for
+this particular question rather than inert ones. Judging
+the match of effort to stakes, and naming what remains
+exposed, stay with the analyst no matter how good the
+dashboard is.
+:::
+:::
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -222,58 +312,13 @@ ladder at all.
 
 ```{r}
 #| label: fig-determinant-stack
-#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, colored by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder.'
-#| fig-alt: 'A horizontal bar chart of nine stacked layers, hardware at the bottom and intrinsic non-determinism at the top, each bar colored by the rung that secures it. Hardware, numerical libraries, and intrinsic non-determinism are colored as unpinned by any rung; the operating system, system libraries, and R runtime are colored L2; package versions are colored L1; analysis code and input data are colored L0, that is, locatable only. Session configuration is colored L2 but is noted as only partially pinned.'
+#| fig-cap: 'The determinant stack, from the hardware at the base to the data at the top, colored by the rung of the ladder that first secures each layer. Package versions are secured at L1, the operating system and R runtime at L2, and the analysis code and data are merely locatable at L0. The session-configuration layer is only partially pinned at L2: the locale and the time zone are fixed, but the RNG kind, the contrasts, and the number of printed digits are not. Three further layers, the hardware, the numerical libraries, and intrinsic non-determinism, are pinned by no rung of the capture ladder. Every chapter that draws this stack draws it with the same function, as the [Conventions](conventions.qmd) page explains, so that no two chapters can disagree about what a layer is called or which rung secures it.'
+#| fig-alt: !expr determinant_stack_alt(captures = determinant_layers()$layer)
 #| fig-width: 7
 #| fig-height: 4.4
-library(ggplot2)
-library(tibble)
-
-stack <- tibble::tibble(
-  layer = c('Hardware',
-            'Numerical libraries (BLAS, LAPACK)',
-            'Operating system, system libraries',
-            'R runtime',
-            'Package versions',
-            'Session configuration',
-            'Analysis code',
-            'Input data',
-            'Intrinsic non-determinism'),
-  height = 1:9,
-  secured = c('Unpinned by any rung',
-              'Unpinned by any rung',
-              'L2 pinned environment',
-              'L2 pinned environment',
-              'L1 pinned packages',
-              'L2 partially pinned',
-              'L0 locatable',
-              'L0 locatable',
-              'Unpinned by any rung')
-)
-
-stack$secured <- factor(
-  stack$secured,
-  levels = c('L0 locatable', 'L1 pinned packages',
-             'L2 pinned environment', 'L2 partially pinned',
-             'Unpinned by any rung'))
-
-ggplot(stack, aes(x = reorder(layer, height),
-                  y = 1, fill = secured)) +
-  geom_col(width = 0.9) +
-  coord_flip() +
-  scale_fill_manual(
-    values = c('L0 locatable' = '#6baed6',
-               'L1 pinned packages' = '#3182bd',
-               'L2 pinned environment' = '#08519c',
-               'L2 partially pinned' = '#fd8d3c',
-               'Unpinned by any rung' = '#737373'),
-    name = NULL) +
-  labs(x = NULL, y = NULL,
-       title = 'Which rung first secures each layer') +
-  theme_minimal(base_size = 11) +
-  theme(axis.text.x = element_blank(),
-        panel.grid = element_blank(),
-        legend.position = 'bottom')
+plot_determinant_stack(
+  captures = determinant_layers()$layer,
+  title = 'Which rung first secures each layer')
 ```
 
 Two features of the session-configuration layer deserve
@@ -372,12 +417,12 @@ ladder <- tibble::tibble(
     'Nothing computational; the source is under version control',
     'The exact version of every R package',
     'The operating system, the R runtime, and the system libraries as well',
-    'Nothing new; the recorded outputs have been regenerated and checked'),
+    'Nothing new; the recorded outputs are shown to regenerate within a stated tolerance from a clean rebuild'),
   `Primary artifact` = c(
     'A version-controlled repository',
     'A lockfile such as renv.lock',
     'A container image or a Nix environment',
-    'A passing verification run comparing regenerated outputs against a recorded baseline, re-run automatically by continuous integration'),
+    'A passing baseline test, run after a clean rebuild, that compares regenerated outputs with values recorded in a committed baseline file within a stated tolerance'),
   `Health-research reading` = c(
     'A reviewer can find the code but cannot yet rebuild it',
     'A colleague installs the same packages the analysis used',
@@ -386,6 +431,31 @@ ladder <- tibble::tibble(
 
 knitr::kable(ladder)
 ```
+
+L3 is the one rung that cannot be read off a file listing,
+so it is worth stating precisely, once. An analysis is at
+**L3, verified**, when its recorded outputs have been shown
+to regenerate within a stated tolerance from a clean
+rebuild, and the showing is done by a *baseline test*: a
+test that recomputes the reported quantities and compares
+them with values recorded in a committed baseline file,
+within a tolerance written into the test. A clean rebuild
+whose tests pass, but which compares nothing against a
+recorded baseline, demonstrates that the environment builds
+and the code runs; that is L2 confirmed, not L3. The
+tolerance matters because estimates are floating-point
+numbers, and exact equality would fail on harmless
+differences in the last digits while saying nothing about
+whether the substantive result moved. In the framework this
+book uses, `zzc verify --full` applies exactly this
+definition: it records L3 only when the image rebuilds, the
+test suite passes, and at least one baseline test (a file
+named `inst/tinytest/test-baseline*.R`) exists and ran;
+otherwise it reports the project as rebuilt and tested, L2,
+with no baseline comparison. Continuous integration that
+re-runs the check on every change keeps an L3 claim current,
+but it is the baseline comparison, not the automation, that
+earns the rung.
 
 The rungs are cumulative. An L2 analysis is also
 locatable and package-pinned; the label names the
@@ -413,14 +483,16 @@ artifact-review badges used by the ACM
 and several computing venues express a related ordering,
 from artifacts that are available, through artifacts
 evaluated as functional and then reusable, to results
-independently reproduced [@acm2020]. Our L3 is the
-analogue of the 'Results Reproduced' badge. The
-correspondence is close but not exact. The 'functional'
-and 'reusable' badges grade how well an artifact is
-documented and exercised rather than the
+independently reproduced [@acm2020]. The badges and the
+rungs grade different things and should not be equated.
+The 'functional' and 'reusable' badges grade how well an
+artifact is documented and exercised rather than the
 package-versus-environment pinning depth that separates
-L1 from L2, so the middle rows are analogies rather than
-alignments. The contribution of the L-scheme is not a new
+L1 from L2, and reaching L3 is not the same act as earning
+a venue's reproduction badge, which is awarded by
+reviewers under that venue's own policy; the reader who
+needs a badge should read the venue's current definition
+directly. The contribution of the L-scheme is not a new
 definition of reproducibility but a mapping of these
 graded views onto artifacts a tool can detect. The point
 is that the level of a repository can then be determined
@@ -506,11 +578,11 @@ carries the sense of the words from one of those older
 documents into a current one will be misled, silently and
 without any error to warn them, in exactly the manner of a
 shifted package default. This book fixes the meaning and
-states it once: throughout, L3 denotes the ACM 'Results
-Reproduced' sense, which now coincides with the National
-Academies reproducibility sense. That sense is that the
-captured analysis, rebuilt from its pinned definition and
-re-run, regenerates its own recorded outputs. It is
+states it once: throughout, 'reproduced' carries the
+National Academies sense, and L3 means that the captured
+analysis, rebuilt from its pinned definition and re-run,
+regenerates its own recorded outputs within a stated
+tolerance, as checked by a baseline test. It is
 deliberately not replication in the sense of an independent
 study on new data, which no software framework can supply.
 When the reader meets 'reproduced' or 'replicated' in a
@@ -518,21 +590,56 @@ journal's author instructions or a venue's badging policy,
 the first task is to determine which convention that
 document uses. The word alone does not tell them.
 
+::: {.callout-warning}
+## Another warning about the words: 'validation'
+
+This chapter uses 'validation' and the L3 label
+'verified' for a narrow act: confirming that a previously
+captured value still holds, as a baseline test does.
+Regulated industry work, pharmaceutical and other
+FDA-adjacent settings among them, attaches 'validation' to
+something larger: a formal, documented process confirming
+that a system is fit for its intended use, as under 21 CFR
+11.10(a) [@cfr21part11]. European regulators expect
+something comparable of a sponsor's analysis tools. A
+graduate moving into that kind of work will meet the
+regulated sense on arrival; this book's narrower one does
+not prepare them for the paperwork that comes with it.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which word, which sense?
+
+A manuscript's cover letter states that the authors
+'reproduced the primary finding in an independent
+cohort.' Under the National Academies convention this
+chapter follows, is that reproduction or replication, and
+why does the sentence as written risk being misread?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+It is replication: an independent cohort means new data,
+and the National Academies convention attaches
+'replicated' to a new study and 'reproduced' to re-running
+the original artifacts on the original data. The sentence
+risks being misread because a reader applying the current
+ACM badge sense would expect the word 'reproduced' to mean
+the authors re-ran their own code, not that a second
+cohort was collected; the fix is to write 'replicated',
+not 'reproduced', or to spell out which convention is
+meant.
+:::
+:::
+
 ::: {.callout-important}
 ## The honest level
 
-A reproducibility claim must be matched to the level
-actually reached, and never asserted above it. An
-analysis that carries a lockfile but no container is at
-L1, and a manuscript that describes it as 'fully
-reproducible' overstates by two rungs. The remedy is not
-modesty for its own sake but accuracy: state the rung,
-name the artifact that marks it, and name the layers left
-exposed. 'This analysis is pinned at L2, with the RNG kind
-fixed and the input data checksummed; it has not been
-verified under `zzc verify` and so is not claimed at L3'
-is a sentence that a reviewer can act upon. 'Fully
-reproducible' is not.
+This chapter defines the ladder rather than climbing it,
+and its one executed placement, the cohort compendium in
+'The cohort, continued' above, itself sits at no higher
+than L0 at the time of writing, with the lift to L1 and L2
+left to the chapters this ladder points toward.
 :::
 
 ## Two numbering schemes, and which this book uses
@@ -574,43 +681,70 @@ using the tool-adoption ramp, and the reader should read it
 as such and not conflate it with our L0 to L3. When we
 write a bare 'L2', we always mean the architectural rung.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: two scales, one word
+
+A student writes in a lab notebook, 'the project is at
+Level 2, so it is container-pinned.' Using this chapter's
+two scales, is the inference safe?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. On the tool-adoption ramp, Level 2 means `renv` has
+been added, which is the architectural chapter's L1, not
+its L2; the container arrives at the ramp's Level 3. The
+student's sentence silently mixed the two scales' numbers.
+The safe habit is to never write a bare number without
+saying which scale it belongs to, and this book's own
+convention, stated above, is to let an unqualified 'L2'
+always mean the architectural rung.
+:::
+:::
+
 ## The ladder grades every archetype
 
 It would be a mistake to read the ladder as a scale for
-manuscripts alone. A research compendium, as
-@sec-compendium develops in full, comes in several
-archetypes, and the ladder grades each of them by the same
-means and to the same rungs.
+manuscripts alone. @tbl-archetype-weight in @sec-compendium
+is the reference: a data-analysis project and a manuscript
+read the ladder the same way, an R package reaches L2 by
+`R CMD check` and L3 by a baseline on its function outputs,
+and a blog applies the ladder post by post. The one case
+that most needs stating here, because it is easy to miss,
+is the **simulation study**: its exposure on the
+session-configuration layer is acute, because its outputs
+are functions of the random-number stream, and an unseeded
+or wrongly seeded simulation can sit at L2, with a
+perfectly pinned environment, and still fail to reproduce.
+For this archetype the discipline of fixing the RNG kind and
+the seed is the difference between a nominal L2 and a real
+one. The ladder is a property of the determinant stack,
+which every archetype shares, and not of any particular
+directory layout.
 
-A **data-analysis project** and a **scholarly manuscript**
-are the familiar cases, and for them the reading is the
-one given above: the lockfile lifts to L1, and the container
-lifts to L2. The verification run, for a manuscript,
-re-renders the report and compares its figures and tables
-against a recorded baseline, and this is what lifts it to
-L3. An **R package**, by contrast, has no report to render.
-Its L3 verification is instead the passing of `R CMD check`
-and its test suite in a clean environment, rather than the
-regeneration of a manuscript, though the pinning of its
-packages and its environment is otherwise identical. A
-**simulation study** reaches the same rungs by the same
-artifacts, but its exposure on the session-configuration
-layer is acute, because its outputs are functions of the
-random-number stream. An unseeded or wrongly seeded
-simulation can sit at L2, with a perfectly pinned
-environment, and still fail to reproduce. For this
-archetype, the discipline of fixing the RNG kind and the
-seed is the difference between a nominal L2 and a real
-one. A **blog** renders many posts rather than one report.
-Its L3 verification is the successful rebuild of the whole
-site from its pinned environment, and the ladder applies
-post by post exactly as it applies to a single manuscript.
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: grading an R package
 
-The lesson is that the ladder is a property of the
-determinant stack, which every archetype shares, and not of
-any particular directory layout. A package or a blog reaches
-L2 by the same container that an analysis project does, and
-reaches L3 by a verification appropriate to what it produces.
+An R package has `renv.lock`, a Dockerfile, and a full
+`testthat`-style test suite that passes in a clean
+rebuild, but none of its tests compare a function's
+output with a value recorded earlier. What rung has it
+reached, and what is missing for the next one?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+It is at L2, pinned environment, confirmed: the lockfile
+and the container pin the packages and the environment,
+and the clean rebuild and passing test suite show the
+package builds and runs. It is not at L3, because none of
+its tests is a baseline test: passing means the code ran
+without error, not that a key function's output still
+matches a recorded reference value within a tolerance.
+Reaching L3 needs at least one test that compares a fixed
+input's output against a value committed earlier.
+:::
+:::
 
 ## No framework pins the whole stack
 
@@ -628,9 +762,10 @@ determinants: the operating system and system libraries
 versions (nominally, through the lockfile), the locale and
 time zone, and the source code. It leaves others to
 convention or to the base image: the random-number kind is
-not pinned by default, the BLAS and LAPACK threading regime
-is inherited from the base image and neither pinned nor
-documented, the integrity of external data is recorded by
+not pinned by default, the BLAS and LAPACK implementation
+is inherited from the base image (the generated Dockerfile
+sets `OMP_NUM_THREADS=1`, which fixes the thread count but
+not the library), the integrity of external data is recorded by
 provenance but not by checksum, and the fonts and the
 graphics device are pinned only for some profiles. These
 are not defects peculiar to one tool. They are the layers
@@ -642,6 +777,32 @@ explicit account of what is secured and what remains
 exposed. Reach plus honesty about the boundary of that
 reach is the standard this book holds every effort to,
 including the framework it teaches.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: naming the gap honestly
+
+A compendium reaches L3 by this chapter's definition: it
+rebuilds from clean, its tests pass, and a baseline test
+compares a reported hazard ratio with a recorded value
+within a stated tolerance. Is it now safe to call the
+analysis fully reproducible, with nothing left to
+disclose?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+No. L3 shows that the pinned definition regenerates the
+reported quantity within a stated tolerance; it does not
+pin the numerical libraries, the hardware, or intrinsic
+non-determinism, none of which any rung of the capture
+ladder secures. An honest statement at L3 still names
+these as exposed, for example that the bootstrap interval
+has not been checked for agreement across a different
+BLAS or CPU architecture. 'Fully reproducible' claims a
+closed stack that no present framework, including the one
+this book teaches, actually closes.
+:::
+:::
 
 ## Worked example
 
@@ -689,11 +850,13 @@ session-configuration exposure that L2 does not close by
 default.
 
 Finally the analyst adds a verification step, developed in
-@sec-verification, that rebuilds the image, re-runs
-`analysis.R`, and compares the regenerated `results.csv`
-against a recorded baseline. The first time it runs it
-passes, and a continuous-integration service re-runs it on
-every change. The folder is now at **L3, verified**: the
+@sec-verification, that rebuilds the image from clean,
+re-runs `analysis.R`, and runs a baseline test comparing the
+regenerated hazard ratio and its confidence limits with the
+values recorded in a committed baseline file, within a
+stated relative tolerance. It passes, and a
+continuous-integration service re-runs it on every change.
+The folder is now at **L3, verified**: the
 reported hazard ratio has been shown to regenerate, not
 merely asserted to. The honest reproducibility statement for
 the paper now writes itself, naming the rung, the artifacts,
@@ -701,18 +864,114 @@ and the one layer, the cross-architecture numerical
 determinism of the bootstrap, that remains outside the
 guarantee.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: which rung, which artifact
+
+The biostatistician's colleague restores the lockfile but
+skips the container, then reports the analysis as
+'reproducible.' Which rung has the colleague actually
+reached, and what single artifact would the colleague need
+to add to reach the next one?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Restoring the lockfile reaches L1, pinned packages, and no
+further: the operating system, the R runtime, and the
+system libraries the colleague's machine happens to carry
+are still whatever that machine provides, not what the
+original analyst used. Calling this 'reproducible' without
+qualification overstates by at least one rung. The single
+artifact that closes the gap to L2 is the container image,
+built from the same recipe the original analyst used, which
+pins the layers the lockfile cannot reach.
+:::
+:::
+
+## The cohort, continued
+
+The worked example above is a composite biostatistician.
+Here is the same placement exercise performed on this
+book's own running cohort compendium, as it actually
+stands at this point in the book.
+
+```{r}
+raw <- load_cohort('../data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
+nrow(raw)
+nrow(cohort)
+```
+
+The extract loads and cleans without error, and
+`clean_cohort()` drops the one duplicated `mrn` the
+Conventions page describes, leaving the row count shown
+above. That is already more than nothing: the code that
+produces it is checked into this repository's version
+control, so a reader of this book can find `R/cohort.R`
+and `analysis/data/raw_data/cohort_raw.csv` and read
+exactly what ran. By the ladder's own definition that is
+**L0, locatable**, and no further. At the time this
+chapter is being written, the repository carries no
+`renv.lock` and no Dockerfile; the package-versions layer
+and the environment layer are both left to whatever R
+and whatever packages happen to be installed on the
+machine that runs this chunk. The chapters on pinning
+packages (@sec-dependencies) and pinning the environment
+(@sec-containers) are exactly the chapters that will lift
+this same compendium to L1 and then L2, and the
+verification chapter (@sec-verification) is the one that
+can lift it to L3 once a baseline test compares a
+quantity computed from `cohort` against a value recorded
+today. The reader who returns to this cell after reading
+those later chapters is looking at the same two lines of
+code; what will have changed is everything underneath
+them.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the compendium's own rung
+
+Right now, before any later chapter's work has been
+applied, what rung does this book's own cohort compendium
+sit at, and what is the single artifact whose absence
+keeps it from the next rung?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+L0, locatable: the loading and cleaning code is under
+version control and a reader can find and read it, but
+nothing computational is pinned. The missing artifact for
+the next rung, L1, is a lockfile, `renv.lock`, recording
+the exact version of `tibble`, `utils`, and every other
+package the two functions call. Chapter 6 adds exactly
+that artifact; chapter 7 adds the container that closes
+the following gap to L2.
+:::
+:::
+
 ## Collaborating with an LLM
 
 A large language model is a capable assistant for reasoning
 about levels. But it is confident in a register that this
 chapter has just taught the reader to distrust, and its
-confidence is not calibrated to the honest level. The
-following triples illustrate productive prompts and the
-verification each demands.
+confidence is not calibrated to the honest level. Never
+paste or upload protected health information, identifiable
+or agreement-restricted data, or outputs derived from them,
+into a model unless the endpoint is approved by the
+reader's institution for that data; describe the structure
+instead. A directory listing can itself be identifying when
+file names carry site or participant codes, so list only
+the code, configuration, and lock files, and leave data
+directories out. A coding agent opened in the project reads
+every file it can reach, so it belongs only in projects
+whose data it is allowed to see. The following triples
+illustrate productive prompts and the verification each
+demands.
 
-**Prompt.** 'Here is my project directory listing. What
-reproducibility level has it reached on the L0 to L3 ladder,
-and what would it take to reach the next rung?'
+**Prompt.** 'Here is the listing of my project's code and
+configuration files, with the data directories omitted.
+What reproducibility level has it reached on the L0 to L3
+ladder, and what would it take to reach the next rung?'
 
 *Watch for.* The model will read the presence of a
 `renv.lock` as L1 and a `Dockerfile` as L2, which is the
@@ -727,9 +986,11 @@ been run green.
 itself, not its filename. For L1, check that the lockfile is
 in step with the code. For L2, check that the base image
 carries a digest and that the library is not shadowed by a
-bind mount. For L3, find an actual passing verification run.
-The presence of a file is capture asserted; a green run is
-validation observed.
+bind mount. For L3, find an actual passing run of a
+baseline test after a clean rebuild, and read the test to
+confirm it compares outputs with recorded values under a
+stated tolerance. The presence of a file is capture
+asserted; a green baseline run is validation observed.
 
 **Prompt.** 'Draft the reproducibility statement for my
 methods section.'
@@ -801,6 +1062,21 @@ inference at hand.
    this demonstrates and why a container alone would not
    protect against it.
 
+7. Run `cohort <- clean_cohort(load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
+   and report `nrow(cohort)`. State the single rung of the L0
+   to L3 ladder this book's own cohort compendium occupies
+   today, and name the one committed artifact, absent right
+   now, that would be needed to lift it to the next rung.
+
+8. This exercise returns to the computational-versus-statistical
+   distinction of Chapter 2 (@sec-crisis). That chapter shows
+   that the R 3.6.0 sampler correction changed the draws a
+   seeded `sample()` call produces, with identical code and an
+   identical seed. Name the exact layer of this chapter's
+   determinant stack responsible, and state which rung, if any,
+   of the L0 to L3 ladder would have protected a 2018 analysis
+   against this specific change.
+
 ## Solutions
 
 Attempt an exercise before expanding its solution. Two of
@@ -852,8 +1128,10 @@ equivalent exact version record? That is L1. Is there a
 container recipe, or another artifact pinning the runtime
 and the system libraries? That is L2. Is there evidence
 that the outputs were regenerated from the pinned
-definition, a CI log, a verification report, recorded output
-hashes? That is L3. Stop at the highest rung for which an
+definition and compared with recorded values within a
+stated tolerance, such as a baseline test and the CI log or
+verification report showing it pass? That is L3. A CI log
+that only shows the code ran is not enough. Stop at the highest rung for which an
 artifact is actually present.
 
 The reproducibility statement should then claim that rung
@@ -923,13 +1201,16 @@ architectural ladder grades locking and verification. A
 project can hold every tool in the list and have never
 rebuilt from its pinned definition, in which case it sits
 at L2 and is asserted rather than shown to reproduce. L3
-is the tool scale's Level 5 territory, and Level 4 is
-below it.
+requires a baseline comparison, which neither Level 4 nor
+Level 5 implies by itself: unit tests and continuous
+integration can both be present while nothing is compared
+with a recorded result.
 
-The artifact to inspect is the continuous-integration
-record: a log showing that the container was rebuilt from
-the recipe and the analysis re-run, and its outputs checked
-against recorded values. Absent that, the honest reading of
+The artifacts to inspect are a baseline test and the
+continuous-integration record: a log showing that the
+container was rebuilt from the recipe, the analysis re-run,
+and its outputs compared with recorded values within a
+stated tolerance. Absent that, the honest reading of
 'Level 4' is L2. Inspecting `renv.lock` and the Dockerfile
 tells you the capture artifacts exist; only the CI record
 tells you the capture works.
@@ -1017,6 +1298,65 @@ alongside the seed, and treat it as part of the analysis
 code rather than part of the environment.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Exercise 7
+
+```r
+cohort <- clean_cohort(
+  load_cohort('analysis/data/raw_data/cohort_raw.csv'))
+nrow(cohort)
+#> [1] 337
+```
+
+The compendium is at **L0, locatable**: the loading and
+cleaning functions, and the raw extract itself, are under
+version control and a reader can find and read them, but
+nothing computational beyond the source and the data is
+pinned. The missing artifact for the next rung, L1, is a
+lockfile, `renv.lock`, recording the exact version of
+`tibble`, `utils`, and every other package `load_cohort()`
+and `clean_cohort()` call; @sec-dependencies adds exactly
+that artifact.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 8
+
+The layer is the **R runtime** layer of this chapter's
+determinant stack, not the package-versions layer above it
+and not the analysis code below it: the sampler that turns
+a seed into a draw is a default behavior of R itself, and
+the change arrived with a new R release rather than with a
+new package version or an edited script.
+
+By this chapter's own stack figure, the R runtime is
+secured only at **L2, pinned environment**, the same rung
+that secures the operating system and system libraries; a
+lockfile at L1 fixes the packages but not the R version
+underneath them. So an L0 or L1 analysis in 2018 would
+have had no protection at all: whichever R release the
+reader happened to install would supply whichever sampler
+that release shipped. Only an analysis built from a
+container image pinned to an R release predating 3.6.0
+would have run the old sampler regardless of when it was
+restored, which is exactly what the L1-to-L2 step this
+chapter's worked example walks through buys that a
+lockfile alone does not.
+:::
+
+## Cheat sheet
+
+| Rung or rule | What it means or checks |
+|---|---|
+| L0 locatable | Source under version control; nothing computational pinned |
+| L1 pinned packages | A lockfile (`renv.lock`) records every package's exact version |
+| L2 pinned environment | A container or Nix recipe also fixes the OS, R runtime, and system libraries |
+| L3 verified | A baseline test compares regenerated outputs with recorded values, within a stated tolerance, after a clean rebuild |
+| Capture vs. validation | Capture (a lockfile, a container) sets the level; validation (CI, a baseline test) only confirms it (habit 5) |
+| Reproduced (this book) | Same code, same data, re-run; contrast replicated: a new study, new data |
+| `zzc verify --full` | Reports L3 only if the image rebuilds, tests pass, and a `test-baseline*.R` file ran |
+| Honest statement | Name the rung, the artifact, and what remains exposed; never claim 'fully reproducible' (motto) |
+
 ## Further reading
 
 - @nas2019 is the National Academies consensus report that
@@ -1033,7 +1373,8 @@ code rather than part of the environment.
   replicating a finding.
 - @acm2020 documents the artifact-review badges whose
   'available', 'functional', 'reusable', and 'reproduced'
-  ordering our ladder maps onto; read it alongside @nas2019 to
+  ordering grades related but different things from our
+  ladder; read it alongside @nas2019 to
   see how the 2020 revision aligns the two vocabularies.
 - @turingway2022 crosses the reproducibility axis with a
   what-varies axis, same or different data against same or

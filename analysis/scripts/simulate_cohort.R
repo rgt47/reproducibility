@@ -18,7 +18,11 @@
 
 set.seed(20260908)
 
+# 400 people are screened; those already meeting the HbA1c
+# diagnostic threshold for diabetes (6.5 percent) at baseline are
+# excluded below, so that the cohort is at risk of incident disease.
 n <- 400
+hba1c_dx <- 6.5
 
 # A fake identifier scheme that looks like a medical record number,
 # and names drawn from a small invented list. Neither corresponds to
@@ -54,7 +58,13 @@ cohort$age_at_enroll <- as.integer(
   floor(as.numeric(cohort$enroll_date - cohort$dob) / 365.25)
 )
 
-# Incident diabetes, with risk rising in HbA1c and BMI.
+cohort <- cohort[cohort$hba1c < hba1c_dx, ]
+rownames(cohort) <- NULL
+n <- nrow(cohort)
+
+# Incident diabetes, with risk rising in HbA1c and BMI. Restricting to
+# cohort$hba1c < hba1c_dx above keeps this a model of genuinely
+# incident disease rather than prevalent disease relabeled as new.
 lp <- -8.5 + 0.9 * cohort$hba1c + 0.06 * cohort$bmi
 cohort$incident_dm <- rbinom(n, 1, plogis(lp))
 cohort$followup_days <- sample(180:1460, n, replace = TRUE)
@@ -80,7 +90,12 @@ cohort <- rbind(cohort, cohort[7, ])
 cohort$age_at_enroll[13] <- 400L
 
 # 5. Inconsistent coding of one categorical, from a merged export.
-cohort$sex[sample(nrow(cohort), 18)] <- 'Female'
+#    Only rows that are truly 'F' are recoded, so that cleaning can
+#    recover the true value; recoding any row would turn some males
+#    into 'Female' and destroy the ground truth the tests rely on.
+#    Indexing into f_rows avoids sample()'s scalar trap.
+f_rows <- which(cohort$sex == 'F')
+cohort$sex[f_rows[sample(length(f_rows), 18)]] <- 'Female'
 
 out_dir <- file.path('analysis', 'data', 'raw_data')
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
