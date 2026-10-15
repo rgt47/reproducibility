@@ -316,12 +316,9 @@ so that the build recipe stays pinned end to end. The SIF
 file Apptainer produces gets its own content hash,
 computed over the converted single-file format, not the
 same bytes as the Docker digest, so the two checksums
-differ even though the SIF was built deterministically
-from that one pinned digest (expert knowledge, not
-checked against Apptainer's own documentation here:
-Apptainer/Singularity does not claim to preserve the
-OCI digest identity into the SIF's own hash; what is
-pinned is the input to the conversion, not the output's
+differ (Apptainer does not claim to preserve the OCI
+digest identity into the SIF hash; what is pinned is
+the input to the conversion, not the output's
 checksum):
 
 ```bash
@@ -849,14 +846,14 @@ reauthored. That pins the recipe, not the run.
 ::: {.callout-warning}
 ## Pitfall
 
-By default, Apptainer mounts the user's `$HOME` and passes
-most host environment variables through into the container
-(expert knowledge, not verified here against a primary
-source), so a stray `R_LIBS_USER` or locale variable set on
-the cluster login node can still leak into execution even
-though the image itself did not change. The `--cleanenv`
-flag drops the inherited environment and isolates `$HOME`,
-and is the right default for a verified run.
+By default, Apptainer binds the user's `$HOME` as a
+read-write mount and passes host environment variables
+through into the container [@apptainer_bind], so a stray
+`R_LIBS_USER` or locale variable set on the cluster login
+node can still leak into execution even though the image
+itself did not change. The `--cleanenv` flag drops the
+inherited environment and isolates `$HOME`, and is the
+right default for a verified run.
 :::
 
 ```bash
