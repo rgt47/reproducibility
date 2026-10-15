@@ -14,17 +14,17 @@ it: look for `tar_make()` under T and `renv::restore()` under R.
 
 ## A {.unnumbered .unlisted}
 
-**`apptainer build`.** Converts an OCI image into a single SIF
+[]{#gloss-apptainer-build}**`apptainer build`.** Converts an OCI image into a single SIF
 file that runs without root, which is what makes it acceptable
 on a shared cluster and depositable as an archival artifact.
 (@sec-backends)
 
-**Apptainer (formerly Singularity).** A container runtime built
+[]{#gloss-apptainer}**Apptainer (formerly Singularity).** A container runtime built
 for shared high-performance computing, where users are not
 administrators. Its SIF format is a single checksummable file.
 (@sec-backends)
 
-**Archetype.** The kind of research object a compendium is (data
+[]{#gloss-archetype}**Archetype.** The kind of research object a compendium is (data
 analysis, manuscript, package, simulation study, or blog), which
 varies the layout and the gates but not the underlying
 machinery. (@sec-compendium)
@@ -32,85 +32,85 @@ machinery. (@sec-compendium)
 
 ## B {.unnumbered .unlisted}
 
-**Backend.** The mechanism that supplies the environment. Docker
+[]{#gloss-backend}**Backend.** The mechanism that supplies the environment. Docker
 is the container backend; Nix is a container-free backend that
 declares the environment directly. (@sec-backends)
 
-**Base image.** The starting image a recipe builds on, named on
+[]{#gloss-base-image}**Base image.** The starting image a recipe builds on, named on
 the `FROM` line. Here, a Rocker image providing a fixed R
 version on a fixed operating system. (@sec-containers)
 
-**Baseline test.** A test, in a file named `test-baseline-*.R`,
+[]{#gloss-baseline-test}**Baseline test.** A test, in a file named `test-baseline-*.R`,
 that recomputes key outputs and compares them with values
 recorded in an earlier session and committed, using
 `expect_equal()` with a stated tolerance. It is the evidence L3
 requires. (@sec-testing, @sec-verification)
 
-**Binder.** A service that builds an environment from a public
+[]{#gloss-binder}**Binder.** A service that builds an environment from a public
 repository and serves it in a browser, so a reviewer can run an
 analysis with nothing installed locally. (@sec-backends)
 
-**Branch.** A movable name for a line of development. The
+[]{#gloss-branch}**Branch.** A movable name for a line of development. The
 default branch is conventionally called `main`.
 (@sec-version-control)
 
 
 ## C {.unnumbered .unlisted}
 
-**Capture.** Fixing an input so that it cannot drift: writing a
+[]{#gloss-capture}**Capture.** Fixing an input so that it cannot drift: writing a
 lockfile, building a container image. Capture sets the
 reproducibility level. (@sec-levels)
 
-**Checksum.** A short fingerprint, computed from a file's or an
+[]{#gloss-checksum}**Checksum.** A short fingerprint, computed from a file's or an
 object's bytes by a hash function such as SHA-256, with the
 property that any change to the input, however small, changes
 the fingerprint. A stored checksum lets a later run detect that
 an input has been altered. (@sec-verification)
 
-**Code chunk.** A block of executable code embedded in a
+[]{#gloss-code-chunk}**Code chunk.** A block of executable code embedded in a
 literate document, delimited from the prose, whose output is
 inserted into the rendered document at the chunk's position.
 (@sec-literate)
 
-**CODECHECK.** A scheme in which an independent person re-runs a
+[]{#gloss-codecheck}**CODECHECK.** A scheme in which an independent person re-runs a
 submitted analysis and certifies the result, catching the class
 of failure where the author's own checks encode the author's own
 assumptions. (@sec-verification)
 
-**Codespaces and devcontainers.** A specification, and a hosted
+[]{#gloss-codespaces-and-devcontainers}**Codespaces and devcontainers.** A specification, and a hosted
 implementation of it, for describing the development environment
 an editor should open a project inside. (@sec-backends)
 
-**Commit.** A recorded snapshot of the tracked files at one
+[]{#gloss-commit}**Commit.** A recorded snapshot of the tracked files at one
 moment, carrying an author, a timestamp, a message, and an
 immutable identifier (a *hash*). The atomic unit of history.
 (@sec-version-control)
 
-**Computational reproducibility.** Obtaining the same numerical
+[]{#gloss-computational-reproducibility}**Computational reproducibility.** Obtaining the same numerical
 results from the same data and the same code, on another machine
 or at a later time. (@sec-crisis)
 
-**conda and pixi.** Cross-language environment managers that pin
+[]{#gloss-conda-and-pixi}**conda and pixi.** Cross-language environment managers that pin
 R and Python packages without a container. `pixi` is the option
 that reproduces natively on Windows. (@sec-backends)
 
-**Container.** A running instance of an image. One image can
+[]{#gloss-container}**Container.** A running instance of an image. One image can
 start many containers; each begins from the same frozen
 filesystem. (@sec-containers)
 
-**Container image.** A packaged environment, built from a
+[]{#gloss-container-image}**Container image.** A packaged environment, built from a
 recipe, that carries the operating system, the system libraries,
 and the language runtime, and runs identically wherever a
 container runtime runs. (@sec-levels)
 
-**Controlled access.** A deposit arrangement in which a
+[]{#gloss-controlled-access}**Controlled access.** A deposit arrangement in which a
 repository holds restricted data behind an approval process,
 rather than releasing it on request, so that a data-use
 agreement and the terms a participant consented to are
 honored while the record stays discoverable and citable.
 (@sec-archiving)
 
-**Continuous integration (CI).** A hosted service that, on every
+[]{#gloss-continuous-integration}**Continuous integration (CI).** A hosted service that, on every
 committed change to a repository, checks out the code onto a
 fresh virtual machine, rebuilds the project, and runs a defined
 set of checks, reporting success or failure automatically.
@@ -119,36 +119,36 @@ set of checks, reporting success or failure automatically.
 
 ## D {.unnumbered .unlisted}
 
-**Daemon.** A background system service that runs continuously
+[]{#gloss-daemon}**Daemon.** A background system service that runs continuously
 with elevated privilege. Docker relies on one; Podman and
 Apptainer do not, which is why they run without administrative
 rights. (@sec-backends)
 
-**Data-availability statement.** A sentence in a manuscript,
+[]{#gloss-data-availability-statement}**Data-availability statement.** A sentence in a manuscript,
 or in its compendium, naming where the data behind its
 results can be obtained: an open deposit's DOI, the name and
 access route of a controlled-access repository, or the
 terms under which the data cannot be shared at all.
 (@sec-archiving)
 
-**Data-validation test.** A check on the data itself rather than
+[]{#gloss-data-validation-test}**Data-validation test.** A check on the data itself rather than
 the code: that a value lies in a plausible range, that no
 impossible ages appear, that the expected columns are present.
 (@sec-testing)
 
-**Dated snapshot.** A view of a repository frozen as it stood on
+[]{#gloss-dated-snapshot}**Dated snapshot.** A view of a repository frozen as it stood on
 a particular calendar day, so that an install run today and one
 run next year fetch the same versions. (@sec-dependencies,
 @sec-containers)
 
-**Dependency graph.** The graph whose nodes are the steps and
+[]{#gloss-dependency-graph}**Dependency graph.** The graph whose nodes are the steps and
 whose edges record that one step consumes what another produces.
 A valid pipeline's graph is a *directed acyclic graph* (DAG):
 directed because inputs flow to outputs, and acyclic because a
 step cannot, directly or transitively, depend on its own output.
 (@sec-pipelines)
 
-**Dependency-manifest gate.** A CI check that enforces the
+[]{#gloss-dependency-manifest-gate}**Dependency-manifest gate.** A CI check that enforces the
 dependency invariant of @sec-dependencies. In its strict,
 R-package form it requires every package the code uses to be
 declared in `DESCRIPTION` and pinned in `renv.lock`. For a
@@ -158,52 +158,52 @@ packages present in `renv.lock` but not in `DESCRIPTION`, it
 enforces the weaker inclusion that every package the code uses
 is pinned in `renv.lock`. (@sec-verification)
 
-**`DESCRIPTION`.** The human-authored file that declares a
+[]{#gloss-description}**`DESCRIPTION`.** The human-authored file that declares a
 project's direct dependencies by role (`Imports`, `Suggests`,
 `Depends`), with optional version floors. (@sec-dependencies)
 
-**Determinant stack.** The layered set of things a computational
+[]{#gloss-determinant-stack}**Determinant stack.** The layered set of things a computational
 result depends upon, from the hardware at the base through the
 environment and the packages to the analysis code and the data
 at the top. A layer is 'pinned' when it has been fixed to a
 recorded value. (@sec-crisis, @sec-levels)
 
-**Determinism (of a render).** The property that rendering the
+[]{#gloss-determinism}**Determinism (of a render).** The property that rendering the
 same source under the same environment produces a byte-for-byte
 identical output file. A rendered PDF is usually not
 deterministic in this strict sense, for reasons developed below.
 (@sec-literate)
 
-**`digest()`.** Computes a content hash of an R object. Used to
+[]{#gloss-digest}**`digest()`.** Computes a content hash of an R object. Used to
 verify that a regenerated computational output matches a
 recorded one, on objects rather than on rendered documents.
 (@sec-verification)
 
-**Docker.** The most widely used container platform, and one
+[]{#gloss-docker}**Docker.** The most widely used container platform, and one
 instrument for reaching a pinned environment rather than a
 synonym for reproducibility. (@sec-containers)
 
-**`docker build` and `docker run`.** Build an image from a
+[]{#gloss-docker-build-and-docker-run}**`docker build` and `docker run`.** Build an image from a
 recipe and start a container from an image. The image is
 durable; the container is ephemeral. (@sec-containers)
 
-**Docker Hub and GHCR.** Container registries. A pushed image is
+[]{#gloss-docker-hub-and-ghcr}**Docker Hub and GHCR.** Container registries. A pushed image is
 a cache and not the record: the committed recipe is the record,
 because a registry can delete, rate-limit, or repoint what it
 holds. (@sec-archiving)
 
-**`docker pull` and `docker inspect`.** Fetch an image and read
+[]{#gloss-docker-pull-and-docker-inspect}**`docker pull` and `docker inspect`.** Fetch an image and read
 its metadata, including the content digest that a reproducible
 recipe pins instead of a tag. (@sec-containers)
 
 
 ## E {.unnumbered .unlisted}
 
-**Expectation.** A single assertion, such as
+[]{#gloss-expectation}**Expectation.** A single assertion, such as
 `expect_equal(actual, expected)`, that passes or fails.
 (@sec-testing)
 
-**`expect_equal()` and the other expectations.** The assertions
+[]{#gloss-expect-equal-and-the-other-expectations}**`expect_equal()` and the other expectations.** The assertions
 of `tinytest`. A file of bare, top-level expectation calls is a
 complete test file, and `expect_inherits()`, `expect_true()`,
 and `expect_error()` cover most of the rest. (@sec-testing)
@@ -211,12 +211,12 @@ and `expect_error()` cover most of the rest. (@sec-testing)
 
 ## F {.unnumbered .unlisted}
 
-**FAIR.** A set of principles holding that a research object
+[]{#gloss-fair}**FAIR.** A set of principles holding that a research object
 should be Findable, Accessible, Interoperable, and Reusable,
 formulated for data and later adapted for research software.
 (@sec-archiving)
 
-**Forge.** A platform that hosts a version-controlled repository
+[]{#gloss-forge}**Forge.** A platform that hosts a version-controlled repository
 and runs its continuous integration. GitHub and GitLab are the
 two principal forges; GitLab is frequently self-hosted by
 universities. (@sec-verification, @sec-archiving)
@@ -224,94 +224,94 @@ universities. (@sec-verification, @sec-archiving)
 
 ## G {.unnumbered .unlisted}
 
-**`git add`.** Stages changes for the next commit. Staging is
+[]{#gloss-git-add}**`git add`.** Stages changes for the next commit. Staging is
 what lets a commit be one idea rather than a snapshot of
 whatever is on disk. (@sec-version-control)
 
-**`git clone`, `push`, `pull`, `fetch`.** Move history between a
+[]{#gloss-git-clone-push-pull-fetch}**`git clone`, `push`, `pull`, `fetch`.** Move history between a
 local repository and a remote. A remote serves backup,
 distribution, and collaboration, which are three purposes worth
 keeping separate. (@sec-version-control)
 
-**`git commit`.** Records the staged changes with a message and
+[]{#gloss-git-commit}**`git commit`.** Records the staged changes with a message and
 an immutable identifier. The atomic unit of the history.
 (@sec-version-control)
 
-**`git diff`.** Shows what changed, between the working tree and
+[]{#gloss-git-diff}**`git diff`.** Shows what changed, between the working tree and
 the index, or between any two commits. (@sec-version-control)
 
-**`git filter-repo`.** Rewrites history to remove content,
+[]{#gloss-git-filter-repo}**`git filter-repo`.** Rewrites history to remove content,
 producing new hashes for every commit from the offending one
 forward. The tool of last resort after protected data has been
 committed, and no substitute for notifying whoever is
 responsible for the data. (@sec-version-control)
 
-**`git init`.** Creates a repository in a directory. The
+[]{#gloss-git-init}**`git init`.** Creates a repository in a directory. The
 `.gitignore` should be written before the first commit, not
 after. (@sec-version-control)
 
-**`git log` and `git show`.** Read the history: `log` lists
+[]{#gloss-git-log-and-git-show}**`git log` and `git show`.** Read the history: `log` lists
 commits, `show` prints one commit's message and its diff
 together. (@sec-version-control)
 
-**`git switch` and `git merge`.** Move between branches and
+[]{#gloss-git-switch-and-git-merge}**`git switch` and `git merge`.** Move between branches and
 rejoin them. A merge commit is the only commit with two parents,
 which is what records that two lines of work came back together.
 (@sec-version-control)
 
-**`git tag`.** Marks a particular commit permanently, such as
+[]{#gloss-git-tag}**`git tag`.** Marks a particular commit permanently, such as
 the state of an analysis at submission. Cheap to place and
 expensive to omit. (@sec-version-control)
 
-**GitHub Actions.** GitHub's continuous-integration service,
+[]{#gloss-github-actions}**GitHub Actions.** GitHub's continuous-integration service,
 configured by YAML workflow files under `.github/workflows/`.
 (@sec-verification)
 
-**GitHub and GitLab.** The two principal forges. GitLab is
+[]{#gloss-github-and-gitlab}**GitHub and GitLab.** The two principal forges. GitLab is
 frequently self-hosted by institutions that forbid pushing to a
 public forge, and a compendium's reproducibility machinery
 should be portable between them. (@sec-archiving)
 
-**`.gitignore`.** A file listing path patterns that git should
+[]{#gloss-gitignore}**`.gitignore`.** A file listing path patterns that git should
 not track, used to keep derived outputs, large data, and,
 critically, sensitive files out of the history.
 (@sec-version-control)
 
-**`groundhog.library()`.** Loads a package as it stood on a
+[]{#gloss-groundhog-library}**`groundhog.library()`.** Loads a package as it stood on a
 given date, a lighter alternative to a lockfile that
 reconstructs by date rather than by record. (@sec-dependencies)
 
 
 ## I {.unnumbered .unlisted}
 
-**Image.** A frozen, read-only filesystem together with
+[]{#gloss-image}**Image.** A frozen, read-only filesystem together with
 metadata, bundling an operating system, R, a set of packages,
 and configuration. It is analogous to a snapshot of a fully
 installed computer, packaged so it can be shipped.
 (@sec-containers)
 
-**Input-addressed.** Identified by a hash of the build inputs
+[]{#gloss-input-addressed}**Input-addressed.** Identified by a hash of the build inputs
 rather than by a mutable name, so that a reference cannot
 silently point at different content later. (@sec-backends)
 
-**`install.packages()`.** Base R's installer. Pointed at a live
+[]{#gloss-install-packages}**`install.packages()`.** Base R's installer. Pointed at a live
 repository it resolves 'the current version' to whatever is
 current on the day it runs, which is why a reproducible recipe
 points it at a dated snapshot or replaces it with a lockfile
 restore. (@sec-dependencies)
 
-**Integration test.** A check that several components behave
+[]{#gloss-integration-test}**Integration test.** A check that several components behave
 correctly when composed into a pipeline, from raw input to final
 result. (@sec-testing)
 
-**Invalidation.** The act of marking a target out of date
+[]{#gloss-invalidation}**Invalidation.** The act of marking a target out of date
 because something it depends on, a file, an upstream target, a
 function, or a package, has changed. (@sec-pipelines)
 
 
 ## K {.unnumbered .unlisted}
 
-**`knitr` and Sweave.** The engines that execute code inside a
+[]{#gloss-knitr-and-sweave}**`knitr` and Sweave.** The engines that execute code inside a
 literate document. Sweave came first; `knitr` superseded it and
 underlies both R Markdown and Quarto's R support.
 (@sec-literate)
@@ -319,38 +319,38 @@ underlies both R Markdown and Quarto's R support.
 
 ## L {.unnumbered .unlisted}
 
-**Landmine.** A pattern in a document that makes the render
+[]{#gloss-landmine}**Landmine.** A pattern in a document that makes the render
 succeed for its author and fail for a later reader, by reaching
 outside the captured and committed material. (@sec-literate)
 
-**LaTeX and TinyTeX.** The typesetting system a PDF render
+[]{#gloss-latex-and-tinytex}**LaTeX and TinyTeX.** The typesetting system a PDF render
 requires, and a small R-managed distribution of it. Belongs in
 the image rather than assumed on the host. (@sec-literate)
 
-**Layer.** Each instruction in an image's recipe produces one
+[]{#gloss-layer}**Layer.** Each instruction in an image's recipe produces one
 filesystem layer. An image is the stack of its layers, and
 identical layers are shared and cached across images.
 (@sec-containers)
 
-**`library()` and `require()`.** The two calls that attach a
+[]{#gloss-library-and-require}**`library()` and `require()`.** The two calls that attach a
 package to the current session. Both are scanned when a
 dependency check derives what the code uses, so a package loaded
 this way must be declared and pinned. (@sec-dependencies)
 
-**Linting.** Static analysis of source code for stylistic and
+[]{#gloss-linting}**Linting.** Static analysis of source code for stylistic and
 likely-error patterns, performed by `lintr`, without running the
 code. (@sec-testing)
 
-**`lintr` and `styler`.** Static analysis and automatic
+[]{#gloss-lintr-and-styler}**`lintr` and `styler`.** Static analysis and automatic
 reformatting for R source. Legibility is a validation feature:
 code nobody can read is code nobody can check. (@sec-testing)
 
-**Literate programming.** Writing narrative prose and executable
+[]{#gloss-literate-programming}**Literate programming.** Writing narrative prose and executable
 code together in one source document, so the document is at once
 the program and its explanation. The term is Knuth's.
 (@sec-literate)
 
-**Lockfile.** A machine-generated file, `renv.lock`, recording
+[]{#gloss-lockfile}**Lockfile.** A machine-generated file, `renv.lock`, recording
 the R version, the package repositories, and the exact version
 and source of every package the project uses, with metadata
 copied from each package's `DESCRIPTION`. (@sec-levels,
@@ -359,7 +359,7 @@ copied from each package's `DESCRIPTION`. (@sec-levels,
 
 ## M {.unnumbered .unlisted}
 
-**`make`.** Rebuilds targets whose modification time is older
+[]{#gloss-make}**`make`.** Rebuilds targets whose modification time is older
 than a prerequisite's. Conservative in one direction and
 unreliable in the other: it will rebuild what did not need it,
 and miss a change that leaves timestamps untouched.
@@ -368,7 +368,7 @@ and miss a change that leaves timestamps untouched.
 
 ## N {.unnumbered .unlisted}
 
-**Nix and Guix.** Declarative package managers that pin an
+[]{#gloss-nix-and-guix}**Nix and Guix.** Declarative package managers that pin an
 entire dependency graph, from the system libraries upward, to a
 single revision. They reach a pinned environment from a recipe
 rather than from a built artifact. (@sec-backends)
@@ -376,107 +376,107 @@ rather than from a built artifact. (@sec-backends)
 
 ## O {.unnumbered .unlisted}
 
-**OCI image.** An image built to the Open Container Initiative
+[]{#gloss-oci-image}**OCI image.** An image built to the Open Container Initiative
 specification, the common format that Docker, Podman, and
 Apptainer can all consume. A Docker image is an OCI image.
 (@sec-backends)
 
-**OCI tarball or SIF file.** A container image exported as a
+[]{#gloss-oci-tarball-or-sif-file}**OCI tarball or SIF file.** A container image exported as a
 single file, checksummable and depositable as an archival
 artifact. An OCI image is exported as a tar archive, whereas SIF
 is the self-contained single-file format used by the Apptainer
 runtime. (@sec-archiving)
 
-**Oracle.** The source of independent truth a test compares
+[]{#gloss-oracle}**Oracle.** The source of independent truth a test compares
 against; the known correct answer. (@sec-testing)
 
 
 ## P {.unnumbered .unlisted}
 
-**Package churn (code rot).** The gradual breakage of
+[]{#gloss-package-churn}**Package churn (code rot).** The gradual breakage of
 once-working code as the packages beneath it are updated over
 time. (@sec-crisis)
 
-**Package library.** The directory into which R installs
+[]{#gloss-package-library}**Package library.** The directory into which R installs
 packages. A project-local library belongs to one project rather
 than being shared across all of a user's work.
 (@sec-dependencies)
 
-**Package record.** The `renv.lock` entry for one package: its
+[]{#gloss-package-record}**Package record.** The `renv.lock` entry for one package: its
 name, exact version, and source, plus fields such as `Imports`
 and `License` copied from its `DESCRIPTION`. It contains no
 checksum of the package's files; the `Hash` field written by
 `renv` before 1.1.0 was a fingerprint of `DESCRIPTION` fields
 used to key the package cache. (@sec-dependencies)
 
-**Package repository.** A server, such as CRAN or the Posit
+[]{#gloss-package-repository}**Package repository.** A server, such as CRAN or the Posit
 Package Manager, from which packages are installed.
 (@sec-dependencies)
 
-**`pacman::p_load()`.** Loads packages and installs any that are
+[]{#gloss-pacman-p-load}**`pacman::p_load()`.** Loads packages and installs any that are
 missing. Convenient and a landmine in a sealed document: it
 reaches the network at render time and pins nothing.
 (@sec-literate)
 
-**pandoc.** The document converter a render invokes after the
+[]{#gloss-pandoc}**pandoc.** The document converter a render invokes after the
 code has run, turning the executed markdown into the requested
 output format. (@sec-literate)
 
-**Persistent identifier (DOI).** A durable, resolvable name for
+[]{#gloss-persistent-identifier}**Persistent identifier (DOI).** A durable, resolvable name for
 a deposited artifact, such as a Digital Object Identifier, that
 continues to resolve even if the artifact moves.
 (@sec-archiving)
 
-**Pipeline.** An analysis expressed as a set of steps, each
+[]{#gloss-pipeline}**Pipeline.** An analysis expressed as a set of steps, each
 declaring its inputs and outputs, so that the whole can be
 re-executed by a single command that runs the steps in
 dependency order. (@sec-pipelines)
 
-**`pkg::fun()`.** A namespaced call, which uses a function
+[]{#gloss-pkg-fun}**`pkg::fun()`.** A namespaced call, which uses a function
 without attaching its package. It still creates a dependency,
 and a scanner that looked only for `library()` would miss it.
 (@sec-dependencies)
 
-**Podman.** A daemonless, rootless container runtime that runs
+[]{#gloss-podman}**Podman.** A daemonless, rootless container runtime that runs
 the same images as Docker. The usual answer where Docker Desktop
 licensing is a constraint. (@sec-backends)
 
-**`podman run`.** Starts a container without a root daemon,
+[]{#gloss-podman-run}**`podman run`.** Starts a container without a root daemon,
 consuming the same image format Docker produces. Swapping the
 runtime changes the launcher and not the reproducibility level.
 (@sec-backends)
 
-**Posit Package Manager.** A package repository that serves
+[]{#gloss-posit-package-manager}**Posit Package Manager.** A package repository that serves
 dated snapshots and prebuilt binaries, so that an install run
 today and one run next year fetch the same versions.
 (@sec-dependencies)
 
-**`precommit`.** Runs checks before a commit is recorded,
+[]{#gloss-precommit}**`precommit`.** Runs checks before a commit is recorded,
 keeping trivia out of the history. It can be skipped, which is
 why it complements rather than replaces continuous integration.
 (@sec-testing)
 
-**Pre-commit hook.** A script that git runs automatically before
+[]{#gloss-pre-commit-hook}**Pre-commit hook.** A script that git runs automatically before
 a commit is recorded, used here to run the linter and the styler
 as a gate. (@sec-testing)
 
-**Prerequisite.** In Make, an input a target depends on. If any
+[]{#gloss-prerequisite}**Prerequisite.** In Make, an input a target depends on. If any
 prerequisite is newer than the target, the target is out of
 date. (@sec-pipelines)
 
-**Profile.** The base-image bundle a project is built from, such
+[]{#gloss-profile}**Profile.** The base-image bundle a project is built from, such
 as `minimal`, `tidyverse`, `rstudio`, or `publishing`. It
 selects the `FROM` image. (@sec-containers)
 
-**Progressive disclosure.** The property that one layout
+[]{#gloss-progressive-disclosure}**Progressive disclosure.** The property that one layout
 supports a project's evolution from one archetype to another
 with no reorganization. (@sec-compendium)
 
-**Pull request (merge request).** A proposal, made on the
+[]{#gloss-pull-request}**Pull request (merge request).** A proposal, made on the
 remote, to merge one branch or fork into another, reviewed
 before it is accepted. (@sec-version-control)
 
-**Purely functional package manager.** A package manager, such
+[]{#gloss-purely-functional-package-manager}**Purely functional package manager.** A package manager, such
 as Nix, in which the installed result is a deterministic
 function of the declared inputs, so that the same declaration
 yields a deterministic, reproducible environment.
@@ -485,11 +485,11 @@ yields a deterministic, reproducible environment.
 
 ## Q {.unnumbered .unlisted}
 
-**Quarto and R Markdown.** The literate-document systems this
+[]{#gloss-quarto-and-r-markdown}**Quarto and R Markdown.** The literate-document systems this
 book uses: prose and executable code in one source, rendered to
 HTML, PDF, and other formats. (@sec-literate)
 
-**`quarto render`.** Executes a document's code and produces its
+[]{#gloss-quarto-render}**`quarto render`.** Executes a document's code and produces its
 output formats. With `freeze` configured it may replay a cache
 instead of executing, which is why a gate that must exercise the
 code has to clear the cache first. (@sec-literate)
@@ -497,255 +497,255 @@ code has to clear the cache first. (@sec-literate)
 
 ## R {.unnumbered .unlisted}
 
-**`R CMD check`.** The standard R command that builds a package,
+[]{#gloss-r-cmd-check}**`R CMD check`.** The standard R command that builds a package,
 runs its tests, and applies dozens of standardized checks; here
 it serves as an integrity gate on the compendium's package skin
 (`R/`, the tests, `DESCRIPTION`). It does not check `analysis/`,
 which `.Rbuildignore` excludes from the build.
 (@sec-compendium, @sec-verification)
 
-**`rang`, `groundhog`, and `capsule`.** Lighter alternatives to
+[]{#gloss-rang-groundhog-and-capsule}**`rang`, `groundhog`, and `capsule`.** Lighter alternatives to
 a lockfile that reconstruct a package set from a date. Useful
 when no lockfile survives, and an approximation rather than a
 record. (@sec-dependencies)
 
-**Raw versus derived data.** Immutable original inputs versus
+[]{#gloss-raw-versus-derived-data}**Raw versus derived data.** Immutable original inputs versus
 the processed datasets regenerated from them by code.
 (@sec-compendium)
 
-**Recipe (or command).** The shell command Make runs to bring a
+[]{#gloss-recipe}**Recipe (or command).** The shell command Make runs to bring a
 target up to date from its prerequisites. (@sec-pipelines)
 
-**Registry.** A server that stores and distributes container
+[]{#gloss-registry}**Registry.** A server that stores and distributes container
 images, from which collaborators pull a pre-built environment.
 GitHub Container Registry (GHCR) and Docker Hub are the two in
 common use. (@sec-archiving)
 
-**Remote.** A copy of the repository hosted elsewhere, typically
+[]{#gloss-remote}**Remote.** A copy of the repository hosted elsewhere, typically
 on GitHub or GitLab, used for backup, distribution, and
 collaboration. `origin` is the conventional name of the primary
 remote. (@sec-version-control)
 
-**`remotes::install_github()`.** Installs a package from a git
+[]{#gloss-remotes-install-github}**`remotes::install_github()`.** Installs a package from a git
 repository rather than a package repository. Reproducible only
 if pinned to a commit or a tag. (@sec-archiving)
 
-**Render gate.** A CI check that re-renders the compendium's
+[]{#gloss-render-gate}**Render gate.** A CI check that re-renders the compendium's
 report (an R Markdown or Quarto document) from source and fails
 the build if the render errors. (@sec-compendium,
 @sec-verification)
 
-**Render (verb and noun).** To execute a literate source
+[]{#gloss-render}**Render (verb and noun).** To execute a literate source
 document and produce a finished output file (HTML, PDF, Word);
 and the resulting file itself. (@sec-literate)
 
-**Rendering toolchain.** The programs a render invokes behind
+[]{#gloss-rendering-toolchain}**Rendering toolchain.** The programs a render invokes behind
 the scenes: `knitr` or the Quarto engine to run the code,
 `pandoc` to convert the result, and, for PDF, a LaTeX
 distribution to typeset it. (@sec-literate)
 
-**`renv` and `packrat`.** The current and superseded R
+[]{#gloss-renv-and-packrat}**`renv` and `packrat`.** The current and superseded R
 dependency managers. Both pair a project-local library with a
 lockfile; `renv` rebuilt the interface around a small set of
 verbs and a shared cache. (@sec-dependencies)
 
-**`renv::init()`.** Creates a project-local library and
+[]{#gloss-renv-init}**`renv::init()`.** Creates a project-local library and
 lockfile, taking a project from unpinned to pinned packages.
 (@sec-dependencies)
 
-**`renv::restore()`.** Reads the lockfile and installs the
+[]{#gloss-renv-restore}**`renv::restore()`.** Reads the lockfile and installs the
 recorded versions into the library. The command a collaborator
 runs on a fresh clone. (@sec-dependencies)
 
-**`renv::snapshot()`.** Reads the library and writes what it
+[]{#gloss-renv-snapshot}**`renv::snapshot()`.** Reads the library and writes what it
 finds into the lockfile. Snapshot writes; restore reads.
 (@sec-dependencies)
 
-**`renv::status()`.** Reports disagreement between the library
+[]{#gloss-renv-status}**`renv::status()`.** Reports disagreement between the library
 and the lockfile, and is the first diagnostic when a restore
 appears not to have worked. (@sec-dependencies)
 
-**Replicability.** Obtaining consistent findings from a new
+[]{#gloss-replicability}**Replicability.** Obtaining consistent findings from a new
 study, with new data, aimed at the same question. (@sec-crisis)
 
-**Repository (repo).** A directory whose contents and full
+[]{#gloss-repository}**Repository (repo).** A directory whose contents and full
 history git tracks, held in a hidden `.git` subdirectory. A
 *clone* is a complete copy of a repository, history and all.
 (@sec-version-control)
 
-**Reproduced.** Obtaining the same computational result by
+[]{#gloss-reproduced}**Reproduced.** Obtaining the same computational result by
 re-executing the same code on the same data. Contrast
 **replicated**, obtaining a consistent finding from a new study
 with new data. (@sec-levels)
 
-**Reproducibility test.** A check that a recorded computational
+[]{#gloss-reproducibility-test}**Reproducibility test.** A check that a recorded computational
 result regenerates. The form that can fail is the baseline test;
 two runs in one session do not qualify. (@sec-testing)
 
-**Research compendium.** A single self-describing directory
+[]{#gloss-research-compendium}**Research compendium.** A single self-describing directory
 bundling the code, data, prose, and environment record of an
 analysis, organized by convention so that it can be located and
 re-run. (@sec-crisis, @sec-compendium)
 
-**Restore.** The reverse act of reading the lockfile and
+[]{#gloss-restore}**Restore.** The reverse act of reading the lockfile and
 reinstalling exactly the packages it records.
 (@sec-dependencies)
 
-**`rix::rix()`.** Generates a `default.nix` pinning an R
+[]{#gloss-rix-rix}**`rix::rix()`.** Generates a `default.nix` pinning an R
 version, a package set, and the `nixpkgs` revision that
 determines everything beneath them. (@sec-backends)
 
-**RNG kind.** The random-number algorithm in force, set by
+[]{#gloss-rng-kind}**RNG kind.** The random-number algorithm in force, set by
 `RNGkind()`. Two runs with the same seed but a different kind
 draw different numbers. (@sec-levels)
 
-**`RNGkind()`.** Selects the random-number generator algorithm.
+[]{#gloss-rngkind}**`RNGkind()`.** Selects the random-number generator algorithm.
 Its `sample.kind` default changed in R 3.6.0, so the same seed
 draws different numbers under different R versions unless the
 kind is recorded. (@sec-crisis)
 
-**Robustness.** Reaching the same qualitative conclusion from
+[]{#gloss-robustness}**Robustness.** Reaching the same qualitative conclusion from
 the same data under different but defensible analytical choices.
 (@sec-crisis)
 
-**Rocker.** The community project that publishes the standard R
+[]{#gloss-rocker}**Rocker.** The community project that publishes the standard R
 Docker images. (@sec-containers)
 
-**Rootless.** Able to run under an ordinary user account,
+[]{#gloss-rootless}**Rootless.** Able to run under an ordinary user account,
 without the `root` superuser privilege. A requirement on shared
 clusters, where users are not administrators. (@sec-backends)
 
-**R-package skin.** The minimal set of files (`DESCRIPTION`,
+[]{#gloss-r-package-skin}**R-package skin.** The minimal set of files (`DESCRIPTION`,
 `NAMESPACE`, an `R/` directory) that makes a directory a valid R
 package, and therefore checkable by the R build tools.
 (@sec-compendium)
 
-**Runner.** The fresh, ephemeral machine (usually a virtual
+[]{#gloss-runner}**Runner.** The fresh, ephemeral machine (usually a virtual
 machine or a container) on which the CI service executes the
 workflow. It is discarded after the run, so nothing persists
 between runs except what the workflow explicitly restores.
 (@sec-verification)
 
-**Runtime.** The program that runs a container image: Docker,
+[]{#gloss-runtime}**Runtime.** The program that runs a container image: Docker,
 Podman, or Apptainer. The runtime is interchangeable when the
 image is a standard OCI image. (@sec-backends)
 
 
 ## S {.unnumbered .unlisted}
 
-**`saveRDS()` and `readRDS()`.** Write and read a single R
+[]{#gloss-saverds-and-readrds}**`saveRDS()` and `readRDS()`.** Write and read a single R
 object to a file. The ordinary way to record the baseline that a
 reproducibility test compares against. (@sec-testing)
 
-**Sealed render.** A document in which every reported number and
+[]{#gloss-sealed-render}**Sealed render.** A document in which every reported number and
 figure is regenerated from the code that produces it on each
 build, so the prose cannot drift from the analysis.
 (@sec-literate)
 
-**Seed and RNG kind.** The seed (`set.seed`) is the fixed
+[]{#gloss-seed-and-rng-kind}**Seed and RNG kind.** The seed (`set.seed`) is the fixed
 starting point that makes a random draw repeatable; the RNG kind
 is the generator algorithm that turns that seed into numbers,
 and its default has changed across R versions. (@sec-crisis)
 
-**`sessionInfo()`.** Reports the R version, platform, and
+[]{#gloss-sessioninfo}**`sessionInfo()`.** Reports the R version, platform, and
 attached packages of the current session. A record of what ran,
 not a mechanism for making it run again. (@sec-levels)
 
-**`set.seed()`.** Fixes the starting point of the random-number
+[]{#gloss-set-seed}**`set.seed()`.** Fixes the starting point of the random-number
 stream so that a stochastic result repeats. Necessary but not
 sufficient: the generator algorithm must be fixed as well.
 (@sec-crisis)
 
-**SIF.** The Singularity Image Format, a single-file archive
+[]{#gloss-sif}**SIF.** The Singularity Image Format, a single-file archive
 that Apptainer produces from an image, suitable for depositing
 alongside a compendium. (@sec-backends)
 
-**Silent default.** A behavior that software applies unless told
+[]{#gloss-silent-default}**Silent default.** A behavior that software applies unless told
 otherwise, and that can change between software versions without
 any error or warning to the analyst. (@sec-crisis)
 
-**Snakemake and Nextflow.** Pipeline tools from the
+[]{#gloss-snakemake-and-nextflow}**Snakemake and Nextflow.** Pipeline tools from the
 bioinformatics community, language-agnostic and built for
 cluster execution. (@sec-pipelines)
 
-**Snapshot.** The act of scanning a project, resolving the
+[]{#gloss-snapshot}**Snapshot.** The act of scanning a project, resolving the
 versions currently installed, and writing them into the
 lockfile. (@sec-dependencies)
 
-**`SOURCE_DATE_EPOCH`.** A conventional environment variable,
+[]{#gloss-source-date-epoch}**`SOURCE_DATE_EPOCH`.** A conventional environment variable,
 honored by many document tools, that fixes the timestamp a build
 embeds, so that two builds do not differ merely because they ran
 at different moments. (@sec-literate)
 
-**Staging area (index).** The set of changes marked, with `git
+[]{#gloss-staging-area}**Staging area (index).** The set of changes marked, with `git
 add`, to go into the next commit. Staging lets a commit hold a
 chosen subset of the current changes. (@sec-version-control)
 
-**Staleness (out-of-date).** The condition of a target whose
+[]{#gloss-staleness}**Staleness (out-of-date).** The condition of a target whose
 inputs have changed since it was last built, so that its stored
 output no longer reflects its inputs. (@sec-pipelines)
 
-**Styling.** Automatic reformatting of source code to a
+[]{#gloss-styling}**Styling.** Automatic reformatting of source code to a
 consistent layout, performed by `styler`. (@sec-testing)
 
 
 ## T {.unnumbered .unlisted}
 
-**Tag.** A permanent, human-readable name for one specific
+[]{#gloss-tag}**Tag.** A permanent, human-readable name for one specific
 commit, used to mark a milestone such as a manuscript
 submission. (@sec-version-control)
 
-**Tag and digest.** A tag, such as `rocker/tidyverse:4.4.0`, is
+[]{#gloss-tag-and-digest}**Tag and digest.** A tag, such as `rocker/tidyverse:4.4.0`, is
 a human-readable pointer that may later be repointed. A digest,
 `@sha256:...`, is an immutable hash of the image's exact
 content. The same digest always denotes byte-identical bytes.
 (@sec-containers)
 
-**Target.** A single step in the pipeline, together with the
+[]{#gloss-target}**Target.** A single step in the pipeline, together with the
 output it produces. The word is shared by Make and `targets`,
 with a shift of emphasis: for Make a target is a file, for
 `targets` it is more often an R object. (@sec-pipelines)
 
-**`targets`.** A function-oriented pipeline tool for R that
+[]{#gloss-targets}**`targets`.** A function-oriented pipeline tool for R that
 hashes function bodies and R objects rather than file
 timestamps, so it detects changes a Makefile can miss.
 (@sec-pipelines)
 
-**`tar_make()`.** Runs a `targets` pipeline, rebuilding only the
+[]{#gloss-tar-make}**`tar_make()`.** Runs a `targets` pipeline, rebuilding only the
 targets that are out of date and everything downstream of them.
 (@sec-pipelines)
 
-**`tar_outdated()`.** Reports which targets `tar_make()` would
+[]{#gloss-tar-outdated}**`tar_outdated()`.** Reports which targets `tar_make()` would
 rebuild, without rebuilding them. The way to check a prediction
 about the dependency graph before paying for it.
 (@sec-pipelines)
 
-**`tar_target()`.** Declares one node of a `targets` pipeline: a
+[]{#gloss-tar-target}**`tar_target()`.** Declares one node of a `targets` pipeline: a
 name, the expression that computes it, and optionally a format
 such as `file`. (@sec-pipelines)
 
-**`tar_visnetwork()`.** Draws the pipeline's dependency graph,
+[]{#gloss-tar-visnetwork}**`tar_visnetwork()`.** Draws the pipeline's dependency graph,
 derived from the code rather than from a hand-maintained
 declaration. (@sec-pipelines)
 
-**The Five Pillars.** The five artifacts a compendium manages,
+[]{#gloss-the-five-pillars}**The Five Pillars.** The five artifacts a compendium manages,
 one per capture point: the `Dockerfile`, `renv.lock`,
 `.Rprofile`, the source code, and the data. (@sec-compendium)
 
-**The level ladder (L0 to L3).** The four-rung scale, L0
+[]{#gloss-the-level-ladder}**The level ladder (L0 to L3).** The four-rung scale, L0
 locatable, L1 pinned packages, L2 pinned environment, L3
 verified, used throughout this book to grade how far down the
 stack an analysis has been secured. (@sec-levels)
 
-**`tinytest`.** A lightweight, zero-dependency R testing
+[]{#gloss-tinytest}**`tinytest`.** A lightweight, zero-dependency R testing
 framework in which a test file is a plain script of bare,
 top-level expectation calls [@vanderloo2020]. (@sec-testing)
 
-**`tinytest` and `testthat`.** R testing frameworks. `tinytest`
+[]{#gloss-tinytest-and-testthat}**`tinytest` and `testthat`.** R testing frameworks. `tinytest`
 has no dependencies and its test files are plain scripts of bare
 expectations, which is why this book uses it. (@sec-testing)
 
-**Two-layer team model.** A division of a project into a
+[]{#gloss-two-layer-team-model}**Two-layer team model.** A division of a project into a
 slow-moving environment layer, fixed once by a team lead, and a
 fast-moving package layer, extended by every contributor.
 (@sec-archiving)
@@ -753,16 +753,16 @@ fast-moving package layer, extended by every contributor.
 
 ## U {.unnumbered .unlisted}
 
-**Union model.** The rule that the project lockfile records the
+[]{#gloss-union-model}**Union model.** The rule that the project lockfile records the
 union of every package any contributor has installed, so that a
 rebuilt image carries what the whole team needs, not only what
 one member used. (@sec-archiving)
 
-**Unit test.** A focused check that one small piece of code,
+[]{#gloss-unit-test}**Unit test.** A focused check that one small piece of code,
 typically a single function, behaves as intended on known
 inputs. (@sec-testing)
 
-**Up-to-date (skippable).** The condition of a target whose
+[]{#gloss-up-to-date}**Up-to-date (skippable).** The condition of a target whose
 inputs have not changed since it was last built, so that
 rebuilding it would reproduce the stored output and can be
 skipped. (@sec-pipelines)
@@ -770,11 +770,11 @@ skipped. (@sec-pipelines)
 
 ## V {.unnumbered .unlisted}
 
-**Validation.** Confirming that the captured inputs actually
+[]{#gloss-validation}**Validation.** Confirming that the captured inputs actually
 suffice, by rebuilding and re-running. Validation does not pin
 anything new; it checks. (@sec-levels)
 
-**Verification.** Rebuilding the compendium's environment from
+[]{#gloss-verification}**Verification.** Rebuilding the compendium's environment from
 its recipe, re-running the analysis in it, and comparing the
 regenerated outputs with a committed baseline, within a stated
 tolerance, by means of a baseline test; passing it is what the
@@ -783,28 +783,28 @@ ladder calls level L3. (@sec-verification)
 
 ## W {.unnumbered .unlisted}
 
-**Workflow.** The file, written in YAML, that tells the CI
+[]{#gloss-workflow}**Workflow.** The file, written in YAML, that tells the CI
 service what to do: which events trigger it, what environment to
 run in, and what commands to execute. On GitHub these files live
 under `.github/workflows/`; on GitLab the single file is
 `.gitlab-ci.yml`. (@sec-verification)
 
-**Working tree.** The ordinary files in the repository directory
+[]{#gloss-working-tree}**Working tree.** The ordinary files in the repository directory
 as they currently exist on disk, as opposed to the versions
 recorded in the history. (@sec-version-control)
 
 
 ## Z {.unnumbered .unlisted}
 
-**Zenodo.** A general-purpose research repository, operated at
+[]{#gloss-zenodo}**Zenodo.** A general-purpose research repository, operated at
 CERN, that mints a DOI for any deposited file set.
 (@sec-archiving)
 
-**zzcollab.** The framework this book uses to compose the
+[]{#gloss-zzcollab}**zzcollab.** The framework this book uses to compose the
 reproducibility tools into one system, organized around the
 levels ladder. (@sec-compendium)
 
-**`zzrenvcheck::check_packages()`.** Checks the dependency triad
+[]{#gloss-zzrenvcheck-check-packages}**`zzrenvcheck::check_packages()`.** Checks the dependency triad
 and can repair it, writing a missing package into `DESCRIPTION`
 and injecting a resolved entry into the lockfile.
 (@sec-dependencies)

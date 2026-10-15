@@ -45,10 +45,12 @@ honest and sufficient choice.
 Running underneath the ladder is a distinction we return
 to constantly: the difference between capturing
 reproducibility and validating it. Pinning packages and
-pinning the environment are acts of capture; they fix the
+pinning the environment are acts of
+[capture](glossary.qmd#gloss-capture); they fix the
 inputs and thereby set the level. Continuous integration,
 dependency checking, and verification are acts of
-validation; they confirm the level without capturing
+[validation](glossary.qmd#gloss-validation); they confirm
+the level without capturing
 anything new. Conflating the two is the source of a great
 deal of false confidence, and separating them is the
 source of a great deal of clarity.
@@ -80,18 +82,21 @@ The twelve chapters proceed in four parts.
    locatable analysis; and the research compendium as the
    unit of reproducible work.
 2. **Capturing the environment.** Pinning packages with a
-   lockfile; pinning the operating system and runtime with
-   a container; and the alternatives, from Nix to Podman to
-   the high-performance-computing runtime Apptainer.
+   [lockfile](glossary.qmd#gloss-lockfile); pinning the
+   operating system and runtime with a
+   [container](glossary.qmd#gloss-container); and the
+   alternatives, from Nix to Podman to the
+   high-performance-computing runtime Apptainer.
 3. **Validation.** Literate programming and the rendered
    report; automating the analysis with make and targets;
-   testing and code quality; and continuous integration and
+   testing and code quality; and
+   [continuous integration](glossary.qmd#gloss-continuous-integration) and
    computational verification, the acts that turn a claimed
    level into a confirmed one.
 4. **Collaboration and stewardship.** Sharing a compendium
    with a team and with the world: the team environment
    model, package registries, archival deposition, and the
-   FAIR principles.
+   [FAIR](glossary.qmd#gloss-fair) principles.
 
 ## What this book does not cover
 
@@ -100,7 +105,8 @@ can already conduct an analysis and concerns itself only
 with making that analysis reproducible. It is not a
 comprehensive manual for any single tool; where a tool's
 own documentation is the right reference, we point to it.
-Nor is it a treatise on replicability in the scientific
+Nor is it a treatise on
+[replicability](glossary.qmd#gloss-replicability) in the scientific
 sense, the question of an independent study reaching the
 same conclusion on new data. That is a vital matter, but a
 different one. We are careful throughout to keep the

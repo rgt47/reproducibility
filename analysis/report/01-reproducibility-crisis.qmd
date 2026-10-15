@@ -103,7 +103,8 @@ in prose: the RNG-kind comparison below and the
 `stringsAsFactors` comparison in 'The cohort, continued'
 each show an unpinned layer behaving exactly as badly as
 the chapter claims. No lockfile, no container, and no
-baseline test appears until later chapters, so
+[baseline test](glossary.qmd#gloss-baseline-test) appears
+until later chapters, so
 @fig-stack-crisis highlights nothing; its point is the
 blank stack itself, which @sec-levels gives a name to and
 every later chapter's figure will mark.

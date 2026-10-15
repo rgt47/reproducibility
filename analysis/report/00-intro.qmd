@@ -239,7 +239,8 @@ here.
 
 Like every tool this book covers, `zzcollab` is held to the
 standard it teaches. By its own accounting it firmly pins a
-part of the determinant stack, the environment, the
+part of the [determinant stack](glossary.qmd#gloss-determinant-stack),
+the environment, the
 packages, the source, and the locale and time zone, and
 leaves the rest, the numerical libraries, the random-number
 discipline, the graphics device, intrinsic non-determinism,

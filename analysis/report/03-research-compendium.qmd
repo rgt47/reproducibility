@@ -53,7 +53,8 @@ answer:**
 - Can you justify why the R package is the compendium
   container, say precisely what `R CMD check` thereby
   checks, and say what it does not?
-- Can you enumerate the Five Pillars of a compendium and
+- Can you enumerate the [Five Pillars](glossary.qmd#gloss-the-five-pillars)
+  of a compendium and
   name the single artifact that captures each?
 - Can you distinguish the five compendium archetypes and
   state how their directory layout, their report, and
@@ -271,7 +272,8 @@ that combines text, code, and data in a form a reader
 can actually execute, rather than a paper that merely
 describes an analysis performed elsewhere
 [@gentleman2007]. The proposal drew on Knuth's earlier
-notion of literate programming, in which prose and code
+notion of [literate programming](glossary.qmd#gloss-literate-programming),
+in which prose and code
 are woven into one source [@knuth1984]. For some years
 the compendium remained an aspiration without a
 conventional implementation. Peng, arguing that
@@ -992,7 +994,8 @@ The reproducibility machinery is identical across the five
 archetypes; only its weight shifts. @tbl-archetype-weight
 is the reference every later chapter points back to rather
 than restates: for each archetype, how the ladder reads it
-(@sec-levels), how heavily it leans on a sealed render
+(@sec-levels), how heavily it leans on a
+[sealed render](glossary.qmd#gloss-sealed-render)
 (@sec-literate), which kind of test carries its weight
 (@sec-testing), how its continuous-integration gates are
 configured (@sec-verification), how much a pipeline tool
