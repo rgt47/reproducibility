@@ -103,7 +103,8 @@ in prose: the RNG-kind comparison below and the
 `stringsAsFactors` comparison in 'The cohort, continued'
 each show an unpinned layer behaving exactly as badly as
 the chapter claims. No lockfile, no container, and no
-baseline test appears until later chapters, so
+[baseline test](glossary.qmd#gloss-baseline-test) appears
+until later chapters, so
 @fig-stack-crisis highlights nothing; its point is the
 blank stack itself, which @sec-levels gives a name to and
 every later chapter's figure will mark.
@@ -569,9 +570,9 @@ updated. A modern analysis may depend on dozens or
 hundreds of packages, each with its own release history
 and its own breaking changes. It is this churn that
 Trisovic and colleagues measured when they found that
-most deposited R scripts ceased to run within a few
-years [@trisovic2022]. The code did not change; its
-dependencies did.
+most deposited R scripts did not run when tested years
+after the original deposit [@trisovic2022]. The scripts
+had not changed; their dependencies had.
 
 These are instances of a general phenomenon that we
 shall develop fully in @sec-levels. A computational
@@ -1308,7 +1309,7 @@ wrong; it is simply the first pass this chapter's
 vocabulary now makes precise.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-crisis}
 
 | Term or rule | What it means |
 |---|---|

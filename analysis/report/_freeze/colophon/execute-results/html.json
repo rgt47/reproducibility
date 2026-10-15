@@ -1,0 +1,15 @@
+{
+  "hash": "15ccd1a8b1d41391646ed6878c5cce8b",
+  "result": {
+    "engine": "knitr",
+    "markdown": "# Colophon {.unnumbered}\n\nThis book was produced with [Quarto](https://quarto.org).\nIts examples use R, the `zzcollab` framework, Docker, and\n`renv`, each introduced in the chapter that first requires\nit.\n\nFittingly for its subject, the book is built as a Quarto\nproject: the sources render to HTML and PDF with `quarto\nrender`, and wherever the book presents a computed figure\nor table, that result is generated at build time from the\ncode shown beside it, so the printed output and the code\nthat produced it cannot drift apart. The table below is\nitself an instance of that discipline: every cell is read\nfrom the actual session that rendered this copy of the\nbook, not typed by hand, so it cannot silently fall out of\nstep with the build that produced it.\n\n\n::: {#tbl-colophon .cell tbl-cap='The actual rendering environment for this build, read from the live session rather than recorded by hand.'}\n::: {.cell-output-display}\n\n\n|Field              |Value                        |\n|:------------------|:----------------------------|\n|R version          |R version 4.6.1 (2026-06-24) |\n|Platform           |aarch64-apple-darwin25.4.0   |\n|Quarto version     |not reported by renderer     |\n|Package: tibble    |3.3.1                        |\n|Package: ggplot2   |4.0.3                        |\n|Package: withr     |3.0.3                        |\n|Package: knitr     |1.51                         |\n|Package: rmarkdown |2.31                         |\n|renv.lock present  |no                           |\n\n\n:::\n:::\n\n\nThe last row is the book's own honest reproducibility\ndisclosure, made the same way the book asks every analysis\nto make it: by naming the artifact rather than asserting\nthe level. As of this build there is no `renv.lock` for the\nbook's own source, so the table above reports `no`; pinning\nthe book's own environment to the L1 and L2 standard the\nlater chapters teach is planned, not yet complete, and this\ncolophon will report `yes` automatically, with no prose\nchange required, the day that lockfile exists.\n\nLast rendered: see the build timestamp on the homepage.\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

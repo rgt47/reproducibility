@@ -85,6 +85,16 @@ jobs:
         if: steps.mode.outputs.backend == 'host' && steps.mode.outputs.python == 'true'
         run: pip install jupyter
 
+      - name: Run R package tests (host)
+        if: steps.mode.outputs.backend == 'host' && steps.mode.outputs.r == 'true'
+        run: |
+          Rscript -e "
+            pkgload::load_all('.', quiet = TRUE)
+            r <- tinytest::run_test_dir('inst/tinytest', verbose = 0)
+            print(summary(r))
+            if (!all(as.logical(r))) stop('tinytest: one or more tests failed')
+          "
+
       - name: Render book (host)
         if: steps.mode.outputs.backend == 'host'
         run: quarto render analysis/report --to html

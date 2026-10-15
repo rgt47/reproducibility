@@ -2214,7 +2214,7 @@ unchanged working directory until they notice the file was
 never staged.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-ci}
 
 | Command or rule | What it does |
 |---|---|

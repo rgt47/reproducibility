@@ -1795,7 +1795,7 @@ rather than one general sentence about 'availability,' is
 doing real work.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-archiving}
 
 | Command or rule | What it does or checks |
 |---|---|

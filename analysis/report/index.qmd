@@ -6,7 +6,8 @@ course textbook.
 
 The book takes a position that a health scientist will
 recognize from their own methodological training.
-Computational reproducibility is not a property of any
+[Computational reproducibility](glossary.qmd#gloss-computational-reproducibility)
+is not a property of any
 single file. It is a property of the relationships among
 the operating system, the language runtime, the package
 set, the session configuration, the source code, and the
@@ -26,14 +27,17 @@ to a verified analysis whose recorded outputs have been
 shown to regenerate (L3). The second is a distinction between
 capturing reproducibility and validating it: pinning an
 environment captures a level, whereas continuous
-integration and verification confirm it. The third is the
-research compendium, a single directory that bundles data,
+integration and [verification](glossary.qmd#gloss-verification)
+confirm it. The third is the
+[research compendium](glossary.qmd#gloss-research-compendium),
+a single directory that bundles data,
 code, and manuscript inside a structure that any reader can
 navigate and any machine can rebuild.
 
 The concrete vehicle throughout is `zzcollab`, an
 open-source R framework built around the levels ladder. It
-composes the standard tools (`renv` or Nix for packages,
+composes the standard tools
+([`renv`](glossary.qmd#gloss-renv-and-packrat) or Nix for packages,
 Docker or a runtime alternative for the environment, a
 research-compendium package structure, continuous
 integration, testing, and data-integrity checking) into a

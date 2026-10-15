@@ -1,19 +1,75 @@
 # Colophon {.unnumbered}
 
 This book was produced with [Quarto](https://quarto.org).
-Its examples use R 4.4 or later, the `zzcollab` framework,
-Docker, and `renv`, each introduced in the chapter that
-first requires it.
+Its examples use R, the `zzcollab` framework, Docker, and
+`renv`, each introduced in the chapter that first requires
+it.
 
 Fittingly for its subject, the book is built as a Quarto
 project: the sources render to HTML and PDF with `quarto
 render`, and wherever the book presents a computed figure
 or table, that result is generated at build time from the
 code shown beside it, so the printed output and the code
-that produced it cannot drift apart. Pinning the book's
-own environment to the standard the later chapters
-develop, a lockfile and a container, is planned rather than
-complete; the book will disclose its own reproducibility
-level here, honestly, as it reaches each rung.
+that produced it cannot drift apart. The table below is
+itself an instance of that discipline: every cell is read
+from the actual session that rendered this copy of the
+book, not typed by hand, so it cannot silently fall out of
+step with the build that produced it.
+
+```{r}
+#| label: tbl-colophon
+#| echo: false
+#| tbl-cap: 'The actual rendering environment for this build, read from the live session rather than recorded by hand.'
+
+pkg_deps <- c('tibble', 'ggplot2', 'withr', 'knitr',
+              'rmarkdown')
+
+pkg_versions <- vapply(pkg_deps, function(p) {
+  if (requireNamespace(p, quietly = TRUE)) {
+    as.character(utils::packageVersion(p))
+  } else {
+    'not loaded'
+  }
+}, character(1))
+
+lockfile_present <- file.exists(
+  file.path('..', '..', 'renv.lock')
+)
+
+quarto_version <- Sys.getenv('QUARTO_VERSION', unset = NA)
+
+colophon_rows <- tibble::tibble(
+  field = c(
+    'R version',
+    'Platform',
+    'Quarto version',
+    paste('Package:', pkg_deps),
+    'renv.lock present'
+  ),
+  value = c(
+    R.version.string,
+    R.version$platform,
+    ifelse(is.na(quarto_version), 'not reported by renderer',
+           quarto_version),
+    pkg_versions,
+    ifelse(lockfile_present, 'yes', 'no')
+  )
+)
+
+knitr::kable(
+  colophon_rows,
+  col.names = c('Field', 'Value')
+)
+```
+
+The last row is the book's own honest reproducibility
+disclosure, made the same way the book asks every analysis
+to make it: by naming the artifact rather than asserting
+the level. As of this build there is no `renv.lock` for the
+book's own source, so the table above reports `no`; pinning
+the book's own environment to the L1 and L2 standard the
+later chapters teach is planned, not yet complete, and this
+colophon will report `yes` automatically, with no prose
+change required, the day that lockfile exists.
 
 Last rendered: see the build timestamp on the homepage.
