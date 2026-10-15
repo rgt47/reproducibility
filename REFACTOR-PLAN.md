@@ -2061,44 +2061,56 @@ recorded here once given.
   with warnings; (c) teach hand-written equivalents and drop the tool
   from the gating chapters. *Recommendation: (a), with (c) as the
   fallback for any fix not released before Phase 6.*
+  **DECIDED 2026-10-15: (a) -- fix tools first, then update book.**
 - **D2. Role of zzcollab.** (a) Concepts first, with a 'with
   zzcollab' track in boxed sections so that the course is teachable
   with renv, a Dockerfile, GitHub Actions, and tinytest alone; (b)
   keep zzcollab as the vehicle throughout. *Recommendation: (a).*
+  **DECIDED 2026-10-15: (a) -- concepts first, zzcollab optional.**
 - **D3. Core path.** (a) Adopt the 10-week path in 10.11, with 06 and
   most of pipelines optional; (b) keep every chapter core.
-  *Recommendation: (a).*
+  *Recommendation: (a).* **DECIDED 2026-10-15: (a) -- applied in
+  Phase 12.**
 - **D4. Restricted data.** (a) A section set in 10 plus
   Restricted-data callouts in version-control, 07, and 09; (b) a new
-  short chapter. *Recommendation: (a).*
+  short chapter. *Recommendation: (a).* **DECIDED 2026-10-15: (a).**
 - **D5. LLM sections.** (a) Consolidate into one appendix (about
   2,500 words: governance, agents, prompt writing, disclosure,
   nondeterminism) and keep a two-triple box per chapter; (b) keep as
-  is and patch. *Recommendation: (a).*
+  is and patch. *Recommendation: (a).* **DECIDED 2026-10-15: (b) --
+  keep LLM sections in each chapter.**
 - **D6. Published solutions (reopens Phase 1).** (a) Keep solutions
   for checks and for practice exercises; move solutions for graded,
   cohort-based exercises to the instructor guide; (b) keep all
   solutions in the book. *Recommendation: (a). Phase 1 was right for
   self-study; a course needs gradeable work.*
+  **DECIDED 2026-10-15: (a).**
 - **D7. The committed synthetic extract.** (a) Commit only the
   generator; gitignore the CSV and generate it in CI and tests, so
   the repository practices what the version-control chapter teaches;
   (b) keep it committed and mark it as synthetic in the data README
   and file header. *Recommendation: (a).*
+  **DECIDED 2026-10-15: (a).**
 - **D8. Topic additions.** Approve the Priority 1 and 2 rows of
   10.10, and decide on the Priority 3 rows. *Recommendation: approve
   Priority 1 and 2; shell primer yes; HPC optional section yes.*
+  **DECIDED 2026-10-15: all priorities (1, 2, and 3) approved.**
 - **D9. Regulated terminology.** (a) A 'warning about the words' box
   in 02 plus one section in 08; (b) rename the ladder's L3 and the
   'validation' axis. *Recommendation: (a).*
+  **DECIDED 2026-10-15: (a).**
 - **D10. Length.** (a) Hold net prose within about 5 percent of
   today and investigate the 31 percent page growth before Phase 11;
   (b) accept growth. *Recommendation: (a).*
+  **DECIDED 2026-10-15: (b) -- accept growth.**
 - **D11. L3 and ACM.** (a) After checking the ACM page, map L3 to
   'repeatability' and reserve 'reproduced' for independent
   verification (the existing 'Independent external verification'
   section, `09:796`); (b) keep the current mapping. *Recommendation:
-  (a), conditional on the check.*
+  (a), conditional on the check.* **DECIDED 2026-10-15: (b) -- keep
+  current L3 label. Phase 14 already explains the ACM/NAS distinction
+  accurately; renaming throughout is high cost for a health-sciences
+  audience that will not encounter ACM badge definitions.**
 - **D12. Repository L3 first.** (a) Do Phase 7 before or alongside
   Phase 6, so the book reaches the level it teaches; (b) defer.
   *Recommendation: (a).*
