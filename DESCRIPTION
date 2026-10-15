@@ -10,7 +10,8 @@ Imports:
     stats,
     utils,
     ggplot2,
-    withr
+    withr,
+    survival
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 Suggests:
