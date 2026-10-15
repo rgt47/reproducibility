@@ -33,6 +33,9 @@ inst/doc
 renv/library/
 renv/staging/
 
+# Generated data (Decision D7: generator committed, CSV gitignored)
+analysis/data/raw_data/cohort_raw.csv
+
 # zzcollab
 .make/
 .zzcollab.log

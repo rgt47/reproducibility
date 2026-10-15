@@ -27,10 +27,16 @@ validation on a concrete extract without exposing anybody.
   generator, the seed, or the random-number defaults have
   changed.
 
-The file is committed deliberately (plan decision D7): a
-committed generator with a fixed seed has no external
-dependency, no link rot, and no access control, so any reader
-can rebuild the extract and check it against the committed copy.
+The CSV is **not committed** (plan decision D7). The generator
+`analysis/scripts/simulate_cohort.R` is committed instead; a fixed
+seed means any reader can regenerate the byte-identical extract.
+This practices what the version-control chapter teaches: raw data
+with identifier-shaped columns belongs outside the repository
+history. Run `Rscript analysis/scripts/simulate_cohort.R` once
+after cloning. CI generates it automatically before running tests.
+`inst/testdata/cohort_raw.csv` is a committed package fixture that
+lets `R CMD check` and `tinytest::test_package()` run without the
+source-tree CSV present.
 
 ## Columns
 
