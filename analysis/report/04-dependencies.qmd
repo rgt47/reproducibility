@@ -713,6 +713,18 @@ verify that the version floors in `DESCRIPTION` agree
 with the exact pins in the lockfile, which is a separate
 concern.
 
+The gate is also archetype-aware. When it finds an
+`analysis/` directory at the project root it enters
+compendium mode automatically (`compendium = "auto"` is
+the default): only packages used in `R/` are required
+in `DESCRIPTION`, while packages used only in
+`analysis/` or `scripts/` need only appear in
+`renv.lock`. On an R-package project, which has no
+`analysis/` directory, the strict double inclusion
+applies. Passing `compendium = TRUE` or
+`compendium = FALSE` overrides the auto-detection when
+the directory layout does not reflect the archetype.
+
 ### Scanning the documentation, not only the code
 
 A dependency check is only as good as its reach, and the
@@ -814,7 +826,9 @@ project, a manuscript compendium, a simulation study,
 and a blog also carry a `DESCRIPTION`, but there it
 declares only the API of the reusable code in `R/`.
 Their binding invariant is instead the single
-$\mathrm{Code} \subseteq \mathrm{renv.lock}$. The
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$, and the
+`check-renv` gate applies that weaker rule automatically
+when it detects an `analysis/` directory. The
 R-package case is the one where the declared middle
 term would exist even if reproducibility were not a
 concern. A subtlety follows for the R-package
