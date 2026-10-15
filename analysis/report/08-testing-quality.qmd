@@ -570,21 +570,25 @@ cohort <- clean_cohort(raw)
 fit <- fit_model(cohort)
 summary_tbl <- summarise_fit(fit)
 
-expect_inherits(fit, 'lm')
+expect_true(is.numeric(coef(fit)))
 expect_true(all(c('term', 'estimate') %in%
                 names(summary_tbl)))
 expect_equal(nrow(summary_tbl), 3L)
 ```
 
-The first expectation looks like a mistake and is not.
-`fit_model()` returns a `glm`, because the outcome is
-binary, and a `glm` object inherits from `lm`, so the
-assertion holds. It is written that way deliberately:
-`expect_inherits(fit, 'lm')` pins the contract that the
-function returns something the modeling generics will
-accept, whereas `expect_equal(class(fit), 'glm')` would
-pin the implementation and break the first time the
-function was changed to fit a Cox model instead.
+The first expectation tests the contract that
+`coef(fit)` returns numeric coefficients, which is
+what `summarise_fit()` needs to proceed. Testing
+`expect_inherits(fit, 'lm')` would also pass here,
+because `glm` inherits from `lm`, but it would break
+the moment the function was upgraded to `fit_cox()`
+returning a `coxph`, which does not. Testing the
+interface -- 'does `coef()` return numeric values?' --
+survives that migration; testing the class does not.
+The book's own `fit_cox()` is exactly this migration:
+the test suite above required only a new test file
+for `fit_cox()`, not a repair of the existing
+integration test for `fit_model()`.
 
 The integration test does not re-check what the unit
 tests already cover; it checks the seams, that the
@@ -731,57 +735,54 @@ a test file that recomputes the quantities and compares
 them with a stated tolerance.
 
 ```r
-# analysis/scripts/record_baseline.R
-# Run once from the project root, inspect the values,
-# then commit the file it writes.
-cohort <- clean_cohort(
-  load_cohort('analysis/data/raw_data/cohort_raw.csv')
+# Run once from the project root to record the baseline,
+# then commit inst/baseline/cohort_baseline.rds.
+# The book's own baseline was recorded this way, and the
+# file is now committed at that path; regenerate it only
+# if the generator, the seed, or the model change.
+result <- run_canonical_analysis(
+  'analysis/data/raw_data/cohort_raw.csv'
 )
-baseline <- list(
-  n_clean = nrow(cohort),
-  boot_upper = bootstrap_ci(cohort, n = 2000,
-                            seed = 2024)[['upper']],
-  r_version = as.character(getRversion()),
-  rng_kind = RNGkind()
-)
-saveRDS(baseline, 'inst/tinytest/baseline-estimates.rds')
+dir.create('inst/baseline', recursive = TRUE,
+           showWarnings = FALSE)
+saveRDS(result, 'inst/baseline/cohort_baseline.rds')
 ```
 
 ```r
-# inst/tinytest/test-baseline-estimates.R
-data_file <- '../../analysis/data/raw_data/cohort_raw.csv'
-if (!file.exists(data_file)) {
-  exit_file('analysis data absent, as under R CMD check')
+# inst/tinytest/test-baseline-cohort.R
+raw_path <- '../../analysis/data/raw_data/cohort_raw.csv'
+if (!file.exists(raw_path)) {
+  exit_file('raw extract absent; run simulate_cohort.R')
 }
-baseline <- readRDS('baseline-estimates.rds')
-cohort <- clean_cohort(load_cohort(data_file))
+baseline <- readRDS(
+  system.file('baseline', 'cohort_baseline.rds',
+              package = 'reproducibility'))
+result <- run_canonical_analysis(raw_path)
 
-expect_equal(nrow(cohort), baseline$n_clean,
-             info = 'cleaned row count matches the baseline')
-expect_equal(
-  bootstrap_ci(cohort, n = 2000, seed = 2024)[['upper']],
-  baseline$boot_upper, tolerance = 1e-8,
-  info = 'seeded bootstrap bound matches the baseline'
-)
+expect_equal(result$n_rows, baseline$n_rows,
+  info = 'cleaned row count matches baseline')
+expect_equal(result$hr, baseline$hr, tolerance = 1e-8,
+  info = 'Cox HR matches committed baseline')
+expect_equal(result$lower, baseline$lower,
+  tolerance = 1e-8,
+  info = 'lower CI bound matches committed baseline')
 ```
 
-Three details carry the weight. The paths are relative
+Three details carry the weight. The path is relative
 to `inst/tinytest/`, where `tinytest` runs the file. The
 guard lets the file exit quietly under `R CMD check`,
-which installs the package without `analysis/`; the
-price is that `R CMD check` never runs this test, so the
-step that does run it, from the project root, must also
-confirm that it ran (@sec-verification). And the
-tolerance is stated and chosen, not left at a default.
-Given the seed, the sampler, the code, and the data, the
-bound is deterministic, so the tolerance is numerical,
-not statistical: `1e-8` relative is wide enough to absorb
-a floating-point summation reordered by a different BLAS
-or thread count (@sec-containers) and far too narrow for
-a change in the resampled draws to pass. A comparison
-with no tolerance would fail on that reordering, and a
-check that fails for reasons unrelated to the analysis
-trains its reader to ignore it.
+which installs the package without `analysis/` (the
+mirror in `inst/testdata/` covers the unit and
+data-validation tests; the baseline test requires the
+raw extract and skips cleanly without it). And the
+tolerance is stated and chosen, not left at a default:
+`1e-8` relative is wide enough to absorb floating-point
+summation reordered by a different BLAS or thread count
+(@sec-containers) and far too narrow for a change in the
+fitted coefficients to pass. A comparison with no
+tolerance would fail on that reordering, and a check
+that fails for reasons unrelated to the analysis trains
+its reader to ignore it.
 
 The test can be watched failing for the reason it
 exists. The chunk below plays both sessions on the
@@ -860,17 +861,19 @@ reported nothing.
 ::: {.callout-tip icon=false}
 ## Verification
 
-To see this hold on your own machine: run
-`Rscript -e 'tinytest::test_package("mycompendium")'` from
-a clean checkout and confirm `test-baseline-estimates.R`
-reports a pass (habit 4). To make it fail on purpose,
-edit the committed `baseline-estimates.rds` by hand, or
-change the seed or `n` passed to `bootstrap_ci()` in
-`record_baseline.R` without regenerating the baseline,
-and rerun the same test; the comparison above, run with
+To see this hold on your own machine: generate the raw
+extract (`Rscript analysis/scripts/simulate_cohort.R`
+from the project root), then run
+`RENV_CONFIG_AUTOLOADER_ENABLED=FALSE Rscript -e
+'pkgload::load_all("."); tinytest::run_test_dir("inst/tinytest")'`
+and confirm `test-baseline-cohort.R` reports five passes
+(habit 4). To make it fail on purpose, open
+`inst/baseline/cohort_baseline.rds`, read it with
+`readRDS()`, change `hr` by more than `1e-8` relative,
+write it back, and rerun; the comparison above, run with
 `sample.kind = 'Rejection'` against a baseline recorded
-under `'Rounding'`, is this exact failure captured in the
-chapter rather than only described.
+under `'Rounding'`, is this exact failure captured in
+the chapter rather than only described.
 :::
 
 A baseline test is what L3 requires. The top rung, as
