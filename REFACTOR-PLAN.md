@@ -2789,6 +2789,43 @@ Tests: 324/324.
 
 Tests after each branch: 324/324. All merges clean with no unresolved references.
 
+### 10.17e Tool fixes and ch04 update (2026-10-15)
+
+**zzrenvcheck fixes (v0.9.0 and v0.10.0).** All three zzrenvcheck
+defects from section 10.17 resolved and pushed to
+`rgt47/zzrenvcheck` `main`.
+
+| Defect (from 10.17) | Fix | Branch | Version |
+|---|---|---|---|
+| `error_on_fail = FALSE` default | Default changed to `!interactive()`; gate fails under `Rscript`/CI | `fix/gate-defaults` | 0.9.0 |
+| auto-fix writes CRAN-current versions | Now records installed version; falls back to CRAN only if not installed, with warning | `fix/gate-defaults` | 0.9.0 |
+| No archetype exemption | `compendium = "auto"` parameter; auto-detects `analysis/`; only `R/` packages required in DESCRIPTION; analysis-only packages need only be in `renv.lock` | `fix/archetype-exemption` | 0.10.0 |
+
+Tests: 203/0. New test file: `inst/tinytest/test_archetype_exemption.R`
+(15 tests), `inst/tinytest/test_gate_defaults.R` (18 tests).
+
+**zzcollab fixes.** All five zzcollab defects from section 10.17
+resolved and pushed to `rgt47/zzcollab` `main`.
+
+| Defect (from 10.17) | Fix | Branch |
+|---|---|---|
+| L3 stamped without baseline comparison | `zzc verify --full` requires `test-baseline*.R` to have run | `fix/l3-verification` |
+| `docker-test` exits 0 on test failure | `make test` and `docker-test` exit nonzero on tinytest failure | `fix/l3-verification` |
+| `get_ubuntu_codename` maps R 4.4 to noble | Fixed to jammy (R 4.4.0 = jammy) | `fix/l3-verification` |
+| `OMP_NUM_THREADS` never set | Generated Dockerfile sets `OMP_NUM_THREADS=1` | `fix/l3-verification` |
+| CI template uses `continue-on-error` | Removed from `r-package.yml` | `fix/l3-verification` |
+
+Tests: 158/0.
+
+**ch04 book update.** Branch `phase-19-ch04-compendium-param`.
+
+| Item | Result |
+|---|---|
+| New paragraph after 'what the gate verifies' | Documents `compendium = "auto"` auto-detection, `analysis/` trigger, `compendium = TRUE/FALSE` override |
+| Sentence in 'The triad across archetypes' | Notes `check-renv` gate applies the weaker rule automatically when `analysis/` is present |
+
+Tests: 324/324. Commits: `a428b09` (content), `e3474e1` (merge + push).
+
 ### 10.16 Limitations
 
 - **The expert reviewers are simulated personas,** not people. Their
