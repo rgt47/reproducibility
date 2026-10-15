@@ -95,7 +95,7 @@ failures, and they are, if anything, more damning because
 they are more avoidable.
 
 @trisovic2022, re-running more than nine thousand R files
-deposited in the Harvard Dataverse, found that fewer than
+deposited in the Harvard Dataverse, found that roughly
 one in four executed without error, even before asking
 whether the output matched. @saju2025, examining R code
 supplements on the Open Science Framework, found that only
@@ -119,7 +119,7 @@ better engineering would.
 ```{r}
 #| label: fig-failure-rates
 #| fig-cap: 'Reported success rates in four studies, separated by what each measured. The left panel reports replication studies, in which new data was collected to test a prior finding. The right panel reports re-execution studies, in which deposited code was run again without any attempt to evaluate the science. The re-execution figures are those stated in the text of the studies as cited in this chapter, and are approximate where the source reports a bound rather than a point estimate.'
-#| fig-alt: 'A two-panel bar chart of four studies. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent and Begley and Ellis at 11 percent. The right panel, labeled re-execution, shows Trisovic and colleagues at about 24 percent and Saju and colleagues at about 25 percent. All four bars sit well below half, and the two panels reach comparably low values by different routes.'
+#| fig-alt: 'A two-panel bar chart of four studies. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent and Begley and Ellis at 11 percent. The right panel, labeled re-execution, shows Trisovic and colleagues at about 26 percent and Saju and colleagues at about 25 percent. All four bars sit well below half, and the two panels reach comparably low values by different routes.'
 #| fig-width: 7
 #| fig-height: 3.2
 
@@ -131,7 +131,7 @@ studies <- tibble(
             'Begley and\nEllis (2012)',
             'Trisovic et al.\n(2022)',
             'Saju et al.\n(2025)'),
-  rate = c(39, 11, 24, 25),
+  rate = c(39, 11, 26, 25),
   kind = factor(
     c('Replication: new data collected',
       'Replication: new data collected',

@@ -561,14 +561,21 @@ about the agreement of estimates across studies rather
 than about the re-running of code [@patil2016].
 
 Here is the warning. The current ACM artifact-badge
-vocabulary, in its 2020 revision, agrees with the National
-Academies usage rather than inverting it [@acm2020]. Under
-both conventions, 'Reproduced' denotes obtaining a prior
-result using the author's own artifacts and the same
-setup, and 'Replicated' denotes obtaining it
-independently, with a different team and a new setup. The
-genuine word-swap that trips students belongs to two
-other places. One is the pre-2020 ACM badging, which
+vocabulary, in its 2020 revision, aligns its direction of
+use with the National Academies convention rather than
+inverting it [@acm2020], but they draw the boundary
+differently. Under the National Academies convention,
+'Reproduced' means obtaining a prior result using the
+same code and data; the same team re-running their own
+analysis qualifies. Under the ACM 'Results Reproduced'
+badge, the re-running must be done by a team other than
+the original authors, using the author's provided
+artifacts. Both conventions therefore point 'Reproduced'
+toward re-execution with the original artifacts and
+'Replicated' toward independence, but the ACM badge
+specifically requires a different team while the National
+Academies definition does not. The genuine word-swap that
+trips students belongs to two other places. One is the pre-2020 ACM badging, which
 attached the two words in the opposite direction along
 the re-execution axis. The other is some biomedical and
 field usages, which a reader may still encounter, where
