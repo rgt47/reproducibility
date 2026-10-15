@@ -912,7 +912,7 @@ knitr::kable(
 ```{r}
 #| label: fig-gates
 #| fig-cap: 'Validation gates by archetype. The R-package check and the unit tests apply universally; the render and seeding gates apply selectively. The underlying reproducibility machinery, the Five Pillars, is identical across every row.'
-#| fig-alt: 'A grid of five archetype rows, data analysis, scholarly manuscript, R package, simulation study, and blog, against four gate columns, R CMD check, unit tests, render report, and seed determinism. Every cell in the R CMD check and unit tests columns is marked as applying. The render report column is marked for the archetypes that produce a rendered document, and the seed determinism column is marked for those that draw random numbers, so those two columns are only partly filled.'
+#| fig-alt: 'A grid of five archetype rows (data analysis, scholarly manuscript, R package, simulation study, and blog) against four gate columns (R CMD check, unit tests, render report, and seed determinism). Active cells contain a filled circle and use a dark fill; inactive cells are shown in medium gray without a symbol. Every cell in the R CMD check and unit tests columns is active, indicating universal application. The render report column is active for data analysis, scholarly manuscript, and blog. The seed determinism column is active for simulation study only.'
 
 library(ggplot2)
 
@@ -947,13 +947,23 @@ grid$status <- factor(
   levels = c('universal', 'applies', 'not emphasised')
 )
 
+# Non-color cue: filled circle in active cells so the encoding
+# does not rely on hue alone (WCAG 1.4.11).
+grid$marker <- ifelse(grid$status == 'not emphasised', '', '●')
+
 ggplot(grid, aes(x = gate, y = archetype, fill = status)) +
   geom_tile(colour = 'white', linewidth = 1.2) +
+  geom_text(aes(label = marker), colour = 'white', size = 4) +
   scale_fill_manual(
     values = c(
-      'universal' = '#2c7fb8',
-      'applies' = '#7fcdbb',
-      'not emphasised' = '#edf2f4'
+      'universal'      = '#1a5c8c',
+      'applies'        = '#1e7a50',
+      'not emphasised' = '#7a8a9c'
+    ),
+    labels = c(
+      'universal'      = 'Universal',
+      'applies'        = 'Selective',
+      'not emphasised' = 'Does not apply'
     )
   ) +
   labs(x = NULL, y = NULL, fill = NULL) +
