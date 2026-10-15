@@ -1904,7 +1904,7 @@ the record a baseline test or a container rebuild was
 never designed to protect.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-vc}
 
 | Command or rule | What it does |
 |---|---|

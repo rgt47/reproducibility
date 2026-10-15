@@ -1375,7 +1375,7 @@ own checksum is evidence about the *output*, and the two
 need not, and do not, match.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-backends}
 
 | Command or rule | What it does |
 |---|---|

@@ -63,6 +63,7 @@ book:
   appendices:
     - shell-primer.qmd
     - setup-appendix.qmd
+    - cheat-sheet-index.qmd
     - glossary.qmd
     - credits.qmd
     - colophon.qmd

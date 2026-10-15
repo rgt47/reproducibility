@@ -1611,7 +1611,7 @@ would grow by orders of magnitude for content that
 one file that actually matters.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-deps}
 
 | Command or rule | What it does |
 |---|---|

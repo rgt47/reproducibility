@@ -1344,7 +1344,7 @@ chapter's worked example walks through buys that a
 lockfile alone does not.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-levels}
 
 | Rung or rule | What it means or checks |
 |---|---|

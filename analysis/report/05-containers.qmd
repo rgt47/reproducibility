@@ -1843,7 +1843,7 @@ lockfile restored cleanly, is precisely a failure the
 lockfile could not prevent and the container does.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-containers}
 
 | Line or rule | What it does |
 |---|---|

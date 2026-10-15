@@ -1665,7 +1665,7 @@ met twice: once as a render-time install, once as an
 invisible, unpinned dependency.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-literate}
 
 | Command or rule | What it does |
 |---|---|

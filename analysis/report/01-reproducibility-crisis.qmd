@@ -1308,7 +1308,7 @@ wrong; it is simply the first pass this chapter's
 vocabulary now makes precise.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-crisis}
 
 | Term or rule | What it means |
 |---|---|

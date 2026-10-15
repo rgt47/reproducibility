@@ -1,0 +1,81 @@
+# Cheat-Sheet Index {#sec-cheat-index .unnumbered}
+
+Each content chapter ends with a two-column reference table of the
+commands, rules, and terms introduced in that chapter. This appendix
+collects those tables in one place. Every entry links to the full
+table in its chapter, where the surrounding context explains any
+term that is not self-explanatory.
+
+## Part I: Foundations
+
+**[Chapter 2 -- The Reproducibility Crisis](@sec-cheat-crisis)**
+Terms and distinctions: reproducibility vs. replicability vs.
+robustness; computational vs. statistical failure;
+`RNGkind()`; the `stringsAsFactors` default change; the
+determinant stack. These are the vocabulary the rest of
+the book assumes.
+
+**[Chapter 3 -- Levels of Reproducibility](@sec-cheat-levels)**
+The L0-L3 ladder; the capture-vs.-validation distinction;
+`zzc verify --full`; how each level is claimed and confirmed.
+The single most referenced table in the book.
+
+**[Chapter 4 -- Version Control](@sec-cheat-vc)**
+Core git commands: `init`, `add`, `commit`, `status`, `log`,
+`show`, `switch -c`, `remote add`, `push`, `tag`. The
+`.gitignore` pattern syntax. The rule of thumb for commit
+messages.
+
+**[Chapter 5 -- The Research Compendium](@sec-cheat-compendium)**
+The minimal R-package skin (`DESCRIPTION`, `NAMESPACE`, `R/`);
+the Five Pillars; the raw-vs.-derived boundary test; the five
+archetypes; progressive disclosure.
+
+## Part II: Capturing the Environment
+
+**[Chapter 6 -- Managing Dependencies](@sec-cheat-deps)**
+`renv::init()`, `snapshot()`, `restore()`, `dependencies()`;
+`zzrenvcheck` CI and development forms; CRAN snapshot URLs;
+`options(renv.config.autoloader.enabled = FALSE)`.
+
+**[Chapter 7 -- Containers](@sec-cheat-containers)**
+`FROM image@sha256:`; `ARG PPM_SNAPSHOT`; `ENV` variables for
+locale, timezone, and thread count; the two-stage `COPY` for
+`renv`; `docker build`, `run`, `exec`, `inspect`; the
+`--platform` flag.
+
+**[Chapter 8 -- Backends and Runtimes](@sec-cheat-backends)**
+Podman and Apptainer equivalents to Docker; `rix::rix()` and
+`nix-shell`; Binder and Dev Containers; the L2 guarantee each
+tool provides.
+
+## Part III: Validation
+
+**[Chapter 9 -- Literate Programming](@sec-cheat-literate)**
+Inline R expressions; `knitr::opts_chunk$set()`; `SOURCE_DATE_EPOCH`;
+`make docker-render`; the five render landmines; the sealed-render
+rule of thumb.
+
+**[Chapter 10 -- Automating the Analysis](@sec-cheat-pipelines)**
+Make syntax (`target: prerequisites`, tab-indented recipes,
+`touch`); `targets` (`tar_target()`, `tar_make()`,
+`tar_outdated()`, `tar_visnetwork()`); `snakemake --cores`.
+
+**[Chapter 11 -- Testing and Code Quality](@sec-cheat-testing)**
+`tinytest` expectations (`expect_equal`, `expect_true`, etc.);
+`test_package()`; `exit_file()`; `make lint` / `make style`;
+the `test-baseline*.R` naming convention; the stated-tolerance
+rule.
+
+**[Chapter 12 -- Continuous Integration](@sec-cheat-ci)**
+`error-on: '"warning"'`; `zzrenvcheck` with `error_on_fail = TRUE`;
+`renv::dependencies()`; the render gate; `docker build` on a
+clean machine; `zzc verify --full`; the L3 rebuild requirement.
+
+## Part IV: Collaboration and Stewardship
+
+**[Chapter 13 -- Archiving and Sharing](@sec-cheat-archiving)**
+`docker inspect` for digest retrieval; `apptainer build` from a
+digest-pinned image; the two-layer (environment/packages) model;
+the union lockfile; `rang` and `groundhog`; Zenodo and OSF
+deposition; FAIR principles and DataCite metadata.

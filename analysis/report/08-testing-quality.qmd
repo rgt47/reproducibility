@@ -1993,7 +1993,7 @@ anyone can point to as having produced it, which is
 exactly the provenance gap habit 1 exists to close.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-testing}
 
 | Command or rule | What it does |
 |---|---|

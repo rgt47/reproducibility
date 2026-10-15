@@ -1723,7 +1723,7 @@ example does, is what turns the green run from a statement
 about re-execution into evidence for L3.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-pipelines}
 
 | Command or rule | What it means or checks |
 |---|---|

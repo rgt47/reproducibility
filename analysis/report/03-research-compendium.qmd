@@ -1666,7 +1666,7 @@ be 'sixty percent of the way' to pinned packages; either
 the lockfile exists or it does not.
 :::
 
-## Cheat sheet
+## Cheat sheet {#sec-cheat-compendium}
 
 | Command or rule | What it does or checks |
 |---|---|
