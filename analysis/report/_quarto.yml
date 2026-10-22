@@ -7,7 +7,7 @@ project:
 book:
   title: 'Reproducible Research for the Health Sciences'
   subtitle: 'Compendia, containers, and computational verification in R'
-  author: "Ronald 'Ryy' G. Thomas"
+  author: "rgtlab curriculum team"
   date: today
   date-format: 'YYYY-MM-DD'
 
@@ -130,3 +130,4 @@ knitr:
     collapse: true
     fig.retina: 2
     dpi: 150
+    out.width: '100%'

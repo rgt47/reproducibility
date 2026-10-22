@@ -1,7 +1,7 @@
 # Welcome {.unnumbered .unlisted}
 
 This is the online version of **Reproducible Research for
-the Health Sciences** by Ronald 'Ryy' G. Thomas, a graduate
+the Health Sciences** by rgtlab curriculum team, a graduate
 course textbook.
 
 The book takes a position that a health scientist will
