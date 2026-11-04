@@ -1546,7 +1546,7 @@ The solution for this exercise is in the
 which is available to course instructors. Self-study
 readers who want to check their answer can compare the
 autogradable values against those reported in the chapter's
-own 'The cohort, continued' section.
+own 'The cohort's own dependencies' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

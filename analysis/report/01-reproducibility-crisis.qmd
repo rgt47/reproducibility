@@ -270,7 +270,7 @@ analyst judgments above does this complaint invoke?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-The third, naming what remains exposed. Reaching L2
+The third, deciding what must be pinned. Reaching L2
 pins the operating system, the runtime, and the system
 libraries, but it does not by itself decide whether the
 random-number configuration is a live exposure for this

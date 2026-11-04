@@ -93,8 +93,8 @@ model, draws a forest plot, and reports an adjusted
 odds ratio of 1.24. The script runs, the manuscript
 renders, the paper is accepted. Two years later a
 reader requests the code, downloads it, and runs it on
-a fresh laptop. The model will not fit: a package that
-the analysis relied upon has changed its default
+a fresh laptop. The model fits, but differently: a
+package that the analysis relied upon has changed its default
 optimizer, and the estimate now returned is 1.19. Which
 number is the finding? The question is not statistical.
 The statistics were the same on both machines. What
@@ -539,8 +539,8 @@ same conditions of analysis: it is a statement about
 re-execution, and it is what the ladder grades.
 *Replicability* is obtaining consistent results across
 studies aimed at the same question, each with its own
-data: it is a statement about the robustness of a
-scientific finding. The two are independent. A result can
+data: it is a statement about whether a scientific
+finding holds on new data. The two are independent. A result can
 be perfectly reproducible and entirely wrong, if the code
 faithfully regenerates a mistaken number every time. And a
 finding can replicate across laboratories while no single
@@ -625,8 +625,8 @@ and the National Academies convention attaches
 the original artifacts on the original data. The sentence
 risks being misread because a reader applying the current
 ACM badge sense would expect the word 'reproduced' to mean
-the authors re-ran their own code, not that a second
-cohort was collected; the fix is to write 'replicated',
+an independent team re-ran the authors' own artifacts, not
+that a second cohort was collected; the fix is to write 'replicated',
 not 'reproduced', or to spell out which convention is
 meant.
 :::
@@ -637,7 +637,7 @@ meant.
 
 This chapter defines the ladder rather than climbing it,
 and its one executed placement, the cohort compendium in
-'The cohort, continued' above, itself sits at no higher
+'The cohort, continued' below, itself sits at no higher
 than L0 at the time of writing, with the lift to L1 and L2
 left to the chapters this ladder points toward.
 :::

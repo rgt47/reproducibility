@@ -604,9 +604,9 @@ Heritage undertakes something narrower and more absolute
 for source code specifically: its stated mission is a
 permanent, universal archive of publicly available source
 code, with no depositor-facing mechanism to remove
-something once archived. The project's own scale and its
-SWHID identifier scheme were formalized as an ISO/IEC
-standard in 2025 [@swhiso2025]. Every archived
+something once archived. The project's SWHID identifier
+scheme was formalized as an ISO/IEC standard in 2025
+[@swhiso2025]. Every archived
 object, whether a file, a directory, a commit, or a full
 repository snapshot, receives a SoftWare Hash IDentifier of
 the form `swh:1:<type>:<hash>`, where `<type>` names the
@@ -679,8 +679,9 @@ data-availability statement must say, exactly, which of
 these routes was taken.
 :::
 
-The paragraphs below work through each of the five routes
-named above in enough detail to act on.
+The paragraphs below work through each of the four routes
+named above, and the two documents that govern the choice,
+in enough detail to act on.
 
 **The code and the environment, always.** The analysis
 code, the tests, the lockfile, the Dockerfile, and the
@@ -781,7 +782,7 @@ performed the comparison and on what data.
 A colleague proposes removing the name and medical record
 number columns from a patient-level extract and depositing
 the rest openly, calling the result 'de-identified.' What
-is wrong with this plan, and which of the five routes
+is wrong with this plan, and which of the four routes
 above should be used instead?
 
 ::: {.callout-note icon=false collapse=true}
@@ -805,7 +806,7 @@ repository or a direct request to the data steward.
 
 ### Funder and journal obligations
 
-Everything the five routes above implement is a response
+Everything the four routes above implement is a response
 to an obligation that exists before the analysis begins: a
 funder's data-sharing policy, and later, a journal's
 reporting requirement. Both predate the deposit and shape
@@ -822,7 +823,7 @@ is made, the approved Plan becomes a term and condition of
 that award: noncompliance can bring added special terms,
 withheld funds, or termination, and can affect future
 funding decisions [@nihdms2020]. For the analyst, the
-choice among the five routes above was therefore made, in
+choice among the four routes above was therefore made, in
 outline, when the grant was written; the deposit executes
 the Plan.
 
@@ -1221,8 +1222,8 @@ at the time of deposit.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the checks did not check
 
-The three checks above all return favorably (or correctly
-`FALSE`) for this compendium. Does that mean the compendium
+The three checks above all return `TRUE` for this
+compendium. Does that mean the compendium
 is ready to deposit as L3? Why or why not?
 
 ::: {.callout-note icon=false collapse=true}

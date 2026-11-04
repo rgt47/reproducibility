@@ -1831,17 +1831,17 @@ The solution for this exercise is in the
 which is available to course instructors. Self-study
 readers who want to check their answer can compare the
 autogradable values against those reported in the chapter's
-own 'The cohort, continued' section.
+own 'Verification' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 8
 
-**The rung reached is L0, and only L0.** The repository
-that is hosted on GitHub today is locatable, so a reviewer
-can find and read it, but its visible history begins with
-yesterday's single commit. Nothing about `git init` run
-fresh touches the lockfile or the container; those files,
+**The rung is unchanged by the deletion.** The repository
+that is hosted on GitHub today is still locatable, so L0
+holds and a reviewer can find and read it, even though its
+visible history begins with yesterday's single commit.
+Nothing about `git init` run fresh touches the lockfile or the container; those files,
 if they still sit in the working tree, are tracked again
 by the new history and restore the analysis to L1 and L2
 exactly as before, because package pinning and environment

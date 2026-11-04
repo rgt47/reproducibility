@@ -509,8 +509,7 @@ coverage, so a pipeline that needs a package without a
 `win-64` build still needs a fallback, and 'reproduces
 on Windows' should be read as 'for the packages that
 conda-forge actually ships there' rather than as a blanket
-claim (expert knowledge, not verified against a current
-`win-64` package listing). Conda also spans R and Python
+claim. Conda also spans R and Python
 in a single environment, so the mixed-language analyst
 need not bridge two toolchains.
 For a Windows-only laboratory running a pipeline that mixes
@@ -635,7 +634,7 @@ rather than archiving.
 ## Choosing among the alternatives
 
 With the three axes laid out, the governing question, as
-the analyst's second contribution insisted, is which
+the analyst's first contribution insisted, is which
 constraint binds. We answer it by
 setting the guidance beside a compact comparison, generated
 at build time from the same tibble that a reader could

@@ -23,7 +23,7 @@ of `clean_cohort()` than the one shipped with the book;
 each of these deviations is diagnostically useful and
 worth discussing.
 
-## Chapter 1: The Reproducibility Crisis {#sec-ig-ch01}
+## Chapter 2: The Reproducibility Crisis {#sec-ig-ch01}
 
 ```r
 raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
@@ -51,7 +51,7 @@ the analysis-code layer by stating the choice explicitly.
 package-versions layer; omitting the explanation of which
 determinant-stack layer the difference occupies.
 
-## Chapter 2: Levels of Reproducibility {#sec-ig-ch02}
+## Chapter 3: Levels of Reproducibility {#sec-ig-ch02}
 
 ```r
 cohort <- clean_cohort(
@@ -72,7 +72,7 @@ package the analysis calls.
 version control (version control is L0); confusing 'pinned'
 with 'committed'.
 
-## Version Control {#sec-ig-vc}
+## Chapter 4: Version Control {#sec-ig-vc}
 
 ```r
 raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
@@ -97,7 +97,7 @@ violation.
 `nrow(raw)` (338); not distinguishing the raw from the
 cleaned extract.
 
-## Chapter 3: The Research Compendium {#sec-ig-ch03}
+## Chapter 5: The Research Compendium {#sec-ig-ch03}
 
 ```r
 raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
@@ -129,7 +129,7 @@ generator) brings the total to three of five, with
 three pillars are present; not distinguishing which pillars
 the script checks from the full five-pillar count.
 
-## Chapter 4: Dependencies {#sec-ig-ch04}
+## Chapter 6: Dependencies {#sec-ig-ch04}
 
 ```r
 deps <- renv::dependencies(
@@ -154,7 +154,7 @@ base-package function or a primitive.
 lockfile entries; not checking the generator script
 separately.
 
-## Chapter 5: Containers {#sec-ig-ch05}
+## Chapter 7: Containers {#sec-ig-ch05}
 
 ```r
 raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
@@ -182,7 +182,7 @@ strings) rather than `length(unique(cohort$sex))` (the
 integer 2); not identifying the thread-count `ENV` line as
 the missing Dockerfile addition.
 
-## Chapter 6: Backends and Runtimes {#sec-ig-ch06}
+## Chapter 8: Backends and Runtimes {#sec-ig-ch06}
 
 ```r
 repo_root <- '.'
@@ -208,7 +208,7 @@ artifact pins a generic environment.
 L2 (it points at a generic image, not a compendium-specific
 one); not explaining why axis two is the available path.
 
-## Chapter 7: Literate Programming {#sec-ig-ch07}
+## Chapter 9: Literate Programming {#sec-ig-ch07}
 
 ```r
 cohort <- clean_cohort(
@@ -230,7 +230,7 @@ percent carry no recorded outcome.'
 rather than using inline expressions; using `nrow(raw)`
 (338) instead of `nrow(cohort)` (337).
 
-## Automating the Analysis (Pipelines) {#sec-ig-pipelines}
+## Chapter 10: Automating the Analysis {#sec-ig-pipelines}
 
 ```r
 cohort <- clean_cohort(
@@ -265,10 +265,10 @@ empty result.
 **Common errors.** Omitting the `format = 'file'` target
 for the CSV (meaning file-content changes would not
 re-trigger downstream targets); placing the compendium at
-L3 because the pipeline runs green (green = L2, not L3,
-without a baseline test).
+L3 because the pipeline runs green (a pipeline pins no
+determinant, so the compendium stays at L0).
 
-## Chapter 8: Testing and Code Quality {#sec-ig-ch08}
+## Chapter 11: Testing and Code Quality {#sec-ig-ch08}
 
 ```r
 raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')
@@ -286,7 +286,7 @@ expect_true(mean(is.na(cohort$incident_dm)) < 0.15)
 `nrow(cohort)` = `337`;
 `sum(duplicated(raw$mrn))` = `1`.
 
-**Rubric.** A correct answer reports all three row counts,
+**Rubric.** A correct answer reports all three counts,
 identifies one duplicate removed by `clean_cohort()`, and
 shows four passing `expect_true()` assertions covering
 required columns, age range, sex coding, and missing-outcome
@@ -297,7 +297,7 @@ extract.
 that `clean_cohort()` removes one duplicate); writing
 assertions that pass trivially (e.g., `expect_true(TRUE)`).
 
-## Chapter 9: Continuous Integration {#sec-ig-ch09}
+## Chapter 12: Continuous Integration {#sec-ig-ch09}
 
 ```r
 used <- unique(renv::dependencies('R/cohort.R')$Package)
@@ -321,7 +321,7 @@ can catch an undeclared import before CI runs a render.
 whole project rather than on `R/cohort.R` alone; not
 testing the planted `library(sandwich)` scenario.
 
-## Chapter 10: Archiving and Sharing {#sec-ig-ch10}
+## Chapter 13: Archiving and Sharing {#sec-ig-ch10}
 
 ```r
 file.exists('LICENSE')
@@ -347,6 +347,6 @@ synthetic stand-in, rather than the real extract), not the
 file-system checks.
 
 **Common errors.** Stating that the third check would need
-to change (it already demonstrates correct practice after
-D7); confusing the file-system audit with the deposit
+to change (it already demonstrates correct practice);
+confusing the file-system audit with the deposit
 decision.

@@ -72,7 +72,8 @@ problem, not of any one program.
 
 ## What this book covers
 
-The twelve chapters proceed in four parts.
+The twelve chapters after the introduction proceed in
+four parts.
 
 1. **Foundations.** The reproducibility crisis and its
    specifically computational character; a framework of

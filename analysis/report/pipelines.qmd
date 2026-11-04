@@ -1240,9 +1240,9 @@ on the book's own running example rather than a hypothetical
 one. Expressing this pair as a `tar_target(raw, load_cohort(cohort_path))`
 and `tar_target(cleaned, clean_cohort(raw))` would make that
 staleness mechanical rather than remembered, at the cost of
-exactly the two-target scaffold shown in Exercise 3's
-solution below. Doing so would not move this compendium off
-the L0 rung @sec-levels places it at, since a pipeline pins
+a two-target scaffold in the pattern of the five-target
+one shown in Exercise 3's solution below. Doing so would
+not move this compendium off the L0 rung @sec-levels places it at, since a pipeline pins
 no determinant; it would only make the one existing
 transform trustworthy to rebuild without having to recall
 that it exists.

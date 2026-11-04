@@ -290,7 +290,7 @@ Any of the three qualifies, but the clearest is the
 first: deciding what counts as a correct output and
 recording the baseline. A workflow can run a comparison
 and report its result, but it has no way to decide which
-quantity matters, which the comparison, or what tolerance
+quantity matters, which outputs to compare, or what tolerance
 distinguishes a real change from floating-point noise;
 that is a scientific judgment about the analysis, and
 the CI configuration cannot make it.
@@ -2131,7 +2131,8 @@ The solution for this exercise is in the
 which is available to course instructors. Self-study
 readers who want to check their answer can compare the
 two autogradable values against those reported in the
-chapter's own 'The cohort, continued' section.
+chapter's own 'Demonstrating a gate on the cohort
+compendium' section.
 :::
 
 ::: {.callout-note icon=false collapse=true}

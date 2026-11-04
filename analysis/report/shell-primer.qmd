@@ -272,4 +272,5 @@ more advanced scripting (array syntax and certain glob options
 differ), which this book does not otherwise rely on. A reader who
 hits a syntax error on a book command that looks exactly as
 written should suspect a shell difference before suspecting a
-typo, and can check which shell is running with `echo $SHELL`.
+typo, and can check which shell is running with `echo $0`
+(`echo $SHELL` reports the login shell, which may differ).

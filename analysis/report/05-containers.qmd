@@ -915,7 +915,7 @@ that does only the first has not finished the second.
 A fixed operating system and a fixed R are still not
 quite enough, because the same R on the same operating
 system can behave differently according to a handful of
-environment variables that the container inherits. Two
+environment variables that the container inherits. Three
 of these deserve concrete illustration, because the
 failures they cause are silent and the fixes are one
 line each.
@@ -1344,8 +1344,8 @@ None of this is built here, because building and verifying
 an image is slow and the showcase Dockerfile earlier in
 this chapter already did exactly that verification once.
 What the check above adds is specific to the compendium:
-it is not yet done, and the gap is these five concrete
-lines, not a vague 'needs a Dockerfile'.
+it is not yet done, and the gap is these four concrete
+items, not a vague 'needs a Dockerfile'.
 
 ## Collaborating with an LLM
 
@@ -1796,7 +1796,7 @@ packages. The lockfile answers 'which packages', the
 container answers 'on what', and this chapter's own
 orientation story, the GDAL-dependent package that failed
 to install on a collaborator's machine even though the
-lockfile restored cleanly, is precisely a failure the
+lockfile pinned its version exactly, is precisely a failure the
 lockfile could not prevent and the container does.
 :::
 

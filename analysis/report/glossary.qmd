@@ -91,8 +91,8 @@ results from the same data and the same code, on another machine
 or at a later time. (@sec-crisis)
 
 []{#gloss-conda-and-pixi}**conda and pixi.** Cross-language environment managers that pin
-R and Python packages without a container. `pixi` is the option
-that reproduces natively on Windows. (@sec-backends)
+R and Python packages without a container. Both run natively on
+Windows, for the packages conda-forge builds there. (@sec-backends)
 
 []{#gloss-container}**Container.** A running instance of an image. One image can
 start many containers; each begins from the same frozen
