@@ -171,8 +171,8 @@ recorded value. (@sec-crisis, @sec-levels)
 []{#gloss-determinism}**Determinism (of a render).** The property that rendering the
 same source under the same environment produces a byte-for-byte
 identical output file. A rendered PDF is usually not
-deterministic in this strict sense, for reasons developed below.
-(@sec-literate)
+deterministic in this strict sense, because it embeds
+timestamps and other build-time metadata. (@sec-literate)
 
 []{#gloss-digest}**`digest()`.** Computes a content hash of an R object. Used to
 verify that a regenerated computational output matches a
@@ -587,7 +587,8 @@ bundling the code, data, prose, and environment record of an
 analysis, organized by convention so that it can be located and
 re-run. (@sec-crisis, @sec-compendium)
 
-[]{#gloss-restore}**Restore.** The reverse act of reading the lockfile and
+[]{#gloss-restore}**Restore.** The reverse of a snapshot: reading
+the lockfile and
 reinstalling exactly the packages it records.
 (@sec-dependencies)
 
@@ -698,7 +699,7 @@ submission. (@sec-version-control)
 []{#gloss-tag-and-digest}**Tag and digest.** A tag, such as `rocker/tidyverse:4.4.0`, is
 a human-readable pointer that may later be repointed. A digest,
 `@sha256:...`, is an immutable hash of the image's exact
-content. The same digest always denotes byte-identical bytes.
+content. The same digest always denotes the same bytes.
 (@sec-containers)
 
 []{#gloss-target}**Target.** A single step in the pipeline, together with the

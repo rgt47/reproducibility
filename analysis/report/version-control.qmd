@@ -195,9 +195,7 @@ second person. Everything the later chapters add, the
 lockfile of @sec-dependencies, the container of
 @sec-containers, the continuous integration of
 @sec-verification, is installed on top of a
-version-controlled history. Version control is thus not
-one tool among many but the substrate the others
-require.
+version-controlled history.
 
 ## The analyst's contribution
 
@@ -227,8 +225,7 @@ much as the commands are.
    'did the analysis' is almost as useless as no
    history at all. A history of small, coherent commits
    whose messages say why each change was made is a
-   readable record of decisions. The difference is
-   entirely the analyst's discipline.
+   readable record of decisions.
 
 3. **Deciding when to branch and when to tag.** Whether
    a piece of work warrants a branch of its own, and
@@ -327,15 +324,14 @@ piece of information about an analysis. Why was the
 outlier-exclusion threshold changed from three standard
 deviations to two? A dated file cannot say. A commit
 whose message reads 'Tighten outlier threshold to 2 SD
-per reviewer 2's comment' says exactly, and says it
-forever.
+per reviewer 2's comment' says exactly why, and the
+record stays with the code.
 
-This last point is worth dwelling on, because it is the
-one that turns version control from a convenience into
-an instrument of scientific accountability. A
-computational result is not only a number; it is the
-end of a chain of decisions, each of which could have
-gone otherwise. In a regulated analysis, a clinical
+The recorded reason is what makes version control an
+instrument of scientific accountability. A
+computational result is the end of a chain of
+decisions, each of which could have gone otherwise. In a regulated
+analysis, a clinical
 trial subject to audit, a study destined for a
 guideline, the chain of decisions is itself an object
 of scrutiny, and 'why did the estimate change between
@@ -365,8 +361,7 @@ restore the identity of the working version, which comes
 from git keeping one tracked `analysis.R` rather than a
 drawer of copies, or the precise content of the change,
 which comes from the diff the commit carries alongside
-its message. The message supplies the one thing only a
-human can: why.
+its message.
 :::
 :::
 
@@ -400,7 +395,7 @@ That hash, a forty-character SHA-1 string usually shown
 in an abbreviated form such as `a1b2c3d`, is computed not
 from the snapshot alone but over the whole commit object,
 which references the snapshot, folds in the metadata,
-and, crucially, records the hash of the commit before it.
+and records the hash of the commit before it.
 (Git also supports repositories that use the longer
 SHA-256 hash of sixty-four characters, though SHA-1
 remains the default.) Because each commit's hash
@@ -481,8 +476,8 @@ git add analysis.R
 git commit -m "Add Cox model for 30-day readmission"
 ```
 
-A note on the message, since it is the part that carries
-the scientific value. The convention, and it is worth
+The message is the part of a commit that carries the
+scientific value. The convention, and it is worth
 adopting from the first day, is a short imperative
 summary line of about fifty characters, optionally
 followed by a blank line and a paragraph giving the
@@ -609,15 +604,12 @@ commit_history |>
     align = c('l', 'l', 'l', 'l', 'r'))
 ```
 
-The reader will note two features that a bare list of
-files could never carry. The fifth commit records not
-only that the outlier threshold changed but that it
-changed *in response to a reviewer*, and the final
-commit records a correction to the person-time
+Two features of this history could not come from a bare
+list of files. The fifth commit records that the outlier
+threshold changed *in response to a reviewer*, and the
+final commit records a correction to the person-time
 denominator, the sort of methodological fix whose
-provenance an auditor will want to establish. The commit
-history has turned a sequence of edits into a
-defensible account of how the result was reached.
+provenance an auditor will want to establish.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: log or diff
@@ -635,7 +627,7 @@ commit's message, and the fifth commit's message in
 @tbl-audit-trail names the reviewer's request directly.
 The diff answers the second: `git show` on that commit's
 hash displays exactly which lines were added and removed.
-The two views are complements, not substitutes; the log
+Neither replaces the other; the log
 without the diff says why but not what, and the diff
 without the log says what but not why.
 :::
@@ -662,9 +654,8 @@ operating-system cruft (`.Rhistory`, `.DS_Store`,
 `.Rproj.user/`) is pure noise. None of these is
 dangerous; all of them are better ignored.
 
-The second category is the category that makes this
-section a matter of ethics and law rather than tidiness:
-files that must *never* enter the history because making
+The second category makes this section a matter of
+ethics and law: files that must *never* enter the history because making
 them permanent and shareable would be a breach. In
 health research three kinds dominate.
 
@@ -713,9 +704,7 @@ as disclosed and follow the applicable incident
 procedure. The remedy is therefore prevention: a correct
 `.gitignore` written *before* the first commit, and the
 habit of reading `git status` before every commit to
-confirm that nothing sensitive has been staged. Never
-commit PHI, because git is built so that you cannot
-cleanly take it back.
+confirm that nothing sensitive has been staged.
 :::
 
 When prevention has failed, the order of the response
@@ -828,7 +817,7 @@ docs/
 ## Verification
 
 A `.gitignore` that has never been watched blocking a
-real file is a guess, not a gate. To see it hold, create a
+real file is untested. To see it hold, create a
 file the pattern should catch and confirm git refuses it:
 `touch analysis/data/raw_data/scratch.csv && git status`
 should not offer to add the new file, because
@@ -864,9 +853,8 @@ practice; its raw extract belongs behind the
 `.gitignore` above, whatever its size and however
 harmless it looks.
 
-The claim that the extract carries identifying-looking
-fields, not merely that such fields are theoretically
-possible, is checked here rather than taken on faith.
+The following check confirms that the shipped extract
+actually carries identifying-looking fields.
 
 ```{r}
 raw <- load_cohort('../data/raw_data/cohort_raw.csv')
@@ -875,12 +863,10 @@ intersect(c('mrn', 'patient_name', 'dob'), names(raw))
 
 Every one of the three columns this section warns against
 is present, by name, in the file this book actually ships.
-That is exactly why the synthetic cohort had to invent an
-identifier, a name, and a date of birth rather than merely
-describe the risk in prose: a `.gitignore` audit of this
-very file, run on real data, would need to flag all three,
-and a reader can now see that rather than take it on this
-chapter's word.
+The synthetic cohort invents an identifier, a name, and a
+date of birth so that the risk appears in a real file
+instead of only in prose: a `.gitignore` audit of this
+very file, run on real data, would need to flag all three.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the same file, two archetypes
@@ -901,7 +887,7 @@ the history to a derivative and is usually avoided. An
 analyst who nonetheless commits it, perhaps to preserve
 the exact submitted PDF as a fixed reference, is making a
 defensible different judgment about what the artifact is
-*for*. The point is that it is a judgment, not a rule.
+*for*. It is a judgment, not a rule.
 The `data_dictionary.csv` and the registry extract sit on
 opposite sides of the one line that is not a matter of
 taste. The dictionary carries variable names and codings,
@@ -951,8 +937,8 @@ treatment light here and return to the collaborative use
 of branches, which is where they earn their keep, when we
 reach pull requests.
 
-@fig-branch draws the shape. The point worth taking from
-it is that the branch does not copy the history: it names
+@fig-branch draws the shape. The branch does not copy
+the history: it names
 a new commit whose parent is a commit on `main`, and the
 merge names a commit with two parents. Everything before
 the branch point is shared, and no hash anywhere in the
@@ -1238,10 +1224,9 @@ fork, and then opens a **pull request** proposing that
 their branch be merged into the canonical repository. The
 pull request is a unit of review: the maintainers see
 exactly the diff being proposed, discuss it inline,
-request changes, and merge it only when satisfied. For a
-regulated multi-site analysis this is more than
-convenience. The pull request is a documented,
-attributable, reviewable gate through which every change
+request changes, and merge it only when satisfied. In a
+regulated multi-site analysis, the pull request is a
+documented, attributable, reviewable gate through which every change
 to the shared analysis passes, and its record, who
 proposed what, who reviewed it, what was said, and when it
 was merged, is held on the forge's servers rather than
@@ -1290,8 +1275,7 @@ discussion, the requested changes, the approval, and the
 merge, each attributable and timestamped. The commit
 history answers 'what was changed and why'; the pull
 request answers 'who checked it, and did they agree'. For a
-regulated analysis both questions have auditors, and the
-two records together are stronger than either alone.
+regulated analysis both questions have auditors.
 :::
 :::
 
@@ -1326,7 +1310,6 @@ and the container of @sec-containers pins the environment
 layer to reach L2. Version control is necessary for all of
 this, since the lockfile and the Dockerfile are themselves
 files whose history git tracks, and sufficient for none of
-it. It puts the analysis on the ladder; it does not climb
 it.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1496,8 +1479,7 @@ because no git command can recall it. Only then apply a
 rewriting tool, on a fresh clone and in the order the
 five-step procedure earlier in this chapter gives, and
 check that the recipe covers the forge's caches, forks,
-and every collaborator's clone. The model's recipe addresses
-the mechanics and is blind to the obligation.
+and every collaborator's clone.
 
 **Prompt.** 'Write a `.gitignore` for my R health-data
 analysis project.'
@@ -1533,9 +1515,7 @@ record must carry.
 draft the imperative summary line from the diff, then edit
 in the motivation, the reviewer comment, the corrected
 denominator, the protocol amendment, that turns a
-description into an accountable record. The model can
-summarize the change; only the analyst knows why it was
-made.
+description into an accountable record.
 
 ## Exercises
 
@@ -1664,7 +1644,7 @@ changed.
 
 On the hashes: recording the middle commit's hash before
 making the third commit and comparing afterward shows it
-unchanged. This is worth dwelling on. A commit hash is
+unchanged. A commit hash is
 computed over the commit's content *and* its parent's
 hash, so it fixes the entire history leading to it. Adding
 a commit on top cannot alter it, because the new commit
@@ -1759,9 +1739,9 @@ reintroduces the old objects. Note the ordering: the
 cleanup is the last step and the least important one,
 because it does not undo the exposure.
 
-The lesson the chapter draws is that this is why the
-`.gitignore` for protected data is written before the first
-commit rather than after the first mistake.
+This is why the `.gitignore` for protected data is written
+before the first commit rather than after the first
+mistake.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1823,8 +1803,8 @@ since nothing in a git repository records which version of
 `dplyr` produced the numbers; and the environment beneath
 them, the R runtime, the operating system, and the system
 libraries. A reader may equally name the numerical
-libraries or the session configuration and be right; the
-point is to name layers the repository does not touch. The
+libraries or the session configuration and be right, since
+the repository touches neither. The
 common wrong answer is to name the data, which version
 control *can* pin for a small committed dataset, though
 usually does not for a large or protected one.
@@ -1880,10 +1860,9 @@ past submission. That record is not a determinant of the
 computational result at all, so no rung of the L0 to L3
 ladder grades its loss; it is a loss of scientific
 provenance and accountability, which is this chapter's
-subject rather than the ladder's. The colleague has not
-dropped a rung. The colleague has erased the one part of
-the record a baseline test or a container rebuild was
-never designed to protect.
+subject rather than the ladder's. What the colleague
+erased is the one part of the record a baseline test or a
+container rebuild was never designed to protect.
 :::
 
 ## Cheat sheet {#sec-cheat-vc}

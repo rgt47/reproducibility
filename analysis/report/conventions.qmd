@@ -101,8 +101,7 @@ depositing, or pasting such data.
 
 A fourth, smaller device, the honest level, closes most
 chapters: one sentence naming the rung the chapter's own
-practice reaches and what it still leaves exposed, not a
-recital of the whole ladder.
+practice reaches and what it still leaves exposed.
 
 ::: {.callout-important}
 ## The honest level
@@ -120,11 +119,9 @@ example 'habit 4', rather than restating it.
 
 ## The two datasets
 
-The book works two datasets, and they have different jobs.
-Which one a chapter uses is not arbitrary, so it is worth
-setting out the division once.
+The book works two datasets, and each has a different job.
 
-**`survival::diabetic`** is real. It holds 394 records from
+`survival::diabetic` is real. It holds 394 records from
 a randomized trial of laser photocoagulation for diabetic
 retinopathy, with one row per eye and two eyes per patient.
 It ships with every R installation, because `survival` is a
@@ -134,7 +131,7 @@ pin. It carries the computation: where the book fits a
 model, draws a figure, or reports a number, that number
 comes from real data and the reader can regenerate it.
 
-**The incident-diabetes cohort is synthetic**, and is
+The incident-diabetes cohort is synthetic, and is
 written by `analysis/scripts/simulate_cohort.R` from a
 fixed seed. It carries two threads the real data cannot.
 The first is confidentiality: the extract holds record

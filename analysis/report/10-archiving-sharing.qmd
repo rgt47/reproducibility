@@ -129,9 +129,8 @@ plot_determinant_stack(
 
 ## Orientation
 
-We arrive at the last question a reproducible analysis
-must answer, and it is not a technical question but a
-social and temporal one. Every earlier chapter was
+The last question a reproducible analysis must answer is
+a social and temporal one. Every earlier chapter was
 concerned with a single machine and a single analyst:
 how to pin the packages (@sec-dependencies),
 fix the environment (@sec-containers), render the
@@ -201,8 +200,7 @@ afterward. What sharing adds is that the fixed environment
 survives contact with a second person without drifting;
 what archiving adds is that the fixed environment survives
 the passage of time and the disappearance of the original
-machine. Both are about the level already reached
-surviving, not about reaching a new one.
+machine.
 :::
 :::
 
@@ -229,8 +227,7 @@ and no tool makes them.
 2. **When to deposit, at what depth, and at what level
    to claim.** An archival deposit is a public and
    permanent act, and the honest disclosure of the
-   level reached is part of the deposit, not an
-   afterthought. Depositing a compendium and labeling
+   level reached is part of the deposit. Depositing a compendium and labeling
    it 'reproducible' without stating whether it has
    been verified, or whether the environment was pinned
    by digest or merely by tag, misrepresents the work.
@@ -318,9 +315,9 @@ and no tool has access to either.
 
 ## Sharing with a team: the two-layer model
 
-We begin with the collaboration problem, and with the
-observation that motivates the whole design: the two
-things a team shares change at very different rates.
+The design for collaboration starts from one
+observation: the two things a team shares change at
+very different rates.
 The computational environment, the operating system,
 the R version, and the system libraries, is chosen at
 most a handful of times over the life of a project. The
@@ -341,14 +338,14 @@ digest, and fixes it for every collaborator. This is
 the slow-moving half. It corresponds to pillar one, the
 computational environment, and it is where the L1-to-L2
 transition of the ladder is secured. The lead builds
-this environment once, and the whole team reuses it. the vignette that describes the pattern calls this
+this environment once, and the whole team reuses it.
+The vignette that describes the pattern calls this
 'build once, use everywhere', and reports that reusing
 a pre-built team image reduces the setup of a new
 project from the fifteen or twenty minutes of a full
-build to a matter of seconds. The saving is real, but
-it is not the point that matters most for
-reproducibility. The point that matters is that every
-collaborator works from the same fixed floor.
+build to a matter of seconds. For reproducibility, the
+larger gain is that every collaborator works from the
+same fixed floor.
 
 **Layer 2 is the package set, and it is
 contributor-governed under the union model.** Each
@@ -385,8 +382,7 @@ lose a day to a missing one.
 
 ### The Dockerfile, not the image, is the guarantee
 
-Here we must state a principle that is easy to get
-backwards. The pushed team image is a convenience, a
+The pushed team image is a convenience, a
 cache that saves build time; it is *not* the
 reproducibility guarantee. The guarantee is the
 Dockerfile, together with the lockfile it restores from,
@@ -421,11 +417,9 @@ identical at the image level, because per-layer
 timestamps ordinarily differ between builds; matching
 content is the guarantee a pinned recipe gives, and
 bit-identical bytes require separate reproducible-build
-tooling (@sec-containers). The image is the fast path;
-the recipe is the guarantee of content, not of bytes.
-A team that treats the pushed image as authoritative,
-and lets the Dockerfile drift
-out of step with it, has quietly converted its
+tooling (@sec-containers). A team that treats the
+pushed image as authoritative, and lets the Dockerfile
+drift out of step with it, has converted its
 compendium from something reconstructable into something
 that merely happens to exist, which is exactly the
 regression to L0 that honest disclosure is meant to
@@ -434,9 +428,8 @@ catch.
 ### Registries and the forge
 
 Two distribution choices attend team sharing, and both
-are best understood as concerns about vendor
-independence rather than about reproducibility level.
-Neither changes the level a compendium has reached.
+are concerns about vendor independence. Neither changes
+the level a compendium has reached.
 
 The **registry** is where the team image is published:
 GitHub Container Registry, Docker Hub, or an
@@ -456,7 +449,7 @@ time without altering the compendium.
 The **forge** is where the repository and its continuous
 integration live: GitHub, or, very often in the health
 sciences, an institutional GitLab. This choice matters
-more than it first appears, because research compendia
+because research compendia
 are disproportionately authored on self-hosted GitLab.
 Many universities and laboratories, particularly those
 subject to on-premises data-governance rules, run their
@@ -470,10 +463,9 @@ supporting both without maintaining two parallel and
 divergent sets of workflow files requires that the CI
 logic be single-sourced, typically in the Makefile, with
 each forge's configuration reduced to a thin shim that
-calls it. The lesson for the analyst is to treat the
-forge as a replaceable host, not as the home of the
-work, and to keep the reproducibility logic in artifacts
-that travel between forges unchanged.
+calls it. The analyst should therefore treat the forge
+as a replaceable host and keep the reproducibility logic
+in artifacts that travel between forges unchanged.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what survives a registry outage
@@ -537,7 +529,7 @@ plus a pinned Dockerfile plus the built environment as a
 single file is reproducible by two independent routes: a
 reader may rebuild from the recipe, or, if the recipe's
 inputs have decayed, may run the archived environment
-directly. Depositing both is belt and braces, and for a
+directly. Depositing both is belt and suspenders, and for a
 result that matters it is worth the disk. What a deposit
 may carry of the *data* is a separate question, governed
 by the terms under which the data were obtained rather
@@ -637,8 +629,7 @@ this writing. The file's presence is enough for GitHub to
 render the 'Cite this repository' link and for Zenodo to
 read it on deposit; its content is not yet enough to tell a
 reader whom, exactly, to credit. Filling it in is a
-five-minute task left to the lead, not a content addition
-this chapter needs to make.
+five-minute task left to the lead.
 
 Two broader efforts are worth the analyst's attention.
 The Whole Tale platform, described by Brinckman and
@@ -688,9 +679,8 @@ data-availability statement must say, exactly, which of
 these routes was taken.
 :::
 
-What remains is to work through each of the five routes
-named above in enough detail to act on. There are five
-parts to the answer.
+The paragraphs below work through each of the five routes
+named above in enough detail to act on.
 
 **The code and the environment, always.** The analysis
 code, the tests, the lockfile, the Dockerfile, and the
@@ -779,7 +769,7 @@ typical:
 > [data steward] for access. The synthetic data do not
 > reproduce the reported estimates.
 
-The last sentence matters for the level. A reader without
+The last sentence bears on the level claim. A reader without
 access to the data can confirm that the pipeline executes;
 only someone with access can confirm that it regenerates
 the published numbers, so an L3 claim must say who
@@ -831,11 +821,10 @@ for completeness rather than scoring it, but once an award
 is made, the approved Plan becomes a term and condition of
 that award: noncompliance can bring added special terms,
 withheld funds, or termination, and can affect future
-funding decisions [@nihdms2020]. The practical consequence
-for the analyst is that the choice among the five routes
-above is not a free one, made at deposit time. It was made,
-in outline, when the grant was written, and the deposit is
-the Plan's execution rather than a fresh decision.
+funding decisions [@nihdms2020]. For the analyst, the
+choice among the five routes above was therefore made, in
+outline, when the grant was written; the deposit executes
+the Plan.
 
 **The journal side.** A code-availability statement is a
 narrower instrument than the data-availability statement
@@ -939,19 +928,18 @@ own system review describes it candidly as a strong
 scaffolding tool rather than a finished guarantor of
 reproducibility, and notes the sustainability risk that
 attends a small maintainer base: a single principal
-author is a bus factor of one, and a tool maintained by
-one person is a tool whose future is contingent. These
-are not reasons to withhold the tool; they are reasons
-to disclose its reach accurately, which is the same
-discipline the honest-level callout demands of any
-analysis. The evidence that disclosure cannot be taken
+author is a bus factor of one, and the tool's future
+depends on that one person. The appropriate response is
+to disclose its reach accurately, the same discipline
+the honest-level callout demands of any analysis. The evidence
+that disclosure cannot be taken
 for granted is empirical. Stodden and colleagues,
 examining the effectiveness of journal reproducibility
 policies, found that the mere existence of a policy is a
 weak predictor of an actually reproducible artifact
-[@stodden2018]: the gap between the reproducibility a
+[@stodden2018]: a gap between the reproducibility a
 project claims and the reproducibility it delivers is
-real, common, and worth the analyst's vigilance.
+common.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: recovering a decayed environment
@@ -980,8 +968,7 @@ failure because the pins were captured correctly at the
 time (the compendium was genuinely L1). What lapsed was
 the preservation of a runnable environment over time,
 which an archived image or a recorded run date would have
-protected. Capturing the level and stewarding it are
-distinct obligations.
+protected.
 :::
 :::
 
@@ -1029,9 +1016,7 @@ and an honest statement of the level reached. It does not
 need @sec-restricted-deposit's machinery at all, because
 data generated by the study's own code from stated
 parameters carries no participant, no consent, and no
-data-use agreement to honor. The restricted-data callout
-exists for exactly the case a simulation study is exempt
-from.
+data-use agreement to honor.
 :::
 :::
 
@@ -1220,7 +1205,7 @@ file, so a package repository or an automated check reading
 `LICENSE` would. The third check returns `TRUE`:
 `analysis/data/raw_data/cohort_raw.csv` is listed in
 `.gitignore`, and the CSV is generated from a committed
-script rather than tracked directly -- the exact practice
+script rather than tracked directly, the practice that
 the version-control chapter (@sec-version-control) and
 @sec-restricted-deposit both prescribe for data with
 identifier-shaped columns. The chunk cannot certify whether
@@ -1314,8 +1299,7 @@ say pinned if you pinned but did not re-run; name the DOI
 you actually minted, not a placeholder. Check every
 sentence about the data against what the deposit holds
 and against the agreement, and name the access route for
-anything withheld. The claim is the analyst's
-responsibility, not the model's.
+anything withheld.
 
 **Prompt.** 'Our 2024 analysis has an renv.lock but
 several pinned versions no longer install. How do we
@@ -1331,8 +1315,7 @@ reconstructs the *original* versions rather than
 substituting current ones, and that it uses the recorded
 run date. Test the reconstructed environment against a
 known output from the original analysis before trusting
-it. A reproduction that quietly upgrades the packages is
-not a reproduction.
+it.
 
 ## Exercises
 
@@ -1529,9 +1512,8 @@ reproducibility of the compendium. The Dockerfile, the
 the tests, the analysis code, the data dictionary, and the
 checks themselves are all forge-agnostic. (Restricted
 data stay off both forges; moving forges does not change
-where they live.) This is the point worth
-drawing out: the reproducibility machinery is not a
-property of the hosting platform, and a compendium that
+where they live.) The reproducibility machinery is
+independent of the hosting platform, and a compendium that
 must be substantially rewritten to move forges was coupled
 to its forge in ways it should not have been.
 
@@ -1598,9 +1580,8 @@ verification report, recorded output hashes? Only then L3.
 
 The last clause of the statement above is the one that
 makes it honest, and it is the clause most authors omit.
-Omitting it does not merely leave the claim vague; it
-invites the reader to assume verification that nobody
-performed.
+Omitting it invites the reader to assume verification
+that nobody performed.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1828,9 +1809,8 @@ doing real work.
 
 ## In conclusion
 
-We have reached the end of the book, and it is fitting
-to gather its argument into a few points, in the manner
-of a closing summary. Reproducibility, we have
+The book's argument comes down to four points.
+Reproducibility, we have
 maintained throughout, is not a badge a project either
 holds or lacks. It is a level a project reaches, and the
 discipline is to reach as high as the work warrants and
@@ -1861,8 +1841,7 @@ distinct from that act. Continuous integration reruns the
 verification on every change and certifies that the L3
 state still holds, but it adds no rung of its own;
 removing it does not lower the level, it only stops the
-automated confirmation. The verification act reaches L3;
-the automation around it keeps the claim current. Keeping
+automated confirmation. Keeping
 these registers distinct is what lets a project report,
 honestly and mechanically, exactly where it stands.
 
@@ -1870,12 +1849,11 @@ Third, the unit of reproducible work is the research
 compendium, and it is not only a manuscript. The same
 machinery, the same pillars, and the same ladder serve a
 data analysis, a simulation study, an R package, a blog,
-and a scholarly manuscript alike. the archetypes differ
+and a scholarly manuscript alike. The archetypes differ
 only in their directory layout, in whether a report is
 rendered, and in the last mile of publication, a package
 submission, a deployed website, or a deposit beside an
-article. To treat the manuscript as the only case is to
-mistake one archetype for the whole.
+article.
 
 Fourth, and above all, the goal is reproducibility
 matched honestly to the level actually reached. The

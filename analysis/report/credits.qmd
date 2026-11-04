@@ -9,10 +9,10 @@ apparatus, its reproducibility-levels ladder, and its
 capture-versus-validation framing from that work and from
 the framework's documentation.
 
-The book stands on the shoulders of the reproducibility
-literature it surveys, in particular the research-compendium
-lineage of Gentleman and Temple Lang and of Marwick,
-Boettiger, and Mullen; the containerisation work of the
+The book also draws on the reproducibility literature it
+surveys, in particular the research-compendium lineage of
+Gentleman and Temple Lang and of Marwick, Boettiger, and
+Mullen; the containerization work of the
 Rocker project; and the many rules-and-practices papers
 cited in the chapters.
 

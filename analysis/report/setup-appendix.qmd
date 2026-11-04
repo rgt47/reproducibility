@@ -4,15 +4,14 @@
 base image by digest matters. This appendix is narrower and more
 mundane: getting Docker itself to run at all, on the three
 machines most readers actually sit down at, before any of that
-chapter's content applies. A 2026 expert review of this book
-named exactly this gap: no setup appendix covering Docker on
-`arm64` laptops, `--platform linux/amd64` emulation and its
-consequences, Windows and WSL2, or locked-down institutional
-laptops, and judged that without it, 'weeks 2 to 4' of a course
-built on this book are lost to installation trouble rather than
-spent on the material itself. Nothing here is new reproducibility
-theory; it is a checklist for the moment before the first `docker
-build` succeeds.
+chapter's content applies: Docker on `arm64` laptops,
+`--platform linux/amd64` emulation and its consequences, Windows
+and WSL2, and locked-down institutional laptops. A 2026 expert
+review of this book judged that without such guidance, 'weeks 2
+to 4' of a course built on it are lost to installation trouble
+instead of spent on the material itself. The appendix adds no
+reproducibility theory; it is a checklist for the moment before
+the first `docker build` succeeds.
 
 ## Apple Silicon (M-series Mac)
 
@@ -101,11 +100,11 @@ does not.
 ## Locked-down institutional laptops
 
 A reader with no administrator rights cannot install Docker
-Desktop at all, a constraint the same expert review named by
-name as common and often treated as an afterthought in course
-materials. This is not a Docker problem to work around locally;
-it is an infrastructure gap to route around, in roughly
-increasing order of how much it is worth asking for:
+Desktop at all, a constraint the same expert review named as
+common and often treated as an afterthought in course
+materials. Nothing on the laptop itself will fix this; the
+options route around it through other infrastructure, in
+roughly increasing order of how much it is worth asking for:
 
 - **A cloud-hosted development environment.** @sec-backends
   already covers GitHub Codespaces, built on the Development

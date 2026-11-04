@@ -149,8 +149,7 @@ has pinned the environment. And it is certainly not yet
 L3, because nothing has re-run it and shown the numbers
 to match a recorded baseline. What the compendium provides is the container
 into which the later chapters install those higher
-guarantees. We build the box first, and the chapters
-that follow fill it.
+guarantees.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the scatter is missing
@@ -162,8 +161,8 @@ compendium add that the statistics alone do not supply?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-Not correctness, which the statistics already have, but
-the property of being a single, locatable object: a thing
+The statistics already have correctness. The compendium
+adds the property of being a single, locatable object: a thing
 that can be handed to a colleague, cited, archived, and
 re-run, because every part of it (the code, the data, and
 eventually the environment record) lives in one
@@ -264,9 +263,9 @@ can infer from the files themselves.
 
 ## The compendium as the unit of reproducible work
 
-The idea is not new, and its history is worth a
-paragraph because it explains the shape of the modern
-object. Gentleman and Temple Lang, writing in 2007,
+The idea is older than its tooling, and its history
+explains the shape of the modern object. Gentleman and Temple
+Lang, writing in 2007,
 proposed the compendium in its current sense: a document
 that combines text, code, and data in a form a reader
 can actually execute, rather than a paper that merely
@@ -325,13 +324,12 @@ ecosystem already attached.
 ## The R package as the compendium container
 
 The choice of the R package as the container is the
-single most consequential design decision in this
-lineage, and it repays careful statement. It appears at
-first to be a convenience, reuse of a familiar layout,
-but its real value is that it makes an existing,
-rigorous, and universal gate apply to the compendium's
-package skin for free. What that gate does not reach
-matters as much as what it does, and we state both.
+most consequential design decision in this lineage. It
+looks at first like a convenience, reuse of a familiar
+layout, but it also makes an existing, rigorous, and
+universal gate apply to the compendium's package skin
+for free. This section states both what that gate
+reaches and what it does not.
 
 The gate is `R CMD check`. When R was designed as a
 system for distributing statistical software, its
@@ -399,8 +397,8 @@ package skin, checked into version control like
 `DESCRIPTION`, not as an incidental dotfile.
 :::
 
-This is why the R-package structure is not incidental to
-the compendium but constitutive of it. Every archetype we
+The R-package structure is therefore part of what makes
+a directory a compendium. Every archetype we
 shall meet below, however different in outward shape,
 carries the same minimal R-package skin, and therefore
 `R CMD check` is the one gate that applies to all of
@@ -524,8 +522,7 @@ pillar above.
 
 ## The directory layout, concretely
 
-It helps to see the whole layout at once. The following
-is the top-level structure of a `zzcollab` compendium.
+The following is the top-level structure of a `zzcollab` compendium.
 The block is illustrative and is not executed.
 
 ```
@@ -556,8 +553,7 @@ penguin-analysis/
 └── .github/workflows/    # continuous-integration definitions
 ```
 
-The reader will note the division. Above the `analysis/`
-directory sits the standard R-package machinery: this is
+Above the `analysis/` directory sits the standard R-package machinery: this is
 the skin that makes `R CMD check` apply. Within
 `analysis/` sits the research proper, in the Marwick
 convention, with the raw-and-derived data separation that
@@ -646,9 +642,8 @@ since it states the one command a user must run. What is
 missing is not part of the README's job: a data dictionary
 naming each column's type, meaning, units, and provenance.
 A reproducer who can rerun the pipeline but cannot tell what
-`hba1c` means or whether it was measured or simulated has not
-been given a reproducible analysis, only a reproducible
-button press.
+`hba1c` means or whether it was measured or simulated can
+regenerate the numbers but cannot interpret them.
 :::
 :::
 
@@ -688,14 +683,12 @@ run from a different tool.
 
 ## The five archetypes
 
-We come now to the heart of the matter, and to the point
-this book returns to in every chapter: a research
-compendium is not only a manuscript. It is tempting, once
-one has seen the `analysis/report/` directory, to imagine
-that the purpose of a compendium is always to render a
-paper. This is the common case, but it is one case among
-five, and treating it as the whole is the error the
-present section exists to prevent.
+This section makes the point this book returns to in
+every chapter: a research compendium need not be a
+manuscript. Once one has seen the `analysis/report/`
+directory, it is easy to assume that a compendium always
+exists to render a paper. That is the common case, but
+it is one case among five.
 
 `zzcollab` treats the research archetype as a first-class
 initialization parameter, orthogonal to the choice of
@@ -707,9 +700,9 @@ top of the universal one. Five archetypes are advertised.
 Because every one of them carries the minimal
 R-package skin, `R CMD check` remains the universal gate
 across all five, as the framework's own whitepaper stresses
-in its account of the archetype axis. What varies is not
-the reproducibility machinery, which is identical, but the
-shape of the work and the gates it warrants. We take each
+in its account of the archetype axis. The reproducibility
+machinery is identical; what varies is the shape of the
+work and the gates it warrants. We take each
 in turn, with a health-sciences example, and then tabulate
 the differences.
 
@@ -729,8 +722,8 @@ analysis-ready table to `derived_data/`, a modeling
 script that fits a Cox proportional-hazards model and
 writes the coefficient table to `tables/`, and a plotting
 script that writes the Kaplan-Meier curves to `figures/`.
-There may be a short results document, but it is not the
-point; the point is the pipeline and its outputs.
+There may be a short results document, but the
+deliverable is the pipeline and its outputs.
 
 The applicable gates are the universal `R CMD check` and
 the unit tests, the latter guarding the cleaning logic and
@@ -767,19 +760,17 @@ validation run rebuilds the report from source, and a
 failure to render is a failure of the compendium. The gates
 are therefore `R CMD check`, the unit tests, and the render
 of `report.Rmd` to PDF. This is the archetype most readers
-imagine when they hear the word compendium, and the burden
-of the present section is that it is only the second of
-five.
+imagine when they hear the word compendium, and it is only
+the second of five.
 
 ### 3. R package (a summary-table package)
 
 The third archetype arises when the reusable code matures
 into something of general interest, at which point `R/`,
 `man/`, and `tests/` become the first-class content and the
-compendium is shareable as a CRAN-style package. The
-distinguishing feature, and the reason this archetype
-matters for the argument, is that *there is no report to
-render at all*. A package that generates
+compendium is shareable as a CRAN-style package. What
+distinguishes this archetype is that *there is no report
+to render at all*. A package that generates
 publication-quality clinical-trial summary tables has no
 manuscript as its deliverable; its
 deliverable is the exported, documented, tested function. A
@@ -852,8 +843,7 @@ compendium carries rather than for a single report. The
 multiplicity is the distinguishing feature of the general
 case: a blog compendium is a
 render-many, where the manuscript is a render-one and the
-package is a render-none. The machinery beneath all three
-is, once more, identical.
+package is a render-none.
 
 The five archetypes and their differences are summarized
 in @tbl-archetypes, and @fig-gates shows which validation
@@ -993,8 +983,7 @@ and by the unit tests, which regenerate and verify the
 function's outputs on every check. The absence of a render
 gate does not weaken reproducibility; it simply reflects
 that the deliverable is a tested procedure rather than a
-document. Reproducibility is a property of re-execution,
-not of rendering.
+document.
 :::
 :::
 
@@ -1024,16 +1013,13 @@ shared (@sec-archiving).
 
 ## Progressive disclosure
 
-The five archetypes are not walls between separate kinds
-of project. They are, rather, stages a single project may
-pass through, and the framework's most useful structural
-property is that the same layout supports the whole
-trajectory without reorganization. This is what the
+The five archetypes can also be stages a single project
+passes through, and the framework's most useful
+structural property is that the same layout supports the
+whole trajectory without reorganization. This is what the
 framework calls *progressive disclosure*: the same
 directory layout, the same `Makefile`, and the same Five
 Pillars carry a project from one archetype to the next.
-No transition demands that the analyst tear the
-project apart and rebuild it in a new shape.
 
 The trajectory is easy to picture, and it is the one our
 epidemiology student is likely to walk. The project begins
@@ -1054,13 +1040,12 @@ The same compendium has been, in turn, a data analysis, a
 manuscript, and a package, and at no point was it
 reorganized.
 
-The lesson we draw, and it is the organizing lesson of the
-chapter, is that the archetype is a description of a
-project's current emphasis rather than a permanent
-category. The reproducibility machinery is invariant across
-the archetypes and across the transitions between them. It
-is precisely this invariance that lets a project evolve
-without ever leaving the reproducible state it started in.
+The archetype therefore describes a project's current
+emphasis; it is not a permanent category. The
+reproducibility machinery is invariant across the
+archetypes and across the transitions between them, which
+is what lets a project evolve without leaving the
+reproducible state it started in.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what moves, what does not
@@ -1137,9 +1122,7 @@ The package archetype's discipline now protects it, and
 function signature. The same compendium is now doing the
 work of three archetypes at once, on one unchanged layout,
 with each gate applying to the part of the project that
-warrants it. This is progressive disclosure in operation,
-and it is the payoff of having chosen a single, principled
-container at the outset.
+warrants it.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the manuscript transition
@@ -1477,9 +1460,8 @@ is no single standard command that verifies the code loads
 and the dependencies resolve, and the analyst must assemble
 an equivalent by hand, differently, for every project.
 
-The ceremony is the price of the interface, and the
-interface is what makes the tooling apply. This is the
-same bargain as any other standard format: the structure is
+This is the same bargain as any other standard format: the
+structure is
 arbitrary in itself and valuable because other things
 already understand it.
 :::
@@ -1510,8 +1492,7 @@ than newly applicable: it now checks documentation
 completeness and export consistency, which were vacuous
 when nothing was exported.
 
-No directory needs reorganizing at any transition, and this
-is the point of the exercise. `R/` held the functions
+No directory needs reorganizing at any transition. `R/` held the functions
 throughout; it merely gains `@export` tags. `analysis/`
 held the driver and the report; it empties or becomes
 `vignettes/`. `tests/` gains cases. The Five Pillars are
@@ -1534,9 +1515,7 @@ tolerance, from a clean rebuild. Without a seed, the
 generator is initialized from a source that varies between
 sessions, so every run draws a different sample and
 produces different numbers. There is nothing stable to
-compare a rerun against. The failure is not that the
-verification is hard or expensive; it is that the property
-being verified does not exist. An unseeded simulation has
+compare a rerun against. An unseeded simulation has
 no recorded output that a rerun could match, so the L3
 check is undefined rather than merely unperformed.
 

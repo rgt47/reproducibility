@@ -116,7 +116,7 @@ figure, the identical p-value. Every rung of the
 ladder of @sec-levels is satisfied: the source is
 locatable, the packages are pinned, the
 environment is pinned. The result is perfectly
-reproducible. It is also perfectly wrong.
+reproducible, and it is wrong.
 
 This is the reproducibility paradox, and it is
 the pivot of this chapter. A buggy function that
@@ -152,8 +152,7 @@ fixes the inputs; validation checks that the
 fixed inputs still produce the answer they are
 supposed to. A reproducible analysis without tests
 is trusted; a reproducible analysis with tests is
-checked, and the difference between trusting and
-checking is the difference this chapter develops.
+checked.
 
 There is a further and more constructive link to
 the ladder. The highest rung, L3 verified, is
@@ -161,9 +160,8 @@ reached not by capturing more but by *confirming*
 that a recorded computational output regenerates.
 That confirmation is itself a test, of a
 particular kind we shall meet below as the
-baseline test. Testing is therefore not
-merely adjacent to the levels; the topmost level
-is defined by a test. We begin with the human
+baseline test, so the topmost level is defined
+by a test. We begin with the human
 judgments that no testing tool can make, then
 develop the four kinds of test in turn, then take
 up code quality as a second validation feature,
@@ -196,10 +194,9 @@ number is right.
 
 Testing tooling runs the checks, tallies the
 passes and failures, and reports them. It does not
-originate a single one of the judgments that give
-a test its value. Three of these judgments are
-worth naming at the outset, because they are the
-human core of everything that follows.
+originate any of the judgments that give a test
+its value. Three of them underlie everything that
+follows.
 
 1. **The analyst decides what 'correct' means.**
    A test compares a computed value against an
@@ -221,8 +218,7 @@ human core of everything that follows.
    contract, the behaviors a future change must not
    break, and writes tests for those. This is the
    distinction, developed below, between testing
-   behavior and testing implementation, and it is a
-   design judgment, not a mechanical one.
+   behavior and testing implementation.
 
 3. **The analyst encodes the domain constraints.**
    The rule that an age lies between zero and one
@@ -293,8 +289,6 @@ age range, the data itself must satisfy.
 
 ## The reproducibility paradox, stated precisely
 
-It is worth stating the paradox with a little more
-care, because its precise form dictates the remedy.
 A computational result depends on the code, the
 data, and the stack of determinants beneath them
 that @sec-levels enumerated. The capture tools of
@@ -319,9 +313,7 @@ detectable defect. On the other hand, a result that
 does reproduce has been shown only to be stable, not
 to be right, and stability is easily mistaken for
 correctness by an analyst who has watched the same
-number appear three times. The paradox is dangerous
-exactly because reproduction is so persuasive.
-Testing exists to break the false inference from
+number appear three times. Testing exists to break the false inference from
 'it came out the same' to 'it came out correct'.
 
 ::: {.callout-important}
@@ -380,7 +372,7 @@ specifies what the correct analysis looks like, not by
 running anything, but by committing in writing to a
 choice that the data cannot later be allowed to revise.
 
-The gap this closes is specific. A function-level
+A function-level
 oracle, such as the hand-computed mean described above,
 catches a coding error: the function returns the wrong
 number for a known input. It says nothing about whether
@@ -546,7 +538,7 @@ expect_equal(calculate_mean(c(1, NA, 3),
 ```
 
 The first two lines pin the ordinary behavior
-against hand-computed answers. the third and fourth
+against hand-computed answers. The third and fourth
 pin the edge cases, the empty vector and the
 missing value, which are exactly the inputs on which
 an untested function tends to misbehave. A unit test
@@ -583,7 +575,7 @@ what `summarise_fit()` needs to proceed. Testing
 because `glm` inherits from `lm`, but it would break
 the moment the function was upgraded to `fit_cox()`
 returning a `coxph`, which does not. Testing the
-interface -- 'does `coef()` return numeric values?' --
+interface ('does `coef()` return numeric values?')
 survives that migration; testing the class does not.
 The book's own `fit_cox()` is exactly this migration:
 the test suite above required only a new test file
@@ -654,8 +646,7 @@ extract happens to show. An assertion that the event
 rate in the laser arm is below one third would pass
 today and would fail on a different trial, or on a
 corrected export, for reasons having nothing to do
-with a defect. Constraints belong to the protocol,
-not to the data in front of you.
+with a defect.
 
 ```r
 # inst/tinytest/test-cohort.R
@@ -964,8 +955,8 @@ R's `RNGkind('L\'Ecuyer-CMRG')` exposes directly and which
 workers of a cluster, assigning each one a non-overlapping
 substream; the `doRNG` package applies the same discipline
 to a `foreach` loop. A parallel bootstrap run without this
-is not merely imprecise; its reported width can understate
-the true Monte Carlo error, and it adds a second way for
+can report a width that understates the true Monte Carlo
+error, and it adds a second way for
 the result to depend on how many cores happened to run it,
 on top of the seed discipline this chapter already
 requires.
@@ -993,15 +984,14 @@ baseline test does, addresses that second problem.
 :::
 :::
 
-The four kinds are not four ways of doing one thing.
-Each catches defects the others do not see, and
+Each of the four kinds catches defects the others do
+not see, and
 @fig-test-coverage sets four representative defects
 against them. Read the bottom row first. Re-execution
 alone, with no test of any kind, catches none of the
 four, because every one of these defects is
 deterministic and will reproduce perfectly. That row is
-the reproducibility paradox in tabular form, and it is
-the reason this chapter exists.
+the reproducibility paradox in tabular form.
 
 ```{r}
 #| label: fig-test-coverage
@@ -1074,11 +1064,9 @@ size. (b) A data-validation test on the age range.
 deviation. (d) A baseline test comparing the seeded
 result with a value recorded before the upgrade and
 committed, which is the comparison L3 requires; a
-same-session test would miss it. Note that
-the unit and
-data-validation tests catch defects that
-reproduction alone would happily propagate: this is
-the paradox in operation.
+same-session test would miss it. Note that the unit
+and data-validation tests catch defects that
+reproduction alone would happily propagate.
 :::
 :::
 
@@ -1126,9 +1114,9 @@ merely confirms a result is a data frame, without
 checking any value in it, tests too little and gives
 false comfort. A test that pins every incidental
 property tests too much and breaks on every
-revision. The judgment of what to pin, named above
-as the second of the analyst's contributions, is the
-skill the tooling cannot supply.
+revision. Deciding what to pin is the second of the
+analyst's contributions named above, and no tool
+makes that decision.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: fragile or robust
@@ -1466,17 +1454,16 @@ results$buggy_passes <-
 knitr::kable(results)
 ```
 
-The table records the whole of the lesson. The
-correct function passes every check; the buggy
+The correct function passes every check; the buggy
 function fails every check, and it fails them
 identically. Were we to rerun this chunk a thousand
 times, on a thousand machines, the `buggy` column
 would hold the same wrong values every time. The bug
 is not a source of variability, which reproducibility
-tooling might eventually surface; it is a source of
-constant, faithful, reproducible error, which only a
-comparison against an independent oracle can catch.
-That comparison is what a test is.
+tooling might eventually surface. It produces the
+same error on every run, and only a comparison
+against an independent oracle can catch it. That
+comparison is what a test is.
 
 In a real compendium, the hand-rolled `expect` gives
 way to the `tinytest` expectations, and the checks
@@ -1576,9 +1563,8 @@ value.
 
 *Verification.* Check every expected value by hand
 or from an independent formula, not by running the
-function. The oracle must come from outside the code
-under test; that is the whole point of an oracle.
-Confirm that the edge cases you care about, the
+function, since the oracle must come from outside the
+code under test. Confirm that the edge cases you care about, the
 empty input, the single value, the missing value,
 each have a test.
 
@@ -1826,23 +1812,23 @@ expect_true(is.nan(summarize_visits(numeric(0))))
 expect_error(summarize_visits('a'))
 ```
 
-**Where each expected value came from** is the substance of
+Where each expected value came from is the substance of
 the exercise, and the three answers should be different.
 
-The ordinary case comes from **arithmetic done by hand**,
+The ordinary case comes from arithmetic done by hand,
 independently of the function. This is what makes it an
 oracle: if the expected value were computed by running the
 function, the test would assert only that the function
 agrees with itself, which is the commonest way a test
 suite becomes worthless.
 
-The empty-input case comes from **a decision about the
-contract**. There is no arithmetic to do; the analyst must
+The empty-input case comes from a decision about the
+contract. There is no arithmetic to do; the analyst must
 decide what the function should do with no data and then
 encode the decision. The test is as much a specification
 as a check.
 
-The wrong-type case comes from **the same contract**,
+The wrong-type case comes from the same contract,
 asserting that the function refuses input it cannot
 handle rather than returning something misleading.
 
@@ -1884,10 +1870,6 @@ wrong thing. The only way to detect the error is to compare
 the output against a value obtained *independently of the
 code*, which is what the hand-computed oracle supplies and
 what no amount of environment capture can.
-
-This is the reproducibility paradox in one line: capture
-fixes the inputs, and validation checks that the fixed
-inputs produce the intended answer.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1917,8 +1899,7 @@ expect_true(
 )
 ```
 
-**The justifications** are the point, and each should come
-from outside the data.
+Each justification should come from outside the data.
 
 The **column set** comes from the data dictionary: these
 are the variables the analysis consumes, and a missing one
@@ -1931,10 +1912,6 @@ the coding sheet. The **missingness bound** comes from
 what the analysis can tolerate before its conclusions
 become unsafe, which is a judgment the analyst must make
 and record.
-
-The recurring discipline: a range read off the current
-data is a description, and a range read off the protocol
-is a test.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1959,8 +1936,7 @@ analysis becomes trusted rather than checked, and the
 class of error the tests were catching, a wrong function
 and an out-of-range dataset, returns to being invisible.
 
-The one qualification worth making, because it is a real
-subtlety rather than a hedge, concerns L3. L3 requires that
+One qualification concerns L3. L3 requires that
 recorded outputs be shown to regenerate within a stated
 tolerance from a clean rebuild, and the evidence for that
 is a baseline test. The unit and data-validation tests of
@@ -1969,8 +1945,7 @@ leaves L3 where it was; removing the baseline test would
 drop a project from L3 to L2, because the one piece of
 evidence the rung requires would be gone. It is the
 *verification role* that matters there, not the testing
-role, and a reader who makes this distinction has
-understood the chapter's central division.
+role.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -2004,8 +1979,8 @@ a verification step finds baseline tests. Changing one
 line of the analysis makes the test fail, reporting the
 coefficients that moved.
 
-**On the tolerance**, which is the part of this exercise
-that repays thought. An exact comparison is the strongest
+The tolerance is the part of this exercise that needs
+thought. An exact comparison is the strongest
 check and will produce failures that mean nothing:
 floating-point summation reorders under a different BLAS
 or a different thread count, as @sec-containers discusses,
@@ -2020,9 +1995,9 @@ reported.
 **What this test is and is not.** It is the kind of
 baseline test L3 requires, and it is a *change detector*: it
 asserts that today's answer matches the recorded one, not
-that either is correct. It is worth being clear about
-this, because the baseline was produced by the same code
-it now guards. If the code was wrong when the baseline was
+that either is correct, because the baseline was
+produced by the same code it now guards. If the code was wrong
+when the baseline was
 recorded, this test will faithfully defend the wrong
 answer, which is the paradox reappearing one level up.
 The unit tests of exercise 1 are what establish

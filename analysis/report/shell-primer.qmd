@@ -5,7 +5,7 @@ Every chapter in this book runs commands at a shell prompt:
 book assumes a reader can already type these and read what
 comes back, but a 2026 syllabi comparison found that only 7 of
 30 comparable reproducibility courses actually teach the shell;
-the rest, like this book until now, assume it. This appendix is
+the rest assume it. This appendix is
 the missing prerequisite: enough of the Unix shell to follow
 every command shown elsewhere in the book, in the order those
 commands are needed, with nothing beyond that scope [the
@@ -91,14 +91,13 @@ ls *.csv
 
 `rm *.csv` therefore does not pass the literal text `*.csv` to
 `rm`; the shell expands it first, into the list of matching
-file names, and `rm` deletes each one named in that list. The
-distinction matters because the expansion happens silently
-before the command runs, so `*.csv` in the wrong directory
-deletes a different, unintended set of files, not nothing.
+file names, and `rm` deletes each one named in that list.
+Because the expansion happens silently before the command
+runs, `*.csv` in the wrong directory deletes a different,
+unintended set of files, not nothing.
 
-`rm file` deletes a file. This is the one command in this
-section that deserves a direct warning: unlike `git`, the shell
-has no undo. A commit can be reverted, a branch can be
+`rm file` deletes a file, and unlike `git`, the shell has no
+undo. A commit can be reverted, a branch can be
 recovered from the reflog, but a file removed with `rm` is
 simply gone; it does not pass through a trash folder, and no
 earlier chapter's recovery techniques apply to it. Running `rm
@@ -262,15 +261,15 @@ sets all nine bits in one command.
 
 The commands above work the same way in bash and in zsh, the
 two shells most readers will encounter, and this book's own
-examples assume bash-compatible syntax throughout. This matters
-on macOS specifically: Apple switched the default shell from
+examples assume bash-compatible syntax throughout. On macOS in
+particular, Apple switched the default shell from
 bash to zsh in macOS Catalina (2019), so a reader following this
 book on a current Mac is, by default, typing these commands into
 zsh, not bash. The everyday commands in this appendix, `pwd`,
 `ls`, `cd`, `cp`, `mv`, `rm`, redirection, pipes, `export`,
 `chmod`, behave identically in both. Differences surface only in
-more advanced scripting, array syntax and certain glob options
-differ, which this book does not otherwise rely on. A reader who
+more advanced scripting (array syntax and certain glob options
+differ), which this book does not otherwise rely on. A reader who
 hits a syntax error on a book command that looks exactly as
 written should suspect a shell difference before suspecting a
 typo, and can check which shell is running with `echo $SHELL`.

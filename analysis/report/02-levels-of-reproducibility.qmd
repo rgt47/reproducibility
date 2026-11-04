@@ -150,10 +150,8 @@ of software ran.
 ## The analyst's contribution
 
 Three judgments at the center of this chapter belong
-to the analyst and are automated by no tool. It is
-worth stating them at the outset, because the machinery
-of later chapters serves them rather than replaces
-them.
+to the analyst and are automated by no tool. The
+machinery of later chapters exists to support them.
 
 1. **Choosing, and declaring, the honest level.** A
    framework can compute which rung a repository has
@@ -171,7 +169,7 @@ them.
    destined for a guideline warrants L2 or L3. Deciding
    where on the ladder a given project should sit, given
    its lifespan, its audience, and the cost of being
-   wrong, is a design decision, not a default.
+   wrong, is a design decision.
 
 3. **Naming what remains exposed.** No rung of the
    ladder pins the whole stack. The analyst who reaches
@@ -296,19 +294,17 @@ iteration over unordered structures, each capable of
 producing a different answer on two runs of identical
 inputs.
 
-Now, which of these layers does common practice pin? The
-answer is sobering, and it motivates the entire book. A
-bare published script pins exactly one layer with any
+Common practice pins very few of these layers. A bare
+published script pins exactly one layer with any
 reliability, the analysis code, since the code is the
 file itself. If the reader is fortunate, it pins a
 second, the data, when it has been deposited alongside.
 Every other layer is left to whatever the next machine
 happens to provide. @fig-determinant-stack maps the stack
 against the rung of the ladder that first secures each
-layer. The reader will note that three layers, the
-hardware, the numerical libraries, and intrinsic
-non-determinism, are secured by no rung of the capture
-ladder at all.
+layer. Three layers, the hardware, the numerical
+libraries, and intrinsic non-determinism, are secured by
+no rung of the capture ladder at all.
 
 ```{r}
 #| label: fig-determinant-stack
@@ -332,8 +328,8 @@ R 3.6.0 broke exactly this, silently, for every analysis
 that had set a seed under the old default. Given that
 simulation studies, multiple imputation, and bootstrap
 confidence intervals are staples of health research, the
-RNG kind is a first-order concern, not a footnote. The
-locale is the second. `sort()` and `order()` on a
+RNG kind is a first-order concern. The locale is the
+second. `sort()` and `order()` on a
 character vector depend on `LC_COLLATE`, and the parsing
 of a decimal mark depends on `LC_NUMERIC`. An analysis
 developed under one locale and re-run under another can
@@ -432,8 +428,8 @@ ladder <- tibble::tibble(
 knitr::kable(ladder)
 ```
 
-L3 is the one rung that cannot be read off a file listing,
-so it is worth stating precisely, once. An analysis is at
+L3 is the one rung that cannot be read off a file listing.
+An analysis is at
 **L3, verified**, when its recorded outputs have been shown
 to regenerate within a stated tolerance from a clean
 rebuild, and the showing is done by a *baseline test*: a
@@ -442,8 +438,8 @@ them with values recorded in a committed baseline file,
 within a tolerance written into the test. A clean rebuild
 whose tests pass, but which compares nothing against a
 recorded baseline, demonstrates that the environment builds
-and the code runs; that is L2 confirmed, not L3. The
-tolerance matters because estimates are floating-point
+and the code runs; that is L2 confirmed, not L3. A
+tolerance is needed because estimates are floating-point
 numbers, and exact equality would fail on harmless
 differences in the last digits while saying nothing about
 whether the substantive result moved. In the framework this
@@ -471,8 +467,7 @@ what the lockfile cannot. The two are complements, not
 substitutes, and a genuinely pinned-environment analysis
 carries both.
 
-Where does the ladder come from, and is it arbitrary?
-It is not. It consolidates several graded views of
+The ladder consolidates several graded views of
 reproducibility that the literature has offered in
 different vocabularies. @peng2011 arranged computational
 work along a spectrum, from the merely published, through
@@ -492,12 +487,11 @@ L1 from L2, and reaching L3 is not the same act as earning
 a venue's reproduction badge, which is awarded by
 reviewers under that venue's own policy; the reader who
 needs a badge should read the venue's current definition
-directly. The contribution of the L-scheme is not a new
-definition of reproducibility but a mapping of these
-graded views onto artifacts a tool can detect. The point
-is that the level of a repository can then be determined
-mechanically and reported honestly, rather than asserted
-by its author.
+directly. The L-scheme adds no new definition of
+reproducibility. It maps these graded views onto
+artifacts a tool can detect, so that the level of a
+repository can be determined mechanically and reported
+honestly, rather than asserted by its author.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: capture or validation?
@@ -524,8 +518,7 @@ captured-but-never-retested analysis suffers, and the
 'works on my machine' failure at its source. The
 laboratory has moved from L2, a pinned environment
 asserted to reproduce, toward L3, a pinned environment
-shown to reproduce. That is the whole purpose of the
-capture-versus-validation distinction.
+shown to reproduce.
 :::
 :::
 
@@ -560,7 +553,7 @@ of the distinction, casting replication as a question
 about the agreement of estimates across studies rather
 than about the re-running of code [@patil2016].
 
-Here is the warning. The current ACM artifact-badge
+The current ACM artifact-badge
 vocabulary, in its 2020 revision, aligns its direction of
 use with the National Academies convention rather than
 inverting it [@acm2020], but they draw the boundary
@@ -595,7 +588,7 @@ study on new data, which no software framework can supply.
 When the reader meets 'reproduced' or 'replicated' in a
 journal's author instructions or a venue's badging policy,
 the first task is to determine which convention that
-document uses. The word alone does not tell them.
+document uses.
 
 ::: {.callout-warning}
 ## Another warning about the words: 'validation'
@@ -653,8 +646,7 @@ left to the chapters this ladder points toward.
 
 A reader who consults the documentation of the framework
 this book uses will encounter a second numbering scheme,
-and the collision is a genuine source of confusion that we
-disarm here rather than leave to chance.
+and the two are easily confused.
 
 The framework's teaching materials include a vignette that
 presents a *five-level* ramp: Level 1, a basic R project
@@ -711,14 +703,12 @@ always mean the architectural rung.
 
 ## The ladder grades every archetype
 
-It would be a mistake to read the ladder as a scale for
-manuscripts alone. @tbl-archetype-weight in @sec-compendium
-is the reference: a data-analysis project and a manuscript
-read the ladder the same way, an R package reaches L2 by
+@tbl-archetype-weight in @sec-compendium shows how each
+archetype reads the ladder: a data-analysis project and a
+manuscript read it the same way, an R package reaches L2 by
 `R CMD check` and L3 by a baseline on its function outputs,
-and a blog applies the ladder post by post. The one case
-that most needs stating here, because it is easy to miss,
-is the **simulation study**: its exposure on the
+and a blog applies the ladder post by post. The case most
+easily missed is the simulation study: its exposure on the
 session-configuration layer is acute, because its outputs
 are functions of the random-number stream, and an unseeded
 or wrongly seeded simulation can sit at L2, with a
@@ -755,12 +745,8 @@ input's output against a value committed earlier.
 
 ## No framework pins the whole stack
 
-We end the exposition where honesty requires, with the
-boundary of the guarantee. It would be incoherent to spend
-a chapter teaching that a reproducibility claim must be
-matched to the level actually reached, and then to imply
-that reaching L2 or L3 pins the entire determinant stack.
-It does not, and no present framework does.
+Reaching L2 or L3 does not pin the entire determinant
+stack, and no present framework pins all of it.
 
 By its own published accounting, the framework this book
 uses robustly pins something like four of the ten
@@ -774,16 +760,14 @@ is inherited from the base image (the generated Dockerfile
 sets `OMP_NUM_THREADS=1`, which fixes the thread count but
 not the library), the integrity of external data is recorded by
 provenance but not by checksum, and the fonts and the
-graphics device are pinned only for some profiles. These
-are not defects peculiar to one tool. They are the layers
-that the whole class of integrative frameworks currently
-leaves exposed, and an honest L2 or L3 claim names them
-rather than papering over them. The reader will therefore
-find, at each rung of the ladder in the chapters ahead, an
-explicit account of what is secured and what remains
-exposed. Reach plus honesty about the boundary of that
-reach is the standard this book holds every effort to,
-including the framework it teaches.
+graphics device are pinned only for some profiles. The
+whole class of integrative frameworks currently leaves
+these layers exposed, and an honest L2 or L3 claim names
+them rather than papering over them. The reader will
+therefore find, at each rung of the ladder in the chapters
+ahead, an explicit account of what is secured and what
+remains exposed, including for the framework this book
+teaches.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: naming the gap honestly
@@ -866,8 +850,8 @@ continuous-integration service re-runs it on every change.
 The folder is now at **L3, verified**: the
 reported hazard ratio has been shown to regenerate, not
 merely asserted to. The honest reproducibility statement for
-the paper now writes itself, naming the rung, the artifacts,
-and the one layer, the cross-architecture numerical
+the paper can now name the rung, the artifacts, and the one
+layer, the cross-architecture numerical
 determinism of the bootstrap, that remains outside the
 guarantee.
 
@@ -897,10 +881,10 @@ pins the layers the lockfile cannot reach.
 
 ## The cohort, continued
 
-The worked example above is a composite biostatistician.
-Here is the same placement exercise performed on this
-book's own running cohort compendium, as it actually
-stands at this point in the book.
+The worked example above follows a composite
+biostatistician. The same placement exercise can be
+performed on this book's own running cohort compendium, as
+it actually stands at this point in the book.
 
 ```{r}
 raw <- load_cohort('../data/raw_data/cohort_raw.csv')
@@ -1184,9 +1168,8 @@ intrinsic non-determinism from parallelism, where the
 reduction order of a parallel sum varies run to run on the
 same machine.
 
-The general form of the answer is that a container pins
-the environment and the environment is not the whole
-stack. It is the L1-to-L2 step, not the whole ladder.
+In general, a container pins the environment, and the
+environment is not the whole stack.
 :::
 
 ::: {.callout-note icon=false collapse=true}

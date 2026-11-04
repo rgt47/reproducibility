@@ -21,8 +21,6 @@ concretely, whether the fault is statistical or
 computational, name the specific silent default most
 likely responsible, and place the original analysis on
 the ladder this book develops in full in @sec-levels.
-That diagnostic habit, rather than a vague appeal to
-'reproducibility', is the chapter's payoff.
 
 ```{r}
 #| include: false
@@ -143,16 +141,12 @@ second.
 
 This book exists to prevent that failure, and this
 chapter establishes that the failure is real, common,
-and specifically computational. The stakes in a
-health science are not abstract. A result that cannot
-be regenerated cannot be audited. An analysis that a
-regulator cannot reproduce is an analysis a regulator
-may decline to trust. And a clinical recommendation
-built on a number that no one can recompute is a
-recommendation resting on faith rather than evidence.
-Reproducibility is, in the end, a precondition for
-the trust that clinical and public-health decisions
-require.
+and specifically computational. In a health science,
+a result that cannot be regenerated cannot be
+audited, and an analysis that a regulator cannot
+reproduce is one a regulator may decline to trust. A
+clinical recommendation built on a number that no one
+can recompute rests on faith rather than evidence.
 
 Throughout the book we place an analysis on a
 four-rung ladder, and we shall begin to use its
@@ -207,8 +201,7 @@ to the analyst and are automated by no tool.
    statistical (the method was inappropriate, the
    inference was misdrawn) or computational (the code
    is sound but its environment has shifted). The
-   remedy differs entirely by case, and the diagnosis
-   is a human act of judgment, not a mechanical one.
+   remedy differs entirely by case.
 
 2. **Matching the claim to the level reached.** A
    reproducibility claim is a scientific claim and
@@ -290,8 +283,7 @@ that judgment, which no tool makes for them.
 
 ## The evidence that re-execution fails
 
-The case for taking reproducibility seriously is
-empirical, and it is not encouraging. We begin with
+We begin with
 the large replication studies, because they set the
 scale of the problem, and then turn to the narrower
 and, for our purposes, more damning studies that
@@ -340,16 +332,14 @@ the great majority, close to ninety-nine percent,
 carried no formal description of their dependencies at
 all [@saju2025].
 
-The distinction between the two bodies of evidence
-matters. The replication studies tell us that
+The replication studies tell us that
 scientific findings are fragile. The re-execution
 studies tell us something more specific and more
 remediable, namely that a large fraction of published
 analyses cannot be regenerated even in principle. The
 reason is that the computational scaffolding needed to
-run them was never captured. It is the second failure,
-and not the first, that the tooling in this book
-addresses.
+run them was never captured. The tooling in this book
+addresses the second failure.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: two kinds of failure
@@ -484,18 +474,18 @@ advertisement of the scholarship, and the scholarship
 itself is the full computational apparatus that produced
 the figures.
 
-Reproducibility so understood is not a single
-threshold but a spectrum. Peng arranged computational
+Reproducibility so understood is a spectrum. Peng
+arranged computational
 work along a scale, from the merely published, through
 code available, code and data available, and linked
 and executable, to fully replicable. He argued that
 reproducibility is a minimum standard for judging a
 scientific claim when full independent replication is
-impractical [@peng2011; @peng2006]. The lesson we take
-from Peng, and develop into the levels ladder of
-@sec-levels, is that reproducibility comes in degrees.
-Honesty about which degree one has reached is
-itself a scientific virtue.
+impractical [@peng2011; @peng2006]. We take from Peng,
+and develop into the levels ladder of @sec-levels, the
+idea that reproducibility comes in degrees, and that
+honesty about which degree one has reached is itself a
+scientific virtue.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: three words, one study
@@ -527,9 +517,8 @@ fails to re-execute.
 
 ## Why the failures are computational, not statistical
 
-It is worth dwelling on why re-execution fails,
-because the reasons point directly at the remedy.
-Consider two changes to R itself, each silent, each an
+The reasons re-execution fails point directly at the
+remedy. Consider two changes to R itself, each silent, each an
 improvement, and each capable of altering a published
 result without any error or warning to announce it.
 
@@ -599,13 +588,12 @@ tractable. A statistical error requires a scientific
 judgment to correct; a computational failure requires
 only that the determinant stack be captured, layer by
 layer, so that the same computation can be run again.
-The crisis is not, at bottom, a shortage of
-statistical competence. It is a shortage of
-computational hygiene, and hygiene can be taught,
+Computational hygiene of that kind can be taught,
 tooled, and enforced.
 
-The point applies to every kind of computational
-output, not only to the polished manuscript. A
+The same exposure applies to every kind of
+computational output, including outputs with no
+polished manuscript. A
 research compendium comes in several archetypes,
 developed in full in @sec-compendium: a data-analysis
 project, a scholarly manuscript, an R package, a
@@ -619,8 +607,7 @@ changed `sample.kind`. A simulation study, whose whole
 output is a set of random draws, is more exposed to
 the RNG change than any manuscript. And a teaching
 blog that renders forty posts inherits the churn of
-every package any post loads. The discipline that
-follows applies across all of them.
+every package any post loads.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: locating the failure
@@ -656,8 +643,7 @@ not stochastic.
 
 ## A reproducible analysis can still be wrong
 
-We must guard against a misreading that the foregoing
-invites. Nothing in this book claims that a
+Nothing in this book claims that a
 reproducible analysis is a correct one. The point is
 pressed by Leek and Peng, who observe that
 reproducibility guarantees only that a computation can
@@ -665,8 +651,7 @@ be regenerated, not that the computation was the right
 one to perform [@leek2015]. A script that
 faithfully regenerates a mistaken p-value on every
 machine, forever, is perfectly reproducible and
-perfectly wrong. Reproducibility disciplines the
-computation; it does not discipline the science.
+perfectly wrong.
 
 It follows that reproducibility is a floor and not a
 ceiling. It is the minimum standard beneath which a
@@ -774,9 +759,9 @@ they diverge almost immediately, coinciding only
 sporadically thereafter. An analyst who set a
 seed under R 3.5, confident that the seed made the
 analysis reproducible, would find the draws silently
-changed on upgrading to R 3.6 or later. The seed was
-never the whole story; the seed together with the RNG
-kind is. This is the determinant stack in miniature:
+changed on upgrading to R 3.6 or later. The draws
+depend on the seed together with the RNG kind. This is
+the determinant stack in miniature:
 the code fixed one layer, the seed, and left another,
 the sampler, to whatever the running version of R
 supplied. Pinning the R version, which we reach at L2
@@ -964,9 +949,9 @@ model, or model family and version, was used, and roughly
 when, with the same discipline this chapter already asks
 for an R package: 'R 4.4.1, glmnet 4.1-8' and 'a
 general-purpose language model, accessed October 2026'
-belong in the same methods paragraph. This matters because
-a model's output is not a fixed, reproducible artifact the
-way a package version is. Model behavior drifts across
+belong in the same methods paragraph. Unlike a package
+version, a model's output is not a fixed, reproducible
+artifact. Model behavior drifts across
 versions, providers retire and replace model identifiers
 over time, and even repeated calls to one unchanged version
 are not guaranteed to return identical output, so the text
@@ -1108,8 +1093,8 @@ different adjustment set, a different handling of missing
 data, a different cut point.
 
 On which failure is most damaging to the clinical
-conclusion, the defensible answer is replication, and the
-reasoning matters more than the answer. A reproducibility
+conclusion, the defensible answer is replication. A
+reproducibility
 failure impugns the record but leaves open whether the
 finding is true. A robustness failure shows the finding
 depends on a choice, which weakens it without refuting
@@ -1147,8 +1132,8 @@ published interval is quoted as excluding the null by a
 narrow margin, a rerun under the other sampler can move
 it across that boundary.
 
-The lesson to draw is that a seed is not a sufficient
-record of a stochastic analysis. The seed pins the
+A seed is therefore not a sufficient record of a
+stochastic analysis. The seed pins the
 starting point, but the RNG kind determines what the
 generator does with it, and the RNG kind is a session
 configuration that neither a lockfile nor a container
@@ -1166,19 +1151,19 @@ answer establishes is that the archetypes stress
 different layers, so a single reproducibility recipe
 serves them unevenly.
 
-A defensible set. For a **data-analysis project**, the
+A defensible set. For a data-analysis project, the
 data itself, since the analysis is worthless without the
 extract it ran on and that extract is often the artifact
-least likely to travel. For a **manuscript**, the
+least likely to travel. For a manuscript, the
 rendering toolchain, since the deliverable is a document
 and the numbers in it must be regenerated rather than
-retyped. For an **R package**, the declared dependency
+retyped. For an R package, the declared dependency
 set, since the package is consumed by other code and its
 correctness is a claim about behavior under a stated
-environment. For a **simulation study**, the random-number
+environment. For a simulation study, the random-number
 discipline, since the entire output is a function of the
 seed and the generator, as this chapter's worked example
-shows. For a **blog**, the pinned package versions, since
+shows. For a blog, the pinned package versions, since
 posts are written once and read for years while the
 packages beneath them move.
 
@@ -1238,9 +1223,8 @@ re-execution, in which the science is not in question
 because it never got as far as being evaluated.
 
 For the argument of this book, Trisovic is the more
-relevant evidence, and it is worth being explicit about
-why, since the replication literature is the more famous.
-This book is about the computational floor. It has
+relevant evidence, even though the replication literature
+is the more famous. This book is about the computational floor. It has
 nothing to say about whether an effect is real, and its
 whole claim is that a large fraction of deposited
 analyses cannot be re-executed, which is a problem
@@ -1281,16 +1265,16 @@ secured only at L2, the same rung that secures the
 operating system and the system libraries, and not by a
 lockfile at L1.
 
-Naming the layer is the addition that matters because it
-converts a story into a diagnosis with a remedy attached.
+Naming the layer converts a story into a diagnosis with
+a remedy attached.
 'A default changed' tells a reader only that something
 went wrong somewhere. 'The R-runtime layer was unpinned'
 tells the reader exactly which artifact, a container
 image pinning the R version, would have prevented the
 failure, and at which rung of the ladder it would have
-been prevented. The informal account of Chapter 1 is not
-wrong; it is simply the first pass this chapter's
-vocabulary now makes precise.
+been prevented. This chapter's vocabulary makes the
+informal account of Chapter 1 precise without
+contradicting it.
 :::
 
 ## Cheat sheet {#sec-cheat-crisis}

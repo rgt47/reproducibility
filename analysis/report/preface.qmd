@@ -52,17 +52,16 @@ dependency checking, and verification are acts of
 [validation](glossary.qmd#gloss-validation); they confirm
 the level without capturing
 anything new. Conflating the two is the source of a great
-deal of false confidence, and separating them is the
-source of a great deal of clarity.
+deal of false confidence.
 
 ## The tool, and why it is here
 
 The book uses `zzcollab`, an R framework for building
 reproducible research compendia, as its concrete
 apparatus. The choice is deliberate and, we hope, honestly
-motivated. Reproducibility is not learned in the abstract;
-it is learned by building something that reproduces, and
-that requires a real toolchain. `zzcollab` composes the
+motivated. Reproducibility is learned by building
+something that reproduces, and that requires a real
+toolchain. `zzcollab` composes the
 established R tools into one workflow organized by the
 levels ladder, which lets the book teach the concepts and
 demonstrate them in the same breath. A reader who prefers a

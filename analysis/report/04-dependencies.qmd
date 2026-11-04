@@ -132,9 +132,6 @@ of an analysis written against the older behavior. A
 script names the packages it loads but almost never
 the versions it loaded them at, and so it inherits
 whatever versions the next machine happens to provide.
-Reproducibility fails in the gap between the packages
-the analysis was written against and the packages a
-later installation supplies.
 
 The remedy for this one layer is a lockfile: a file
 that records the exact version of every package the
@@ -181,8 +178,6 @@ three judgments remain irreducibly the analyst's.
    analysis is stable, and must understand that a
    snapshot taken mid-exploration pins whatever
    half-installed state the library happens to be in.
-   The tool records; the analyst decides what is worth
-   recording.
 
 2. **Distinguishing a result dependency from a
    development tool.** No scanner can know that
@@ -198,9 +193,8 @@ three judgments remain irreducibly the analyst's.
    layer and no other. Presenting a lockfile-equipped
    analysis as fully reproducible, when the R version,
    the operating system, and the system libraries
-   remain unpinned, overstates what has been achieved.
-   The honesty is the analyst's responsibility, not the
-   tool's.
+   remain unpinned, overstates what has been achieved,
+   and only the analyst can prevent that.
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -254,8 +248,8 @@ asserts as correct; the distinction between a package the
 result depends on and a package that merely serves the
 analyst's editor or workflow; or the honest match between
 the reproducibility claim made and the layer the lockfile
-actually pins. The scan automates the bookkeeping; it
-does not automate any of these three decisions.
+actually pins. The scan makes none of these three
+decisions.
 :::
 :::
 
@@ -277,8 +271,7 @@ human-readable JSON lockfile, and a shared package
 cache that lets many projects share one physical copy
 of a given package version.
 
-The design rests on a separation the analyst should
-hold clearly in mind. The **library** is where
+The design separates two things. The **library** is where
 packages physically live; the **lockfile** is the
 written record of what should live there. The two are
 kept in agreement by two complementary operations. A
@@ -382,10 +375,10 @@ Second, the source is named. A package that came from
 CRAN, from a Posit Package Manager mirror, from
 Bioconductor, or from a specific GitHub commit is
 recorded as such, and by default `renv::restore()` looks
-for it in the same place. This matters because the same
-version number can denote different code on different
-repositories. The `Repository` value is the registered
-name of the repository the package was drawn from,
+for it in the same place, since the same version number
+can denote different code on different repositories.
+The `Repository` value is the registered name of the
+repository the package was drawn from,
 matching one of the names in the `Repositories` block
 above. This is why the excerpt records `CRAN` even
 though that entry points at a Posit mirror.
@@ -395,9 +388,7 @@ package that `dplyr` needs, directly or through another
 package, has a record of its own: the full file also
 holds records for `rlang`, `vctrs`, `tibble`, and the
 rest, and one for `renv` itself. Base packages such as
-`methods` and `utils` come with R and have none. The
-lockfile therefore captures the full transitive closure,
-not merely the packages the analyst named.
+`methods` and `utils` come with R and have none.
 
 Fourth, and easily misread, the record contains no
 checksum of the package's files. Lockfiles written by
@@ -461,10 +452,7 @@ packages the code actually references, through
 `library()`, `require()`, and `pkg::fun()` calls, and
 records those together with their transitive
 dependencies. A package sitting in the library but
-called nowhere in the code is, by default, left out, a
-behavior that keeps the lockfile a record of what the
-analysis uses rather than of everything that happens to
-be installed.
+called nowhere in the code is, by default, left out.
 
 On another machine, or the same machine a year later, a
 restore reads the lockfile and rebuilds the library to
@@ -474,12 +462,10 @@ match.
 renv::restore()
 ```
 
-This is the operation that redeems the pin. A
-collaborator who clones the repository and calls
+A collaborator who clones the repository and calls
 `renv::restore()` obtains the exact package set the
 analysis was written against, irrespective of what
-versions are current. Snapshot is capture; restore is
-the later consumption of what was captured.
+versions are current.
 
 In the framework this book uses, this lifecycle is
 partly automated so that an analyst does not forget the
@@ -488,9 +474,8 @@ an exit hook that snapshots the library when an
 interactive session ends, and restores missing packages
 when a session begins. A package installed during
 analysis is thus captured rather than lost. The automation
-does not change the model; it merely removes the two
-most common ways the library and the lockfile drift
-apart.
+removes the two most common ways the library and the
+lockfile drift apart.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -572,7 +557,7 @@ which every R installation provides, are excluded from
 the code set, so the first inclusion concerns only
 contributed packages.
 
-One qualification keeps the invariant honest. Its strict
+The invariant needs one qualification. Its strict
 form, with `DESCRIPTION` as the binding middle term,
 holds cleanly for the R-package archetype, where
 `DESCRIPTION` is the package's declared dependency
@@ -598,9 +583,8 @@ in the package archetype, where `DESCRIPTION` is the
 authoritative dependency interface.
 
 @fig-triad draws the nesting, with the archetype
-qualification marked rather than hidden. The regions are
-what matter: a package may sit legitimately in any of the
-three bands, and the only genuinely broken position is
+qualification marked. A package may sit legitimately in
+any of the three bands; the only broken position is
 outside the lockfile altogether.
 
 ```{r}
@@ -651,8 +635,8 @@ ggplot() +
   theme_void()
 ```
 
-The invariant matters because it is checkable by
-machine. The framework's `check-renv` gate, backed by
+The invariant can be checked by machine. The framework's
+`check-renv` gate, backed by
 the `zzrenvcheck` package, scans all three sources,
 tests the two inclusions, and reports any violation: a
 package used in code but undeclared, or declared but
@@ -705,9 +689,8 @@ job installs it first, with
 that escaped the developer's machine therefore fails the
 build rather than being silently repaired, which forces
 the contributor to commit the fix instead of letting the
-clean build paper over it. It is worth being precise
-about what the gate does and does not verify.
-It is a presence check: it guarantees that the three
+clean build paper over it. The gate is a presence
+check: it guarantees that the three
 sets nest, that nothing used is unpinned. It does not
 verify that the version floors in `DESCRIPTION` agree
 with the exact pins in the lockfile, which is a separate
@@ -727,15 +710,13 @@ the directory layout does not reflect the archetype.
 
 ### Scanning the documentation, not only the code
 
-A dependency check is only as good as its reach, and the
-most common way for one to fail is subtle. It scans the
-analysis code, pronounces the project consistent, and
-overlooks a package that is used only in a vignette or in
-the rendered manuscript. `zzrenvcheck` is deliberately
-more expansive than a plain code scan on this point, and
-the reason is worth understanding, because it is exactly
-where a documentation build quietly breaks on a fresh
-machine.
+The most common way for a dependency check to fail is
+subtle. It scans the analysis code, pronounces the
+project consistent, and overlooks a package that is used
+only in a vignette or in the rendered manuscript, which
+is exactly where a documentation build quietly breaks on
+a fresh machine. `zzrenvcheck` deliberately scans more
+widely than a plain code scan on this point.
 
 The scan does not look at `.R` scripts alone. It parses
 the literate and dynamic documents as well, R Markdown
@@ -760,8 +741,7 @@ version-pinned installs such as `pak('survival@3.5-8')`,
 catching a version fixed in the container recipe that has
 drifted from the lockfile.
 
-The payoff is precisely the failure a code-only audit
-misses. Consider a manuscript compendium whose analysis in
+Consider a manuscript compendium whose analysis in
 `R/` restores cleanly from the lockfile, but whose report
 draws a forest plot with a plotting package that appears
 nowhere except the `.qmd` itself. A scanner that read only
@@ -769,12 +749,11 @@ the code would certify the project as consistent, and the
 report would then fail to render on the reviewer's machine
 for want of an unpinned package. Because `zzrenvcheck`
 reads the document, the missing dependency is caught and
-pinned before it can break the build. This reach matters
-most for the archetypes whose dependencies live in their
-documents rather than their code, the scholarly manuscript
-and the blog. Their rendered outputs are the point, and
-their package needs are therefore concentrated where a
-naive check does not look.
+pinned before it can break the build. The wider reach
+helps most with the scholarly manuscript and the blog,
+whose rendered outputs are the deliverable, so that their
+package needs sit in documents, where a naive check does
+not look.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what a code-only scan misses
@@ -816,8 +795,8 @@ archetypes of @sec-compendium, because every archetype
 records its packages in the same `renv.lock` by the
 same snapshot and restore. What varies slightly is how
 natural the declared-dependency middle term feels. In
-the R-package archetype, `DESCRIPTION` is not an
-optional extra but the package's defining interface:
+the R-package archetype, `DESCRIPTION` is the package's
+defining interface:
 `R CMD check` reads it, an installer reads it, and CRAN
 reads it. The triad is therefore especially natural
 there, since the declared set already exists for
@@ -828,10 +807,8 @@ declares only the API of the reusable code in `R/`.
 Their binding invariant is instead the single
 $\mathrm{Code} \subseteq \mathrm{renv.lock}$, and the
 `check-renv` gate applies that weaker rule automatically
-when it detects an `analysis/` directory. The
-R-package case is the one where the declared middle
-term would exist even if reproducibility were not a
-concern. A subtlety follows for the R-package
+when it detects an `analysis/` directory. A subtlety
+follows for the R-package
 archetype: a package used only by an analysis script or
 report belongs in `Suggests` rather than `Imports`, so
 that `R CMD check` does not hard-require a package the
@@ -913,7 +890,7 @@ book uses, the project's generated configuration points
 R at a dated snapshot automatically, so that the two
 benefits accrue without the analyst assembling the URL
 by hand. The date of the snapshot becomes, in effect,
-part of the environment's identity, and a topic we take
+part of the environment's identity, a topic we take
 up again when the container fixes a snapshot date at
 image-build time in @sec-containers.
 
@@ -944,10 +921,9 @@ platform still delivers the fixity without the speed.
 
 ## The limits of renv
 
-It is essential to be precise about what a lockfile does
-not do, because the temptation to overclaim is strong
-and the gap it leaves is exactly the subject of the next
-chapter. `renv` pins the R packages. It does not pin the
+A lockfile is easy to overclaim, and the gap it leaves
+is the subject of the next chapter. `renv` pins the R packages. It
+does not pin the
 R interpreter itself, so a lockfile produced under R
 4.6.0 may restore under R 4.2.1 with different results,
 or fail to restore at all when a recorded version
@@ -961,10 +937,9 @@ system library may therefore fail to compile a package
 or, more insidiously, may install a differently
 behaving one.
 
-The point is not a criticism of `renv`, which does its
-one job well. It is that the package layer is one layer
-of a taller stack, and pinning it leaves every layer
-beneath it as the next machine happens to provide.
+`renv` does its one job well, but the package layer is
+one layer of a taller stack, and pinning it leaves every
+layer beneath it as the next machine happens to provide.
 @ushey2020 designed `renv` to solve the package problem
 and no more; the environment problem is out of its scope
 by design. An analysis equipped with a faithful lockfile
@@ -1024,8 +999,8 @@ the packages current on that date are loaded for that
 session. It needs no project library and no snapshot
 step, trading `renv`'s explicit committed lockfile for a
 date-stamped call evaluated against the repository's
-history. The convenience is real, and so is the cost:
-the pin now lives inside the script's control flow
+history. The cost of that convenience is that the pin
+now lives inside the script's control flow
 rather than in a separate, inspectable manifest, which a
 reviewer must read the code to discover.
 
@@ -1040,8 +1015,7 @@ exploratory work, it lowers the friction of adoption
 while preserving the lockfile as the eventual source of
 truth.
 
-Across all of these the invariant lesson holds. Each
-pins the package layer and only the package layer;
+Each of these approaches pins the package layer and only the package layer;
 whether the pin is a committed lockfile, a reconstructed
 date, or a run-time call, none reaches down to the R
 version, the operating system, or the system libraries.
@@ -1113,19 +1087,17 @@ and `rlang`), the kind that ordinarily preserve
 behavior but occasionally do not. One is a minor
 version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
 that can refine a default. The `rlang` move, from 1.1.2
-to 1.1.4, is likewise patch-level. It is singled out
-here not for the distance it traveled but for its
-transitive position: a package almost nothing calls
-directly, yet almost everything depends on. It thus moved
-beneath the whole stack. The lesson is that a diff
-of the lockfile is a reviewable record of exactly this
-churn. Without a committed lockfile, none of these
-movements would be visible, and the analyst confronted
-with a changed result would have no way to see which
-package had shifted. The lockfile does not prevent
-packages from changing; it makes the change legible, and
-lets the analyst restore the earlier column deliberately
-rather than discover the drift by accident.
+to 1.1.4, deserves attention despite its size because of
+its transitive position: almost nothing calls `rlang`
+directly, yet almost everything depends on it, so the
+move happened beneath the whole stack. A diff of the
+lockfile is a reviewable record of this churn. Without a
+committed lockfile, none of these movements would be
+visible, and the analyst confronted with a changed result
+would have no way to see which package had shifted. The
+lockfile cannot stop packages from changing, but it makes
+the change legible and lets the analyst restore the
+earlier column deliberately.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: reading the diff
@@ -1153,8 +1125,8 @@ every day.
 ## The cohort's own dependencies
 
 The running cohort compendium has no `renv.lock` yet, so
-it is worth applying this chapter's own method to it
-rather than to a hypothetical project. `renv::dependencies()`
+this section applies the chapter's method to it.
+`renv::dependencies()`
 scans a file for the packages its code actually references
 and returns one row per package found, which is exactly the
 scan `renv::snapshot()` would run before writing a lockfile.
@@ -1213,8 +1185,7 @@ beyond what R itself always provides.
 ## Collaborating with an LLM
 
 A language model is a capable assistant for the
-mechanics of `renv`, but its confident fluency is
-precisely the hazard, because a plausible-looking
+mechanics of `renv`, but a fluent, plausible-looking
 lockfile instruction can pin the wrong thing or nothing
 at all. Each of the following triples pairs a useful
 prompt with what the analyst must watch for and verify.
@@ -1417,8 +1388,8 @@ lockfile shows a `Hash` field moving alongside the
 version is running `renv` older than 1.1.0, which wrote
 the older format.
 
-Two further effects are worth noticing in the diff, and
-are easy to miss on a first reading. If the upgraded
+Two further effects in the diff are easy to miss on a
+first reading. If the upgraded
 package gained a dependency, new package entries appear
 in the lockfile that you never installed by name, because
 the lockfile captures the full transitive closure rather
@@ -1461,8 +1432,6 @@ the two manifests as text and is deliberately distinct
 from an `renv::snapshot()`, which would instead re-derive
 the whole lockfile from whatever is currently installed.
 
-One observation the exercise is designed to provoke, and
-which is worth stating because it surprises people.
 Removing the `library()` call and re-running the check
 does make the check pass, but it does not return the
 manifests to their prior state: the repair already wrote
@@ -1526,8 +1495,8 @@ does not exist.
 The number of differing packages will generally grow with
 the age of the date and with the depth of the dependency
 tree, since a difference anywhere in the transitive
-closure counts. It is worth noting that a package whose
-version happens to be unchanged is not evidence that the
+closure counts. A package whose version happens to be unchanged is
+not evidence that the
 reconstruction succeeded, only that that particular
 package was quiet over the interval.
 :::
@@ -1594,9 +1563,9 @@ different kind of large, regenerable, and machine-specific
 content rather than to restricted data.
 
 Committing `library/` would not merely waste space; it
-would defeat the lockfile's purpose outright. The whole
-point of `renv.lock` is that it is a small, portable,
-human-readable description from which the library can be
+would defeat the lockfile's purpose outright. `renv.lock`
+exists to be a small, portable, human-readable
+description from which the library can be
 *rebuilt* on any machine. If the library itself were
 committed, a collaborator on a different operating system
 or architecture would receive compiled binaries built for

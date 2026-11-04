@@ -69,17 +69,17 @@ is pressed by Leek and Peng [@leek2015]. This book concerns
 itself almost entirely with the first, and says so plainly
 wherever the boundary is in doubt.
 
-Reproducibility so defined is not a single threshold but a
-spectrum. @peng2011 arranged computational work along a
+Reproducibility so defined is a spectrum. @peng2011 arranged
+computational work along a
 scale from the merely published, through code available,
 code and data available, and linked and executable, to
 fully replicable. He argued that reproducibility is 'a
 minimum standard for judging scientific claims when full
-independent replication is impractical'. The lesson we take
-from Peng, and develop into the levels ladder of
-@sec-levels, is that reproducibility comes in degrees, and
-that honesty about which degree one has reached is itself a
-scientific virtue.
+independent replication is impractical'. We take from Peng,
+and develop into the levels ladder of @sec-levels, the idea
+that reproducibility comes in degrees, and that honesty
+about which degree one has reached is itself a scientific
+virtue.
 
 ## The evidence that it is not happening
 
@@ -101,9 +101,9 @@ whether the output matched. @saju2025, examining R code
 supplements on the Open Science Framework, found that only
 about a quarter ran to completion, and that the vast
 majority carried no description of their dependencies at
-all. These are not analyses that reached the wrong
-conclusion; they are analyses that could not be made to run
-a second time. The scholarship, in Claerbout's phrase, was
+all. These analyses could not be made to run a second
+time, so the question of whether they reached the right
+conclusion never arose. The scholarship, in Claerbout's phrase, was
 advertised but never delivered.
 
 Setting the four studies beside one another, as in
@@ -111,10 +111,9 @@ Setting the four studies beside one another, as in
 The replication studies and the re-execution studies are
 measuring different things, and the figure keeps them in
 separate panels for that reason, but the rates are
-comparably low in both. The difference that matters for
-this book is that the right-hand panel counts failures that
-no amount of additional data collection would fix, and that
-better engineering would.
+comparably low in both. The right-hand panel, however,
+counts failures that better engineering would fix and that
+no amount of additional data collection would.
 
 ```{r}
 #| label: fig-failure-rates
@@ -162,8 +161,8 @@ ggplot(studies, aes(x = reorder(study, rate), y = rate)) +
 
 ## Why the failures are computational, not statistical
 
-It is worth dwelling on why re-execution fails, because the
-reasons point directly at the remedy. Consider two changes
+The reasons re-execution fails point directly at the
+remedy. Consider two changes
 to R itself, each silent and each capable of altering a
 published result. In R 3.6.0 the default random-number
 algorithm changed, so that code setting a seed and drawing
@@ -221,8 +220,8 @@ the compendium structure that @gentleman2007 and
 @sec-testing, and @sec-verification for the workflow,
 quality, and validation layer.
 
-None of this tooling is the problem; composing it by hand
-is. `renv` says nothing about the operating system, Docker
+The difficulty lies in composing this tooling by hand.
+`renv` says nothing about the operating system, Docker
 says nothing about which package versions are installed
 inside it, and neither says anything about session
 configuration, so a researcher who wants a genuinely
@@ -250,18 +249,15 @@ problem: @saju2025 found that most deposited code
 supplements carry no dependency description at all, even
 though mature, free, documented tools for that exact
 problem have existed for years. The book's task is
-therefore less to invent than to make existing capability
-teachable and routine, and to state plainly, at each level
+therefore to make existing capability teachable and
+routine, and to state plainly, at each level
 of the ladder, what a given effort has secured and what
 remains exposed, including its own.
 
 ## The plan of this book
 
 The book is organized in four parts, and three ideas recur
-in every chapter. It is written for a one-quarter, ten-week
-course; not every chapter fits in ten weeks, and an
-instructor teaching on that schedule should expect to treat
-some material as optional. The first is the ladder of
+in every chapter. The first is the ladder of
 reproducibility levels (L0 locatable, L1 pinned packages,
 L2 pinned environment, L3 verified), introduced in
 @sec-levels and used thereafter as the common scale. The
@@ -269,7 +265,10 @@ second is the distinction between capturing reproducibility
 and validating it: pinning is capture, and continuous
 integration and verification are validation. The third is
 the research compendium as the unit of reproducible work,
-introduced in @sec-compendium.
+introduced in @sec-compendium. The book is written for a
+one-quarter, ten-week course; not every chapter fits in ten
+weeks, and an instructor teaching on that schedule should
+expect to treat some material as optional.
 
 - **Part I, Foundations.** The reproducibility crisis and
   its computational character (@sec-crisis); the levels of
@@ -301,10 +300,9 @@ about reproducibility with any toolchain and to state,
 without flinching, the level a given analysis has actually
 reached.
 
-Seven habits recur across the chapters that follow, each a
-concrete instinct rather than a slogan, and a chapter's own
-rules of thumb will cite one by number rather than restate
-it. The closing chapter recalls them once the book's
+Seven habits recur across the chapters that follow, and a
+chapter's own rules of thumb will cite one by number rather
+than restate it. The closing chapter recalls them once the book's
 argument is complete.
 
 {{< include _habits.qmd >}}

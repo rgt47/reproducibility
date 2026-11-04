@@ -10,11 +10,10 @@ project: the sources render to HTML and PDF with `quarto
 render`, and wherever the book presents a computed figure
 or table, that result is generated at build time from the
 code shown beside it, so the printed output and the code
-that produced it cannot drift apart. The table below is
-itself an instance of that discipline: every cell is read
-from the actual session that rendered this copy of the
-book, not typed by hand, so it cannot silently fall out of
-step with the build that produced it.
+that produced it cannot drift apart. The table below
+follows the same discipline: every cell is read from the
+session that rendered this copy of the book, not typed by
+hand.
 
 ```{r}
 #| label: tbl-colophon

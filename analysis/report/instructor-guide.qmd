@@ -2,7 +2,7 @@
 *2026-10-15 10:59 PDT*
 
 This guide is for course instructors. It contains grading
-keys for Exercise 7 in each chapter -- the cohort-based,
+keys for Exercise 7 in each chapter, the cohort-based,
 autogradable exercise. Solutions for all other exercises,
 including checks and practice exercises, appear in the
 chapter itself.
@@ -20,8 +20,8 @@ deterministic generator, so the autogradable values below
 are exact. A student whose values differ has either an
 edited generator, an edited extract, or a different version
 of `clean_cohort()` than the one shipped with the book;
-both deviations are diagnostically useful and worth
-discussing.
+each of these deviations is diagnostically useful and
+worth discussing.
 
 ## Chapter 1: The Reproducibility Crisis {#sec-ig-ch01}
 

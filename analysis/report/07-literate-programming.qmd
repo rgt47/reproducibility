@@ -153,10 +153,9 @@ cannot silently disagree with its own analysis.
 
 The reader will recall the ladder of reproducibility
 levels that organizes this book: L0 locatable, L1
-pinned packages, L2 pinned environment, L3 verified. It
-is worth stating at the outset where a sealed render
-sits on that ladder, because the answer is not what a
-newcomer expects. A sealed render is, on its own, a
+pinned packages, L2 pinned environment, L3 verified.
+Where a sealed render sits on that ladder tends to
+surprise newcomers. A sealed render is, on its own, a
 property almost orthogonal to the ladder. It guarantees
 that the document agrees with the code, but it says
 nothing about whether the packages are pinned, whether
@@ -306,8 +305,7 @@ computational science is not the scholarship itself, it
 is merely advertising of the scholarship; the actual
 scholarship is the complete software environment and
 the complete set of instructions that generated the
-figures. The claim is worth pausing over, because it
-reframes what a paper is. On this view the printed
+figures. On this view the printed
 figures and tables are not the result but a picture of
 the result, and a picture can be a faithful likeness or
 a flattering one. The result itself, the thing that can
@@ -379,9 +377,9 @@ comment form used in this book, and standardizes the
 production of books, websites, and journal articles from
 the same source. This very book is a Quarto book. For an
 R analyst the migration from R Markdown to Quarto is
-small, and the two will coexist for years. The important
-point is that all four tools implement the same idea, and
-that the idea, not the tool, is what secures the seal.
+small, and the two will coexist for years. All four tools
+implement the same idea, and any of them can secure the
+seal.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: four tools, one idea
@@ -432,9 +430,7 @@ does not produce.
 
 ## The sealed render
 
-We can now make the central idea concrete, and the
-natural way to do so is to compute something. The
-following chunk generates a small synthetic dataset in
+The following chunk generates a small synthetic dataset in
 the spirit of the Palmer penguins, three species
 measured on two bill dimensions, fits a within-species
 and a pooled relationship, and draws the result. The
@@ -503,10 +499,8 @@ associated on average with shallower ones. The reversal
 here is real but modest: it is the sign of the pooled
 slope that flips, not its magnitude that grows. This is
 Simpson's paradox, and it is a useful thing for a figure
-to show. For our purposes,
-however, the statistical lesson is secondary. The
-methodological lesson is that the preceding paragraph is
-safe to write. If a later edit changed the synthetic
+to show. What matters more for this chapter is that the
+preceding paragraph is safe to write. If a later edit changed the synthetic
 means so that the pooled line no longer reversed, the
 figure would change on the next render and the paragraph
 would become visibly false, prompting its correction. In
@@ -516,8 +510,7 @@ no longer showed, indefinitely. The seal is precisely
 this coupling: the prose and the picture rise and fall
 together because they are the same computation.
 
-Two properties of the chunk are worth naming, because
-they are what keeps it sealed. First, it draws its data
+Two properties of the chunk keep it sealed. First, it draws its data
 from `set.seed()` and `rnorm()`, not from a file on the
 author's disk, so it carries its inputs with it. Second,
 it loads only packages that the build environment is
@@ -785,10 +778,9 @@ question: it scans every report's YAML for a
 `pdf_document` or `latex_engine` output and, finding one,
 concludes that the verse base is required.
 
-The general principle is the one that runs through the
-whole book. The literate document declares what it wants
-to be, and the environment must be provisioned to supply
-it. HTML asks little; PDF asks for LaTeX; and the honest
+As elsewhere in the book, the literate document declares
+what it wants to be, and the environment must be
+provisioned to supply it. HTML asks little; PDF asks for LaTeX; and the honest
 way to supply LaTeX is to pin it in the image, not to
 install it, fragilely and at render time, on whatever
 machine happens to build the document.
@@ -821,9 +813,8 @@ against.
 
 ## Why a rendered document will not hash the same twice
 
-We come now to a subtlety that surprises many analysts
-and that shapes how verification is done in
-@sec-verification. It is natural to suppose that the way
+The next point surprises many analysts, and it shapes how
+verification is done in @sec-verification. It is natural to suppose that the way
 to check a reproducible report is to render it twice and
 compare the two output files: if the analysis is
 reproducible, surely the PDFs should be identical? They
@@ -840,9 +831,7 @@ subsets internal names that can vary between builds. Two
 renders of byte-for-byte identical source, in the same
 environment, minutes apart, therefore produce two PDF
 files that differ in their bytes, even though every
-number and figure in them is identical. The difference is
-real at the level of the file and spurious at the level
-of the science.
+number and figure in them is identical.
 
 Part of this non-determinism can be normalized away. Many
 document tools, including LaTeX and `pandoc`, honor a
@@ -869,15 +858,14 @@ is a human-facing artifact, a faithful presentation of
 those outputs, and it is checked by regenerating it and
 confirming that the outputs it presents match the
 recorded baseline, not by demanding that its bytes be
-identical. It is worth noting that the framework goes
-further in the opposite direction for provenance: its
-render hook deliberately stamps each rendered PDF with the
-render time and the git version of the source, in a
-footer, precisely so that a reader can tell two renders
-apart and trace each to its source commit. The rendered
-document is thus treated as a dated, signed presentation
-of a result, not as the hashable object of record. The
-object of record is the computation.
+identical. For provenance the framework goes further in
+the opposite direction: its render hook deliberately
+stamps each rendered PDF with the render time and the git
+version of the source, in a footer, precisely so that a
+reader can tell two renders apart and trace each to its
+source commit. The rendered document is thus a dated,
+signed presentation of a result; the object of record is
+the computation.
 
 ::: {.callout-important}
 ## The honest level
@@ -962,9 +950,9 @@ the machinery is largely absent.
 
 ## The write-as-you-go doctrine
 
-There remains a matter of practice rather than mechanism,
-and it is the one on which experienced compendium authors
-are most insistent. The traditional order of work runs:
+One matter of practice remains, and experienced
+compendium authors are most insistent about it. The
+traditional order of work runs:
 write the analysis scripts, generate the results, then
 start the manuscript, and finally copy the results into
 the prose. This order builds the drift we opened the
@@ -993,8 +981,8 @@ than preceding it: the manuscript drives the analysis,
 and the `R/`, `tests/`, and `scripts/` directories fill
 in as the code in the document matures.
 
-The doctrine is not merely tidy. Its reproducibility
-payoff is that the document is sealed from the first day
+The doctrine's reproducibility payoff is that the document is
+sealed from the first day
 and stays sealed, because there is never a phase in which
 results live in the prose by having been copied there.
 The number in the paragraph was computed by the chunk
@@ -1105,7 +1093,7 @@ appear to hold on the author's machine, one renders it from
 a fresh clone of the repository inside the pinned
 environment (habit 6). If it renders there, with no file
 missing and no package installed on the fly, the seal is
-real. If it fails, one of the landmines catalogued above has
+real. If it fails, one of the landmines cataloged above has
 been stepped on, and the failure names which.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1280,7 +1268,7 @@ code ran and the prose agrees with it; it says nothing
 about whether a sentence of prose, or a chunk of code, was
 drafted by a person or a model, so that provenance has to
 be recorded separately, in prose the seal does not cover.
-This record matters because a model is not a versioned,
+The record is needed because a model is not a versioned,
 reproducible dependency the way a package is. The same
 model name can behave differently across releases, a
 provider can retire or silently update a model identifier
@@ -1415,8 +1403,8 @@ With the call removed, the generator is initialized from
 varying session state, so each render draws a different
 sample and the figure differs between renders.
 
-**Why this matters for the seal, and what the seal is
-not.** The seal binds prose to code: it guarantees that
+**What the seal does and does not cover.** The seal binds prose to
+code: it guarantees that
 the figure a reader sees was produced by the code shown
 beside it. That guarantee still holds without the seed.
 What fails is something adjacent and easily confused with
@@ -1428,8 +1416,8 @@ association reverses within each group', 'three points lie
 outside the interval', can become false without the code
 changing.
 
-The precise statement is that a seal makes the document
-agree with its code, and a seed makes the code agree with
+A seal makes the document agree with its code, and a seed makes
+the code agree with
 itself across runs. An unseeded literate document is
 sealed and not reproducible, which is a good illustration
 of the chapter's warning that the seal and the pins are
@@ -1474,8 +1462,7 @@ absolute path, which is exactly why the chapter pairs them
 and asks for a distinguishing check: inspect version
 control to see whether the file is tracked.
 
-The general lesson from the prediction exercise: two of
-the five fail loudly, and the three that render anyway are
+Two of the five fail loudly, and the three that render anyway are
 the dangerous ones. Rendering from a fresh clone catches
 the loud two reliably and the quiet three only sometimes,
 which is the argument for continuous integration in
@@ -1503,8 +1490,7 @@ the PDF is produced.
 
 **Which level the move raises the project to.** L2, from
 wherever it was before, provided a lockfile is also in
-place. The precise claim is worth stating carefully,
-because the exercise invites an overclaim: moving the
+place. The exercise invites an overclaim: moving the
 toolchain into the image is the L1-to-L2 step for the
 *rendering* dependency specifically. If the packages were
 never pinned, the project moves to L2 only once the
@@ -1546,8 +1532,7 @@ The render gate then sits alongside as a separate check
 confirming that the document still builds from those
 outputs.
 
-It is worth noting that byte-identical PDFs are
-attainable, by setting `SOURCE_DATE_EPOCH` and freezing
+Byte-identical PDFs are attainable, by setting `SOURCE_DATE_EPOCH` and freezing
 font subsetting, and that this is a fragile route to a
 result the output hashes give directly. The chapter's
 position is that one should hash what is deterministic

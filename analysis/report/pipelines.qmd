@@ -111,8 +111,8 @@ and they do not fix an operating system or an R runtime;
 that is the work of @sec-dependencies and @sec-containers.
 What a pipeline does is confirm, mechanically and on every
 run, that the recorded analysis code and the input data
-currently in hand are the ones a given output reflects,
-which is a check rather than a pin. @fig-stack-pipelines
+currently in hand are the ones a given output reflects.
+@fig-stack-pipelines
 therefore marks the analysis-code and input-data layers as
 validated here, not captured, the same reading @sec-testing
 gives its own test suite for the same two layers, though by
@@ -258,9 +258,8 @@ and no pipeline tool makes them.
    bookkeeping overhead dominates. The right granularity
    puts the expensive, stable computations, a model fit, a
    simulation run, in targets of their own, so that a
-   change elsewhere does not needlessly re-run them. This
-   is a design decision, and it trades caching benefit
-   against graph legibility.
+   change elsewhere does not needlessly re-run them. The
+   choice trades caching benefit against graph legibility.
 
 2. **Keeping the dependency declarations honest.** A
    pipeline can only track dependencies it is told about,
@@ -272,12 +271,11 @@ and no pipeline tool makes them.
    step that reads a file without declaring it as a file
    target, or that reaches for global state the tool cannot
    trace. Getting the declared dependencies to match the
-   real ones is the analyst's responsibility, and it is the
-   single discipline on which a pipeline's correctness
-   rests.
+   real ones is the analyst's responsibility, and a
+   pipeline's correctness rests on it.
 
 3. **Matching the claim to what a pipeline delivers.** A
-   pipeline mechanises re-execution. It does not pin a
+   pipeline mechanizes re-execution. It does not pin a
    package, fix an environment, or establish that a result
    is correct. An analyst who says 'the analysis is
    reproducible' because `tar_make()` runs to completion
@@ -307,8 +305,7 @@ about whether the declared dependencies are complete,
 since an undeclared input simply never triggers a rebuild
 and the run stays green regardless. And it says nothing
 about the level reached, since re-execution and pinning
-are different questions entirely. All three judgments stay
-with the analyst no matter how clean the run looks.
+are different questions entirely.
 :::
 :::
 
@@ -438,10 +435,10 @@ leaves nothing behind.
 
 ### The graph of an actual analysis
 
-@fig-pipeline-dag draws the shape in the abstract. It is
-worth seeing the same shape over an analysis that runs,
-because a real graph is less tidy than a diagram and the
-untidiness is where the argument lives.
+@fig-pipeline-dag draws the shape in the abstract. Over an
+analysis that actually runs, the same shape is less tidy
+than the diagram, and the argument below depends on that
+untidiness.
 
 ```{r}
 #| label: tbl-pipeline-steps
@@ -487,20 +484,18 @@ steps <- tibble(
 kable(steps, align = 'llr')
 ```
 
-The measured ratios make the argument that prose cannot.
 On this build the bootstrap costs about
 `r round(t_boot / max(t_fit, 1))` times the model fit,
 and the two steps above it are too fast to measure at
-all, so the value of selective rebuild is not a matter
-of taste: an analyst who re-runs everything after
-changing a label pays for the bootstrap to learn
-nothing. That ratio is itself an inline expression, for
+all. An analyst who re-runs everything after changing a
+label pays for the bootstrap to learn nothing. That ratio is
+itself an inline expression, for
 the reason @sec-literate gives; had it been typed, the
 next machine to build the book would have made it
 false.
 
-It is also the case for a cache with a caveat, and the
-caveat is this table itself. These timings are computed
+The table also carries a caveat about itself. These
+timings are computed
 when the book is built, so they describe the build
 machine and not the reader's, and a slower machine would
 show different absolute values. The ratio between the
@@ -629,8 +624,8 @@ the effect that there is nothing to be done. This is the
 selective rebuild of the previous section, implemented
 with nothing more than the file system's clock.
 
-The timestamp rule is also Make's principal limitation,
-and an honest account must state it. Make knows only
+The timestamp rule is also Make's principal limitation.
+Make knows only
 whether a file is newer, not whether its contents have
 changed. Touching a file without editing it will trigger
 a needless rebuild, and, more subtly, a change that does
@@ -666,8 +661,7 @@ skips `cleaned.rds` and `model.rds`: neither the raw data,
 the cleaning script, the fitting script, nor the cleaned
 data changed, so each of those targets remains newer than
 all of its prerequisites and is up to date. The expensive
-model fit is not repeated, which is the payoff of
-expressing the analysis as a graph.
+model fit is not repeated.
 :::
 :::
 
@@ -741,8 +735,8 @@ pattern, while under `tar_render()` it listed `report`. A
 report that does not rebuild when its own text changes is
 a stale report that the pipeline calls current.
 
-Several features distinguish this from the Makefile, and
-each is the point. The intermediate results, `raw_data`,
+Several features distinguish this from the Makefile. The
+intermediate results, `raw_data`,
 `cleaned`, `model`, `figures`, are **R objects, not
 files**. `targets` stores each in a hidden `_targets/`
 store, keyed and versioned, and hands it to the next
@@ -863,7 +857,7 @@ Make decides staleness by comparing file modification
 times against declared prerequisites, so a change that is
 not reflected in a listed prerequisite's timestamp is
 invisible to it. `targets` instead hashes the contents of
-its inputs and, crucially, the bodies of the functions
+its inputs and also the bodies of the functions
 each target calls and the R expression in the target
 itself. Editing the function body changes its hash, which
 invalidates every target that calls it and everything
@@ -878,11 +872,10 @@ cannot see.
 
 ## What a pipeline does, and does not, add
 
-It is worth stating with care what a pipeline contributes
-to reproducibility, because the answer is easily
-overstated in one direction and undersold in the other,
-and the book's capture-versus-validation framework makes
-the precise statement available.
+What a pipeline contributes to reproducibility is easily
+overstated in one direction and undersold in the other.
+The book's capture-versus-validation framework allows a
+precise statement.
 
 Recall the framework. A computational result depends on a
 stack of determinants, the operating system, the system
@@ -906,8 +899,7 @@ that an output is correct; that is verification's. An
 analysis run through `targets` and an identical analysis
 run by hand, on the same machine, with the same packages,
 produce the same numbers and sit at the same level of the
-ladder. In the strict accounting of determinants, the
-pipeline changes nothing.
+ladder.
 
 Yet it would be wrong to conclude that the pipeline is
 reproducibility-neutral, and the reason returns us to the
@@ -924,11 +916,10 @@ human running it may re-run some steps and forget others.
 The pipeline turns 'rebuild the analysis' from a
 remembered sequence into one command whose completeness is
 structural rather than remembered, and in doing so it
-removes the 'did I re-run everything?' doubt that is the
-quiet enemy of every validation step. A pipeline is thus
-to re-execution what continuous integration is to
-checking: it captures no determinant and adds no rung,
-but it makes the re-execution that verification
+removes the 'did I re-run everything?' doubt that
+undermines every validation step. Like continuous
+integration, a pipeline captures no determinant and adds
+no rung; it makes the re-execution that verification
 (@sec-verification) confirms reliable and repeatable.
 
 The relation to continuous integration is especially
@@ -1039,10 +1030,9 @@ performed by the package toolchain instead.
 
 Make and `targets` are the right tools for an R-centric
 analysis, but a reader whose work reaches beyond R, or beyond a
-single machine, should know the tools that dominate the wider
-computational-science world, because pipelines are one of the
-areas where the R ecosystem is a small part of a much larger
-world.
+single machine, should know the tools that dominate
+computational science more widely, since in pipelines the R
+ecosystem is a small part of a much larger field.
 
 The two dominant language-agnostic pipeline managers come from
 bioinformatics, where analyses routinely chain dozens of
@@ -1079,14 +1069,13 @@ website of analyses that must each be traceable to a commit, and
 it composes with the version-control discipline that runs through
 this book.
 
-The lesson to carry away is that the pipeline idea, express the
-analysis as a dependency graph and rebuild only what is stale, is
-universal, and that the choice of tool is a choice of scale and
-setting. Make is the language-agnostic minimum; `targets` is the
-R-native tool that tracks objects and functions; Snakemake and
-Nextflow are the same idea at cluster and cloud scale; and
-`workflowr` is the idea applied to a versioned website. An analyst
-who understands the graph understands all of them.
+The pipeline idea, express the analysis as a dependency graph
+and rebuild only what is stale, is common to all five tools, and
+the choice among them is a choice of scale and setting. Make is
+the language-agnostic minimum; `targets` is the R-native tool
+that tracks objects and functions; Snakemake and Nextflow are the
+same idea at cluster and cloud scale; and `workflowr` is the idea
+applied to a versioned website.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: choosing among the five tools
@@ -1156,8 +1145,8 @@ extra cross-edges that the schematic omits.
 
 The third step is to build the pipeline once, with `tar_make()`,
 which runs all six targets in dependency order in a fresh
-session and populates the `_targets/` store. From this point the
-payoff arrives. A correction to the raw data, followed by
+session and populates the `_targets/` store. A correction to the
+raw data, followed by
 `tar_make()`, rebuilds all five downstream targets and skips
 nothing, because everything depends on the data. A refinement to
 `make_figures()`, followed by `tar_make()`, rebuilds only
@@ -1182,9 +1171,7 @@ workflow of @sec-verification is given one core instruction, to
 restore the environment and run `tar_make()`, so that every push
 rebuilds exactly the stale targets on a clean machine and the
 'did I re-run everything?' doubt is answered, permanently, by a
-machine that is not the author's. The pipeline has added no rung
-to the ladder, but it has made the act of climbing it a single
-reliable command.
+machine that is not the author's.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the two-target split
@@ -1363,9 +1350,7 @@ verified.
 pipeline secures re-execution; it says nothing about packages,
 environment, or correctness. Ask whether there is a lockfile
 (L1), a container (L2), and a verification of the outputs against
-a baseline (L3), and state the level actually reached. A pipeline
-is the mechanism of re-execution, not a certificate of any rung
-on the ladder.
+a baseline (L3), and state the level actually reached.
 
 ## Exercises
 
@@ -1466,12 +1451,10 @@ and reliably forget the intermediate results that nothing
 on screen depends on, along with any figure that is not in
 the document currently open.
 
-The conclusion to draw is not that analysts are careless.
-It is that the downstream set is a property of the graph,
-and a person holding the graph in their head computes it
+The downstream set is a property of the graph, and a
+person holding the graph in their head computes it
 correctly only for small graphs and recent memory. A
-pipeline tool computes it from the graph every time, which
-is the entire value proposition.
+pipeline tool computes it from the graph every time.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1494,9 +1477,8 @@ that input is now older than one of its prerequisites, so
 Make rebuilds it, and the rebuild propagates downstream
 exactly as a real edit would.
 
-This is worth dwelling on, because it is the honest
-characterization of what Make guarantees. Make is
-conservative in one direction and unreliable in the other:
+Make's guarantee is therefore conservative in one
+direction and unreliable in the other:
 it will happily rebuild things that did not need
 rebuilding, which costs time and nothing else, and it will
 miss a change that leaves timestamps as it found them,
@@ -1550,11 +1532,10 @@ that set. Readers who predicted correctly have understood
 the propagation rule; readers who predicted too small a
 set usually forgot that invalidation is transitive.
 
-One observation worth making. The prediction is easy here
-and was hard in exercise 1, and the difference is not that
-the analysis got simpler. It is that `targets` made the
-graph visible, so the reader is reading a dependency
-structure rather than recalling one.
+The prediction is easy here and was hard in exercise 1,
+on the same analysis, because `targets` made the graph
+visible: the reader is reading a dependency structure
+rather than recalling one.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1615,9 +1596,8 @@ on an axis the ladder does not grade.
 **What would still be needed.** A lockfile to reach L1, a
 container to reach L2, and verification against a recorded
 baseline to reach L3. None of the three is supplied by the
-pipeline, and it is worth being explicit that the pipeline
-does not make any of them easier or harder; they are
-orthogonal.
+pipeline, and the pipeline does not make any of them
+easier or harder to add; they are orthogonal.
 
 The one honest qualification in the pipeline's favor:
 because it computes rather than remembers the downstream
@@ -1632,8 +1612,7 @@ raise the level, and it makes the level easier to keep.
 
 **Data analysis: central.** The archetype is a chain of
 steps producing derived data and results, which is exactly
-what a dependency graph describes. This is the pipeline's
-home.
+what a dependency graph describes.
 
 **Simulation study: central.** Replicates are expensive
 and independent, so recomputing only what is stale matters
