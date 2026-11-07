@@ -105,15 +105,15 @@ container runtime runs. (@sec-levels)
 
 []{#gloss-controlled-access}**Controlled access.** A deposit arrangement in which a
 repository holds restricted data behind an approval process,
-rather than releasing it on request, so that a data-use
-agreement and the terms a participant consented to are
-honored while the record stays discoverable and citable.
+rather than releasing it on request. Its purpose is to honor a
+data-use agreement and the terms a participant consented to
+while the record stays discoverable and citable.
 (@sec-archiving)
 
 []{#gloss-continuous-integration}**Continuous integration (CI).** A hosted service that, on every
 committed change to a repository, checks out the code onto a
 fresh virtual machine, rebuilds the project, and runs a defined
-set of checks, reporting success or failure automatically.
+set of checks. It reports success or failure automatically.
 (@sec-verification)
 
 
@@ -126,8 +126,8 @@ rights. (@sec-backends)
 
 []{#gloss-data-availability-statement}**Data-availability statement.** A sentence in a manuscript,
 or in its compendium, naming where the data behind its
-results can be obtained: an open deposit's DOI, the name and
-access route of a controlled-access repository, or the
+results can be obtained. It gives an open deposit's DOI, the
+name and access route of a controlled-access repository, or the
 terms under which the data cannot be shared at all.
 (@sec-archiving)
 
@@ -151,12 +151,12 @@ step cannot, directly or transitively, depend on its own output.
 []{#gloss-dependency-manifest-gate}**Dependency-manifest gate.** A CI check that enforces the
 dependency invariant of @sec-dependencies. In its strict,
 R-package form it requires every package the code uses to be
-declared in `DESCRIPTION` and pinned in `renv.lock`. For a
-research compendium, whose `DESCRIPTION` declares only the API
-exported from `R/` while analysis scripts legitimately draw on
-packages present in `renv.lock` but not in `DESCRIPTION`, it
-enforces the weaker inclusion that every package the code uses
-is pinned in `renv.lock`. (@sec-verification)
+declared in `DESCRIPTION` and pinned in `renv.lock`. In a
+research compendium, `DESCRIPTION` declares only the API
+exported from `R/`, while analysis scripts legitimately draw on
+packages present in `renv.lock` but not in `DESCRIPTION`. There
+the gate enforces the weaker inclusion that every package the
+code uses is pinned in `renv.lock`. (@sec-verification)
 
 []{#gloss-description}**`DESCRIPTION`.** The human-authored file that declares a
 project's direct dependencies by role (`Imports`, `Suggests`,
@@ -296,9 +296,9 @@ silently point at different content later. (@sec-backends)
 
 []{#gloss-install-packages}**`install.packages()`.** Base R's installer. Pointed at a live
 repository it resolves 'the current version' to whatever is
-current on the day it runs, which is why a reproducible recipe
-points it at a dated snapshot or replaces it with a lockfile
-restore. (@sec-dependencies)
+current on the day it runs. For this reason a reproducible
+recipe points it at a dated snapshot or replaces it with a
+lockfile restore. (@sec-dependencies)
 
 []{#gloss-integration-test}**Integration test.** A check that several components behave
 correctly when composed into a pipeline, from raw input to final
@@ -644,7 +644,7 @@ build, so the prose cannot drift from the analysis.
 (@sec-literate)
 
 []{#gloss-seed-and-rng-kind}**Seed and RNG kind.** The seed (`set.seed`) is the fixed
-starting point that makes a random draw repeatable; the RNG kind
+starting point that makes a random draw repeatable. The RNG kind
 is the generator algorithm that turns that seed into numbers,
 and its default has changed across R versions. (@sec-crisis)
 
@@ -778,7 +778,7 @@ anything new; it checks. (@sec-levels)
 []{#gloss-verification}**Verification.** Rebuilding the compendium's environment from
 its recipe, re-running the analysis in it, and comparing the
 regenerated outputs with a committed baseline, within a stated
-tolerance, by means of a baseline test; passing it is what the
+tolerance, by means of a baseline test. Passing it is what the
 ladder calls level L3. (@sec-verification)
 
 

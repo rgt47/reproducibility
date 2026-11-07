@@ -4,8 +4,8 @@ This is the online version of **Reproducible Research for
 the Health Sciences** by the rgtlab curriculum team, a graduate
 course textbook.
 
-The book takes a position that a health scientist will
-recognize from their own methodological training.
+In this book we take a position that a health scientist
+will recognize from their own methodological training.
 [Computational reproducibility](glossary.qmd#gloss-computational-reproducibility)
 is not a property of any
 single file. It is a property of the relationships among
@@ -19,7 +19,7 @@ these relationships. The unsolved problem, and the subject
 of this book, is composing them into a single workflow
 that a working analyst can actually adopt.
 
-The book is organized around three ideas that recur in
+We organize the book around three ideas that recur in
 every chapter. The first is a ladder of reproducibility
 levels. It runs from a merely locatable analysis (L0)
 through pinned packages (L1) and a pinned environment (L2)
@@ -57,10 +57,11 @@ operate this one.
   integration, or Nix is assumed. Each is built up from
   first principles.
 
-The intended reader is a graduate student or working
-analyst in public health, biostatistics, epidemiology, or a
-related quantitative health science, who produces analyses
-that others will need to trust, audit, and rebuild.
+The reader we have in mind is a graduate student or
+working analyst in public health, biostatistics,
+epidemiology, or a related quantitative health science.
+Such a reader produces analyses that others will need to
+trust, audit, and rebuild.
 
 ## License
 

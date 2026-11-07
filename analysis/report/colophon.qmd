@@ -5,11 +5,12 @@ Its examples use R, the `zzcollab` framework, Docker, and
 `renv`, each introduced in the chapter that first requires
 it.
 
-The book is built as a Quarto project: the sources render
-to HTML and PDF with `quarto render`, and wherever the book presents a computed figure
-or table, that result is generated at build time from the
-code shown beside it, so the printed output and the code
-that produced it cannot drift apart. The table below
+The book is built as a Quarto project, and the sources
+render to HTML and PDF with `quarto render`. Wherever we
+present a computed figure or table, that result is
+generated at build time from the code shown beside it. In
+this way the printed output and the code that produced it
+cannot drift apart. The table below
 follows the same discipline: every cell is read from the
 session that rendered this copy of the book, not typed by
 hand.
@@ -64,10 +65,10 @@ The last row is the book's own honest reproducibility
 disclosure, made the same way the book asks every analysis
 to make it: by naming the artifact rather than asserting
 the level. As of this build there is no `renv.lock` for the
-book's own source, so the table above reports `no`; pinning
-the book's own environment to the L1 and L2 standard the
-later chapters teach is planned, not yet complete, and this
-colophon will report `yes` automatically, with no prose
-change required, the day that lockfile exists.
+book's own source, so the table above reports `no`.
+Pinning the book's own environment to the L1 and L2
+standard the later chapters teach is planned but not yet
+complete. The day that lockfile exists, this colophon will
+report `yes` automatically, with no prose change required.
 
 Last rendered: see the build timestamp on the homepage.

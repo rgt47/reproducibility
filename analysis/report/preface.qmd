@@ -18,15 +18,14 @@ ask for the code. What the field has not yet absorbed is
 that making a computational result reproducible in
 practice is a technical discipline in its own right. It
 has its own tools, its own failure modes, and its own
-standards of evidence.
-This book teaches that discipline to an audience that
-already has the quantitative training to appreciate why it
-matters.
+standards of evidence. In this book we teach that
+discipline to an audience that already has the
+quantitative training to appreciate why it matters.
 
 ## The organizing idea
 
-The book's organizing idea is that reproducibility is
-layered, and that honesty about which layer one has
+The organizing idea of the book is that reproducibility
+is layered, and that honesty about which layer one has
 reached is itself a scientific virtue. We develop a ladder
 of four levels. A locatable analysis (L0) is under version
 control and can be found, but nothing about its
@@ -37,10 +36,11 @@ operating system, the language runtime, and the system
 libraries, most often inside a container. A verified
 analysis (L3) has gone one step further: its recorded
 computational outputs have been regenerated from scratch
-and shown to match. The book teaches how to reach each
-level, how to tell which one an analysis has actually
-reached, and, just as important, when a lower level is the
-honest and sufficient choice.
+and shown to match. In the chapters that follow we teach
+how to reach each level and how to tell which one an
+analysis has actually reached. Just as important, we
+consider when a lower level is the honest and sufficient
+choice.
 
 Running underneath the ladder is a distinction we return
 to constantly: the difference between capturing
@@ -61,19 +61,19 @@ reproducible research compendia, as its concrete
 apparatus. The choice is deliberate and, we hope, honestly
 motivated. Reproducibility is learned by building
 something that reproduces, and that requires a real
-toolchain. `zzcollab` composes the
-established R tools into one workflow organized by the
-levels ladder, which lets the book teach the concepts and
-demonstrate them in the same breath. A reader who prefers a
-different toolchain will find that the concepts transfer
-without loss; the ladder, the compendium, and the
+toolchain. `zzcollab` composes the established R tools
+into one workflow organized by the levels ladder. This
+allows us to teach the concepts and demonstrate them in
+the same breath. A reader who prefers a different
+toolchain will find that the concepts transfer without
+loss. That is, the ladder, the compendium, and the
 capture-validation distinction are properties of the
 problem, not of any one program.
 
 ## What this book covers
 
-The twelve chapters after the introduction proceed in
-four parts.
+Following the introduction, the remaining twelve chapters
+are arranged in four parts, which we outline here.
 
 1. **Foundations.** The reproducibility crisis and its
    specifically computational character; a framework of
@@ -100,9 +100,9 @@ four parts.
 
 ## What this book does not cover
 
-The book is not a statistics text; it assumes the reader
-can already conduct an analysis and concerns itself only
-with making that analysis reproducible. It is not a
+The book is not a statistics text. We assume the reader
+can already conduct an analysis, and we concern ourselves
+only with making that analysis reproducible. It is not a
 comprehensive manual for any single tool; where a tool's
 own documentation is the right reference, we point to it.
 Nor is it a treatise on
@@ -114,26 +114,28 @@ computational question of re-execution distinct from it.
 
 ## Reading it in one quarter
 
-The book is written for a one-quarter, ten-week course, but
-not every chapter fits that schedule. The
+We have written the book for a one-quarter, ten-week
+course, but not every chapter fits that schedule. The
 [Conventions](conventions.qmd) page marks a core path
-through the thirteen chapters and names
-the material a ten-week offering has no room for, Backends
-and Runtimes in full and the latter half of Automating the
-Analysis; an instructor teaching to that pace will find a
-week-by-week table built from the same core path in the
-instructor guide. A reader with more time, or working
-alone, can simply read the book in order; nothing marked
+through the thirteen chapters. It also names the material
+a ten-week offering has no room for, namely Backends and
+Runtimes in full and the latter half of Automating the
+Analysis. An instructor teaching to that pace will find,
+in the instructor guide, a week-by-week table built from
+the same core path. A reader with more time, or working
+alone, can simply read the book in order. Nothing marked
 optional is weaker material, only material a shorter term
 cannot fit.
 
 ## Chapter template
 
-Each content chapter follows the same sequence: learning
-objectives, an orientation that motivates the chapter from
-a concrete research problem, the analyst's contribution
-that no tool automates, content sections with worked R and
-shell examples, a section on collaborating with a language
-model, exercises, and further reading. The pattern repeats
+Each content chapter follows the same sequence. It opens
+with learning objectives and an orientation that motivates
+the chapter from a concrete research problem. It then
+identifies the analyst's contribution that no tool
+automates, and proceeds through content sections with
+worked R and shell examples. It closes with a section on
+collaborating with a language model, exercises, and
+further reading. The pattern repeats
 deliberately, so that by the third chapter the reader knows
 where to find each component.

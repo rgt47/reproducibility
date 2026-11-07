@@ -25,12 +25,13 @@ pkgload::load_all('../..', quiet = TRUE)
 A function that silently sums instead of averaging will
 pass every rung of the reproducibility ladder and still
 be wrong on every machine that runs it. By the end of
-this chapter you will be able to say, of any
+this chapter the reader will be able to say, of any
 computational result, whether it has merely been
-reproduced or actually checked, and you will have the
-four kinds of test, plus a baseline test of the kind
+reproduced or actually checked. To tell the difference
+in an analysis of one's own, we develop the four kinds
+of test, plus a baseline test of the kind
 @tbl-baseline-rng demonstrates on the book's own running
-cohort, to tell the difference in your own analysis.
+cohort.
 
 ::: {.callout-note icon=false}
 ## Before you start
@@ -65,28 +66,31 @@ vectors, and basic control flow.
 - explain why `lintr`, `styler`, and a pre-commit hook
   belong to the validation register?
 
-**Outline.** The analyst's irreplaceable judgments; the
-paradox stated precisely; `tinytest`'s bare-expectation
-style; the four kinds of test, worked on the cohort and
-the retinopathy trial; behavior versus implementation;
-linting, styling, and the pre-commit gate; how the
-emphasis shifts across archetypes; a worked example of
-the paradox itself; collaborating with an LLM;
-exercises, a cheat sheet, and further reading.
+**Outline.** We begin with the analyst's irreplaceable
+judgments and then state the paradox precisely. We next
+introduce `tinytest`'s bare-expectation style and work
+the four kinds of test on the cohort and the retinopathy
+trial. We then distinguish behavior from implementation,
+and treat linting, styling, and the pre-commit gate. The
+later sections show how the emphasis shifts across
+archetypes, give a worked example of the paradox itself,
+and discuss collaborating with an LLM. Lastly, the
+chapter closes with exercises, a cheat sheet, and
+further reading.
 :::
 
 ## Where this sits on the stack
 
 Testing is this book's clearest case of pure
 validation. It is also, among the chapters so far, one
-that captures nothing at all: a test suite adds no
-package to the lockfile and no layer to the image.
+that captures nothing at all. That is, a test suite adds
+no package to the lockfile and no layer to the image.
 @fig-stack-testing marks that asymmetry on the shared
-determinant stack: the two layers this chapter writes
+determinant stack. The two layers this chapter writes
 code against, the analysis code and the input data, are
-validated here, not captured, because the surrounding
-chapters captured them already and this chapter only
-confirms they still behave.
+validated here, not captured. The surrounding chapters
+captured them already, and this chapter only confirms
+they still behave.
 
 ```{r}
 #| label: fig-stack-testing
@@ -131,10 +135,10 @@ and not a ceiling. It guarantees that a result can
 be regenerated. It says nothing whatever about
 whether the result is correct.
 
-The remedy is testing, and the reason testing
-belongs in a book about reproducibility, rather
-than in a separate book about software
-engineering, is precisely the paradox. Pinning a
+The remedy is testing. But why does testing belong
+in a book about reproducibility, rather than in a
+separate book about software engineering? The
+reason is precisely the paradox. Pinning a
 package version, building a container, restoring a
 lockfile: each of these *captures* a determinant
 of the computation, and none of them examines
@@ -160,12 +164,14 @@ that a recorded computational output regenerates.
 That confirmation is itself a test, of a
 particular kind we shall meet below as the
 baseline test, so the topmost level is defined
-by a test. We begin with the human
-judgments that no testing tool can make, then
-develop the four kinds of test in turn, then take
-up code quality as a second validation feature,
-and close with the way the emphasis shifts across
-archetypes.
+by a test.
+
+The plan of the chapter is as follows. We shall
+begin with the human judgments that no testing tool
+can make, and then develop the four kinds of test in
+turn. We next take up code quality as a second
+validation feature. Lastly, we close with the way the
+emphasis shifts across archetypes.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the paradox
@@ -201,9 +207,9 @@ follows.
    A test compares a computed value against an
    expected one, and the expected one has to come
    from somewhere outside the code under test. This
-   source of independent truth is called an oracle:
-   a mean of one, two, and three that the analyst
-   knows to be two; a count of rows that a data
+   source of independent truth is called an oracle.
+   Examples are a mean of one, two, and three that the
+   analyst knows to be two; a count of rows that a data
    dictionary fixes at some known number; a
    coefficient that a textbook formula supplies. No
    tool knows the right answer. The analyst supplies
@@ -220,14 +226,14 @@ follows.
    behavior and testing implementation.
 
 3. **The analyst encodes the domain constraints.**
-   The rule that an age lies between zero and one
-   hundred and twenty, that a treatment arm is one
-   of a fixed set of labels, that a probability sits
-   in the unit interval: these are not facts the
-   computer can infer. They are clinical and
-   scientific knowledge, and a data-validation test
-   is the place where that knowledge is written down
-   in executable form, so that a violation halts the
+   Consider the rules that an age lies between zero
+   and one hundred and twenty, that a treatment arm is
+   one of a fixed set of labels, and that a
+   probability sits in the unit interval. These are
+   not facts the computer can infer. They are clinical
+   and scientific knowledge. A data-validation test is
+   the place where that knowledge is written down in
+   executable form, so that a violation halts the
    analysis rather than passing silently into a
    result.
 
@@ -248,7 +254,7 @@ follows.
   computational result regenerates. The form that can
   fail is the *baseline test*, which compares a fresh
   result with a value recorded in an earlier session
-  and committed, within a stated tolerance; two runs
+  and committed, within a stated tolerance. Two runs
   in one session do not qualify.
 - **Oracle.** The source of independent truth a
   test compares against; the known correct answer.
@@ -278,11 +284,12 @@ make on its own, and that fall to the analyst instead.
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-What 'correct' means for a given input, supplied by an
-oracle outside the code under test; which behaviors of
-a function constitute its contract and so deserve a
-test; and which domain constraints, such as a plausible
-age range, the data itself must satisfy.
+The first is what 'correct' means for a given input,
+supplied by an oracle outside the code under test. The
+second is which behaviors of a function constitute its
+contract and so deserve a test. The third is which
+domain constraints, such as a plausible age range, the
+data itself must satisfy.
 :::
 :::
 
@@ -310,10 +317,11 @@ reproduce is thereby shown to be untrustworthy,
 which is a genuine service; irreproducibility is a
 detectable defect. On the other hand, a result that
 does reproduce has been shown only to be stable, not
-to be right, and stability is easily mistaken for
+to be right. Stability is easily mistaken for
 correctness by an analyst who has watched the same
-number appear three times. Testing exists to break the false inference from
-'it came out the same' to 'it came out correct'.
+number appear three times. Testing exists to break
+the false inference from 'it came out the same' to
+'it came out correct'.
 
 ::: {.callout-important}
 ## The honest level
@@ -321,10 +329,10 @@ number appear three times. Testing exists to break the false inference from
 This chapter's own practice reaches a baseline test
 on one bootstrap bound (@tbl-baseline-rng) and a short,
 illustrative suite of unit, integration, and
-data-validation checks on hand-picked examples; it
+data-validation checks on hand-picked examples. It
 establishes that those particular results regenerate
 and that those particular functions behave as
-intended, and it says nothing whatsoever about any
+intended. It says nothing whatsoever about any
 function, dataset, or computation this chapter did not
 choose to test.
 :::
@@ -358,34 +366,34 @@ the level of the whole analysis's primary result, and
 doing so closes a gap the paradox otherwise leaves
 open.
 
-A **pre-specified analysis plan** (also called a
-statistical analysis plan, or, when it is registered
-publicly before the data are seen, a pre-registration)
-states in advance the primary endpoint, the model, the
-covariates, and the comparison that will answer the
-study's main question. Written and dated before the
-analyst has looked at the outcome data, it is computed
+A **pre-specified analysis plan** states in advance the
+primary endpoint, the model, the covariates, and the
+comparison that will answer the study's main question.
+It is also called a statistical analysis plan, or, when
+it is registered publicly before the data are seen, a
+pre-registration. Written and dated before the analyst
+has looked at the outcome data, it is computed
 independently of any code's output in exactly the sense
-the Vocabulary box above requires of an oracle: it
-specifies what the correct analysis looks like, not by
-running anything, but by committing in writing to a
+the Vocabulary box above requires of an oracle. That is,
+it specifies what the correct analysis looks like, not
+by running anything, but by committing in writing to a
 choice that the data cannot later be allowed to revise.
 
-A function-level
-oracle, such as the hand-computed mean described above,
-catches a coding error: the function returns the wrong
-number for a known input. It says nothing about whether
-the analysis itself asks the right question. An analysis
-built by trying several models, several covariate sets,
-or several endpoints and reporting the one that reached
-significance can be bug-free in every function, pass
-every unit test, and still reproduce exactly on a second
-machine, because reproduction only checks that the same
-code returns the same output. The reproducibility
-paradox stated above applies again, one level up: a
-fully reproducible analysis can still be the wrong
-analysis, chosen with the benefit of having already seen
-the answer. A pre-specified plan is the oracle that
+A function-level oracle, such as the hand-computed mean
+described above, catches a coding error: the function
+returns the wrong number for a known input. It says
+nothing about whether the analysis itself asks the right
+question. Consider an analysis built by trying several
+models, several covariate sets, or several endpoints and
+reporting the one that reached significance. It can be
+bug-free in every function and pass every unit test. It
+can also still reproduce exactly on a second machine,
+because reproduction only checks that the same code
+returns the same output. The reproducibility paradox
+stated above applies again, one level up. A fully
+reproducible analysis can still be the wrong analysis,
+chosen with the benefit of having already seen the
+answer. A pre-specified plan is the oracle that
 guards against this failure, because it fixes the
 intended analysis before the data could have shaped it.
 
@@ -396,7 +404,7 @@ of the data that will later be analyzed. Both are
 necessary, and neither substitutes for the other. A
 bug-free implementation of an unregistered, data-driven
 analysis is still untrustworthy in the way the plan would
-have prevented; a faithful implementation of a
+have prevented. Conversely, a faithful implementation of a
 pre-specified plan can still contain a coding error that
 only a function-level oracle would catch.
 
@@ -410,8 +418,9 @@ model's formula, the stated primary comparison, and the
 decision rule actually implemented match what the plan
 specified? Where the match can be stated mechanically,
 for example that `fit_model()` fits the formula the plan
-names, a test can assert it directly, comparing the
-model's formula (as text, or as a parsed call) against a
+names, a test can assert it directly. Such a test
+compares the model's formula (as text, or as a parsed
+call) against a
 string recorded from the plan rather than against
 anything the analysis itself computed.
 
@@ -430,7 +439,7 @@ ask for?
 
 No. Reproducing exactly and passing every unit test
 shows that the code is a faithful, bug-free
-implementation of whatever analysis it runs; neither
+implementation of whatever analysis it runs. Neither
 check examines whether that analysis is the one the
 study committed to before seeing the data. The
 additional check is whether the fitted model, the
@@ -445,15 +454,15 @@ the code could produce.
 ## tinytest: bare expectations
 
 The framework this book uses adopts `tinytest`
-[@vanderloo2020] as its testing tool, and the
-choice rewards a moment's explanation because it
-shapes how the tests look. `tinytest` is
-lightweight and carries no dependencies of its own,
-which matters in a reproducible compendium: every
-additional test dependency enlarges the lockfile
-and the container image, and a testing framework
-that dragged in a dozen packages would tax the very
-machinery it is meant to protect. The more visible
+[@vanderloo2020] as its testing tool. The choice
+rewards a moment's explanation because it shapes how
+the tests look. `tinytest` is lightweight and carries
+no dependencies of its own, which matters in a
+reproducible compendium. Every additional test
+dependency enlarges the lockfile and the container
+image, and a testing framework that dragged in a
+dozen packages would tax the very machinery it is
+meant to protect. The more visible
 consequence is stylistic. A `tinytest` test file is
 an ordinary R script containing bare, top-level
 expectation calls, with no wrapping function around
@@ -476,18 +485,18 @@ Each line is a complete test. The file is also a
 runnable script, so during development an analyst
 can source it directly and watch the expectations
 evaluate. The available expectations cover the
-common cases, `expect_equal()`, `expect_true()`,
+common cases (`expect_equal()`, `expect_true()`,
 `expect_false()`, `expect_identical()`,
 `expect_error()`, `expect_inherits()`, and a few
-others, and a compendium's tests are collected in
+others). A compendium's tests are collected in
 `inst/tinytest/` and driven by a small
 `tests/tinytest.R` runner that `R CMD check`
 invokes. `tinytest` runs each file with the test
-directory as its working directory, so a test that
-reads a project file from the root reaches it through
-`../../`, as the listings below do. We follow the
-convention throughout: bare
-top-level expectations, one concern per file, named
+directory as its working directory. A test that
+reads a project file from the root therefore reaches
+it through `../../`, as the listings below do. We
+follow the convention throughout: bare top-level
+expectations, one concern per file, named
 `test-<thing>.R`.
 
 ::: {.callout-note icon=false collapse=true}
@@ -582,10 +591,10 @@ for `fit_cox()`, not a repair of the existing
 integration test for `fit_model()`.
 
 The integration test does not re-check what the unit
-tests already cover; it checks the seams, that the
-output of `clean_cohort` is a valid input to
-`fit_model`, that the model summary has the expected
-shape. A pipeline that passes its unit tests can
+tests already cover. Instead it checks the seams: that
+the output of `clean_cohort` is a valid input to
+`fit_model`, and that the model summary has the
+expected shape. A pipeline that passes its unit tests can
 still fail here, if a column is renamed in one step
 and read under its old name in the next.
 
@@ -594,18 +603,19 @@ and read under its old name in the next.
 The third kind of test turns its attention from the
 code to the data. Much of what goes wrong in a
 health analysis is not a coding error but a data
-defect: an age of two hundred, a negative
-laboratory value, a treatment label misspelled, a
-column silently dropped by an upstream export. A
+defect. Examples are an age of two hundred, a
+negative laboratory value, a treatment label
+misspelled, or a column silently dropped by an
+upstream export. A
 data-validation test encodes the analyst's domain
 knowledge as executable constraints and fails when
 the data violates them.
 
-Before writing constraints it is worth looking at
-what one is constraining. @tbl-diabetic-arms
-tabulates the retinopathy trial introduced in the
-conventions, and it is included here for a reason
-beyond illustration: every cell in it can be counted
+Before writing constraints, we look first at what
+we are constraining. @tbl-diabetic-arms tabulates
+the retinopathy trial introduced in the conventions.
+It is included here for a reason beyond
+illustration: every cell in it can be counted
 by hand from the data, which is precisely the
 property an oracle needs. A test asserting that the
 untreated arm contains 197 eyes is checkable by
@@ -638,14 +648,14 @@ kable(arms, align = 'lrrr')
 ```
 
 The difference between the arms is large and in the
-expected direction, which is a reason to be careful
-rather than pleased: a validation test should assert
-what the protocol requires, not what this particular
-extract happens to show. An assertion that the event
-rate in the laser arm is below one third would pass
-today and would fail on a different trial, or on a
-corrected export, for reasons having nothing to do
-with a defect.
+expected direction. That is a reason to be careful
+rather than pleased, because a validation test should
+assert what the protocol requires, not what this
+particular extract happens to show. An assertion that
+the event rate in the laser arm is below one third
+would pass today. It would fail on a different trial,
+or on a corrected export, for reasons having nothing
+to do with a defect.
 
 ```r
 # inst/tinytest/test-cohort.R
@@ -696,7 +706,7 @@ expect_equal(bootstrap_ci(cohort, n = 2000, seed = 2024),
 Note first where the seed lives. `bootstrap_ci()` takes
 it as an argument and sets it internally, with
 `withr::with_seed()`, which also restores the caller's
-generator state on exit, so the function is
+generator state on exit. As a result, the function is
 deterministic given its arguments and does not disturb
 any random stream around it. A procedure that depends
 on the caller setting a seed first is one `set.seed`
@@ -719,7 +729,7 @@ in a unit test, but it is not a reproducibility test.
 A reproducibility test that can fail compares today's
 result with one recorded in an earlier session and
 committed to the repository. We call it a *baseline
-test*, and it has three parts: a script, run once, that
+test*. It has three parts: a script, run once, that
 records the baseline; the committed baseline file; and
 a test file that recomputes the quantities and compares
 them with a stated tolerance.
@@ -761,15 +771,15 @@ expect_equal(result$lower, baseline$lower,
 Three details carry the weight. The path is relative
 to `inst/tinytest/`, where `tinytest` runs the file. The
 guard lets the file exit early under `R CMD check`,
-which installs the package without `analysis/` (the
+which installs the package without `analysis/`. The
 mirror in `inst/testdata/` covers the unit and
 data-validation tests; the baseline test requires the
-raw extract and skips cleanly without it). And the
-tolerance is stated and chosen, not left at a default:
+raw extract and skips cleanly without it. Finally, the
+tolerance is stated and chosen, not left at a default.
 `1e-8` relative is wide enough to absorb floating-point
 summation reordered by a different BLAS or thread count
-(@sec-containers) and far too narrow for a change in the
-fitted coefficients to pass. A comparison with no
+(@sec-containers), and far too narrow for a change in
+the fitted coefficients to pass. A comparison with no
 tolerance would fail on that reordering, and a check
 that fails for reasons unrelated to the analysis trains
 its reader to ignore it.
@@ -779,9 +789,10 @@ exists. The chunk below plays both sessions on the
 synthetic cohort. It records the 97.5 percent bootstrap
 bound for mean BMI under the sampler R used before
 version 3.6.0 (`sample.kind = 'Rounding'`), as an
-analysis recorded on an older R would have; reruns it
-with the same seed and sampler; and reruns it with the
-same seed under the current default (`'Rejection'`). The
+analysis recorded on an older R would have. It then
+reruns it with the same seed and sampler, and reruns it
+again with the same seed under the current default
+(`'Rejection'`). The
 comparison is the one `expect_equal()` makes, `all.equal()`
 at the stated tolerance. `withr::with_seed()` sets the
 sampler only for the duration of each call, and the final
@@ -860,7 +871,7 @@ and confirm `test-baseline-cohort.R` reports five passes
 (habit 4). To make it fail on purpose, open
 `inst/baseline/cohort_baseline.rds`, read it with
 `readRDS()`, change `hr` by more than `1e-8` relative,
-write it back, and rerun; the comparison above, run with
+write it back, and rerun. The comparison above, run with
 `sample.kind = 'Rejection'` against a baseline recorded
 under `'Rounding'`, is this exact failure, executed in
 the chapter itself.
@@ -875,13 +886,13 @@ environment rebuilt from its recipe supplies the clean
 rebuild, and @sec-verification assembles the two in
 continuous integration. A suite with no baseline test
 can show that the code runs and that its functions are
-correct on known inputs, but it cannot show that a
-recorded result regenerates, so it does not reach L3
+correct on known inputs. However, it cannot show that
+a recorded result regenerates, so it does not reach L3
 however thorough it is. In the zzcollab composition,
-`zzc verify --full` applies exactly this rule: it stamps
+`zzc verify --full` applies exactly this rule. It stamps
 L3 only when the image rebuilds, the test suite passes,
 and at least one `inst/tinytest/test-baseline*.R` file
-exists and ran; otherwise it reports the project as
+exists and ran. Otherwise it reports the project as
 rebuilt and tested, at L2, with no baseline comparison.
 
 ## Monte Carlo error and parallel streams
@@ -889,18 +900,19 @@ rebuilt and tested, at L2, with no baseline comparison.
 @tbl-baseline-rng fixed the seed and varied only the
 sampler (the default that R changed in version 3.6.0),
 which isolated one source of change in the bootstrap
-bound. A second source is always
-present and has nothing to do with R versions: a bootstrap
-estimate is itself a Monte Carlo quantity, built from a
-finite number of resamples, and it carries its own
-sampling variability on top of the statistical sampling
-variability of the original cohort. Two bootstrap runs at
-different seeds, same data, same `n`, will not return
-exactly the same bound, and the size of that disagreement
-is the Monte Carlo standard error (MCSE), distinct from
-the standard error the bootstrap is estimating.
+bound. A second source is always present and has nothing
+to do with R versions. A bootstrap estimate is itself a
+Monte Carlo quantity, built from a finite number of
+resamples. It carries its own sampling variability on
+top of the statistical sampling variability of the
+original cohort. Two bootstrap runs at different seeds,
+same data, same `n`, will not return exactly the same
+bound. The size of that disagreement is the Monte Carlo
+standard error (MCSE), distinct from the standard error
+the bootstrap is estimating.
 
-The practical diagnostic needs no extra theory: rerun the
+But how much does such a bound move in practice? The
+practical diagnostic needs no extra theory: rerun the
 same call at several seeds for a given `n`, and look at
 how much the result moves; then raise `n` and watch the
 spread narrow. The chunk below does this with
@@ -925,41 +937,41 @@ ranges over `r sprintf('%.2f', min(w300))` to
 `r sprintf('%.2f', max(w300))`, a standard deviation of
 `r sprintf('%.3f', sd(w300))`. At `n = 1500`, five times
 as many resamples, the same spread falls to
-`r sprintf('%.3f', sd(w1500))`, a reduction broadly
+`r sprintf('%.3f', sd(w1500))`. That reduction is broadly
 consistent with the Monte Carlo error's usual
 $1/\sqrt{n}$ scaling, though three seeds is too few to
 pin the exponent down. A result is 'Monte Carlo stable'
 at a given comparison tolerance when this seed-to-seed
-spread is small relative to that tolerance; the baseline
-test's `1e-8` in @tbl-baseline-rng is a numerical
-tolerance for one fixed sequence of draws and says
-nothing about this, so raising `n` until the spread
+spread is small relative to that tolerance. We note that
+the baseline test's `1e-8` in @tbl-baseline-rng is a
+numerical tolerance for one fixed sequence of draws, and
+it says nothing about this. Raising `n` until the spread
 shown here is small relative to whatever difference the
-analysis cares about detecting is a separate check,
-made once, by hand, when choosing `n`, not by the test
-suite on every run.
+analysis cares about detecting is therefore a separate
+check. It is made once, by hand, when choosing `n`, not
+by the test suite on every run.
 
 Resampling at the `n` a real analysis needs is often
 parallelized across cores, and this is where Monte Carlo
 error becomes a correctness risk rather than only a
 precision question. Each worker process must draw from
-its own independent random stream; naive parallelization,
-such as `parallel::mclapply()` with no RNG setup, can
-leave workers sharing or overlapping generator state, so
-that resamples drawn as 'independent' on different cores
-are correlated, which understates the Monte Carlo
-error. The fix is the
-L'Ecuyer-CMRG generator, built for exactly this, which
-R's `RNGkind('L\'Ecuyer-CMRG')` exposes directly and which
-`parallel::clusterSetRNGStream()` applies across the
-workers of a cluster, assigning each one a non-overlapping
-substream; the `doRNG` package applies the same discipline
-to a `foreach` loop. A parallel bootstrap run without this
-can report a width that understates the true Monte Carlo
-error, and it adds a second way for
-the result to depend on how many cores happened to run it,
-on top of the seed discipline this chapter already
-requires.
+its own independent random stream. Naive
+parallelization, such as `parallel::mclapply()` with no
+RNG setup, can leave workers sharing or overlapping
+generator state. Resamples drawn as 'independent' on
+different cores are then correlated, which understates
+the Monte Carlo error. The fix is the L'Ecuyer-CMRG
+generator, built for exactly this, which R's
+`RNGkind('L\'Ecuyer-CMRG')` exposes directly.
+`parallel::clusterSetRNGStream()` applies it across the
+workers of a cluster, assigning each one a
+non-overlapping substream; the `doRNG` package applies
+the same discipline to a `foreach` loop. A parallel
+bootstrap run without this can report a width that
+understates the true Monte Carlo error. It also adds a
+second way for the result to depend on how many cores
+happened to run it, on top of the seed discipline this
+chapter already requires.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: two kinds of instability
@@ -977,7 +989,7 @@ No. The seed-to-seed change at fixed `n` is Monte Carlo
 error, the resampling's own finite-sample noise; raising
 `n` shrinks it toward zero. The sampler change after an
 upgrade is a change in which resamples a *given* seed
-produces, not in how many resamples were drawn; raising
+produces, not in how many resamples were drawn. Raising
 `n` does not fix it, because the two samplers will keep
 disagreeing at any `n`. Only pinning the sampler, as the
 baseline test does, addresses that second problem.
@@ -985,9 +997,9 @@ baseline test does, addresses that second problem.
 :::
 
 Each of the four kinds catches defects the others do
-not see, and
-@fig-test-coverage sets four representative defects
-against them. Read the bottom row first. Re-execution
+not see, and @fig-test-coverage sets four
+representative defects against them. We read the
+bottom row first. Re-execution
 alone, with no test of any kind, catches none of the
 four, because every one of these defects is
 deterministic and will reproduce perfectly. That row is
@@ -1093,18 +1105,18 @@ The first test asserts that `my_clean` uses a
 function called `filter` internally. If the analyst
 later rewrites `my_clean` in base R, removing the
 `filter` call while leaving its behavior
-unchanged, the first test fails, and it fails for no
+unchanged, the first test fails. It fails for no
 good reason: the function still does exactly what it
 promised. Such a test punishes honest refactoring
 and trains the analyst to distrust the suite. The
 second test asserts only that the cleaned data
 carries no missing values, which is the behavior
-that actually matters, and it passes under any
-correct implementation. As a general rule, a test
-should fail when, and only when, the function's
-contract is broken. Tests that fail for other
-reasons are a tax on maintenance, and Wilson and
-colleagues, in their best-practices and
+that actually matters. It passes under any correct
+implementation. As a general rule, a test should
+fail when, and only when, the function's contract is
+broken. Tests that fail for other reasons are a tax
+on maintenance. Wilson and colleagues, in their
+best-practices and
 good-enough-practices guidance, make behavioral
 testing a recurring recommendation [@wilson2014;
 @wilson2017].
@@ -1143,21 +1155,21 @@ distrust or delete it.
 
 Testing confirms that code is correct. A second
 family of tools confirms that code is *legible and
-consistent*, and although these tools do not check
+consistent*. Although these tools do not check
 correctness directly, they belong to the same
 validation register and serve the same
 reproducibility end. The argument is one of
 mechanism. Code that a reader can follow is code
-whose errors a reader can find; consistent
+whose errors a reader can find. Consistent
 formatting removes the visual noise that hides a
-transposed argument or a misplaced parenthesis; and
-a single house style across a compendium means that
-a difference in the code is always a difference in
-meaning, never merely a difference in whitespace.
-Wilson and colleagues, in both of their practice
-papers, treat readable, conventional code as a
-component of reproducible work rather than an
-aesthetic preference [@wilson2014; @wilson2017];
+transposed argument or a misplaced parenthesis.
+Moreover, a single house style across a compendium
+means that a difference in the code is always a
+difference in meaning, never merely a difference in
+whitespace. Wilson and colleagues, in both of their
+practice papers, treat readable, conventional code
+as a component of reproducible work rather than an
+aesthetic preference [@wilson2014; @wilson2017].
 Sandve and colleagues, in their ten simple rules,
 make the companion point that the provenance and the
 recorded results of an analysis must themselves be
@@ -1167,10 +1179,11 @@ Two tools mechanize this, and a third enforces them.
 
 **Linting** is static analysis: `lintr` reads the
 source without running it and flags stylistic
-deviations and likely errors, an assignment with
-`=` where the house style is `<-`, a line past the
-width limit, a variable assigned and never used, a
-call to a function that does not exist. Because it
+deviations and likely errors. Examples are an
+assignment with `=` where the house style is `<-`, a
+line past the width limit, a variable assigned and
+never used, and a call to a function that does not
+exist. Because it
 does not execute the code, it catches a class of
 mistake that tests, which only exercise the paths
 they call, may miss.
@@ -1199,8 +1212,8 @@ moment; a pre-commit hook runs before a commit is
 recorded, and can refuse the commit if a check
 fails. Configuring the linter and styler as a
 pre-commit hook means that unstyled or unlinted code
-cannot enter the history in the first place, which
-is a far stronger guarantee than a convention that
+cannot enter the history in the first place. That is
+a far stronger guarantee than a convention that
 relies on the analyst's memory. The configuration
 lives in a `.pre-commit-config.yaml` file at the
 project root:
@@ -1220,8 +1233,8 @@ repos:
 With this in place, an attempt to commit code that
 `styler` would reformat, or that `lintr` flags, or
 that contains a stray `browser()` left over from
-debugging, is stopped before the commit completes,
-and the analyst is prompted to fix it. Continuous
+debugging, is stopped before the commit completes.
+The analyst is then prompted to fix it. Continuous
 integration, in @sec-verification, runs the same
 checks again on the server, so that a collaborator
 who has not installed the hook is caught
@@ -1264,61 +1277,64 @@ statistical and software-engineering sense: checking that
 code is correct, that data meet a constraint, that a
 result regenerates. In pharmaceutical, medical-device, and
 other FDA- or EMA-regulated work, 'validation' names a
-narrower and more procedural idea, and @sec-levels's
-warning box introduces the distinction; this section
-develops the three practices that fill it out for testing
+narrower and more procedural idea. @sec-levels's warning
+box introduces the distinction; this section develops the
+three practices that fill it out for testing
 specifically.
 
 **Computer system validation.** Under 21 CFR 11.10(a),
 a regulated electronic record system must be validated
 'to ensure accuracy, reliability, consistent intended
 performance, and the ability to discriminate invalid or
-altered records' [@cfr21part11], a standard reflected in
-parallel form in European Medicines Agency expectations
-for computerized systems in the same regulatory setting.
-This is validation of the system across its lifecycle,
-documented once and maintained by a change-control
-process, not a one-time test run. A `tinytest` suite that
-passes is evidence toward this standard; it is not, by
-itself, the standard, which also demands documented
+altered records' [@cfr21part11]. The same standard is
+reflected in parallel form in European Medicines Agency
+expectations for computerized systems in the same
+regulatory setting. This is validation of the system
+across its lifecycle, documented once and maintained by a
+change-control process, not a one-time test run. A
+`tinytest` suite that passes is evidence toward this
+standard. It is not, by itself, the standard, which also
+demands documented
 installation qualification, operational qualification,
 and a record of who approved each change and when.
 
 **Double programming.** Independent of any code-based
 test, a regulated submission is commonly checked by
-*double programming*: two analysts, or one analyst and an
+*double programming*. Two analysts, or one analyst and an
 independent reviewer, implement the same analysis
 separately, from the same specification, usually in
-isolation from each other's code, and the two results are
-compared. This is a different reproducibility practice
-from everything else in this chapter. A baseline test
-reruns the *same* code and checks that it still returns
-the same answer; double programming runs *two different*
-implementations of the same specification and checks that
-they agree. A bug shared by both implementations, because
-both analysts misread the same ambiguous protocol
-sentence, would pass a baseline test (the code is
-unchanged) and would also pass double programming (the
-two analysts made the same mistake); what double
-programming catches is a bug particular to one
-implementation, the error a single analyst's code review
-is least likely to find in their own work.
+isolation from each other's code. The two results are
+then compared. This is a different reproducibility
+practice from everything else in this chapter. A baseline
+test reruns the *same* code and checks that it still
+returns the same answer; double programming runs *two
+different* implementations of the same specification and
+checks that they agree. Consider a bug shared by both
+implementations, because both analysts misread the same
+ambiguous protocol sentence. It would pass a baseline
+test (the code is unchanged) and would also pass double
+programming (the two analysts made the same mistake).
+What double programming catches is a bug particular to
+one implementation, the error a single analyst's code
+review is least likely to find in their own work.
 
 **Package risk assessment.** Pinning package versions,
-as @sec-dependencies teaches, fixes which code runs; it
-says nothing about how much to trust that code. The R
-Validation Hub, an R Consortium working group formed for
-exactly this question, proposes a risk-based answer
-[@nicholls2020]: classify each package as either
+as @sec-dependencies teaches, fixes which code runs. It
+says nothing about how much to trust that code. But how
+is that trust to be judged? The R Validation Hub, an R
+Consortium working group formed for exactly this
+question, proposes a risk-based answer [@nicholls2020].
+The first step is to classify each package as either
 'intended for use' (called directly by the analysis) or
 an unexamined dependency reached only through another
-package; for each intended-for-use package, assess its
-purpose, maintenance practice, community usage, and
-existing test coverage; and have a qualified reviewer
-record a documented risk judgment, higher risk earning
-additional targeted testing and lower risk, such as base
-R or a long-established tidyverse package, earning
-'trusted' status with no further work. The `riskmetric`
+package. The second is, for each intended-for-use
+package, to assess its purpose, maintenance practice,
+community usage, and existing test coverage. The third
+is to have a qualified reviewer record a documented risk
+judgment. Higher risk earns additional targeted testing;
+lower risk, such as base R or a long-established
+tidyverse package, earns 'trusted' status with no
+further work. The `riskmetric`
 package operationalizes several of these metrics so the
 assessment does not start from nothing. This is a
 judgment about trustworthiness layered on top of the
@@ -1346,37 +1362,38 @@ chapter's sense; the risk assessment is a package-level
 trust judgment. 21 CFR 11.10(a) asks for documented
 evidence that the system as a whole reliably does what
 it purports to do across its lifecycle, maintained
-through a change-control process, which requires
+through a change-control process. That requires
 installation and operational qualification records and
-sign-off on each subsequent change, not only a snapshot
-of the code, the tests, and one package's status at a
-single point in time.
+sign-off on each subsequent change. It is not met by a
+snapshot alone of the code, the tests, and one
+package's status at a single point in time.
 :::
 :::
 
 ## Testing across the archetypes
 
 The four kinds of test are the same in every compendium,
-but their relative weight shifts with the archetype;
-@tbl-archetype-weight in @sec-compendium is the reference,
-so that a student who has met testing only in the context
-of R packages does not wrongly conclude that a data
-analysis has nothing to test. Testing is native to the
-**R-package** archetype, whose suite is dominated by unit
-tests that `R CMD check` runs as a matter of course. The
-**data-analysis** and **simulation** archetypes, by
-contrast, may have few reusable functions and no exported
-interface, so the data-validation and reproducibility
-tests carry the weight instead; a simulation in particular
-leans on a baseline test that fixes the seed and compares
-the result with a committed value, since its entire output
-is a function of that seed, the point @sec-verification
-develops at length. The **manuscript** archetype adds a
-test that the report renders and that its headline numbers
-match a baseline, and the **blog** archetype tests the
-functions and example computations its posts depend on, a
-reproducibility obligation to readers no smaller than a
-manuscript's to its reviewers.
+but their relative weight shifts with the archetype.
+@tbl-archetype-weight in @sec-compendium is the
+reference. We state the shift here so that a student who
+has met testing only in the context of R packages does
+not wrongly conclude that a data analysis has nothing to
+test. Testing is native to the **R-package** archetype,
+whose suite is dominated by unit tests that `R CMD check`
+runs as a matter of course. The **data-analysis** and
+**simulation** archetypes, by contrast, may have few
+reusable functions and no exported interface. In these
+the data-validation and reproducibility tests carry the
+weight instead. A simulation in particular leans on a
+baseline test that fixes the seed and compares the result
+with a committed value, since its entire output is a
+function of that seed. @sec-verification develops the
+point at length. The **manuscript** archetype adds a test
+that the report renders and that its headline numbers
+match a baseline. The **blog** archetype tests the
+functions and example computations its posts depend on.
+That is a reproducibility obligation to readers no
+smaller than a manuscript's to its reviewers.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: shifting weight
@@ -1390,8 +1407,8 @@ kinds of test carry most of that weight, and why?
 
 Data-validation tests and reproducibility (baseline)
 tests. With few reusable functions, the unit-test
-surface is small, so the risk shifts to the two places
-such a compendium still has: the data it reads, which
+surface is small. The risk therefore shifts to the two
+places such a compendium still has: the data it reads, which
 may be malformed, and the result it reports, which
 must regenerate. Those are exactly what data-validation
 and baseline tests check.
@@ -1406,9 +1423,9 @@ in two forms, one correct and one carrying the bug of
 the orientation, and checks each against three inputs
 whose means are known by hand. Rather than call the
 `tinytest` package, which may be absent from a bare R
-session, we hand-roll a one-line expectation, which
-is all a bare check really is: a comparison of an
-actual value against an expected one.
+session, we hand-roll a one-line expectation. That is
+all a bare check really is: a comparison of an actual
+value against an expected one.
 
 ```{r}
 #| label: tbl-paradox
@@ -1469,8 +1486,8 @@ In a real compendium, the hand-rolled `expect` gives
 way to the `tinytest` expectations, and the checks
 live in a file under `inst/tinytest/`. The following
 is that file, shown as a static listing that is not
-run here, and it is exactly the unit test that would
-have caught the bug before it reached a result:
+run here. It is exactly the unit test that would have
+caught the bug before it reached a result:
 
 ```r
 # inst/tinytest/test-calculate_mean.R
@@ -1493,10 +1510,10 @@ if (requireNamespace('tinytest', quietly = TRUE)) {
 ```
 
 and the pre-commit configuration shown earlier
-completes the picture: the linter and styler guard
-the code's legibility on every commit, the tinytest
-suite guards its correctness, and continuous
-integration re-runs both on a clean machine so that
+completes the picture. The linter and styler guard
+the code's legibility on every commit, and the
+tinytest suite guards its correctness. Continuous
+integration re-runs both on a clean machine, so that
 neither guarantee depends on the author's local
 setup.
 
@@ -1513,7 +1530,7 @@ by hand in the chunk rather than computed by calling
 Because an oracle has to come from outside the code
 under test. Computing the expected values by calling
 `calculate_mean()` would make the check compare the
-function against itself; it would pass identically
+function against itself. It would pass identically
 whether `calculate_mean` were correct or carried the
 dropped-division bug, since both forms are internally
 consistent with their own output. The hand-written
@@ -1537,10 +1554,10 @@ model is most fluent.
 Tests sit close to the data, so one rule comes first
 (habit 3). Never paste or upload protected health
 information, identifiable records, or data covered by a
-data-use agreement, nor outputs derived from them, such
-as a failing test's printout of offending rows, into a
-model unless your institution has approved that endpoint
-for that data. Describe the structure instead: the data
+data-use agreement into a model unless your institution
+has approved that endpoint for that data. The same holds
+for outputs derived from them, such as a failing test's
+printout of offending rows. Describe the structure instead: the data
 dictionary, column names and types, and a synthetic
 example such as the book's simulated cohort. A coding
 agent reads the files in its project, so run one only
@@ -1564,9 +1581,9 @@ value.
 *Verification.* Check every expected value by hand
 or from an independent formula, not by running the
 function, since the oracle must come from outside the
-code under test. Confirm that the edge cases you care about, the
-empty input, the single value, the missing value,
-each have a test.
+code under test. Confirm that the edge cases you care
+about, the empty input, the single value, the missing
+value, each have a test.
 
 **Prompt.** 'Here is the data dictionary, not the
 data, for my cohort: `age_at_enroll` (integer, years),
@@ -1577,10 +1594,10 @@ frame with these columns.'
 
 *Watch for.* The model will propose generic checks,
 non-missing identifiers, numeric outcomes, that are
-reasonable but do not encode *your* domain. The
-dictionary gives types and codes; it does not give
+reasonable but do not encode *the analyst's* domain.
+The dictionary gives types and codes. It does not give
 the protocol's eligibility ages, the plausible range
-of BMI in your population, or how much outcome
+of BMI in the study population, or how much outcome
 missingness the analysis can tolerate, so the model
 will invent those bounds.
 
@@ -1619,7 +1636,7 @@ proportional-hazards model fit to the cleaned extract,
 with BMI expressed per 5 kg/m^2 so that the hazard
 ratio has a clinically natural scale. The analysis
 runs clean only after `clean_cohort()` has repaired
-the four planted defects; uncleaned, it would still
+the four planted defects. Uncleaned, it would still
 run, but it would fit a different model on 338 rows
 with the duplicate and the miscoded sex included.
 
@@ -1660,7 +1677,7 @@ expect_equal(fit$nevent,
 
 **Integration test of the pipeline.** An integration
 test checks that the pipeline stages compose
-correctly end to end: `load_cohort` feeds
+correctly end to end. That is, `load_cohort` feeds
 `clean_cohort` feeds `fit_cox` feeds `summarise_cox`,
 and the final result is a list with the expected
 names and no `NA` values.
@@ -1736,14 +1753,14 @@ follows from the audit.
 
 2. Introduce the `calculate_mean` bug of this chapter
    into a copy of one of your own summary functions,
-   confirm that the analysis still runs and produces
-   a stable result, and then write the single unit
+   and confirm that the analysis still runs and
+   produces a stable result. Then write the single unit
    test that would have caught it. Reflect in a
    sentence on why reproduction did not catch it.
 
 3. Write a data-validation test file for a dataset
-   you use, encoding at least four domain constraints:
-   an expected set of columns, a plausible range for a
+   you use, encoding at least four domain constraints.
+   These are an expected set of columns, a plausible range for a
    continuous variable, an admissible set of labels
    for a categorical variable, and a bound on the
    missing-data rate. Justify each range from a data
@@ -1817,7 +1834,7 @@ the exercise, and the three answers should be different.
 
 The ordinary case comes from arithmetic done by hand,
 independently of the function. This is what makes it an
-oracle: if the expected value were computed by running the
+oracle. If the expected value were computed by running the
 function, the test would assert only that the function
 agrees with itself, which is the commonest way a test
 suite becomes worthless.
@@ -1868,7 +1885,7 @@ machinery captures determinants and propagates whatever
 the code computes with mechanical fidelity, including the
 wrong thing. The only way to detect the error is to compare
 the output against a value obtained *independently of the
-code*, which is what the hand-computed oracle supplies and
+code*. That is what the hand-computed oracle supplies, and
 what no amount of environment capture can.
 :::
 
@@ -1905,7 +1922,7 @@ The **column set** comes from the data dictionary: these
 are the variables the analysis consumes, and a missing one
 means an upstream export changed. The **age range** comes
 from the protocol's eligibility criteria, not from the
-observed minimum and maximum; deriving the bound from the
+observed minimum and maximum. Deriving the bound from the
 data would make the test unable to detect the very
 excursion it exists to catch. The **label set** comes from
 the coding sheet. The **missingness bound** comes from
@@ -1926,8 +1943,8 @@ intended.
 **What removing them would change.** Nothing about the
 position on the L0 to L3 ladder. An analysis at L2 with a
 full test suite and the same analysis at L2 with no tests
-sit on the same rung, because the rung grades how far down
-the determinant stack the result is locked, and tests lock
+sit on the same rung. The rung grades how far down the
+determinant stack the result is locked, and tests lock
 nothing.
 
 **What removing them would change instead** is whether
@@ -1941,8 +1958,8 @@ recorded outputs be shown to regenerate within a stated
 tolerance from a clean rebuild, and the evidence for that
 is a baseline test. The unit and data-validation tests of
 exercises 1 and 3 are not baseline tests, so removing them
-leaves L3 where it was; removing the baseline test would
-drop a project from L3 to L2, because the one piece of
+leaves L3 where it was. Removing the baseline test, by
+contrast, would drop a project from L3 to L2, because the one piece of
 evidence the rung requires would be gone. It is the
 *verification role* that matters there, not the testing
 role.
@@ -1980,9 +1997,9 @@ line of the analysis makes the test fail, reporting the
 coefficients that moved.
 
 The tolerance is the part of this exercise that needs
-thought. An exact comparison is the strongest
-check and will produce failures that mean nothing:
-floating-point summation reorders under a different BLAS
+thought. An exact comparison is the strongest check,
+and it will produce failures that mean nothing.
+Floating-point summation reorders under a different BLAS
 or a different thread count, as @sec-containers discusses,
 and the last digits move without the analysis changing. A
 tolerance of `1e-8` accepts that noise and still catches
@@ -1993,13 +2010,13 @@ chosen against the precision at which results are
 reported.
 
 **What this test is and is not.** It is the kind of
-baseline test L3 requires, and it is a *change detector*: it
-asserts that today's answer matches the recorded one, not
-that either is correct, because the baseline was
-produced by the same code it now guards. If the code was wrong
-when the baseline was
-recorded, this test will faithfully defend the wrong
-answer, which is the paradox reappearing one level up.
+baseline test L3 requires, and it is a *change detector*.
+It asserts that today's answer matches the recorded one,
+not that either is correct, because the baseline was
+produced by the same code it now guards. If the code was
+wrong when the baseline was recorded, this test will
+faithfully defend the wrong answer. That is the paradox
+reappearing one level up.
 The unit tests of exercise 1 are what establish
 correctness; this test establishes stability.
 :::
@@ -2032,10 +2049,10 @@ like formatting and linting, whereas CI can rebuild the
 container and run the full suite.
 
 The two are complements rather than alternatives, and the
-chapter's framing explains why: the hook is a convenience
-that keeps trivia out of the history, and CI is the gate
-that actually guarantees anything, because it is the one
-nobody can skip.
+chapter's framing explains why. The hook is a convenience
+that keeps trivia out of the history. CI is the gate that
+actually guarantees anything, because it is the one nobody
+can skip.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -2053,27 +2070,28 @@ chapter's own 'The cohort, continued' section.
 ## Exercise 8
 
 The code must be committed first, then the recording
-script is run against that committed code,
-and the baseline file it writes is committed second, in
-its own commit. This is habit 1 applied to a derived
+script is run against that committed code, and the
+baseline file it writes is committed second, in its own
+commit. This is habit 1 applied to a derived
 artifact rather than to the primary analysis: a committed
 file must always be traceable to the committed code that
 produced it.
 
-Reversing the order breaks that traceability. If the
+Reversing the order breaks that traceability. Suppose the
 baseline is regenerated and committed while the code
-change that motivated it is still uncommitted, a
-collaborator who pulls the repository receives the new
-baseline paired with the *old* code, because the code
+change that motivated it is still uncommitted. A
+collaborator who pulls the repository then receives the
+new baseline paired with the *old* code, because the code
 change never reached the shared history. Their copy of
 the baseline test then fails immediately, not because
 anything is wrong with their checkout, but because the
 repository itself never recorded a consistent pair of
 code and baseline. Worse, if the local, uncommitted code
 change is later lost, the committed baseline becomes
-orphaned: a recorded result with no committed code that
-anyone can point to as having produced it, which is
-exactly the provenance gap habit 1 exists to close.
+orphaned. It is then a recorded result with no committed
+code that anyone can point to as having produced it,
+which is exactly the provenance gap habit 1 exists to
+close.
 :::
 
 ## Cheat sheet {#sec-cheat-testing}
@@ -2096,22 +2114,22 @@ exactly the provenance gap habit 1 exists to close.
 
 The single most important reference for this chapter
 is the short note by Leek and Peng, that reproducible
-research can still be wrong [@leek2015], which states
-the paradox that motivates every test in a compendium
-and argues for a prevention-oriented rather than a
+research can still be wrong [@leek2015]. It states the
+paradox that motivates every test in a compendium, and
+it argues for a prevention-oriented rather than a
 correction-oriented stance toward analytical error.
 
 For the testing tool itself, van der Loo's
 documentation of `tinytest` [@vanderloo2020] explains
 the design rationale for a zero-dependency,
-bare-expectation framework, and is worth reading for
+bare-expectation framework. It is worth reading for
 the argument that a testing framework should not
 itself be a heavy dependency.
 
 For the practice of testing and code quality as
 components of scientific computing, the two papers by
-Wilson and colleagues are the standard references:
-the best-practices paper [@wilson2014] and the
+Wilson and colleagues are the standard references.
+They are the best-practices paper [@wilson2014] and the
 good-enough-practices paper [@wilson2017], the latter
 pitched deliberately at researchers without a
 software background. Sandve and colleagues' ten
@@ -2122,11 +2140,12 @@ discipline.
 
 For the connection between testing and the highest
 rung of the ladder, the reader is referred forward to
-@sec-verification, where the reproducibility test of
+@sec-verification. There the reproducibility test of
 this chapter reappears at the scale of the whole
-compendium as output verification, and to @sec-levels
-for the capture-and-validation distinction that places
-testing in the validation register. Peng's early
+compendium as output verification. The reader is also
+referred to @sec-levels for the capture-and-validation
+distinction that places testing in the validation
+register. Peng's early
 account of reproducibility as a spectrum [@peng2011]
 remains the clearest short statement of why confirming
 a result, and not merely producing it, is a minimum

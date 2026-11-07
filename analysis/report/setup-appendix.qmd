@@ -2,27 +2,28 @@
 
 @sec-containers teaches what a container is and why pinning a
 base image by digest matters. This appendix is narrower and more
-mundane: getting Docker itself to run at all, on the three
-machines most readers actually sit down at, before any of that
-chapter's content applies: Docker on `arm64` laptops,
-`--platform linux/amd64` emulation and its consequences, Windows
-and WSL2, and locked-down institutional laptops. A 2026 expert
-review of this book judged that without such guidance, 'weeks 2
-to 4' of a course built on it are lost to installation trouble
-instead of spent on the material itself. The appendix adds no
-reproducibility theory; it is a checklist for the moment before
-the first `docker build` succeeds.
+mundane. Its subject is getting Docker itself to run at all, on
+the three machines most readers actually sit down at, before any
+of that chapter's content applies. We take up Docker on `arm64`
+laptops, `--platform linux/amd64` emulation and its consequences,
+Windows and WSL2, and locked-down institutional laptops. A 2026
+expert review of this book judged that without such guidance,
+'weeks 2 to 4' of a course built on it are lost to installation
+trouble instead of spent on the material itself. We add no
+reproducibility theory here. The appendix is a checklist for the
+moment before the first `docker build` succeeds.
 
 ## Apple Silicon (M-series Mac)
 
-@sec-containers already explains the mechanism: `rocker/tidyverse`
+@sec-containers already explains the mechanism. `rocker/tidyverse`
 and `rocker/verse`, the two base images this book's own Dockerfiles
-build on, publish a `linux/amd64` entry only, so an Apple Silicon
-Mac (an `arm64` host) has nothing native to match, and `--platform
-linux/amd64` is not an optimization but the only way to get a
-build at all. That section is worth reading before this one. What
-follows is the practical sequence for a reader sitting at such a
-machine for the first time.
+build on, publish a `linux/amd64` entry only. An Apple Silicon Mac
+(an `arm64` host) therefore has nothing native to match, and the
+flag `--platform
+linux/amd64` is then the only way to get a build at all; it is
+not an optimization. The reader is referred to that section
+before this one. What follows is the practical sequence for a
+reader sitting at such a machine for the first time.
 
 1. **Confirm Docker Desktop is installed and running.** `docker
    version` should print both a `Client` and a `Server` block; a
@@ -56,26 +57,28 @@ machine for the first time.
 ## Windows with WSL2
 
 This book's images are Linux-based, and Docker Desktop on Windows
-runs them through the **WSL2 backend**, not through Hyper-V alone
-and not through Windows containers, which target Windows-native
-images this book never builds. Docker's own current documentation
-describes the setup directly (opened 2026-10-12): WSL2 itself must
-be installed and the Docker Desktop setting **Use WSL 2 based
-engine** enabled under Settings > General (on by default on
-systems that support it); a specific Linux distribution is then
-enabled for Docker integration under Settings > Resources > WSL
-Integration, which is on by default for the default distribution
-[@dockerdesktopwsl2024]. Installing WSL2 itself, if it is not
+runs them through the **WSL2 backend**. It does not run them
+through Hyper-V alone, nor through Windows containers, which
+target Windows-native images this book never builds. Docker's own
+current documentation describes the setup directly (opened
+2026-10-12). WSL2 itself must be installed, and the Docker Desktop
+setting **Use WSL 2 based engine** must be enabled under
+Settings > General (on by default on systems that support it).
+A specific
+Linux distribution is then enabled for Docker integration under
+Settings > Resources > WSL Integration, which is on by default for
+the default distribution [@dockerdesktopwsl2024]. Installing WSL2 itself, if it is not
 already present, is a single elevated command from Windows:
 `wsl --install`, per Microsoft's own documentation
 [@mswslinstall2024].
 
-The gotcha that costs real time is where the project's files
+The problem that costs real time is where the project's files
 live. Microsoft's own guidance is explicit: for the fastest
 performance when working from a Linux command line, store files
 in the WSL Linux filesystem (`/home/<user>/project`), not on a
-mounted Windows drive accessed through `/mnt/c/...`, which the
-same document calls out as measurably slower [@mswslfiles2024].
+mounted Windows drive accessed through `/mnt/c/...`. The same
+document calls out such a mount as measurably slower
+[@mswslfiles2024].
 A repository cloned from inside Windows Explorer or PowerShell,
 then opened from a WSL2 terminal only by crossing the `/mnt/c`
 mount, pays this cost on every file Docker touches during a
@@ -90,9 +93,9 @@ CRLF line endings by default (`core.autocrlf=true`), while this
 book's shell scripts, Dockerfiles, and R scripts assume LF, the
 Linux convention a container's shell expects. A script that
 looks identical in an editor can fail inside a container with an
-`exec format error` or a shebang that silently does not match,
-because a trailing `\r` is part of the first line's interpreter
-path as far as the kernel is concerned. Cloning inside WSL2's own
+`exec format error` or a shebang that silently does not match.
+The reason is that a trailing `\r` is part of the first line's
+interpreter path as far as the kernel is concerned. Cloning inside WSL2's own
 filesystem, where Git's Linux default is LF, avoids this
 entirely; cloning on the Windows side and later copying into WSL2
 does not.
@@ -100,39 +103,42 @@ does not.
 ## Locked-down institutional laptops
 
 A reader with no administrator rights cannot install Docker
-Desktop at all, a constraint the same expert review named as
+Desktop at all. The same expert review named this constraint as
 common and often treated as an afterthought in course
-materials. Nothing on the laptop itself will fix this; the
-options route around it through other infrastructure, in
-roughly increasing order of how much it is worth asking for:
+materials. Unfortunately, nothing on the laptop itself will fix
+this. The options instead route around it through other
+infrastructure, in roughly increasing order of how much it is
+worth asking for:
 
 - **A cloud-hosted development environment.** @sec-backends
   already covers GitHub Codespaces, built on the Development
-  Containers specification [@devcontainers], as a way to open a
-  pinned environment in an editor without installing anything
-  locally beyond a browser or a thin client; it requires no local
+  Containers specification [@devcontainers]. There it is
+  presented as a way to open a pinned environment in an editor
+  without installing anything
+  locally beyond a browser or a thin client. It requires no local
   Docker Desktop at all, because the container runs on GitHub's
   infrastructure, not the laptop.
 
 - **A department-provided remote server or HPC login node,**
   reached over SSH. @sec-backends's HPC worked example already
-  shows the companion half of this: Apptainer, not Docker, is the
+  shows the companion half of this. Apptainer, not Docker, is the
   standard container runtime on a shared cluster, and it runs
-  unprivileged, which is exactly the property that makes it
+  unprivileged. That is exactly the property that makes it
   acceptable where a locked-down laptop's Docker daemon is not.
   A reader who already has cluster access may find the
   institutional gap is already closed, just not with Docker.
 
 - **A formal request to institutional IT**, when neither of the
   above is available. The request is answerable only if it is
-  concrete: ask specifically for Docker Desktop, or, if desktop
-  software cannot be approved, for Docker Engine plus the
-  ability to run containers under the requester's own account
-  (not merely 'Docker', which names a product family spanning
-  both). An IT request phrased as 'I need Docker' is easy to
-  deny or stall; one phrased as 'I need to run `docker build` and
-  `docker run` as my own user, without root' is a specification
-  someone can actually approve or substitute for.
+  concrete. Ask specifically for Docker Desktop. If desktop
+  software cannot be approved, ask instead for Docker Engine plus
+  the ability to run containers under the requester's own
+  account. Do not ask merely for 'Docker', which names a product
+  family spanning both. An IT request phrased as 'I need Docker'
+  is easy to deny or stall. On the other hand, one phrased as 'I
+  need to run `docker build` and `docker run` as my own user,
+  without root' is a specification someone can actually approve
+  or substitute for.
 
 ## Diagnosing a failed or unexpectedly slow build
 
@@ -150,9 +156,9 @@ assuming the Dockerfile itself is wrong:
 On the machine this book was written on (Apple Silicon, Docker
 Desktop with the `desktop-linux` context), `docker version`
 reports a `darwin/arm64` client against a `linux/arm64` server
-(verified, run 2026-10-12); a reader instead passing
+(verified, run 2026-10-12). A reader instead passing
 `--platform linux/amd64`, as this book's own Dockerfile requires,
 would see the pulled or built image itself report `amd64` under
-`docker image inspect`, even though the daemon underneath is
-`arm64`, which is the signature of emulation working as intended
-rather than a misconfiguration.
+`docker image inspect`. The daemon underneath, however, is still
+`arm64`. This combination is the signature of emulation working
+as intended rather than a misconfiguration.

@@ -3,15 +3,14 @@
 Every chapter in this book runs commands at a shell prompt:
 `docker build`, `git commit`, `Rscript`, `quarto render`. The
 book assumes a reader can already type these and read what
-comes back, but a 2026 syllabi comparison found that only 7 of
-30 comparable reproducibility courses actually teach the shell;
-the rest assume it. This appendix is
-the missing prerequisite: enough of the Unix shell to follow
-every command shown elsewhere in the book, in the order those
-commands are needed, with nothing beyond that scope [the
-treatment below follows the scope and sequencing of
-@swcarpentry2024shell, a widely used open lesson covering the
-same ground].
+comes back. However, a 2026 syllabi comparison found that only
+7 of 30 comparable reproducibility courses actually teach the
+shell; the rest assume it. This appendix supplies the missing
+prerequisite. It covers enough of the Unix shell to follow every
+command shown elsewhere in the book, in the order those commands
+are needed, with nothing beyond that scope. The treatment below
+follows the scope and sequencing of a widely used open lesson
+covering the same ground [@swcarpentry2024shell].
 
 ## Where you are: `pwd`, `ls`, `cd`
 
@@ -47,10 +46,10 @@ ls -a
 
 `cd` ('change directory') moves the working directory. `cd
 analysis/report` moves into a subfolder named relative to where
-you already are; `cd /Users/jane/project` moves to an absolute
-path regardless of where you started; `cd ..` moves up one
-level, to the parent of the current directory; and `cd` with no
-argument returns to the home directory. `cd ../..` chains two
+the shell already is, and `cd /Users/jane/project` moves to an
+absolute path regardless of the starting point. `cd ..` moves
+up one level, to the parent of the current directory, and `cd`
+with no argument returns to the home directory. `cd ../..` chains two
 steps up, and `cd ../report` moves up one level and back down
 into a sibling folder, without ever returning to the project
 root by name.
@@ -59,14 +58,15 @@ The distinction between a relative path (`analysis/report`,
 `../data`) and an absolute path (`/Users/jane/project`) matters
 throughout this book. A relative path resolves differently
 depending on the working directory the shell happens to be in
-when the command runs, which is exactly the fragility Chapter 5
-examines in its section on project-oriented paths: a script
+when the command runs. This is exactly the fragility Chapter 5
+examines in its section on project-oriented paths. A script
 that is correct when launched from the project root can be
 wrong when launched from `analysis/report/`, because a relative
 path has no fixed meaning on its own. `here::here()` fixes this
-inside R by computing an absolute path from a marker file, but
-the underlying hazard, that a relative path depends on where you
-started, is a shell concept first and an R concept second.
+inside R by computing an absolute path from a marker file.
+However, the underlying hazard (that a relative path depends on
+the starting directory) is a shell concept first and an R
+concept second.
 
 ## File operations: `cp`, `mv`, `rm`
 
@@ -99,7 +99,7 @@ unintended set of files, not nothing.
 `rm file` deletes a file, and unlike `git`, the shell has no
 undo. A commit can be reverted, a branch can be
 recovered from the reflog, but a file removed with `rm` is
-simply gone; it does not pass through a trash folder, and no
+simply gone. It does not pass through a trash folder, and no
 earlier chapter's recovery techniques apply to it. Running `rm
 *.csv` in the wrong directory, or `rm -rf` on the wrong path,
 destroys exactly what it is told to destroy, correctly and
@@ -136,11 +136,11 @@ cat out.txt
 ```
 
 This single character, `>` versus `>>`, is the difference
-between replacing a log file and growing one, and it is worth
+between replacing a log file and growing one. It is worth
 checking deliberately, because the failure mode of using `>`
-by mistake is silent: the file exists, it
-has content, and nothing in the command's own output signals
-that the previous content was discarded.
+by mistake is silent. That is, the file exists, it has
+content, and nothing in the command's own output signals that
+the previous content was discarded.
 
 A pipe, `|`, sends one command's standard output directly into
 the next command's standard input, without an intermediate
@@ -170,8 +170,8 @@ cat err.txt
 ```
 
 Without the `2>`, that same error message prints to the
-terminal as usual; a plain `>` on its own redirects only
-standard output and leaves error messages visible, which is why
+terminal as usual. A plain `>` on its own redirects only
+standard output and leaves error messages visible. This is why
 a redirected command can still fail loudly even though its
 output file is empty.
 
@@ -193,12 +193,12 @@ bash -c 'echo "in subshell: $MYVAR"'
 
 Without `export`, a variable assignment (`MYVAR=hello`, no
 `export`) is visible only to the current shell, not to programs
-it starts. This is the mechanism behind an instruction this book
-gives more than once without naming it: setting
+it starts. This is the mechanism behind an instruction we give
+more than once in this book without naming it. Setting
 `RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` before an R session, as
 Chapter 12's continuous-integration examples do, works because
 the shell exports it into the environment that `R` or `Rscript`
-then reads when it starts. The variable is not an R setting; it
+then reads when it starts. The variable is not an R setting. It
 is a value the shell handed to the R process at launch, and any
 process the shell starts can read it with its own language's
 equivalent of `echo $VAR` (`Sys.getenv('RENV_CONFIG_AUTOLOADER_ENABLED')`
@@ -207,7 +207,7 @@ in R).
 `PATH` is a particular environment variable, a colon-separated
 list of directories the shell searches, in order, when it looks
 up a command name. Typing `Rscript` works because some directory
-in `PATH` contains a program named `Rscript`; `echo $PATH` shows
+in `PATH` contains a program named `Rscript`. `echo $PATH` shows
 the search list, and prepending a directory to it (`export
 PATH="$HOME/bin:$PATH"`) makes programs placed there runnable by
 name without typing their full path.
@@ -216,9 +216,9 @@ name without typing their full path.
 
 `ls -l` shows a permissions string before each file name, such
 as `-rw-r--r--`. The first character marks the entry type (`-`
-for a plain file, `d` for a directory); the next nine are three
-groups of three, read, write, and execute permission for the
-file's owner, its group, and everyone else.
+for a plain file, `d` for a directory). The next nine are three
+groups of three, giving read, write, and execute permission for
+the file's owner, its group, and everyone else.
 
 A script with no execute permission cannot be run directly, even
 if the file itself is readable text:
@@ -242,7 +242,7 @@ ls -l greet.sh
 ```
 
 The `x` bit is what separates 'this file contains runnable
-instructions' from 'this file is runnable right now'; a shell
+instructions' from 'this file is runnable right now'. A shell
 script downloaded or generated by a template typically starts
 without it, and `chmod +x` is the usual fix.
 
@@ -250,21 +250,21 @@ without it, and `chmod +x` is the usual fix.
 group (owner, group, other), each digit the sum of read (4),
 write (2), and execute (1) for that group. `chmod 644 greet.sh`
 sets `-rw-r--r--`, read and write for the owner and read-only
-for everyone else, with no execute bit anywhere; `chmod 755
-greet.sh` sets `-rwxr-xr-x`, the common mode for a script meant
-to be run by its owner and read and executed, but not modified,
-by anyone else. The symbolic form (`+x`, `-w`) changes one bit
-at a time without needing to know the rest; the numeric form
-sets all nine bits in one command.
+for everyone else, with no execute bit anywhere. `chmod 755
+greet.sh` sets `-rwxr-xr-x`. This is the common mode for a
+script meant to be run by its owner and read and executed, but
+not modified, by anyone else. The symbolic form (`+x`, `-w`)
+changes one bit at a time without needing to know the rest; the
+numeric form sets all nine bits in one command.
 
 ## A note on bash versus zsh
 
 The commands above work the same way in bash and in zsh, the
 two shells most readers will encounter, and this book's own
 examples assume bash-compatible syntax throughout. On macOS in
-particular, Apple switched the default shell from
-bash to zsh in macOS Catalina (2019), so a reader following this
-book on a current Mac is, by default, typing these commands into
+particular, Apple switched the default shell from bash to zsh
+in macOS Catalina (2019). A reader following this book on a
+current Mac is therefore, by default, typing these commands into
 zsh, not bash. The everyday commands in this appendix, `pwd`,
 `ls`, `cd`, `cp`, `mv`, `rm`, redirection, pipes, `export`,
 `chmod`, behave identically in both. Differences surface only in
@@ -272,5 +272,5 @@ more advanced scripting (array syntax and certain glob options
 differ), which this book does not otherwise rely on. A reader who
 hits a syntax error on a book command that looks exactly as
 written should suspect a shell difference before suspecting a
-typo, and can check which shell is running with `echo $0`
+typo. The running shell can be checked with `echo $0`
 (`echo $SHELL` reports the login shell, which may differ).

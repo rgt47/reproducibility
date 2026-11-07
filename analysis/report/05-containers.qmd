@@ -17,14 +17,14 @@ for Reproducible Research* (2015)
 ```
 :::
 
-By the end of this chapter you will be able to write a
+By the end of this chapter we will be able to write a
 Dockerfile that reaches L2, pinned environment, rather
-than one that merely looks reproducible: a recipe whose
-base is named by an immutable digest, whose installer
-fetches from a dated snapshot of the package repository,
-and whose locale, time zone, and thread count are
-declared in the recipe instead of inherited from
-whichever machine happens to run it.
+than one that merely looks reproducible. That is, we
+will write a recipe whose base is named by an immutable
+digest and whose installer fetches from a dated snapshot
+of the package repository. Its locale, time zone, and
+thread count will be declared in the recipe instead of
+inherited from whichever machine happens to run it.
 
 ```{r}
 #| include: false
@@ -94,14 +94,15 @@ answer:**
 ## Where this sits on the stack
 
 This chapter captures, for the first time in the book,
-the two layers beneath the packages: the operating
-system and its system libraries, and the R runtime
-itself. @fig-stack-containers marks both as captured on
-the shared determinant stack of @sec-levels. It captures
-nothing above those two layers; a container that pins
-the operating system and the R version still restores
-whatever the lockfile says about packages, which is the
-layer @sec-dependencies already captures.
+the two layers beneath the packages. These are the
+operating system with its system libraries, and the R
+runtime itself. @fig-stack-containers marks both as
+captured on the shared determinant stack of @sec-levels.
+We note that the chapter captures nothing above those
+two layers. A container that pins the operating system
+and the R version still restores whatever the lockfile
+says about packages, which is the layer
+@sec-dependencies already captures.
 
 ```{r}
 #| label: fig-stack-containers
@@ -149,15 +150,17 @@ libraries, and the runtime, and so carries an
 analysis from L1 to L2, pinned environment.
 
 We shall build the container from first principles,
-assuming no prior contact with it, because the health
-scientist who most needs reproducibility is rarely the
-one with a systems-administration background. We begin
-with what a container is, proceed to the Rocker
-project that supplies R-specific containers, and then
-to the two refinements that make a container itself
-reproducible rather than merely convenient. We close
-with the profiles, a short menu of base environments,
-and a first look at how a team shares one.
+assuming no prior contact with it. The reason is that
+the health scientist who most needs reproducibility is
+rarely the one with a systems-administration
+background. We begin with what a container is, and
+proceed to the Rocker project that supplies R-specific
+containers. We then take up the two refinements that
+make a container itself reproducible rather than merely
+convenient, followed by the environment variables that
+govern determinism. We close with the profiles, a short
+menu of base environments, and a first look at how a
+team shares one.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the lockfile missed
@@ -172,12 +175,12 @@ failure, and say why the lockfile pinned neither.
 ## Answer
 
 The collaborator's restore failed because a package
-linked against GDAL, a system library the lockfile
-cannot name because GDAL is not an R package; the third
-machine's different number came from an older R release
-in which a numerical default differed, and the lockfile
-pins package versions, not the R version they run under.
-Both failures sit beneath the package layer, on the
+linked against GDAL. GDAL is a system library the
+lockfile cannot name, because it is not an R package.
+The third machine's different number came from an older
+R release in which a numerical default differed; the
+lockfile pins package versions, not the R version they
+run under. Both failures sit beneath the package layer, on the
 system-library layer and the R-runtime layer, which is
 the gap a container closes.
 :::
@@ -205,10 +208,11 @@ belong to the analyst and to no script.
    real requirement.
 
 2. **How far to pin decides whether the
-   reproducibility claim is honest.** A container built
-   on a mutable tag such as `latest`, installing
-   whatever the package repository serves on the day
-   of the build, looks reproducible and is not. Two
+   reproducibility claim is honest.** Consider a
+   container built on a mutable tag such as `latest`,
+   which installs whatever the package repository serves
+   on the day of the build. Such a container looks
+   reproducible and is not. Two
    builds from the same recipe on different days
    produce different images. Fixing this costs a little
    effort now, in pinning the base by digest and the
@@ -219,9 +223,9 @@ belong to the analyst and to no script.
 3. **The environment variables that govern
    determinism are the analyst's to set.** A container
    inherits a locale, a time zone, and a default
-   thread count, and these silently shape sorting,
-   date arithmetic, and the last bits of a floating
-   point sum. No tool infers what the analysis needs;
+   thread count. These silently shape sorting, date
+   arithmetic, and the last bits of a floating point
+   sum. No tool infers what the analysis needs;
    the analyst declares it, in a few lines that a
    later reader can inspect and trust.
 
@@ -274,9 +278,9 @@ wrong with that reasoning.
 ## Answer
 
 The choice of base must match the archetype, not the
-maximum. A bigger image is not free: it inflates the
+maximum. A bigger image is not free. It inflates the
 image, slows every rebuild, and, more importantly,
-obscures what the analysis actually depends on, because
+obscures what the analysis actually depends on. That is,
 anything the base happens to carry no longer shows up as
 a declared dependency in the lockfile. An R-package
 archetype that builds on a publishing base, for
@@ -290,10 +294,10 @@ carries the real requirement.
 ## What the lockfile leaves standing
 
 The boundary of what a lockfile fixes is the whole
-motivation for the container. A lockfile records, for every R package an
-analysis loaded, the exact version and the repository
-it came from, and `renv::restore()` reinstalls that
-precise set [@ushey2020]. That is the L0-to-L1
+motivation for the container. A lockfile records, for
+every R package an analysis loaded, the exact version
+and the repository it came from, and `renv::restore()`
+reinstalls that precise set [@ushey2020]. That is the L0-to-L1
 transition, and it is genuine progress. Beneath the
 packages, however, sits a stack of determinants the
 lockfile never touches.
@@ -309,7 +313,7 @@ linear algebra. A package that needs GDAL will not
 install on a machine that lacks it, and the lockfile
 cannot supply it, because GDAL is not an R package. The
 third is the R interpreter itself. A lockfile pins the
-packages but not the R version, and, as we saw in the
+packages but not the R version. As we saw in the
 introduction, a change between R releases can alter a
 result silently: the random-number default that changed
 in R 3.6.0, the `stringsAsFactors` default that flipped
@@ -350,26 +354,27 @@ container's job.
 
 ## Images and containers
 
-The idea of the container is simple, and it is easiest
-to grasp through the distinction between an image and a
-container, which are as different as a recipe from a
-meal, or a class from an object.
+The idea of the container is straightforward, and it is
+easiest to grasp through the distinction between an
+image and a container. The two are as different as a
+recipe from a meal, or a class from an object.
 
 An **image** is a frozen filesystem plus metadata. It
 is, quite literally, a snapshot of a fully installed
-computer: an operating system, the system libraries, a
-particular R, a particular set of R packages, and the
-configuration that ties them together, all captured as
-a single read-only artifact. The image does not run.
+computer. That is, it holds an operating system, the
+system libraries, a particular R, a particular set of R
+packages, and the configuration that ties them
+together. All of this is captured as a single read-only
+artifact. The image does not run.
 It is inert, like a disk image or a virtual-machine
 template, waiting to be started.
 
 A **container** is what one gets by starting an image.
-It is a running instance: the frozen filesystem is
-made live, a process begins inside it, and that process
-sees exactly the operating system and libraries the
-image froze, regardless of what the host machine
-outside the container happens to have. One image can
+It is a running instance. The frozen filesystem is made
+live, and a process begins inside it. That process sees
+exactly the operating system and libraries the image
+froze, regardless of what the host machine outside the
+container happens to have. One image can
 start many containers, each an independent running copy
 that begins from the same frozen state. When a
 container exits, any change it made to its own
@@ -379,10 +384,10 @@ image is the durable, shippable thing; the container is
 the ephemeral, running thing.
 
 Images are built in **layers**, which explains both the
-speed of the tool and the way we shall pin it. An image is
-built from a recipe, the Dockerfile, whose instructions
-execute in order, and each instruction adds one layer
-to a stack. A layer that installs the operating system
+speed of the tool and the way we shall pin it. An image
+is built from a recipe, the Dockerfile, whose
+instructions execute in order, and each instruction adds
+one layer to a stack. A layer that installs the operating system
 sits at the bottom; a layer that installs R sits on top
 of it; a layer that installs packages sits on top of
 that. Because layers are content-addressed and cached,
@@ -398,8 +403,8 @@ everywhere it runs'. The claim is precise, and the
 repetition of 'runs' is deliberate. Wherever a
 container runtime is present, the same image starts a
 container with the same operating system, the same
-system libraries, and the same R, so a result computed
-inside it does not depend on the host. The
+system libraries, and the same R. A result computed
+inside it therefore does not depend on the host. The
 qualification is that the container must actually run:
 the guarantee holds across every machine with a
 compatible runtime, and it is silent about machines
@@ -489,9 +494,10 @@ releases, and is slower to build because it shares no
 cached layers with any other project. More to the point
 for reproducibility, two analysts who each write their
 own installation steps are two independent sources of
-small decisions, such as which compiler flags or which
-locale packages get installed, that a shared Rocker base
-fixes identically for everyone who builds on it. Building
+small decisions. Examples are which compiler flags or
+which locale packages get installed. A shared Rocker
+base fixes those decisions identically for everyone who
+builds on it. Building
 on the same base image turns those into one decision
 made once, by the Rocker maintainers, rather than many
 decisions made silently and differently by each analyst.
@@ -500,12 +506,15 @@ decisions made silently and differently by each analyst.
 
 ## Apple Silicon and multi-architecture images
 
-A single image tag, such as `rocker/r-ver:4.4.0`, need not
-name one fixed set of bytes. Docker images can be published
-as a **manifest list**, also called an image index: one tag,
-or even one digest, that points not directly at a filesystem
-but at a small table of entries, each naming a different CPU
-architecture built from the same recipe. When a client pulls
+Before we turn to pinning, we note a complication that
+warrants attention. A single image tag, such as
+`rocker/r-ver:4.4.0`, need not name one fixed set of
+bytes. Docker images can be published as a **manifest
+list**, also called an image index. That is, one tag, or
+even one digest, points not directly at a filesystem but
+at a small table of entries. Each entry names a
+different CPU architecture built from the same recipe.
+When a client pulls
 the tag, the runtime inspects its own architecture and
 silently selects the matching entry. An `amd64` host receives
 the `amd64` build, an `arm64` host receives the `arm64` build,
@@ -545,20 +554,21 @@ correctness. A QEMU-translated `amd64` instruction still
 computes the `amd64` result, so a container built this way
 runs the same program, only more slowly.
 
-Emulation is not where a numerical risk would come from. If an
-`arm64` variant of `rocker/tidyverse`
-existed, a native `arm64` build of the same Dockerfile would
-not be guaranteed to match an emulated `amd64` build bit for
-bit, because a different architecture's base image can, in
-principle, link a different BLAS, enable different vector
-instructions, or carry a different compiler default, any of
-which can shift a floating-point result in its last few bits.
-None of that is new: it is the same category of hidden
-determinant, beneath the package layer, that the next section
-exists to pin. The guarantee this chapter already teaches,
-pinning the base image by digest, is what actually settles
-the question, because a digest names one
-specific, byte-identical filesystem for one specific platform.
+Emulation is not where a numerical risk would come from.
+Suppose an `arm64` variant of `rocker/tidyverse` existed.
+A native `arm64` build of the same Dockerfile would then
+not be guaranteed to match an emulated `amd64` build bit
+for bit. The reason is that a different architecture's
+base image can, in principle, link a different BLAS,
+enable different vector instructions, or carry a
+different compiler default. Any of these can shift a
+floating-point result in its last few bits. None of that
+is new: it is the same category of hidden determinant,
+beneath the package layer, that the next section exists
+to pin. The guarantee this chapter already teaches,
+pinning the base image by digest, is what actually
+settles the question. A digest names one specific,
+byte-identical filesystem for one specific platform.
 Choosing `--platform linux/amd64` decides which platform's
 bytes a build asks for; pinning the digest decides that it
 receives the same bytes every time it asks. Only the second
@@ -569,8 +579,9 @@ is a reproducibility guarantee.
 
 A student on an Apple Silicon laptop builds this chapter's
 showcase Dockerfile with `--platform linux/amd64` and gets a
-working container, but the build takes nine minutes instead
-of the ninety seconds a labmate on an Intel laptop reports.
+working container. However, the build takes nine minutes
+instead of the ninety seconds a labmate on an Intel laptop
+reports.
 The student worries the slow build means the result cannot be
 trusted. Is that worry justified, and what single step
 already taught in this chapter is the one that actually
@@ -582,7 +593,7 @@ decides whether the result is trustworthy?
 The worry conflates two separate things. The nine-minute
 build is QEMU translating `amd64` instructions into `arm64`
 instructions for a host that has no native `arm64` build of
-`rocker/tidyverse` to offer; that cost is real but it is a
+`rocker/tidyverse` to offer. That cost is real, but it is a
 cost in time, not in correctness, since a translated `amd64`
 instruction still computes the `amd64` result. What actually
 decides trustworthiness is whether the `FROM` line names a
@@ -599,18 +610,19 @@ chapter pins by digest.
 ## Making the image itself reproducible
 
 A container is reproducible only if the recipe that
-builds it is, and the naive recipe is not. Two refinements separate a
-container that merely runs today from one that will
-rebuild to the same image next year. Nüst and
-colleagues, in their ten simple rules for writing
-Dockerfiles for reproducible data science [@nust2020],
-argue for pinning software versions explicitly and for
-naming version-specific image tags rather than `:latest`,
-while cautioning that even a version-specific tag is not
-a guarantee against change, since the maintainer can
-still rebuild and repoint it (inspected: the published
-rules recommend version tags, not cryptographic digests,
-and do not discuss dated package-repository snapshots).
+builds it is, and the naive recipe is not. Two
+refinements separate a container that merely runs today
+from one that will rebuild to the same image next year.
+Nüst and colleagues, in their ten simple rules for
+writing Dockerfiles for reproducible data science
+[@nust2020], argue for pinning software versions
+explicitly. They also argue for naming version-specific
+image tags rather than `:latest`. At the same time they
+caution that even a version-specific tag is not a
+guarantee against change, since the maintainer can still
+rebuild and repoint it. (Inspected: the published rules
+recommend version tags, not cryptographic digests, and
+do not discuss dated package-repository snapshots.)
 This chapter takes that caution one step further than
 their rules do, with two refinements that do the most
 work here:
@@ -639,11 +651,11 @@ edited at any point in either row; the only thing that
 varies is whether its `FROM` line names the tag or the
 digest. (The digest strings shown here and in the figure,
 such as `sha256:1c2f...e8a9` and `sha256:6f05...`, are
-truncated for display and illustrative only; a digest
+truncated for display and illustrative only. A digest
 copied for actual use must be the full 64-character hash,
 such as the one the showcase Dockerfile below carries.)
-Nothing in the upper row is an error or
-a misconfiguration on the maintainer's part. Repointing a
+Nothing in the upper row is an error or a
+misconfiguration on the maintainer's part. Repointing a
 tag to patch a security flaw is the correct thing for
 them to do, which is exactly why a tag cannot carry a
 reproducibility claim.
@@ -709,29 +721,29 @@ ggplot(spans) +
 The second refinement concerns what happens inside the
 image when it installs packages. An installer pointed at
 a live package repository resolves 'the current version'
-to whatever is current on the day of the build, so that
-an image built in March and an image built in June from
-the same recipe carry different packages. The remedy is
+to whatever is current on the day of the build. An image
+built in March and an image built in June from the same
+recipe therefore carry different packages. The remedy is
 to point the in-image installer at a **dated snapshot**
 of the repository, a frozen view of the repository as it
 stood on a chosen day. With the snapshot fixed, a request
 for 'the current version' resolves to the same version on
-every build. The digest fixes the ground the image is
-built on; the lockfile, restored inside the image, fixes
-which package versions are installed onto it; and the
-dated snapshot fixes where those packages are fetched
-from, and what any install that names no version
+every build. In sum, the digest fixes the ground the
+image is built on. The lockfile, restored inside the
+image, fixes which package versions are installed onto
+it. The dated snapshot fixes where those packages are
+fetched from, and what any install that names no version
 resolves to.
 
 A small Dockerfile with both refinements in place, and
 with the environment variables of the next section,
-follows. It is shown as static text, but we tested
-it: on 2026-10-11 we built it with
+follows. It is shown as static text, but we tested it.
+On 2026-10-11 we built it with
 `docker build --platform linux/amd64` against a lockfile
 written by `renv` 1.2.3 that pins one package,
-`jsonlite` 2.0.0, with its recorded R version set to
-4.4.0 to match the image, and the built image reported
-`jsonlite` 2.0.0 and `renv` 1.2.3. The digest is the one
+`jsonlite` 2.0.0. The lockfile's recorded R version was
+set to 4.4.0 to match the image, and the built image
+reported `jsonlite` 2.0.0 and `renv` 1.2.3. The digest is the one
 the `rocker/r-ver:4.4.0` tag resolved to on that date. A
 reader adapting the recipe should look the digest up
 afresh, as Exercise 1 shows, rather than copy one from a
@@ -786,7 +798,7 @@ miss.
   system, which `renv` would then treat as the project.
   That directory contains the home directory, and
   `renv::init()` refuses to initialize a project in that
-  position; a dedicated directory avoids the problem and
+  position. A dedicated directory avoids the problem and
   keeps `renv`'s files out of the root.
 - **`renv` is installed at the version the lockfile
   records.** The lockfile names the `renv` that wrote it,
@@ -822,44 +834,44 @@ The snapshot does not choose the versions of the
 packages in the lockfile; the lockfile does, and a
 recorded version older than the one current on the
 snapshot date is sought in the repository's archive.
-What the snapshot fixes is the
-source of every download, the binary build that matches
-the image's Ubuntu release, and the version of anything
-installed without a lockfile entry: `renv` itself here,
-and any later `install.packages()` call made inside the
-running container. Rocker's own image already points R
+What the snapshot fixes is the source of every download,
+the binary build that matches the image's Ubuntu
+release, and the version of anything installed without
+a lockfile entry. Here that means `renv` itself, and any
+later `install.packages()` call made inside the running
+container. Rocker's own image already points R
 at a dated snapshot, one taken when the image was built,
 which is why the `echo` line appends rather than
 replaces: the later setting wins.
 
 The container and the lockfile divide the labor. The
-`FROM` line fixes the operating
-system, the system libraries, and the R; the snapshot
-fixes where packages come from; the `COPY renv.lock` and
-`renv::restore()` fix the exact package versions inside
-that environment. Neither the container nor the lockfile
-alone is enough. A container without a lockfile fixes
-the environment but not which package versions live in
-it; a lockfile without a container fixes the packages but
-not the platform. An L2 analysis uses both, and
-the honest reading of an image is that it reaches L2 only
-when the base is pinned by digest, the snapshot is
-dated, and a lockfile is restored inside it.
+`FROM` line fixes the operating system, the system
+libraries, and the R; the snapshot fixes where packages
+come from; the `COPY renv.lock` and `renv::restore()`
+fix the exact package versions inside that environment.
+Neither the container nor the lockfile alone is enough.
+A container without a lockfile fixes the environment but
+not which package versions live in it; a lockfile
+without a container fixes the packages but not the
+platform. An L2 analysis uses both. The honest reading
+of an image, then, is that it reaches L2 only when the
+base is pinned by digest, the snapshot is dated, and a
+lockfile is restored inside it.
 
 ::: {.callout-tip icon=false}
 ## Verification
 
 See the pinning actually hold by building the image
 twice and confirming the two builds carry the same
-content, that is, the same operating system and the same
-R and package versions, for example by comparing
-`renv::status()` and the installed apt and R package
-versions across the two builds. Do not test this by
-comparing the two image digests: Docker digests are not
-reproducible across rebuilds by default, because
-per-layer timestamps and file modification times differ,
-so two builds of a correctly pinned recipe carry
-different digests. Bit-identical digests require
+content. That is, they should carry the same operating
+system and the same R and package versions. This can be
+checked, for example, by comparing `renv::status()` and
+the installed apt and R package versions across the two
+builds. Do not test this by comparing the two image
+digests. Docker digests are not reproducible across
+rebuilds by default, because per-layer timestamps and
+file modification times differ, so two builds of a
+correctly pinned recipe carry different digests. Bit-identical digests require
 reproducible-build tooling, such as `SOURCE_DATE_EPOCH`
 and the BuildKit rewrite-timestamp option, which is a
 separate concern from whether the content is pinned. Make
@@ -867,7 +879,7 @@ the check able to fail: replace the digest with a mutable
 tag and the snapshot with a live repository, rebuild on
 two different days, and confirm `renv::status()` or the
 package versions now disagree. If the content differs
-between two builds of the recipe you believe is pinned,
+between two builds of a recipe believed to be pinned,
 the recipe is not yet pinned, and the honest level is
 still L1 whatever the `FROM` line claims.
 :::
@@ -875,13 +887,13 @@ still L1 whatever the `FROM` line claims.
 ::: {.callout-important}
 ## The honest level
 
-This chapter's own practice, when it names a digest, a
-dated snapshot, and a restored lockfile together as it
-does in the Dockerfile above, reaches L2 for the two
-layers a lockfile cannot reach, the operating system and
-system libraries and the R runtime, but leaves L3,
-verification against a recorded baseline, entirely to
-@sec-verification.
+When this chapter's own practice names a digest, a
+dated snapshot, and a restored lockfile together, as it
+does in the Dockerfile above, it reaches L2 for the two
+layers a lockfile cannot reach. These are the operating
+system and system libraries, and the R runtime. It
+leaves L3, verification against a recorded baseline,
+entirely to @sec-verification.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -900,10 +912,10 @@ system, the system libraries, and the R runtime, which is
 genuine progress on the two layers a lockfile cannot
 reach. But a plain `install.packages()` against the live
 repository still resolves 'the current version' to
-whatever is current on the day of that particular build,
-so the recipe can produce a different set of packages on
-two builds months apart even though the `FROM` line is
-identical both times. Pinning the base and dating the
+whatever is current on the day of that particular build.
+The recipe can therefore produce a different set of
+packages on two builds months apart, even though the
+`FROM` line is identical both times. Pinning the base and dating the
 package source are two separate refinements, and a recipe
 that does only the first has not finished the second.
 :::
@@ -911,9 +923,9 @@ that does only the first has not finished the second.
 
 ## Environment-variable determinism
 
-A fixed operating system and a fixed R are still not
-quite enough, because the same R on the same operating
-system can behave differently according to a handful of
+Are a fixed operating system and a fixed R enough? Not
+quite, because the same R on the same operating system
+can behave differently according to a handful of
 environment variables that the container inherits. Three
 of these deserve concrete illustration, because the
 failures they cause are silent and the fixes are one
@@ -923,26 +935,27 @@ The first is the **locale**, carried in `LANG` and
 `LC_ALL`, which governs, among other things, how text is
 sorted and how dates and numbers are formatted for
 display. R's own numeric parsing is not one of the
-things it governs: `LC_NUMERIC` is pinned to `"C"` inside
-R regardless of what `LANG` or `LC_ALL` say, so
+things it governs. `LC_NUMERIC` is pinned to `"C"`
+inside R regardless of what `LANG` or `LC_ALL` say, so
 `as.numeric('1,5')` returns `NA` with a coercion warning
-under any locale the host or container sets (verified by
-calling `Sys.setlocale('LC_ALL', 'fr_FR.UTF-8')` and
-confirming `Sys.getlocale('LC_NUMERIC')` still reports
-`'C'` and `as.numeric('1,5')` is still `NA`). The risk is
-not that R silently reparses a number under a different
+under any locale the host or container sets. (We
+verified this by calling
+`Sys.setlocale('LC_ALL', 'fr_FR.UTF-8')` and confirming
+that `Sys.getlocale('LC_NUMERIC')` still reports `'C'`
+and `as.numeric('1,5')` is still `NA`.) The risk is not
+that R silently reparses a number under a different
 convention; it is that data arriving from *outside* R
 already carries a convention baked in. A locale that
 uses a comma as the decimal mark, common across much of
 Europe, writes the number one and a half as `1,5` in a
-spreadsheet or CSV export, and an ingest step that
-assumes a period decimal mark, perhaps a hand-written
-regex that strips what it takes to be thousands
-separators, will misread it without erroring. To make the
-failure concrete, consider the same numeric vector
-written under each convention by an external tool such
-as a spreadsheet application, and what a naive
-period-assuming cleaning step reads back from the
+spreadsheet or CSV export. An ingest step that assumes a
+period decimal mark will misread it without erroring;
+an example is a hand-written regex that strips what it
+takes to be thousands separators. To make the failure
+concrete, consider the same numeric vector written under
+each convention by an external tool such as a
+spreadsheet application. The table below shows what a
+naive period-assuming cleaning step reads back from the
 comma-convention strings.
 
 ```{r}
@@ -971,18 +984,17 @@ knitr::kable(decimal_demo)
 ```
 
 The parsed values are wildly wrong, and nothing warns
-the analyst. The number
-`1.5` returns as `1500`, the number `2200.75` as
-roughly `2.2`, and the number `0.333` as `333`, because
-the period-assuming cleaning step treats the European
-comma as noise and strips it. This is a failure of the
-ingest code, not of R's parser, but pinning `LANG` and
-`LC_ALL` in the image still matters for the parts of R
-that genuinely do depend on locale: collation and
-formatted output. Sorting the strings
-`'cote'`, `'côte'`, `'coté'`, `'coter'` with
+the analyst. The number `1.5` returns as `1500`, the
+number `2200.75` as roughly `2.2`, and the number
+`0.333` as `333`, because the period-assuming cleaning
+step treats the European comma as noise and strips it.
+This is a failure of the ingest code, not of R's parser.
+Even so, pinning `LANG` and `LC_ALL` in the image still
+matters for the parts of R that genuinely do depend on
+locale: collation and formatted output. Sorting the
+strings `'cote'`, `'côte'`, `'coté'`, `'coter'` with
 `sort()` returns a different order under `LC_ALL=C` than
-under `LC_ALL=fr_FR.UTF-8` (verified), and
+under `LC_ALL=fr_FR.UTF-8` (verified). Likewise,
 `format(Sys.Date(), '%B')` prints an English month name
 under one and a French month name under the other
 (verified). A report that sorts a table of names, or
@@ -1021,8 +1033,8 @@ Dockerfile sets `OPENBLAS_NUM_THREADS=1` alongside
 `OMP_NUM_THREADS=1`. Setting the OpenMP and the BLAS
 thread counts to one together, rather than either alone,
 removes thread count as a source of variation in the
-order of summation, trading a little speed for
-run-to-run stability on the same image. Whether that
+order of summation. The cost is a little speed, traded
+for run-to-run stability on the same image. Whether that
 trade is worth making is the analyst's judgment, and a
 container lets that judgment be recorded and enforced
 instead of left to whatever the host defaults to.
@@ -1032,7 +1044,7 @@ instead of left to whatever the host defaults to.
 
 A collaborator in Berlin and a collaborator in San
 Diego run the same containerized script on the same
-image and obtain identical package versions, yet their
+image and obtain identical package versions. Yet their
 daily case-count tables disagree by one case on several
 days, always at the boundaries between days. Which
 environment variable is the likely culprit, and why
@@ -1082,10 +1094,10 @@ when the deliverable is a rendered PDF manuscript.
 The design intent is that the profiles differ in as few
 lines as possible. Moving a project from one profile to
 another changes the `FROM` line and, at most, a single
-system-installation line, while the
-reproducibility-relevant configuration, the locale and
-time-zone variables, the dated snapshot, and the
-lockfile restore, stays constant. The profile decides
+system-installation line. The reproducibility-relevant
+configuration stays constant: the locale and time-zone
+variables, the dated snapshot, and the lockfile
+restore. The profile decides
 what the base carries, and the lockfile decides what is
 installed on top.
 
@@ -1111,8 +1123,8 @@ archetype; only the base changes.
 - A **simulation** archetype often wants more cores than
   software, so the base may be minimal while the
   container is run with a larger core allocation. Here
-  the analyst must weigh the determinism point above:
-  more cores may speed the simulation while changing the
+  the analyst must weigh the determinism point above.
+  More cores may speed the simulation while changing the
   last bits of a result, so `OMP_NUM_THREADS` and the
   random-number discipline of @sec-dependencies deserve
   particular care.
@@ -1136,9 +1148,9 @@ A package must be checked against a clean environment
 carrying only its declared dependencies, so that `R CMD
 check` or its equivalent catches a dependency the
 `DESCRIPTION` fails to declare. A rich publishing base can
-mask exactly that failure: the package's code may rely,
+mask exactly that failure. The package's code may rely,
 without declaring it, on a LaTeX tool or a system library
-the publishing base happens to carry, and the check will
+the publishing base happens to carry. The check will then
 pass in this image and fail the moment the package is
 installed on a user's machine that lacks that base. The
 minimal profile is the honest choice because it
@@ -1149,14 +1161,14 @@ software nobody asked for.
 
 ## A first look at the two-layer team model
 
-A container fixes an environment for one analyst. A team
-needs every member to share the same environment, and
-this introduces a wrinkle we shall only sketch here and
-develop fully in @sec-archiving. Building an image from
-a Rocker base and a full package set takes many minutes,
-and it would be wasteful for every member of a lab, and
-every one of a lab's projects, to rebuild the same base
-from scratch.
+A container fixes an environment for one analyst. But
+how does a team share one? A team needs every member to
+share the same environment, and this introduces a
+wrinkle we shall only sketch here and develop fully in
+@sec-archiving. Building an image from a Rocker base and
+a full package set takes many minutes. It would be
+wasteful for every member of a lab, and every one of a
+lab's projects, to rebuild the same base from scratch.
 
 The remedy is a two-layer model. A team lead builds a
 comprehensive **team image** once, carrying the lab's
@@ -1166,11 +1178,11 @@ that team image, rather than on the raw Rocker base. The
 first layer, the team image, is built once and reused
 everywhere; the second layer, the per-project image,
 adds only what the project needs and builds in seconds,
-where the full image takes minutes. Because the team image is itself
-pinned by digest and recorded in a committed file, every
-member pulls byte-identical bytes, so 'works on my
-machine' cannot arise: there is, in the relevant sense,
-only one machine. The mechanics of building, pushing,
+where the full image takes minutes. Because the team
+image is itself pinned by digest and recorded in a
+committed file, every member pulls byte-identical bytes.
+'Works on my machine' therefore cannot arise: there is,
+in the relevant sense, only one machine. The mechanics of building, pushing,
 digest-recording, and updating the team image are the
 business of @sec-archiving.
 
@@ -1187,15 +1199,15 @@ what the two-layer model buys beyond saved build minutes.
 Saved time is real but not the main point. Building a
 comprehensive image once and pinning it by digest means
 every project in the lab, and every member working on
-any of them, starts from byte-identical bytes rather than
-from independently resolved installs that could drift
-even when every project names the same package versions
-in its own lockfile. Rebuilding from the raw base every
-time reintroduces the chance that two builds, run on
-different days against a live snapshot or a different
-system-library patch level, diverge in ways no lockfile
-would catch, because the divergence sits below the
-package layer. The shared team image is what makes 'works
+any of them, starts from byte-identical bytes. The
+alternative is independently resolved installs, which
+could drift even when every project names the same
+package versions in its own lockfile. Rebuilding from
+the raw base every time reintroduces the chance that two
+builds diverge, when they run on different days against
+a live snapshot or a different system-library patch
+level. No lockfile would catch such a divergence,
+because it sits below the package layer. The shared team image is what makes 'works
 on my machine' inapplicable across the whole lab, not
 only within one project.
 :::
@@ -1203,15 +1215,15 @@ only within one project.
 
 ## Worked example
 
-Let us follow a concrete case through, in the manner of
+We now follow a concrete case through, in the manner of
 the framework this book uses, which generates the
 Dockerfile so that the analyst does not write one by
-hand. A biostatistician is analyzing a registry
-cohort. The deliverable is a set of tables and figures,
-not a typeset manuscript, so the appropriate archetype
-is data analysis and the appropriate profile is minimal:
-R and the essentials, with the analysis stack drawn from
-the lockfile. She scaffolds the project and builds the
+hand. A biostatistician is analyzing a registry cohort.
+The deliverable is a set of tables and figures, not a
+typeset manuscript, so the appropriate archetype is data
+analysis and the appropriate profile is minimal. That
+profile carries R and the essentials, with the analysis
+stack drawn from the lockfile. She scaffolds the project and builds the
 image. The shell session, shown as static text and never
 executed here, is short.
 
@@ -1227,11 +1239,11 @@ a Dockerfile pinned to a digest and a dated snapshot;
 `make docker-build` builds the image; and `make r` starts
 a container and drops her into an R session inside it.
 The generated Dockerfile is, in essence, the one shown
-earlier: a digest-pinned `FROM rocker/r-ver`, the locale
-and time-zone and thread variables, the dated snapshot
-wired into the repository options, and a
-`renv::restore()` that installs the locked packages
-inside the fixed environment. The image records its own
+earlier. It carries a digest-pinned `FROM rocker/r-ver`,
+the locale and time-zone and thread variables, and the
+dated snapshot wired into the repository options. It
+ends with a `renv::restore()` that installs the locked
+packages inside the fixed environment. The image records its own
 provenance in labels, the base image, its digest, and
 the snapshot date, so a later reader can see exactly what
 was pinned without leaving the image.
@@ -1251,9 +1263,9 @@ toolchain comes with it, and the manuscript renders to
 PDF inside the container. Almost nothing else in the
 recipe changed: the locale and thread variables, the
 dated snapshot, and the lockfile restore are identical.
-The same
-reproducibility machinery served both archetypes, and
-the move between them was a single changed line.
+The same reproducibility machinery served both
+archetypes, and the move between them was a single
+changed line.
 
 What has she gained, in the vocabulary of the ladder?
 Before the container, at L1, her collaborator's restore
@@ -1263,7 +1275,7 @@ it, at L2, the operating system, the system libraries,
 and the R are fixed and travel with the analysis, and
 the locale and time-zone and thread variables are
 declared rather than inherited. What she has not yet
-gained is verification, L3: an image that builds and a
+gained is verification, L3. An image that builds and a
 report that renders are not the same as a report whose
 numbers have been regenerated and shown to match a
 recorded baseline. That is the subject of
@@ -1312,11 +1324,11 @@ Neither file exists at the compendium's root, so the
 compendium has not reached L2 by this chapter's standard,
 consistent with the honest L0/L1 framing @sec-levels and
 @sec-compendium already gave it. Reaching L2 needs
-nothing new, only a Dockerfile that follows the
+nothing new. It needs only a Dockerfile that follows the
 showcase recipe built and verified earlier in this
-chapter, adapted to
-what the compendium's own `renv.lock` (once @sec-dependencies'
-lockfile is committed) records:
+chapter, adapted to what the compendium's own
+`renv.lock` (once @sec-dependencies' lockfile is
+committed) records:
 
 - a `FROM` line naming a Rocker base appropriate to the
   compendium's archetype, data analysis, so `rocker/r-ver`
@@ -1337,12 +1349,12 @@ lockfile is committed) records:
   so the packages the compendium's scripts load are
   restored inside the pinned environment.
 
-None of this is built here, because building and verifying
-an image is slow and the showcase Dockerfile earlier in
-this chapter already did that verification once.
-What the check above adds is specific to the compendium:
-it is not yet done, and the gap is these four concrete
-items, not a vague 'needs a Dockerfile'.
+None of this is built here, because building and
+verifying an image is slow and the showcase Dockerfile
+earlier in this chapter already did that verification
+once. What the check above adds is specific to the
+compendium: it is not yet done, and the gap is these
+four concrete items, not a vague 'needs a Dockerfile'.
 
 ## Collaborating with an LLM
 
@@ -1358,12 +1370,12 @@ watch for.
 
 One rule comes before any prompt (habit 3). Never paste
 or upload protected health information, identifiable
-records, or data held under a data use agreement, nor
-outputs derived from them, into a model unless your
-institution has approved that endpoint for that data; to
-ask about a container, describe the structure instead,
-such as the column names and types or a synthetic
-example. A coding agent that runs commands can read
+records, or data held under a data use agreement into a
+model, nor outputs derived from them. The one exception
+is an endpoint your institution has approved for that
+data. To ask about a container, describe the structure
+instead, such as the column names and types or a
+synthetic example. A coding agent that runs commands can read
 whatever the container mounts, so run one only in
 projects whose data it is allowed to see.
 :::
@@ -1379,19 +1391,19 @@ undated installer, the absent locale and time zone. The
 result runs today and is not L2.
 
 *Verification.* Confirm that the `FROM` line carries an
-`@sha256:` digest, not merely a tag; that the in-image
-installer points at a dated snapshot, with a distribution
-codename that matches
-the base image's Ubuntu release, and that
-`renv::restore()` is told to use it; and that `LANG`,
-`LC_ALL`, and `TZ` are set.
-Then build the image twice and confirm the two builds
-carry the same content, comparing the installed operating
-system and the R and package versions, for instance
-through `renv::status()` and the apt and R package
-version lists, rather than comparing image digests, which
-differ across rebuilds even for a correctly pinned recipe
-because per-layer timestamps vary. If the content
+`@sha256:` digest, not merely a tag. Confirm also that
+the in-image installer points at a dated snapshot, with
+a distribution codename that matches the base image's
+Ubuntu release, and that `renv::restore()` is told to
+use it. Finally, confirm that `LANG`, `LC_ALL`, and `TZ`
+are set. Then build the image twice and confirm the two
+builds carry the same content, comparing the installed
+operating system and the R and package versions. This
+can be done, for instance, through `renv::status()` and
+the apt and R package version lists. Do not compare
+image digests, which differ across rebuilds even for a
+correctly pinned recipe because per-layer timestamps
+vary. If the content
 differs, the recipe is not pinned, whatever the model
 asserted.
 
@@ -1401,10 +1413,11 @@ laptop. Why?'
 *Watch for.* The model is likely to reach first for the
 code, suggesting a bug in the analysis, and to overlook
 the environment. The environment is the more probable
-cause because the container was supposed to
-fix it and may have fixed it incompletely: a missing
-locale variable, a different thread count, an unpinned
-package version inside a pinned environment.
+cause, because the container was supposed to fix it and
+may have fixed it incompletely. Typical gaps are a
+missing locale variable, a different thread count, or
+an unpinned package version inside a pinned
+environment.
 
 *Verification.* Compare the environment inside the
 container with the one outside it: inspect `LANG`,
@@ -1577,8 +1590,8 @@ RUN Rscript -e "install.packages('renv', repos = Sys.getenv('RENV_CONFIG_REPOS_O
 The `FROM` line pins the image by its own digest, the one
 `rocker/tidyverse:4.4.0` resolved to on 2026-10-11. A
 digest names exactly one image, so it cannot be borrowed
-from another image such as `rocker/r-ver`: when both a
-tag and a digest are given, Docker resolves the digest
+from another image such as `rocker/r-ver`. When both a
+tag and a digest are given, Docker resolves the digest,
 and the tag is only a label for the human reader. The
 image is built on Ubuntu 22.04, so the snapshot names
 `jammy`, and it is published for `linux/amd64` only, so
@@ -1587,14 +1600,13 @@ must be built with `--platform linux/amd64`. The block
 then copies the committed lockfile into a working
 directory, installs `renv` from the dated snapshot, and
 restores the recorded package set, fetching from that
-snapshot. We built
-this recipe on 2026-10-11 against a one-package lockfile
-(`jsonlite` 2.0.0) and the image reported `jsonlite`
-2.0.0. A fuller repair would add the locale, time-zone,
-and thread-count variables and check the `renv` version,
-as the Dockerfile in the chapter does, but these lines
-are the ones that carry the recipe from unpinned to
-pinned.
+snapshot. We built this recipe on 2026-10-11 against a
+one-package lockfile (`jsonlite` 2.0.0) and the image
+reported `jsonlite` 2.0.0. A fuller repair would add the
+locale, time-zone, and thread-count variables and check
+the `renv` version, as the Dockerfile in the chapter
+does. Nevertheless, these lines are the ones that carry
+the recipe from unpinned to pinned.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1656,7 +1668,7 @@ conventions and means something different under each:
 1 February under the month-first reading. No error is
 raised, because both readings are valid dates. This is the
 same failure mode as the decimal-mark table earlier in the
-chapter, and it is worse in one respect: the decimal-mark
+chapter, and it is worse in one respect. The decimal-mark
 case produces visibly implausible magnitudes, whereas a
 swapped date is simply a different plausible date.
 
@@ -1684,7 +1696,7 @@ is unambiguous under every convention.
 ## Exercise 5
 
 **Why the digits move.** Floating-point addition is not
-associative: adding a long column of numbers left to right
+associative. Adding a long column of numbers left to right
 can give a slightly different answer from adding it in
 pairs and combining, because each intermediate result is
 rounded. A multithreaded numerical library splits the sum
@@ -1712,17 +1724,17 @@ problem.
 outputs will be verified against recorded values, which is
 to say anything reaching for L3, since the verification
 compares numbers and the numbers must be stable. The
-concrete case is a regulatory submission: a fixed thread
+concrete case is a regulatory submission. A fixed thread
 count for the final analysis makes the reported estimates
 reproducible bit for bit, and the extra hours are
 irrelevant against the cost of a discrepancy an auditor
 cannot explain. For exploratory work during development,
 the trade is usually not worth making.
 
-One refinement: one can develop with
-threads and fix the count only for the final verified run,
-which recovers most of the speed and all of the
-determinism where it matters.
+One refinement: one can develop with threads and fix the
+count only for the final verified run, which recovers
+most of the speed and all of the determinism where it
+matters.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1730,15 +1742,16 @@ determinism where it matters.
 
 **The most likely cause** is that `renv::restore()` did
 not restore into the library the session is actually
-using, or did not run against the lockfile you think it
-did. In practice this resolves to one of a few things: the
-project was opened from a directory where the lockfile is
-absent, so `restore()` had nothing to read; the container
-mounts a host `renv` cache or library that shadows the
-project library; `RENV_PATHS_LIBRARY` points somewhere
-unexpected inside the image; or the lockfile itself was
-not committed, so the collaborator restored an older
-version of it.
+using, or did not run against the lockfile the analyst
+believes it did. In practice this resolves to one of a
+few things. The project may have been opened from a
+directory where the lockfile is absent, so `restore()`
+had nothing to read. The container may mount a host
+`renv` cache or library that shadows the project
+library. `RENV_PATHS_LIBRARY` may point somewhere
+unexpected inside the image. Or the lockfile itself may
+not have been committed, so the collaborator restored an
+older version of it.
 
 The diagnostic sequence is `renv::status()` to see whether
 the library and the lockfile agree, then `.libPaths()` to
@@ -1750,8 +1763,9 @@ them these locate all four causes.
 packages.** A container pins the environment: the
 operating system, the system libraries, and the R runtime.
 The packages installed into the image at build time are
-pinned by the image, but any package the analysis installs
-or restores *afterward* is not, because it is resolved at
+pinned by the image. However, any package the analysis
+installs or restores *afterward* is not, because it is
+resolved at
 run time against whatever the lockfile or the repository
 then says. The image and the lockfile do different jobs:
 in the chapter's framing, the image is the L1-to-L2 step
@@ -1782,19 +1796,19 @@ recorded, from the repository recorded, so two restores of
 the same lockfile install the same packages. It guarantees
 nothing about the operating system, the system libraries a
 package links against, or the version of R itself that
-runs those packages, because none of those three is an R
-package and so none of them has an entry in the lockfile.
+runs those packages. None of those three is an R package,
+and so none of them has an entry in the lockfile.
 
 The specific gap this chapter's container closes is
 exactly those three: the `FROM` line fixes the operating
 system and the system libraries, and the digest-pinned
 Rocker base fixes which R runtime runs the restored
-packages. The lockfile answers 'which packages', the
-container answers 'on what', and this chapter's own
-orientation story, the GDAL-dependent package that failed
+packages. The lockfile answers 'which packages' and the
+container answers 'on what'. Consider this chapter's own
+orientation story: the GDAL-dependent package that failed
 to install on a collaborator's machine even though the
-lockfile pinned its version exactly, is a failure the
-lockfile could not prevent and the container does.
+lockfile pinned its version exactly. That is a failure
+the lockfile could not prevent and the container does.
 :::
 
 ## Cheat sheet {#sec-cheat-containers}
@@ -1842,10 +1856,10 @@ mind that its remit stops exactly where this chapter's
 begins. The compendium structure into which both fit is
 the subject of @marwick2018, whose `rrtools` first
 combined a lockfile and a Dockerfile in a packaged
-analysis. The alternatives to Docker as a runtime, from
-the high-performance-computing runtime Apptainer
-(formerly Singularity) [@kurtzer2017] to the
-browser-based Binder
-[@jupyter2018] and the container-free Nix, are taken up
-in @sec-backends, and the team-image model sketched here
-is developed in full in @sec-archiving.
+analysis. The alternatives to Docker as a runtime are
+taken up in @sec-backends. They range from the
+high-performance-computing runtime Apptainer (formerly
+Singularity) [@kurtzer2017] to the browser-based Binder
+[@jupyter2018] and the container-free Nix. The
+team-image model sketched here is developed in full in
+@sec-archiving.

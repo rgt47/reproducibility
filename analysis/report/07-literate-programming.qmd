@@ -17,13 +17,13 @@ want a computer to do.*
 ```
 :::
 
-By the end of this chapter you will be able to write an
+This chapter has three aims. The first is to write an
 analysis whose every reported number and figure is
-produced by the code sitting beside it, recognize the
-handful of ways that guarantee silently breaks, and say
-precisely what a successful render does and does not
-establish about an analysis's place on the
-reproducibility ladder.
+produced by the code sitting beside it. The second is to
+recognize the handful of ways that guarantee silently
+breaks. The third is to say precisely what a successful
+render does and does not establish about an analysis's
+place on the reproducibility ladder.
 
 ```{r}
 #| include: false
@@ -39,8 +39,9 @@ pkgload::load_all('../..', quiet = TRUE)
 **Reading time.** About 60 minutes.
 
 **Prerequisites.** @sec-dependencies and @sec-containers,
-for the lockfile and the container, so that the seal this
-chapter develops is not mistaken for either kind of pin.
+for the lockfile and the container. With these in hand,
+the seal this chapter develops is not mistaken for
+either kind of pin.
 @sec-levels, for the L0-L3 ladder and the
 capture-versus-validation vocabulary this chapter applies
 to the literate document itself. Statistically, nothing
@@ -66,27 +67,31 @@ prior exposure to `knitr` or Quarto chunk syntax is assumed.
   precisely what the seal does and does not establish
   about an analysis's reproducibility?
 
-**Outline.** Where a sealed render sits on the stack; the
-oldest idea in the book, from Knuth to Buckheit and
-Donoho; the R lineage from Sweave to Quarto; the sealed
-render, and the same seal applied to inline numbers; the
-landmines that break the seal; HTML or PDF and the
-toolchain each needs; why a render will not hash the same
-twice; literate programming across the archetypes; the
-write-as-you-go doctrine; the cohort, continued; a worked
-example; collaborating with an LLM; exercises, a cheat
-sheet, and further reading.
+**Outline.** We begin by locating a sealed render on the
+stack, and then trace the oldest idea in the book, from
+Knuth to Buckheit and Donoho. We next follow the R
+lineage from Sweave to Quarto. With that history in
+hand, we develop the sealed render, apply the same seal
+to inline numbers, and catalog the landmines that break
+the seal. We then consider HTML or PDF and the toolchain
+each needs, and explain why a render will not hash the
+same twice. The later sections treat literate
+programming across the archetypes, the write-as-you-go
+doctrine, the cohort continued, a worked example, and
+collaborating with an LLM. Lastly, the chapter closes
+with exercises, a cheat sheet, and further reading.
 :::
 
 ## Where this sits on the stack
 
-A sealed render is, among this book's chapters, an unusual
-case: it pins nothing new. @fig-stack-literate marks
-analysis code as validated here rather than captured,
-because version control already secures the code at L0;
-what a sealed render adds is the check that the document's
-prose and figures are actually produced by that code and
-are not pasted in and left to drift.
+A sealed render is an unusual case among this book's
+chapters, in that it pins nothing new.
+@fig-stack-literate marks analysis code as validated here
+rather than captured, because version control already
+secures the code at L0. What a sealed render adds is the
+check that the document's prose and figures are actually
+produced by that code. That is, they are not pasted in
+and left to drift.
 
 ```{r}
 #| label: fig-stack-literate
@@ -154,8 +159,9 @@ cannot silently disagree with its own analysis.
 The reader will recall the ladder of reproducibility
 levels that organizes this book: L0 locatable, L1
 pinned packages, L2 pinned environment, L3 verified.
-Where a sealed render sits on that ladder tends to
-surprise newcomers. A sealed render is, on its own, a
+But where on that ladder does a sealed render sit? The
+answer tends to surprise newcomers. A sealed render is,
+on its own, a
 property almost orthogonal to the ladder. It guarantees
 that the document agrees with the code, but it says
 nothing about whether the packages are pinned, whether
@@ -171,7 +177,7 @@ That said, the sealed render is the natural home for
 the machinery of the earlier chapters. It is where the
 pinned packages of @sec-dependencies and the pinned
 environment of @sec-containers are actually exercised,
-because it is the thing that runs the code. And it is
+because it is the thing that runs the code. It is also
 the artifact that continuous integration renders on
 every change, as we shall see in @sec-verification. The
 sealed render is therefore the hinge between capturing
@@ -190,19 +196,19 @@ and no tool makes them.
    that takes an hour to fit cannot be re-fitted on
    every render, which argues for computing it once in a
    script and caching the result. Where to draw this
-   line, between the code that lives in the sealed
-   document and the code that lives in
+   line is a design decision the analyst makes for each
+   project. The line falls between the code that lives in
+   the sealed document and the code that lives in
    `analysis/scripts/` with its output saved to
-   `derived_data/`, is a design decision the analyst
-   makes for each project, and it trades the strength of
-   the seal against the cost of the render.
+   `derived_data/`. The choice trades the strength of the
+   seal against the cost of the render.
 
 2. **Keeping the render sealed by refusing to reach
    outside it.** A sealed render must draw only on what
    is captured and committed. The temptations to reach
    outside are many and quiet, and we catalog them
-   below as landmines: installing a package at render
-   time, loading with `pacman::p_load`, reading a file
+   below as landmines. They are installing a package at
+   render time, loading with `pacman::p_load`, reading a file
    by its absolute path on the author's machine,
    depending on state left in the session by a previous
    chunk, reading a file that was never committed. Each
@@ -300,9 +306,9 @@ That application, and the sentence this book takes as
 its keystone, is due to Buckheit and Donoho, writing in
 1995 about their WaveLab software and paraphrasing their
 colleague Jon Claerbout [@buckheit1995]. Their argument,
-in its clearest form, is this: an article about
-computational science is not the scholarship itself, it
-is merely advertising of the scholarship; the actual
+in its clearest form, is this. An article about
+computational science is not the scholarship itself; it
+is merely advertising of the scholarship. The actual
 scholarship is the complete software environment and
 the complete set of instructions that generated the
 figures. On this view the printed
@@ -330,9 +336,9 @@ rest of this chapter is in service of it.
 ## From Sweave to Quarto
 
 The R ecosystem has realized Knuth's idea four times
-over, each realization improving on the last, and a
-reader will meet all four in existing code, so it is
-worth knowing the lineage.
+over, each realization improving on the last. The
+reader will meet all four in existing code, so we
+review the lineage briefly.
 
 The first was Sweave, introduced by Friedrich Leisch
 around 2002 and shipped with R itself. Sweave let an
@@ -358,9 +364,9 @@ including the executable chunk later in this chapter.
 The third was R Markdown, which paired `knitr` with
 `pandoc`, the universal document converter
 [@xie2018]. The author now wrote in Markdown, a light and
-readable prose syntax, rather than in LaTeX, and
-`pandoc` converted the woven Markdown into whatever
-final format was wanted: HTML for the web, PDF by way of
+readable prose syntax, rather than in LaTeX. `pandoc`
+then converted the woven Markdown into whatever final
+format was wanted: HTML for the web, PDF by way of
 LaTeX, Word for a collaborator who redlines in track
 changes. This is the `report.Rmd` that the zzcollab
 templates scaffold, and the format in which a great deal
@@ -370,12 +376,12 @@ The fourth and most recent is Quarto, released by Posit
 in 2022 and documented by Allaire and colleagues
 [@allaire2024]. Quarto is best understood not as a
 replacement for R Markdown but as its generalization
-beyond R. It keeps the `knitr` engine as one option,
-adds a Jupyter engine for Python and Julia, unifies the
-chunk-option syntax across languages into the `#|`
-comment form used in this book, and standardizes the
-production of books, websites, and journal articles from
-the same source. This very book is a Quarto book. For an
+beyond R. It keeps the `knitr` engine as one option and
+adds a Jupyter engine for Python and Julia. It also
+unifies the chunk-option syntax across languages into
+the `#|` comment form used in this book, and it
+standardizes the production of books, websites, and
+journal articles from the same source. This very book is a Quarto book. For an
 R analyst the migration from R Markdown to Quarto is
 small, and the two will coexist for years. All four tools
 implement the same idea, and any of them can secure the
@@ -394,7 +400,7 @@ Knuth's sense?
 ## Answer
 
 Each interleaves narrative prose with executable code in one
-source document and weaves the code's output into the
+source document. Each also weaves the code's output into the
 rendered result at build time, so the figure or number a
 reader sees is produced by the code beside it. That
 property, not the particular markup language or output
@@ -430,15 +436,16 @@ does not produce.
 
 ## The sealed render
 
-The following chunk generates a small synthetic dataset in
-the spirit of the Palmer penguins, three species
-measured on two bill dimensions, fits a within-species
-and a pooled relationship, and draws the result. The
-point of the exercise is not the statistics, which are a
-textbook instance of Simpson's paradox, but the
-mechanism: this figure is produced when the book is
-built, from the code the reader sees, and it cannot
-therefore disagree with the sentences around it.
+We begin with a figure. The following chunk generates a
+small synthetic dataset in the spirit of the Palmer
+penguins, three species measured on two bill dimensions.
+It fits a within-species and a pooled relationship, and
+draws the result. The point of the exercise is not the
+statistics, which are a textbook instance of Simpson's
+paradox, but the mechanism. That is, this figure is
+produced when the book is built, from the code the
+reader sees, and it cannot therefore disagree with the
+sentences around it.
 
 ```{r}
 #| label: fig-simpson
@@ -492,18 +499,19 @@ ggplot(penguin_like,
 Within each of the three synthetic species, bill depth
 rises with bill length: the three solid lines slope
 upward. Pooled across the species, the relationship
-reverses sign, and the dashed line comes out nearly
-flat with a slight downward tilt rather than a steep
-descent, because across species longer bills are
-associated on average with shallower ones. The reversal
-here is real but modest: it is the sign of the pooled
-slope that flips, not its magnitude that grows. This is
-Simpson's paradox, and it is a useful thing for a figure
-to show. What matters more for this chapter is that the
-preceding paragraph is safe to write. If a later edit changed the synthetic
-means so that the pooled line no longer reversed, the
-figure would change on the next render and the paragraph
-would become visibly false, prompting its correction. In
+reverses sign. The dashed line comes out nearly flat
+with a slight downward tilt rather than a steep descent,
+because across species longer bills are associated on
+average with shallower ones. The reversal here is real
+but modest: it is the sign of the pooled slope that
+flips, not its magnitude that grows. This is Simpson's
+paradox, and it is a useful thing for a figure to show.
+What matters more for this chapter is that the preceding
+paragraph is safe to write. If a later edit changed the
+synthetic means so that the pooled line no longer
+reversed, the figure would change on the next render.
+The paragraph would then become visibly false, prompting
+its correction. In
 a document that pasted the figure in as a static image,
 the paragraph could go on asserting a reversal the data
 no longer showed, indefinitely. The seal is precisely
@@ -543,7 +551,7 @@ typed. In the laser-treated arm of the retinopathy
 trial there are `r n_eyes` eyes, of which `r n_events`
 progressed to visual loss, a rate of `r pct` percent.
 
-Read the source of that sentence and there are no
+If we read the source of that sentence, we find no
 numerals in it. Each is an inline expression evaluated
 at build time, so if the trial data were corrected, or
 the arm redefined, the sentence would change with it.
@@ -565,15 +573,15 @@ rather than results.
 ::: {.callout-tip icon=false}
 ## Verification
 
-To see the seal hold on an inline number: change one line
+To see the seal hold on an inline number, change one line
 upstream of `n_eyes`, `n_events`, or `pct` in the
 `seal-inline` chunk above, say by subsetting a different
-treatment arm, and rerender; the sentence that reports them
+treatment arm, and rerender. The sentence that reports them
 updates to match, with no edit to the prose itself. To make
 it fail on purpose, replace one of the inline expressions
 with the literal number it currently evaluates to, change
-the upstream data, and rerender; the hardcoded sentence will
-now silently disagree with the chunk that computed it,
+the upstream data, and rerender. The hardcoded sentence
+will now silently disagree with the chunk that computed it,
 which is the drift this chapter exists to prevent.
 :::
 
@@ -588,10 +596,10 @@ of 400 eyes as an inline expression computed from the data?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-Because the enrollment target is a constant of the study
-design, not a result of the analysis: it was fixed by the
-protocol before any data were collected, and no quantity in
-the dataset determines it. Writing it as an inline
+The enrollment target is a constant of the study design,
+not a result of the analysis. It was fixed by the protocol
+before any data were collected, and no quantity in the
+dataset determines it. Writing it as an inline
 expression would make a design input masquerade as a
 computed result, and would break, or silently misreport, if
 the observed sample size happened to differ from the target.
@@ -617,7 +625,7 @@ turn.
 The first is **installing packages at render time**. A
 chunk that calls `install.packages('somepkg')` or
 `pak::pak('somepkg')` during the render reaches out to a
-package repository as it builds, which makes the render
+package repository as it builds. This makes the render
 depend on network access, on the repository's state on
 the day of the render, and on whatever version is
 current then. The remedy is that provisioning belongs in
@@ -636,7 +644,7 @@ render time, with all the fragility just described; and
 it defeats static dependency discovery. Tools such as
 `renv` find a project's dependencies by scanning the
 source for `library()`, `require()`, and `pkg::fun()`
-calls; they do not parse the argument list of
+calls. They do not parse the argument list of
 `p_load(a, b, c)`, so packages loaded that way go
 unrecorded in the lockfile and silently absent from the
 next machine. The remedy is to replace
@@ -657,8 +665,9 @@ referenced by a relative path, so that the document
 carries its inputs with it.
 
 The fourth is **hidden state**. A document renders its
-chunks in order, in a single R session, and it is easy to
-write a chunk that depends on an object created in an
+chunks in order, in a single R session. In that setting
+it is easy to write a chunk that depends on an object
+created in an
 earlier chunk, or on an option set earlier, or on a
 package attached earlier, without saying so. The document
 renders correctly from top to bottom and fails when a
@@ -715,12 +724,12 @@ check that would distinguish them.
 
 The two candidates are an absolute or author-specific
 path, and an uncommitted file. They are distinguished by
-inspecting version control: if `data/interim.csv` is
+inspecting version control. If `data/interim.csv` is
 tracked and committed, the failure is more likely a path
-problem or a working-directory assumption; if `git
+problem or a working-directory assumption. If `git
 status` or `git ls-files` shows the file is untracked, it
-is the uncommitted-file landmine, and the file must be
-committed (or the chunk that generates it must be
+is the uncommitted-file landmine. In that case the file
+must be committed (or the chunk that generates it must be
 included in the render) before the render can seal.
 Rendering from a fresh clone of the repository reproduces
 the CI failure locally and settles the matter.
@@ -750,40 +759,42 @@ HTML is the sensible target.
 PDF is heavier, because a PDF is typeset, and typesetting
 in this ecosystem means LaTeX. Rendering to PDF runs the
 same `knitr` and `pandoc` steps and then hands the result
-to a LaTeX distribution, which lays out the pages,
-resolves the cross-references, sets the mathematics, and
-embeds the fonts. A LaTeX distribution is large, on the
-order of a gigabyte for a full installation, and its
-absence is the single most common cause of a PDF render
-failing on a machine where the HTML render succeeds. This
-is precisely the environmental problem the earlier
-chapters solved, and it is why the framework's publishing
-profile exists. The publishing profile builds on the
-`rocker/verse` base image, which carries a base LaTeX
-distribution sufficient for a straightforward render:
-plain prose, ordinary tables, standard mathematics. It
-does not carry a full LaTeX distribution, so a document
-that reaches for a package the base omits, dense tables,
-`moderncv`-style layouts, and similar, still needs that
+to a LaTeX distribution. The distribution lays out the
+pages, resolves the cross-references, sets the
+mathematics, and embeds the fonts. A LaTeX distribution
+is large, on the order of a gigabyte for a full
+installation. Its absence is the single most common
+cause of a PDF render failing on a machine where the
+HTML render succeeds. This is precisely the
+environmental problem the earlier chapters solved, and
+it is why the framework's publishing profile exists.
+
+The publishing profile builds on the `rocker/verse` base
+image, which carries a base LaTeX distribution sufficient
+for a straightforward render: plain prose, ordinary
+tables, standard mathematics. Unfortunately, it does not
+carry a full LaTeX distribution. A document that reaches
+for a package the base omits (dense tables,
+`moderncv`-style layouts, and similar) still needs that
 package installed with `tlmgr` before it will render.
 zzcollab's own publishing profile pre-installs roughly two
 dozen such packages at image build time precisely because
 the base image does not ship them. A project that renders
-to PDF chooses the publishing profile at initialization;
-a project that renders only to HTML does not need it, and
+to PDF chooses the publishing profile at initialization.
+A project that renders only to HTML does not need it, and
 pays neither the build time nor the image size that the
 LaTeX toolchain costs. The playbook that migrates a
-compendium to the publishing profile turns on exactly this
-question: it scans every report's YAML for a
+compendium to the publishing profile turns on exactly
+this question. It scans every report's YAML for a
 `pdf_document` or `latex_engine` output and, finding one,
 concludes that the verse base is required.
 
 As elsewhere in the book, the literate document declares
 what it wants to be, and the environment must be
-provisioned to supply it. HTML asks little; PDF asks for LaTeX; and the honest
-way to supply LaTeX is to pin it in the image, not to
-install it, fragilely and at render time, on whatever
-machine happens to build the document.
+provisioned to supply it. HTML asks little; PDF asks for
+LaTeX. The honest way to supply LaTeX is to pin it in the
+image, not to install it, fragilely and at render time,
+on whatever machine happens to build the document.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: choosing the profile
@@ -801,10 +812,10 @@ need the publishing profile's LaTeX distribution and should
 not pay its build time or image size before it is needed.
 What matters is recognizing, once the PDF output is added,
 that the project must move to the publishing profile (built
-on `rocker/verse`) and confirm any package-specific LaTeX
-dependencies are present, rather than installing `tlmgr`
-packages ad hoc on whichever machine first attempts the PDF
-render. Waiting to decide is fine; waiting to act once the
+on `rocker/verse`). It must also confirm that any
+package-specific LaTeX dependencies are present, rather
+than installing `tlmgr` packages ad hoc on whichever
+machine first attempts the PDF render. Waiting to decide is fine; waiting to act once the
 YAML declares `pdf_document2` reintroduces exactly the
 render-time, machine-specific fragility this chapter warns
 against.
@@ -824,14 +835,15 @@ A rendered PDF, and to a lesser degree a rendered HTML
 file, embeds metadata that has nothing to do with the
 analysis and everything to do with the moment of the
 render. A PDF carries a creation timestamp and a
-modification timestamp in its metadata; it carries an
-internal document identifier, often randomly generated;
-and when it subsets the fonts it uses, it assigns those
-subsets internal names that can vary between builds. Two
-renders of byte-for-byte identical source, in the same
-environment, minutes apart, therefore produce two PDF
-files that differ in their bytes, even though every
-number and figure in them is identical.
+modification timestamp in its metadata. It also carries
+an internal document identifier, often randomly
+generated. Moreover, when it subsets the fonts it uses,
+it assigns those subsets internal names that can vary
+between builds. Two renders of byte-for-byte identical
+source, in the same environment, minutes apart, therefore
+produce two PDF files that differ in their bytes. They
+differ even though every number and figure in them is
+identical.
 
 Part of this non-determinism can be normalized away. Many
 document tools, including LaTeX and `pandoc`, honor a
@@ -849,20 +861,21 @@ misplaced effort, because it fights a symptom.
 The resolution the framework adopts is to hash the right
 thing. Verification, developed in @sec-verification, does
 not hash the rendered document. It hashes the
-computational outputs, the derived datasets, the model
-objects, the figure data, the numbers themselves, which
+computational outputs: the derived datasets, the model
+objects, the figure data, the numbers themselves. These
 are deterministic under a fixed environment and a fixed
 seed in a way the typeset PDF is not. The rendered report
 is a human-facing artifact, a faithful presentation of
-those outputs, and it is checked by regenerating it and
+those outputs. It is checked by regenerating it and
 confirming that the outputs it presents match the
 recorded baseline, not by demanding that its bytes be
 identical. For provenance the framework goes further in
-the opposite direction: its render hook deliberately
+the opposite direction. Its render hook deliberately
 stamps each rendered PDF with the render time and the git
-version of the source, in a footer, precisely so that a
-reader can tell two renders apart and trace each to its
-source commit. The rendered document is thus a dated,
+version of the source, in a footer. It does so precisely
+so that a reader can tell two renders apart and trace
+each to its source commit. The rendered document is thus
+a dated,
 signed presentation of a result; the object of record is
 the computation.
 
@@ -871,9 +884,9 @@ the computation.
 
 This chapter's own executed chunks, `fig-simpson`, the
 inline-sealed retinopathy sentence, and the cohort passage
-below, are sealed, every number in them regenerates from
-the code beside it, but that seal alone leaves them at no
-higher than L0, since nothing in this chapter pins the
+below, are sealed. Every number in them regenerates from
+the code beside it. However, that seal alone leaves them at
+no higher than L0, since nothing in this chapter pins the
 packages or the environment that produced them.
 :::
 
@@ -892,9 +905,9 @@ nothing to do with the analysis, a creation timestamp, a
 document identifier, font-subset names, not because the
 figures or numbers changed. The right question is whether
 the computational outputs, the numbers and figures the
-document presents, regenerate within a stated tolerance, and
-that is answered by hashing the outputs themselves, not the
-typeset file. A rendered document's bytes are not the object
+document presents, regenerate within a stated tolerance.
+That question is answered by hashing the outputs
+themselves, not the typeset file. A rendered document's bytes are not the object
 of record; the computation is.
 :::
 :::
@@ -908,22 +921,21 @@ for the manuscript, multiplied across many posts for the
 blog, and lighter for an internal data-analysis summary.
 The two cases most worth stating here are the ones a reader
 fixed on the manuscript will misjudge. The **R-package**
-archetype has no sealed report at all: its 'document' is
+archetype has no sealed report at all. Its 'document' is
 its help pages and vignettes, generated from roxygen
 comments and demonstrating the package rather than
-reporting an analysis, and its correctness rests on the
-tests of @sec-testing, not on a rendered result. The
+reporting an analysis. Its correctness rests on the tests
+of @sec-testing, not on a rendered result. The
 **simulation-study** archetype inverts the usual weight for
-a different reason: the heavy computation, hours or days of
-Monte Carlo replicates, cannot live in the sealed document,
-so it runs once in `analysis/scripts/`, seeded with the care
-@sec-levels stressed, and saves its results to
-`derived_data/`; the literate report then becomes a thin
+a different reason. The heavy computation, hours or days of
+Monte Carlo replicates, cannot live in the sealed document.
+It therefore runs once in `analysis/scripts/`, seeded with
+the care @sec-levels stressed, and saves its results to
+`derived_data/`. The literate report then becomes a thin
 presentation layer that loads and presents those results.
-In every case
-the underlying machinery, `knitr` or Quarto, chunks,
-committed inputs, a pinned environment, is the same; only
-how heavily an archetype leans on it changes.
+In every case the underlying machinery (`knitr` or Quarto,
+chunks, committed inputs, a pinned environment) is the
+same; only how heavily an archetype leans on it changes.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the package that renders nothing
@@ -937,7 +949,7 @@ colleague right?
 ## Answer
 
 No. The R-package archetype has no single analysis to
-report, so it has no `report.Rmd` to seal; its literate
+report, so it has no `report.Rmd` to seal. Its literate
 surface is the vignette and the roxygen-generated help page,
 and its correctness is established by `R CMD check` and the
 test suite rather than by a rendered result. Demanding a
@@ -951,18 +963,18 @@ the machinery is largely absent.
 
 One matter of practice remains, and experienced
 compendium authors are most insistent about it. The
-traditional order of work runs:
-write the analysis scripts, generate the results, then
+traditional order of work runs: write the analysis
+scripts, generate the results, then
 start the manuscript, and finally copy the results into
 the prose. This order builds the drift we opened the
 chapter with directly into the workflow, because the
 copying is manual and the results and the prose are
 separate artifacts from the start.
 
-The write-as-you-go doctrine inverts the order. One
-creates the `report.Rmd` on the first day of the project,
-before there is any analysis to report. Into it one
-writes the research question, the background, and the
+The write-as-you-go doctrine inverts the order. We
+create the `report.Rmd` on the first day of the project,
+before there is any analysis to report. Into it we
+write the research question, the background, and the
 planned methods as prose. The analysis code is then added
 inline, in chunks, as the work proceeds, so that from the
 first day the numbers in the document are computed rather
@@ -976,14 +988,14 @@ its result for the document to load. This is the
 build-time-versus-load-time boundary named among the
 analyst's contributions above. The compendium's directory
 structure, in this view, emerges from the writing rather
-than preceding it: the manuscript drives the analysis,
-and the `R/`, `tests/`, and `scripts/` directories fill
-in as the code in the document matures.
+than preceding it. That is, the manuscript drives the
+analysis, and the `R/`, `tests/`, and `scripts/`
+directories fill in as the code in the document matures.
 
-The doctrine's reproducibility payoff is that the document is
-sealed from the first day
-and stays sealed, because there is never a phase in which
-results live in the prose by having been copied there.
+The doctrine's reproducibility payoff is that the
+document is sealed from the first day and stays sealed.
+There is never a phase in which results live in the
+prose by having been copied there.
 The number in the paragraph was computed by the chunk
 above it on the very first render, and on every render
 since. The drift that opened this chapter has no moment
@@ -1003,11 +1015,11 @@ document were still computed rather than typed?
 
 Nothing would be lost about any individual number's seal, if
 the author were careful. What would be lost is the absence
-of a phase in which copying could occur: a month of
+of a phase in which copying could occur. A month of
 scripts-first work creates thirty days during which a
 results-in-progress tempts an author to paste a number into
-a slide or an email, and the habit of pasting is exactly
-what later infects the manuscript once it starts. Starting
+a slide or an email. The habit of pasting is exactly what
+later infects the manuscript once it starts. Starting
 the document on day one removes the opportunity for that
 habit to form, rather than merely disciplining the author
 once it already has.
@@ -1016,7 +1028,7 @@ once it already has.
 
 ## Worked example
 
-Let us assemble the pieces into a concrete `report.Rmd`,
+We now assemble the pieces into a concrete `report.Rmd`,
 as a health scientist beginning a cohort analysis would.
 On the first day, before any data are analyzed, the author
 creates the report and writes its header. A representative
@@ -1056,9 +1068,9 @@ by the render tooling (`make docker-render`, by way of
 
 Below the header the author writes a setup chunk that fixes
 the chunk defaults and loads the packages the document
-uses, naming each with an explicit `library()` call so that
-`renv` can discover them and no package is installed at
-render time:
+uses. Each package is named with an explicit `library()`
+call so that `renv` can discover them and no package is
+installed at render time:
 
 ```r
 knitr::opts_chunk$set(
@@ -1072,12 +1084,12 @@ library(ggplot2)
 ```
 
 From here the write-as-you-go doctrine takes over. The
-author writes the introduction as prose, adds a
-data-summary chunk, then the modeling chunk that produces
-the analysis, then the figure, exactly the sealed
-`fig-simpson` chunk demonstrated earlier in this chapter,
-which computes its result at build time and carries its
-synthetic inputs with it. Each number the introduction and
+author writes the introduction as prose and adds a
+data-summary chunk. Then come the modeling chunk that
+produces the analysis and the figure. The figure chunk is
+exactly the sealed `fig-simpson` chunk demonstrated
+earlier in this chapter, which computes its result at
+build time and carries its synthetic inputs with it. Each number the introduction and
 discussion cite is inserted by an inline expression that
 reads the computed object, never typed by hand. Rendering
 the document inside the container, with `make docker-render`
@@ -1086,8 +1098,8 @@ regenerates every figure, and produces the PDF and HTML,
 each carrying the render's provenance footer.
 
 The result is a document that is sealed by construction. To
-convince oneself that the seal holds, and does not merely
-appear to hold on the author's machine, one renders it from
+convince ourselves that the seal holds, and does not merely
+appear to hold on the author's machine, we render it from
 a fresh clone of the repository inside the pinned
 environment (habit 6). If it renders there, with no file
 missing and no package installed on the fly, the seal is
@@ -1136,10 +1148,10 @@ pct_missing_outcome <- round(
 The cleaned cohort holds `r n_cohort` records, of which
 `r pct_missing_outcome` percent carry no recorded outcome.
 Both numbers are inline expressions reading `cohort`, not
-literals typed after a console check, so a later edit to
-`clean_cohort()`, or to the raw extract, changes this
-paragraph on the next render instead of leaving it to drift
-the way the orientation's opening story describes. Nothing
+literals typed after a console check. A later edit to
+`clean_cohort()`, or to the raw extract, therefore changes
+this paragraph on the next render instead of leaving it to
+drift the way the orientation's opening story describes. Nothing
 about this passage pins a package or an environment; it is
 the seal, and only the seal, demonstrated on the book's own
 data.
@@ -1158,9 +1170,10 @@ the number is correct?
 
 No, for the same reason @sec-testing presses at length. An
 identical rerun shows that the document's prose agrees with
-its own code and that the code is at least stable across
-the two machines on the one layer this chapter touches; it
-does not show that `clean_cohort()`'s missingness
+its own code. It also shows that the code is at least
+stable across the two machines on the one layer this
+chapter touches. It does not show that `clean_cohort()`'s
+missingness
 calculation is the one the analyst intended. That
 correctness question belongs to a unit or data-validation
 test with an independent oracle, not to the seal, which
@@ -1183,12 +1196,13 @@ analyst must supply.
 
 A literate document mixes code with data and results, so it
 is easy to paste too much (habit 3). Never paste or upload
-protected health information, identifiable or
-agreement-restricted data, or outputs derived from them (a
-rendered table of small cells included), into a model unless
-the endpoint is approved by the reader's institution for
-that data; describe the structure instead, with column
-names, types, and a synthetic example. A coding agent asked
+protected health information into a model unless the
+endpoint is approved by the reader's institution for that
+data. The same rule holds for identifiable or
+agreement-restricted data, and for outputs derived from
+them (a rendered table of small cells included). Describe
+the structure instead, with column names, types, and a
+synthetic example. A coding agent asked
 to render the document reads the data it renders, so it
 belongs only in projects whose data it is allowed to see.
 :::
@@ -1203,7 +1217,7 @@ formats), `hba1c` and `bmi` (numeric), and `incident_dm`
 *Watch for.* A model will often reach for convenience over
 seal. It may emit `pacman::p_load(...)`, or an
 `install.packages()` call, or a `library(pacman)` line,
-because these are common in the training data; and it may
+because these are common in the training data. It may also
 read the data from an absolute path it invents, such as
 `/Users/you/data/cohort.csv`, or from a path outside the
 project.
@@ -1221,7 +1235,7 @@ HTML render works. Fix it.'
 
 *Watch for.* A model may propose to install a LaTeX package
 at render time, or to add a `tinytex::tlmgr_install()` call
-inside a chunk, which converts an environment problem into
+inside a chunk. Either converts an environment problem into
 a render-time landmine and makes the document depend on
 network access and repository state.
 
@@ -1244,10 +1258,11 @@ chapter exists to prevent.
 *Verification.* Ask, and answer, the level question
 explicitly. A render that succeeds demonstrates the seal.
 Whether the analysis is pinned (L1), environment-fixed
-(L2), or verified (L3) is a separate question, settled by
-the lockfile, the container, and a baseline test run after
-a clean rebuild (@sec-levels), not by the fact of a render. State
-the level actually reached and no more.
+(L2), or verified (L3) is a separate question. It is
+settled by the lockfile, the container, and a baseline
+test run after a clean rebuild (@sec-levels), not by the
+fact of a render. State the level actually reached and no
+more.
 
 The same disclosure obligation applies to a literate
 document. If a language model drafted or edited a chunk, a
@@ -1255,29 +1270,31 @@ caption, or a paragraph of prose here, that use belongs in
 the manuscript's methods section or acknowledgments, not
 left unstated. Current editorial guidance, including from
 the International Committee of Medical Journal Editors,
-treats AI assistance as disclosable, not authorable: a
-model cannot be listed as an author, because it cannot take
-responsibility for the work, but silence about its use is
-not an option either. Record which model, or model family
-and version, helped produce the document, and roughly when,
-exactly as the compendium already records an R and package
-version in its lockfile. A render's seal attests that the
-code ran and the prose agrees with it; it says nothing
-about whether a sentence of prose, or a chunk of code, was
-drafted by a person or a model, so that provenance has to
-be recorded separately, in prose the seal does not cover.
-The record is needed because a model is not a versioned,
-reproducible dependency the way a package is. The same
-model name can behave differently across releases, a
-provider can retire or silently update a model identifier
-the document depended on, and even one unchanged version is
-not guaranteed to produce identical text or code from one
-call to the next. 'Drafted with language-model assistance,
-a general-purpose model, approximately mid-2026' is a
-usable record for a future reader auditing the document;
-'AI-assisted' alone is not, any more than 'used some R
-packages' would be an acceptable substitute for a lockfile
-entry.
+treats AI assistance as disclosable, not authorable. A
+model cannot be listed as an author, because it cannot
+take responsibility for the work, but silence about its
+use is not an option either. Record which model, or model
+family and version, helped produce the document, and
+roughly when, exactly as the compendium already records an
+R and package version in its lockfile. A render's seal
+attests that the code ran and the prose agrees with it. It
+says nothing about whether a sentence of prose, or a chunk
+of code, was drafted by a person or a model. That
+provenance therefore has to be recorded separately, in
+prose the seal does not cover.
+
+But why is such a record needed at all? The reason is that
+a model is not a versioned, reproducible dependency the way
+a package is. The same model name can behave differently
+across releases. A provider can retire or silently update
+a model identifier the document depended on. Even one
+unchanged version is not guaranteed to produce identical
+text or code from one call to the next. 'Drafted with
+language-model assistance, a general-purpose model,
+approximately mid-2026' is a usable record for a future
+reader auditing the document. 'AI-assisted' alone is not,
+any more than 'used some R packages' would be an
+acceptable substitute for a lockfile entry.
 
 ## Exercises
 
@@ -1299,8 +1316,8 @@ entry.
    renders and what that implies for the seal.
 
 3. Deliberately plant each of the five landmines from this
-   chapter, one at a time, in a copy of a working document:
-   an `install.packages()` call, a `pacman::p_load()` call,
+   chapter, one at a time, in a copy of a working document.
+   The five are an `install.packages()` call, a `pacman::p_load()` call,
    an absolute host path, a chunk that depends on hidden
    state from an earlier chunk, and a read of an uncommitted
    file. For each, predict whether the document will still
@@ -1401,22 +1418,21 @@ With the call removed, the generator is initialized from
 varying session state, so each render draws a different
 sample and the figure differs between renders.
 
-**What the seal does and does not cover.** The seal binds prose to
-code: it guarantees that
-the figure a reader sees was produced by the code shown
-beside it. That guarantee still holds without the seed.
-What fails is something adjacent and easily confused with
-it, which is that the document is no longer a
-deterministic function of its source. Two people rendering
-the same committed document get different figures, so any
-sentence in the prose describing the figure, 'the
-association reverses within each group', 'three points lie
-outside the interval', can become false without the code
-changing.
+**What the seal does and does not cover.** The seal binds
+prose to code: it guarantees that the figure a reader sees
+was produced by the code shown beside it. That guarantee
+still holds without the seed. What fails is something
+adjacent and easily confused with it, which is that the
+document is no longer a deterministic function of its
+source. Two people rendering the same committed document
+get different figures. Any sentence in the prose
+describing the figure ('the association reverses within
+each group', 'three points lie outside the interval') can
+therefore become false without the code changing.
 
-A seal makes the document agree with its code, and a seed makes
-the code agree with
-itself across runs. An unseeded literate document is
+A seal makes the document agree with its code, and a seed
+makes the code agree with itself across runs. An unseeded
+literate document is
 sealed and not reproducible, which is a good illustration
 of the chapter's warning that the seal and the pins are
 different virtues.
@@ -1456,12 +1472,12 @@ diagnose.
 
 **A read of an uncommitted file.** Renders on your machine
 and fails on the fresh clone, the same symptom as the
-absolute path, which is exactly why the chapter pairs them
+absolute path. This is exactly why the chapter pairs them
 and asks for a distinguishing check: inspect version
 control to see whether the file is tracked.
 
-Two of the five fail loudly, and the three that render anyway are
-the dangerous ones. Rendering from a fresh clone catches
+Two of the five fail loudly, and the three that render
+anyway are the dangerous ones. Rendering from a fresh clone catches
 the loud two reliably and the quiet three only sometimes,
 which is the argument for continuous integration in
 @sec-verification.
@@ -1481,7 +1497,7 @@ so the base image becomes `rocker/verse`, which carries the
 LaTeX toolchain. Pin that base by digest. Confirm that the
 document's specific LaTeX dependencies are present, since
 `verse` carries a substantial but not unlimited TeX
-installation, and add any missing packages explicitly to
+installation. Add any missing packages explicitly to
 the Dockerfile rather than letting a run-time installer
 fetch them. Then render inside the container and confirm
 the PDF is produced.
@@ -1533,10 +1549,9 @@ outputs.
 Byte-identical PDFs are attainable, by setting
 `SOURCE_DATE_EPOCH` and freezing font subsetting, but this
 is a fragile route to a result the output hashes give
-directly. The chapter's position is that one should hash
-what is deterministic
-rather than work to make the non-deterministic thing
-deterministic.
+directly. The chapter's position is that we should hash
+what is deterministic rather than work to make the
+non-deterministic thing deterministic.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1576,10 +1591,10 @@ document reporting an unseeded simulation is bound to its
 code and still not reproducible, as exercise 2 shows.
 
 The pattern across the five is that the render carries the
-most weight exactly where the document is the deliverable,
-and that in the two archetypes where it carries least, the
-package and the simulation, a different mechanism, tests
-and seeds respectively, does the binding instead.
+most weight exactly where the document is the deliverable.
+In the two archetypes where it carries least, the package
+and the simulation, a different mechanism (tests and seeds
+respectively) does the binding instead.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1615,15 +1630,15 @@ syntactic forms `library(pkg)`, `require(pkg)`, and
 `pkg::fun()`, the same forms @sec-dependencies's
 dependency-triad check looks for. A call to
 `pacman::p_load(dplyr, tibble, ggplot2)` recognizes `pacman`
-itself, because that is a namespaced call, but the three
-packages named as bare arguments inside it are not calls of
-any of those three recognized forms, so the scan does not
-see them. The chunk would still run, and would still render,
-on a machine where those packages happened to be installed,
-which is exactly this chapter's warning about
-`pacman::p_load()`: it reaches outside the committed
-lockfile at render time, and @sec-dependencies's own gate,
-built on the same kind of syntactic scan as
+itself, because that is a namespaced call. However, the
+three packages named as bare arguments inside it are not
+calls of any of those three recognized forms, so the scan
+does not see them. The chunk would still run, and would
+still render, on a machine where those packages happened
+to be installed. That is exactly this chapter's warning
+about `pacman::p_load()`: it reaches outside the committed
+lockfile at render time. Moreover, @sec-dependencies's own
+gate, built on the same kind of syntactic scan as
 `renv::dependencies()`, cannot catch what it cannot see
 either. The two chapters' landmines are the same landmine,
 met twice: once as a render-time install, once as an
@@ -1652,17 +1667,17 @@ The foundational statement of literate programming is
 inversion of the usual priority of code over explanation,
 even though its concrete apparatus is now of historical
 interest. The reproducibility argument this chapter takes
-as its keystone is @buckheit1995, whose paraphrase of
+as its keystone is @buckheit1995. Their paraphrase of
 Claerbout, that the article is advertising and the code and
 instructions are the scholarship, is the single most cited
-sentence in this literature and the one worth committing to
-memory. The earlier formulation in @claerbout1992 and the
+sentence in this literature. It is also the one worth
+committing to memory. The earlier formulation in @claerbout1992 and the
 signal-processing lineage surveyed by @vandewalle2009 give
 the argument its original setting.
 
 On the R realizations, @xie2015 is the definitive treatment
 of `knitr` by its author, and @xie2018 documents R Markdown
-and its `pandoc`-based toolchain; @allaire2024 introduces
+and its `pandoc`-based toolchain. @allaire2024 introduces
 Quarto and is the natural starting point for a reader
 beginning today. The compendium framing that binds the
 literate document to the rest of the project is
@@ -1673,8 +1688,8 @@ habits, @sandve2013 and @wilson2017 both stress recording
 exactly how each figure was produced, which is the sealed
 render stated as a rule of conduct. The determinism
 questions touched on here connect to the verification
-machinery of @sec-verification and, in the wider setting of
-reproducible builds, to a substantial body of systems
-literature that a reader pursuing byte-level reproduction of
-documents will want to consult beyond the scope of this
-book.
+machinery of @sec-verification. In the wider setting of
+reproducible builds, they also connect to a substantial
+body of systems literature, beyond the scope of this book,
+that a reader pursuing byte-level reproduction of documents
+will want to consult.
