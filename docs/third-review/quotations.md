@@ -1,0 +1,34 @@
+| file | line | kind | citation | text |
+|---|---|---|---|---|
+| 03-research-compendium.qmd | 0 | inline | @nhsrap2024 | includes a README.md file (or equivalent) that clearly details steps a user must follow to reproduce the code |
+| 05-containers.qmd | 0 | inline | @sec-dependencies | Pinning Packages with renv |
+| 06-backends-runtimes.qmd | 1264 | blockquote |  | Nix pins the whole stack from the system libraries upward, and does it from a recipe rather than a built artifact, so it reaches L2 as cleanly as a container does and arguably more transparently. What it does not reach i |
+| 08-testing-quality.qmd | 0 | inline | @cfr21part11 | to ensure accuracy, reliability, consistent intended performance, and the ability to discriminate invalid or altered records |
+| 09-continuous-integration.qmd | 0 | inline | @githubsecrets | should never be stored as plaintext in workflow files |
+| 10-archiving-sharing.qmd | 782 | blockquote |  | The analysis code, package lockfile, container recipe, and archived container image are openly available at [DOI], with a synthetic dataset of the same structure on which the pipeline runs from end to end. The patient-le |
+| 10-archiving-sharing.qmd | 1490 | blockquote |  | The Dockerfile is a recipe and the image is a cake. The recipe says how the environment was made, in text, in version control, reviewable line by line, and it will still say so in ten years. The image is an opaque binary |
+| 10-archiving-sharing.qmd | 1570 | blockquote |  | The complete research compendium, comprising the analysis code, the simulated data and the script that generates them, the package lockfile, and the container recipe, is archived at https://doi.org/10.5281/zenodo.XXXXXXX |
+| 10-archiving-sharing.qmd | 1588 | blockquote |  | The analysis code, package lockfile, container recipe, and archived container image are archived at https://doi.org/10.5281/zenodo.XXXXXXX, with a synthetic dataset of the same structure on which the pipeline runs from e |
+| 10-archiving-sharing.qmd | 1752 | blockquote |  | The analysis code for this compendium is available at [repository URL], at the commit tagged for this submission (not the default branch, which continues to change). The code is a `CITATION.cff`-bearing R research compen |
+| 10-archiving-sharing.qmd | 1764 | blockquote |  | The patient-level data analyzed were obtained from [registry] under a data-use agreement that does not permit redistribution. Qualified researchers may apply to [data steward] for access under the same agreement terms. A |
+| 10-archiving-sharing.qmd | 0 | inline | @wilkinson2016 | a clear and accessible data usage license |
+| copyright.qmd | 20 | blockquote |  | rgtlab curriculum team (2026). *Reproducible Research for the Health Sciences: Compendia, Containers, and Computational Verification in R*. Available at <https://reproducibility.rgtlab.org>. |
+| setup-appendix.qmd | 0 | inline | @docker2024multiplatform | can be much slower than native builds,    especially for compute-heavy tasks |
+
+## Epigraphs
+
+| file | text | attribution |
+|---|---|---|
+| 00-intro.qmd | *An article about computational science in a scientific publication is not the scholarship itself, it is merely advertising of the scholarship. The actual scholarship is the complete software development environment and the complete set of instructions which generated the figures.* [Buckheit and Don |  |
+| 01-reproducibility-crisis.qmd | *More than 70% of researchers have tried and failed to reproduce another scientist's experiments, and more than half have failed to reproduce their own experiments.* [Monya Baker]{.smallcaps}, *1,500 Scientists Lift the Lid on Reproducibility* (2016) |  |
+| 02-levels-of-reproducibility.qmd | *Reproducibility has the potential to serve as a minimum standard for judging scientific claims when full independent replication of a study is not possible.* [Roger D. Peng]{.smallcaps}, *Reproducible Research in Computational Science* (2011) |  |
+| 03-research-compendium.qmd | *The purpose of this article is to show how the R package can be a suitable template for organizing files into a research compendium to enhance the reproducibility of research.* [Marwick, Boettiger, and Mullen]{.smallcaps}, *Packaging Data Analytical Work Reproducibly Using R (and Friends)* (2018) |  |
+| 04-dependencies.qmd | *In order to exactly reproduce a given result, it may be necessary to use programs in the exact versions used originally.* [Sandve, Nekrutenko, Taylor, and Hovig]{.smallcaps}, *Ten Simple Rules for Reproducible Computational Research*, Rule 3 (2013) |  |
+| 05-containers.qmd | *Though computational reproducibility seems more straight forward than replicating physical experiments, the complex and rapidly changing nature of computer environments makes being able to reproduce and extend such work a serious challenge.* [Carl Boettiger]{.smallcaps}, *An Introduction to Docker  |  |
+| 06-backends-runtimes.qmd | *Using Singularity containers, developers can work in reproducible environments of their choosing and design, and these complete environments can easily be copied and executed on other platforms.* [Kurtzer, Sochat, and Bauer]{.smallcaps}, *Singularity: Scientific Containers for Mobility of Compute*  |  |
+| 07-literate-programming.qmd | *Let us change our traditional attitude to the construction of programs: Instead of imagining that our main task is to instruct a computer what to do, let us concentrate rather on explaining to human beings what we want a computer to do.* [Donald E. Knuth]{.smallcaps}, *Literate Programming* (1984) |  |
+| 08-testing-quality.qmd | *Program testing can be used to show the presence of bugs, but never to show their absence!* [Edsger W. Dijkstra]{.smallcaps}, *Notes on Structured Programming* (1972) |  |
+| 09-continuous-integration.qmd | *Provide Public Access to Scripts, Runs, and Results.* [Sandve, Nekrutenko, Taylor, and Hovig]{.smallcaps}, *Ten Simple Rules for Reproducible Computational Research*, Rule 10 (2013) |  |
+| 10-archiving-sharing.qmd | *The intent is that these may act as a guideline for those wishing to enhance the reusability of their data holdings.* [Wilkinson and colleagues]{.smallcaps}, *The FAIR Guiding Principles for Scientific Data Management and Stewardship* (2016) |  |
+| pipelines.qmd | *Avoid Manual Data Manipulation Steps.* [Sandve, Nekrutenko, Taylor, and Hovig]{.smallcaps}, *Ten Simple Rules for Reproducible Computational Research*, Rule 2 (2013) |  |
+| version-control.qmd | *Maintaining a high degree of transparency in scientific reporting is essential not just for gaining trust and credibility within the scientific community but also for facilitating the development of new ideas.* [Karthik Ram]{.smallcaps}, *Git Can Facilitate Greater Reproducibility and Increased Tra |  |

@@ -3,6 +3,12 @@
 
 ## 0. Status
 
+**A third review was conducted on 2026-11-07 and is recorded in
+`THIRD-REVIEW-PLAN.md`,** with findings from 29, phases from 19, and
+decisions from D13. It found several items this document records as
+complete still present in the text (its Finding 33), so the
+implementation records below should be read together with it.
+
 **A second review was conducted on 2026-10-10 and is reported in
 Section 10.** Unlike the scan below, it read every chapter, checked
 technical claims by running them, and surveyed coverage against 30
