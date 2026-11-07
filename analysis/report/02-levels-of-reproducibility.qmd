@@ -173,13 +173,12 @@ machinery of later chapters exists to support them.
 
 3. **Naming what remains exposed.** No rung of the
    ladder pins the whole stack. The analyst who reaches
-   L2 must still ask whether the layers left unpinned,
-   the numerical libraries, the random-number
-   discipline, the integrity of an external data source,
+   L2 must still ask whether the layers left unpinned
+   (the numerical libraries, the random-number
+   discipline, the integrity of an external data source)
    matter for this particular analysis. Those that do
-   must be closed by hand. Recognizing a live exposure
-   from an inert one is a matter of subject-matter
-   judgment.
+   must be closed by hand. Telling a live exposure from
+   an inert one is a matter of subject-matter judgment.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: whose judgment is it?
@@ -192,14 +191,14 @@ and which remain the analyst's alone?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-The dashboard can detect the capture artifacts, a
-lockfile and a container recipe, and so can compute the
+The dashboard can detect the capture artifacts (a
+lockfile and a container recipe) and so can compute the
 rung mechanically; that much is automatable. It cannot
 decide whether L2 was the right level to target for this
 analysis given its stakes, and it cannot know which
 unpinned layers, among the numerical libraries, the RNG
 kind, or an external data source, are live exposures for
-this particular question rather than inert ones. Judging
+this particular question. Judging
 the match of effort to stakes, and naming what remains
 exposed, stay with the analyst no matter how good the
 dashboard is.
@@ -302,8 +301,8 @@ second, the data, when it has been deposited alongside.
 Every other layer is left to whatever the next machine
 happens to provide. @fig-determinant-stack maps the stack
 against the rung of the ladder that first secures each
-layer. Three layers, the hardware, the numerical
-libraries, and intrinsic non-determinism, are secured by
+layer. Three layers (the hardware, the numerical
+libraries, and intrinsic non-determinism) are secured by
 no rung of the capture ladder at all.
 
 ```{r}
@@ -556,7 +555,7 @@ than about the re-running of code [@patil2016].
 The current ACM artifact-badge
 vocabulary, in its 2020 revision, aligns its direction of
 use with the National Academies convention rather than
-inverting it [@acm2020], but they draw the boundary
+inverting it [@acm2020], but the two draw the boundary
 differently. Under the National Academies convention,
 'Reproduced' means obtaining a prior result using the
 same code and data; the same team re-running their own
@@ -568,13 +567,13 @@ toward re-execution with the original artifacts and
 'Replicated' toward independence, but the ACM badge
 specifically requires a different team while the National
 Academies definition does not. The genuine word-swap that
-trips students belongs to two other places. One is the pre-2020 ACM badging, which
-attached the two words in the opposite direction along
-the re-execution axis. The other is some biomedical and
-field usages, which a reader may still encounter, where
-'reproduce' names an independent study rather than a
-re-run. A reader who
-carries the sense of the words from one of those older
+trips students belongs to two other places. One is the
+pre-2020 ACM badging, which attached the two words in the
+opposite direction along the re-execution axis. The other
+is a set of biomedical and other field-specific usages,
+which a reader may still encounter, where 'reproduce'
+names an independent study rather than a re-run. A reader
+who carries the sense of the words from one of those older
 documents into a current one will be misled, silently and
 without any error to warn them, in exactly the manner of a
 shifted package default. This book fixes the meaning and
@@ -763,7 +762,7 @@ provenance but not by checksum, and the fonts and the
 graphics device are pinned only for some profiles. The
 whole class of integrative frameworks currently leaves
 these layers exposed, and an honest L2 or L3 claim names
-them rather than papering over them. The reader will
+them. The reader will
 therefore find, at each rung of the ladder in the chapters
 ahead, an explicit account of what is secured and what
 remains exposed, including for the framework this book
@@ -851,9 +850,8 @@ The folder is now at **L3, verified**: the
 reported hazard ratio has been shown to regenerate, not
 merely asserted to. The honest reproducibility statement for
 the paper can now name the rung, the artifacts, and the one
-layer, the cross-architecture numerical
-determinism of the bootstrap, that remains outside the
-guarantee.
+layer that remains outside the guarantee: the
+cross-architecture numerical determinism of the bootstrap.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: which rung, which artifact
@@ -1002,8 +1000,8 @@ code.
 each time even inside the container. Why, and is it a bug?'
 
 *Watch for.* The model may propose plausible but wrong
-culprits, a package version or an operating-system
-difference, that the container has already pinned. It may
+culprits (a package version or an operating-system
+difference) that the container has already pinned. It may
 also not distinguish an unseeded RNG (a real defect) from
 low-order-digit variation due to BLAS threading (an inherent
 limit at L2).
@@ -1266,7 +1264,7 @@ suppressWarnings(RNGkind(
 The two calls share a seed and return different draws.
 Restoring the original generator afterward matters, since
 `RNGkind()` sets session state that would otherwise persist
-and quietly affect everything downstream.
+and silently affect everything downstream.
 
 The layer demonstrated is the **session configuration**
 layer, which sits above the package versions and below the

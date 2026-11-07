@@ -26,8 +26,8 @@ machine for the first time.
 
 1. **Confirm Docker Desktop is installed and running.** `docker
    version` should print both a `Client` and a `Server` block; a
-   `Client`-only response, or a connection error, means Docker
-   Desktop is not running, not merely that the command is missing.
+   `Client`-only response, or a connection error, means the
+   command is installed but Docker Desktop is not running.
 
 2. **Add `--platform linux/amd64` to every build and run** against
    an image, like this book's own, that has no `arm64` entry:

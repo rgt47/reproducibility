@@ -109,9 +109,8 @@ operating system; the union lockfile and the digest-pinned
 image already did that capturing in @sec-dependencies and
 @sec-containers. What stewardship does is confirm, using
 `rang` or an archived image, that those pins can still be
-resolved after they have aged, which is validation of a
-layer already captured elsewhere rather than a fresh
-capture of its own.
+resolved after they have aged, which validates a layer
+already captured elsewhere.
 
 ```{r}
 #| label: fig-stack-archiving
@@ -169,7 +168,7 @@ archiving and stewardship: depositing the finished
 compendium so that it remains findable and executable
 long after the project ends, and recovering it when
 the pins have decayed. Both sit at the top of the
-reproducibility ladder rather than adding a new rung.
+reproducibility ladder and add no new rung.
 Sharing a compendium changes nothing about its
 level: an L2 compendium shared with a team is still an
 L2 compendium, and a verified L3 compendium deposited
@@ -361,8 +360,7 @@ main branch and rebuilds therefore inherits the survival
 packages, the table packages, and the spatial packages
 all at once, whether or not their own work touches any
 of them. This is the fast-moving half, corresponding to
-pillar two, and it is governed by every member rather
-than by the lead.
+pillar two, and it is governed by every member.
 
 The union model buys the elimination of a common and
 maddening failure, the analysis that runs for its author
@@ -421,7 +419,7 @@ tooling (@sec-containers). A team that treats the
 pushed image as authoritative, and lets the Dockerfile
 drift out of step with it, has converted its
 compendium from something reconstructable into something
-that merely happens to exist, which is exactly the
+that merely happens to exist, which is the
 regression to L0 that honest disclosure is meant to
 catch.
 
@@ -517,9 +515,9 @@ compendium supports. The DOI is what lifts a compendium
 from merely locatable on a forge, which is fragile, to
 durably findable, which is the archival requirement.
 
-A deposit should carry the environment, not only the
+A deposit should carry the environment as well as the
 source. Here the container runtimes of @sec-backends
-supply exactly the archival artifact needed. Apptainer,
+supply the archival artifact needed. Apptainer,
 the high-performance-computing runtime, builds from a
 digest-pinned Docker image a single Singularity Image
 Format file, and that SIF, or equivalently an OCI image
@@ -545,7 +543,7 @@ should be Findable, Accessible, Interoperable, and
 Reusable, and framed the principles for research data
 [@wilkinson2016]. Barker and colleagues subsequently
 adapted them for research software, whose reuse involves
-execution and not only reading [@barker2022]. A DOI
+execution as well as reading [@barker2022]. A DOI
 serves findability; a repository with a stated access
 procedure serves accessibility, which for restricted
 data means a controlled route rather than an open
@@ -901,7 +899,7 @@ enforces consistency prospectively over a project's
 active life, and `rang` provides a recovery path
 retrospectively when that consistency has lapsed. A
 prudent steward records the
-run date in the compendium precisely so that this
+run date in the compendium so that this
 recovery path stays open.
 
 ::: {.callout-important}
@@ -966,7 +964,7 @@ useful recorded fact is the *date the analysis was run*,
 from which `rang` resolves the historical package set.
 It is a stewardship failure rather than a capture
 failure because the pins were captured correctly at the
-time (the compendium was genuinely L1). What lapsed was
+time (the compendium was L1). What lapsed was
 the preservation of a runnable environment over time,
 which an archived image or a recorded run date would have
 protected.
@@ -1312,8 +1310,7 @@ analysis rather than reproducing it, or may recommend
 `rang` but misstate what input it needs.
 
 *Verification.* Confirm that the proposed route
-reconstructs the *original* versions rather than
-substituting current ones, and that it uses the recorded
+reconstructs the *original* versions from the recorded
 run date. Test the reconstructed environment against a
 known output from the original analysis before trusting
 it.
@@ -1382,8 +1379,8 @@ it.
 8. This exercise returns to the commit rule of Chapter 4
    (@sec-version-control): never commit restricted data,
    because `git` keeps every version forever even after a
-   file is deleted. The same rule turns out to apply one
-   layer up. Suppose a `.dockerignore` lists `*.csv` but a
+   file is deleted. The same rule applies one layer up.
+   Suppose a `.dockerignore` lists `*.csv` but a
    teammate's branch adds `analysis/data/raw_data/extra.tsv`
    the week before a deposit, and nobody updates the
    ignore patterns. Walk through what happens to that file
@@ -1442,7 +1439,7 @@ appears in the lockfile because several contributors
 installed it independently, it has outgrown the fast layer.
 
 A package with heavy system dependencies used by only one
-contributor is genuinely ambiguous. Installing it from the
+contributor is ambiguous. Installing it from the
 lockfile is slow and may fail without the system libraries;
 baking it in imposes the size on everyone. The usual
 resolution is to put the *system libraries* in the image
@@ -1700,7 +1697,7 @@ and, per this chapter's own account of archival deposits,
 unrecallable.
 
 **What would have caught it.** An inspection of the built
-image's file system before the push, exactly the check
+image's file system before the push, the check
 this chapter's worked example performs with `docker run
 --rm ... find / -xdev -path '*raw_data*' -type f`, run
 against the actual data directory rather than assumed from
@@ -1746,10 +1743,9 @@ The data statement answers a harder question, 'can a reader
 obtain what the code was run *on*,' and in the restricted
 case the honest answer is a controlled route rather than a
 download: the two statements can diverge sharply even for
-the same manuscript, which is exactly why a reporting
-guideline that names them as separate checklist items,
-rather than one general sentence about 'availability,' is
-doing real work.
+the same manuscript, which is why a reporting guideline
+that names them as separate checklist items is doing real
+work.
 :::
 
 ## Cheat sheet {#sec-cheat-archiving}
@@ -1862,7 +1858,7 @@ tools this book has taught, and the framework it has used
 as its running example, are strong but partial: they
 firmly secure some determinants and leave others to
 convention, and an honest practitioner discloses the
-difference rather than papering over it. A verified L3
+difference. A verified L3
 compendium and a locatable L0 script are both legitimate
 outputs of a scientific process; what is not legitimate
 is to present the second as the first. The reader who

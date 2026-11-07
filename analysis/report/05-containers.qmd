@@ -21,10 +21,10 @@ By the end of this chapter you will be able to write a
 Dockerfile that reaches L2, pinned environment, rather
 than one that merely looks reproducible: a recipe whose
 base is named by an immutable digest, whose installer
-fetches from a dated snapshot rather than whatever is
-current today, and whose locale, time zone, and thread
-count are declared rather than inherited from whichever
-machine happens to run it.
+fetches from a dated snapshot of the package repository,
+and whose locale, time zone, and thread count are
+declared in the recipe instead of inherited from
+whichever machine happens to run it.
 
 ```{r}
 #| include: false
@@ -179,7 +179,7 @@ in which a numerical default differed, and the lockfile
 pins package versions, not the R version they run under.
 Both failures sit beneath the package layer, on the
 system-library layer and the R-runtime layer, which is
-exactly the gap a container closes.
+the gap a container closes.
 :::
 :::
 
@@ -457,8 +457,7 @@ their survey of what they call the Rockerverse
 The practical value of Rocker is that it supplies, for
 each R version, a tested base image with R already
 installed on a known operating system. The analyst's
-recipe can then begin from a solid and shared
-foundation, rather than reconstructing one. The images
+recipe can then build on that shared foundation. The images
 form a small hierarchy. At the bottom sits
 `rocker/r-ver`, R on Ubuntu and little else. Above it,
 `rocker/rstudio` adds the RStudio Server development
@@ -557,8 +556,8 @@ which can shift a floating-point result in its last few bits.
 None of that is new: it is the same category of hidden
 determinant, beneath the package layer, that the next section
 exists to pin. The guarantee this chapter already teaches,
-pinning the base image by digest rather than by tag, is what
-actually settles the question, because a digest names one
+pinning the base image by digest, is what actually settles
+the question, because a digest names one
 specific, byte-identical filesystem for one specific platform.
 Choosing `--platform linux/amd64` decides which platform's
 bytes a build asks for; pinning the digest decides that it
@@ -842,7 +841,7 @@ that environment. Neither the container nor the lockfile
 alone is enough. A container without a lockfile fixes
 the environment but not which package versions live in
 it; a lockfile without a container fixes the packages but
-not the platform. A genuinely L2 analysis uses both, and
+not the platform. An L2 analysis uses both, and
 the honest reading of an image is that it reaches L2 only
 when the base is pinned by digest, the snapshot is
 dated, and a lockfile is restored inside it.
@@ -991,7 +990,7 @@ prints a month in running text, will read differently
 on two machines that disagree about locale even though
 every number in it was parsed identically. Fixing `LANG`
 and `LC_ALL` in the image removes that variability, which
-is exactly why the Dockerfile above sets both to
+is why the Dockerfile above sets both to
 `en_US.UTF-8`.
 
 The second is the **time zone**, carried in `TZ`. Date
@@ -1053,8 +1052,8 @@ makes the day assignment independent of the host, so
 both collaborators bucket the events identically. Note
 that identical package versions, that is, a shared L1,
 did nothing to prevent this: the failure is an
-environment failure, which is precisely what the
-container layer exists to fix.
+environment failure, which is what the container layer
+exists to fix.
 :::
 :::
 
@@ -1142,7 +1141,7 @@ without declaring it, on a LaTeX tool or a system library
 the publishing base happens to carry, and the check will
 pass in this image and fail the moment the package is
 installed on a user's machine that lacks that base. The
-minimal profile is the honest choice precisely because it
+minimal profile is the honest choice because it
 cannot hide an undeclared dependency behind extra
 software nobody asked for.
 :::
@@ -1166,8 +1165,8 @@ Each project then builds a thin second layer on top of
 that team image, rather than on the raw Rocker base. The
 first layer, the team image, is built once and reused
 everywhere; the second layer, the per-project image,
-adds only what the project needs and builds in seconds
-rather than minutes. Because the team image is itself
+adds only what the project needs and builds in seconds,
+where the full image takes minutes. Because the team image is itself
 pinned by digest and recorded in a committed file, every
 member pulls byte-identical bytes, so 'works on my
 machine' cannot arise: there is, in the relevant sense,
@@ -1206,8 +1205,8 @@ only within one project.
 
 Let us follow a concrete case through, in the manner of
 the framework this book uses, which generates the
-Dockerfile rather than asking the analyst to write one
-by hand. A biostatistician is analyzing a registry
+Dockerfile so that the analyst does not write one by
+hand. A biostatistician is analyzing a registry
 cohort. The deliverable is a set of tables and figures,
 not a typeset manuscript, so the appropriate archetype
 is data analysis and the appropriate profile is minimal:
@@ -1268,8 +1267,7 @@ gained is verification, L3: an image that builds and a
 report that renders are not the same as a report whose
 numbers have been regenerated and shown to match a
 recorded baseline. That is the subject of
-@sec-verification, and it is the honest boundary of what
-this chapter delivers.
+@sec-verification.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what changed and what did not
@@ -1300,7 +1298,7 @@ build reproducible.
 The running cohort compendium of this book is, itself, a
 small research compendium: a `cohort_raw.csv`, a
 `clean_cohort()`, and a model fit on top. Whether it has
-reached L2 yet can be checked rather than asserted.
+reached L2 yet can be checked directly.
 
 ```{r}
 #| label: cohort-dockerfile-check
@@ -1314,7 +1312,7 @@ Neither file exists at the compendium's root, so the
 compendium has not reached L2 by this chapter's standard,
 consistent with the honest L0/L1 framing @sec-levels and
 @sec-compendium already gave it. Reaching L2 needs
-nothing new, only a Dockerfile that follows exactly the
+nothing new, only a Dockerfile that follows the
 showcase recipe built and verified earlier in this
 chapter, adapted to
 what the compendium's own `renv.lock` (once @sec-dependencies'
@@ -1327,7 +1325,7 @@ lockfile is committed) records:
 - a dated-snapshot `ARG`, naming the Ubuntu release the
   chosen base actually runs (`jammy` for the current
   `rocker/r-ver:4.4.0`), wired into
-  `RENV_CONFIG_REPOS_OVERRIDE` exactly as the showcase
+  `RENV_CONFIG_REPOS_OVERRIDE` as the showcase
   Dockerfile does;
 - the three determinism variables this chapter argued for,
   `LANG`/`LC_ALL` set to a fixed locale, `TZ=UTC`, and
@@ -1337,12 +1335,11 @@ lockfile is committed) records:
 - a `WORKDIR`, a `COPY renv.lock renv.lock`, and the same
   two-step `renv` install and `renv::restore()` pattern,
   so the packages the compendium's scripts load are
-  restored inside the pinned environment rather than
-  assumed to already be present.
+  restored inside the pinned environment.
 
 None of this is built here, because building and verifying
 an image is slow and the showcase Dockerfile earlier in
-this chapter already did exactly that verification once.
+this chapter already did that verification once.
 What the check above adds is specific to the compendium:
 it is not yet done, and the gap is these four concrete
 items, not a vague 'needs a Dockerfile'.
@@ -1383,8 +1380,8 @@ result runs today and is not L2.
 
 *Verification.* Confirm that the `FROM` line carries an
 `@sha256:` digest, not merely a tag; that the in-image
-installer points at a dated snapshot rather than a live
-repository, with a distribution codename that matches
+installer points at a dated snapshot, with a distribution
+codename that matches
 the base image's Ubuntu release, and that
 `renv::restore()` is told to use it; and that `LANG`,
 `LC_ALL`, and `TZ` are set.
@@ -1404,7 +1401,7 @@ laptop. Why?'
 *Watch for.* The model is likely to reach first for the
 code, suggesting a bug in the analysis, and to overlook
 the environment. The environment is the more probable
-cause precisely because the container was supposed to
+cause because the container was supposed to
 fix it and may have fixed it incompletely: a missing
 locale variable, a different thread count, an unpinned
 package version inside a pinned environment.
@@ -1533,8 +1530,8 @@ image named by the digest, because the digest is a content
 hash: an altered image hashes differently and is therefore
 a different image by construction, not by convention.
 
-A reproducible recipe pins the digest because it wants the
-second guarantee rather than the first. Pinning the tag
+A reproducible recipe pins the digest because it wants
+that guarantee. Pinning the tag
 records an *intention* about which image to use; pinning
 the digest records the image. The cost is that a
 digest-pinned recipe does not receive security updates
@@ -1590,7 +1587,7 @@ must be built with `--platform linux/amd64`. The block
 then copies the committed lockfile into a working
 directory, installs `renv` from the dated snapshot, and
 restores the recorded package set, fetching from that
-snapshot rather than from the live repository. We built
+snapshot. We built
 this recipe on 2026-10-11 against a one-package lockfile
 (`jsonlite` 2.0.0) and the image reported `jsonlite`
 2.0.0. A fuller repair would add the locale, time-zone,
@@ -1756,9 +1753,9 @@ The packages installed into the image at build time are
 pinned by the image, but any package the analysis installs
 or restores *afterward* is not, because it is resolved at
 run time against whatever the lockfile or the repository
-then says. The image and the lockfile do different jobs,
-and the chapter's framing is exactly this: the image is
-the L1-to-L2 step and the lockfile is the L0-to-L1 step.
+then says. The image and the lockfile do different jobs:
+in the chapter's framing, the image is the L1-to-L2 step
+and the lockfile is the L0-to-L1 step.
 
 The compact statement: the container guarantees the same
 *floor*, the lockfile guarantees the same *packages*, and
@@ -1796,7 +1793,7 @@ packages. The lockfile answers 'which packages', the
 container answers 'on what', and this chapter's own
 orientation story, the GDAL-dependent package that failed
 to install on a collaborator's machine even though the
-lockfile pinned its version exactly, is precisely a failure the
+lockfile pinned its version exactly, is a failure the
 lockfile could not prevent and the container does.
 :::
 
@@ -1828,8 +1825,8 @@ surveyed thoroughly by @nust2020rockerverse; both are
 worth consulting before building a base image of one's
 own.
 
-On making a container genuinely reproducible rather than
-merely convenient, the essential reference is @nust2020,
+On making a container reproducible, the essential
+reference is @nust2020,
 whose ten simple rules for writing Dockerfiles argue for
 version-specific image tags over `:latest`, explicit
 version pinning, and much else this chapter has drawn

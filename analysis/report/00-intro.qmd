@@ -200,7 +200,7 @@ down the stack a given effort has actually reached.
 
 The R ecosystem has, over two decades, produced mature
 tools for nearly every layer of that stack. Literate
-programming, `knitr`, R Markdown, and now Quarto
+programming, through `knitr`, R Markdown, and now Quarto
 [@allaire2024], binds prose to the code that produces it.
 `renv` [@ushey2020] pins package versions in a lockfile.
 Docker, through Rocker's R-specific base images
@@ -208,11 +208,11 @@ Docker, through Rocker's R-specific base images
 system and its libraries. Continuous integration re-runs
 the whole compendium on a clean machine to confirm that the
 pinned layers actually suffice. Alternatives exist at every
-layer, Nix and its R front-end `rix` in place of `renv`
+layer: Nix and its R front-end `rix` in place of `renv`
 [@dolstra2004; @rodrigues2024rix], Podman or Apptainer in
-place of Docker [@kurtzer2017], GitLab in place of GitHub,
-and this book introduces each tool where the chapter ahead
-needs it rather than in one early catalog: @sec-dependencies
+place of Docker [@kurtzer2017], GitLab in place of GitHub.
+This book introduces each tool where the chapter ahead
+needs it, not in one early catalog: @sec-dependencies
 for package pinning, @sec-containers and @sec-backends for
 the environment and its alternatives, @sec-compendium for
 the compendium structure that @gentleman2007 and
@@ -227,23 +227,21 @@ inside it, and neither says anything about session
 configuration, so a researcher who wants a genuinely
 reproducible analysis must assemble all of it correctly,
 for every project, by hand. This book's running example
-uses `zzcollab`, a framework that assembles the triad,
-`renv` for packages, Docker for the environment, continuous
-integration for validation, into one coherent workflow, so
-that a biostatistician obtains the composition without
-building it from scratch. Each chapter ahead develops the
-part of `zzcollab` relevant to its own layer against the
-concept it has just introduced, rather than all at once
-here.
+uses `zzcollab`, a framework that assembles the triad
+(`renv` for packages, Docker for the environment, continuous
+integration for validation) into one workflow, so that a
+biostatistician obtains the composition without building it
+from scratch. Each chapter ahead develops the part of
+`zzcollab` relevant to its own layer, against the concept it
+has just introduced.
 
 Like every tool this book covers, `zzcollab` is held to the
 standard it teaches. By its own accounting it firmly pins a
-part of the [determinant stack](glossary.qmd#gloss-determinant-stack),
-the environment, the
-packages, the source, and the locale and time zone, and
-leaves the rest, the numerical libraries, the random-number
-discipline, the graphics device, intrinsic non-determinism,
-to the base image or to convention. Reproducibility tooling
+part of the [determinant stack](glossary.qmd#gloss-determinant-stack)
+(the environment, the packages, the source, and the locale
+and time zone) and leaves the rest (the numerical libraries,
+the random-number discipline, the graphics device, intrinsic
+non-determinism) to the base image or to convention. Reproducibility tooling
 in general has an adoption problem more than a capability
 problem: @saju2025 found that most deposited code
 supplements carry no dependency description at all, even

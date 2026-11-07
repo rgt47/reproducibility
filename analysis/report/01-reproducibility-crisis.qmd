@@ -93,11 +93,11 @@ answer:**
 This chapter diagnoses rather than pins, and @sec-levels
 has not yet drawn the distinction between capturing a
 layer and validating one, so the figure below is careful
-not to claim either. It names the layers of the
-determinant stack most responsible for the re-execution
-failures the evidence below documents, the R runtime
-itself and the session configuration riding on top of it,
-in prose: the RNG-kind comparison below and the
+not to claim either. It names, in prose, the layers of
+the determinant stack most responsible for the
+re-execution failures the evidence below documents (the
+R runtime itself and the session configuration riding on
+top of it): the RNG-kind comparison below and the
 `stringsAsFactors` comparison in 'The cohort, continued'
 each show an unpinned layer behaving exactly as badly as
 the chapter claims. No lockfile, no container, and no
@@ -318,7 +318,7 @@ a growing body of work isolates the specifically
 computational failures. Here the question is not
 whether a finding holds up in a new sample, but merely
 whether the original analysis can be made to run a
-second time. Here the evidence is starker, because the
+second time. The evidence there is starker, because the
 failures are more avoidable. Trisovic and colleagues
 re-ran more than nine thousand R files deposited
 alongside published articles in the Harvard Dataverse.
@@ -504,7 +504,7 @@ observation bears on.
 The second registry's independent confirmation, with new
 data aimed at the same question, is replicability. That
 the confirmation held under a different covariate
-adjustment is additionally evidence of robustness, since
+adjustment is also evidence of robustness, since
 the conclusion survived a defensible change in analytical
 choice. The third team's failure to regenerate the
 deposited table, same data and same code required,
@@ -539,14 +539,14 @@ the old one. A simulation that draws from `rnorm()`,
 through `sample()` is unaffected; the 2019 correction
 touched one generator, not every source of randomness
 in R.
+
 Then, in R 4.0.0, released in 2020, the
 `stringsAsFactors` default flipped from `TRUE` to
 `FALSE`. Reading a data frame now silently produced
 character columns where it once produced factors. This
-changed the behavior of any code that depended on
-factor-specific behavior, such as the ordering of
-levels or a function that requires a factor
-[@rcoreteam2020]. Neither
+affected any code that depended on factor-specific
+behavior, such as the ordering of levels or a function
+that requires a factor [@rcoreteam2020]. Neither
 change was a bug; both were deliberate improvements.
 Both would nonetheless break the exact reproduction of
 an analysis written under the old default, and neither
@@ -699,8 +699,8 @@ placement on the ladder that @sec-levels defines.
 
 ## Worked example
 
-To make the RNG change concrete rather than anecdotal,
-we reproduce it here in a few lines of base R. The
+To make the RNG change concrete, we reproduce it here
+in a few lines of base R. The
 generator that turns a seed into a sample is
 selectable through `RNGkind()`, and R still ships both
 the pre-3.6.0 sampler, named `Rounding`, and the
@@ -831,15 +831,15 @@ which R version runs it. Calling `read.csv()` on the
 identical file with the pre-4.0.0 default made explicit,
 `stringsAsFactors = TRUE`, returns the same column as a
 factor instead. Every function downstream that cares
-about the difference, an `ifelse()` that compares against
-a string, a `table()` that orders levels, would see two
+about the difference (an `ifelse()` that compares against
+a string, a `table()` that orders levels) would see two
 different objects from the one file, depending on nothing
 but which R release happened to be installed when the
 bare call ran. `load_cohort()` pins the choice in the
-code rather than leaving it to the runtime; that is a
-capture of the analysis-code layer, not of the R-runtime
-layer itself, which is why this comparison still counts
-as a diagnosis rather than as the chapter's first capture.
+code. That is a capture of the analysis-code layer, not
+of the R-runtime layer itself, which is why this
+comparison still counts as a diagnosis and not as the
+chapter's first capture.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: which layer is closed
@@ -1088,7 +1088,7 @@ regenerate the published numbers. *Replicability fails*
 if a new cohort, collecting its own data to answer the
 same question, does not find the effect. *Robustness
 fails* if the effect disappears when a competent analyst
-makes a different but defensible modeling choice, a
+makes a different but defensible modeling choice: a
 different adjustment set, a different handling of missing
 data, a different cut point.
 

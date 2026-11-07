@@ -20,7 +20,7 @@ want a computer to do.*
 By the end of this chapter you will be able to write an
 analysis whose every reported number and figure is
 produced by the code sitting beside it, recognize the
-handful of ways that guarantee quietly breaks, and say
+handful of ways that guarantee silently breaks, and say
 precisely what a successful render does and does not
 establish about an analysis's place on the
 reproducibility ladder.
@@ -56,7 +56,7 @@ prior exposure to `knitr` or Quarto chunk syntax is assumed.
   instructions are the scholarship, and say how a literate
   document makes the two the same artifact?
 - Build a sealed render in Quarto or `knitr` and recognize
-  each of the five landmines that quietly break the seal?
+  each of the five landmines that silently break the seal?
 - Choose between HTML and PDF output, name the toolchain
   each requires, and explain why a LaTeX distribution
   belongs in the image rather than on the host?
@@ -85,8 +85,8 @@ case: it pins nothing new. @fig-stack-literate marks
 analysis code as validated here rather than captured,
 because version control already secures the code at L0;
 what a sealed render adds is the check that the document's
-prose and figures are actually produced by that code,
-rather than pasted in and left to drift.
+prose and figures are actually produced by that code and
+are not pasted in and left to drift.
 
 ```{r}
 #| label: fig-stack-literate
@@ -113,8 +113,8 @@ it do instead?
 No. Sealing the render pins no new layer of the determinant
 stack: the analysis code it runs was already locatable, at
 L0, because it sits in a version-controlled document.
-Rather than capturing something new, the seal validates that
-the document's prose agrees with that already-committed
+The seal captures nothing new; it validates that the
+document's prose agrees with that already-committed
 code, by construction, every time the document is built. A
 sealed, unpinned-package document and an unsealed,
 fully-pinned one are both possible, which is exactly why the
@@ -231,14 +231,14 @@ make on that basis alone?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-Because a sealed render matches the claim to what the seal
-actually delivers, which is only that the document agrees
-with its own code. It says nothing about whether the
-packages are pinned, the environment is fixed, or the
-outputs have been shown to regenerate from a clean rebuild.
-The third analyst's judgment named above, matching the
-claim to what the render seals, is exactly the discipline
-that stops a successful render from being overclaimed.
+Because a sealed render delivers only one thing, that the
+document agrees with its own code. It says nothing about
+whether the packages are pinned, the environment is fixed,
+or the outputs have been shown to regenerate from a clean
+rebuild. The analyst's third judgment named above, matching
+the claim to what the render seals, is exactly the
+discipline that stops a successful render from being
+overclaimed.
 :::
 :::
 
@@ -396,9 +396,9 @@ Knuth's sense?
 Each interleaves narrative prose with executable code in one
 source document and weaves the code's output into the
 rendered result at build time, so the figure or number a
-reader sees is produced by the code beside it rather than
-pasted in. That property, not the particular markup
-language or output format, is what secures the seal; the
+reader sees is produced by the code beside it. That
+property, not the particular markup language or output
+format, is what secures the seal; the
 four tools are successive engineerings of the same idea
 Knuth proposed in 1984.
 :::
@@ -837,15 +837,14 @@ Part of this non-determinism can be normalized away. Many
 document tools, including LaTeX and `pandoc`, honor a
 conventional environment variable, `SOURCE_DATE_EPOCH`,
 which fixes the timestamp the build embeds to a specified
-value rather than reading the wall clock. Setting it
+value instead of the wall-clock time. Setting it
 removes the timestamp difference, and a determined
 practitioner can normalize further, stripping identifiers
 and canonicalizing font-subset names, until two renders
 do hash alike. This is worthwhile work in some settings,
 notably in the reproducible-builds movement for operating
-systems. For a research compendium it is usually effort
-misplaced, because it fights the symptom rather than
-addressing the target.
+systems. For a research compendium it is usually
+misplaced effort, because it fights a symptom.
 
 The resolution the framework adopts is to hash the right
 thing. Verification, developed in @sec-verification, does
@@ -904,7 +903,7 @@ of record; the computation is.
 
 The weight the sealed render carries varies sharply across
 the five archetypes; @tbl-archetype-weight in
-@sec-compendium is the reference. It is center of gravity
+@sec-compendium is the reference. It is the center of gravity
 for the manuscript, multiplied across many posts for the
 blog, and lighter for an internal data-analysis summary.
 The two cases most worth stating here are the ones a reader
@@ -920,8 +919,8 @@ Monte Carlo replicates, cannot live in the sealed document,
 so it runs once in `analysis/scripts/`, seeded with the care
 @sec-levels stressed, and saves its results to
 `derived_data/`; the literate report then becomes a thin
-presentation layer that loads and presents those results
-rather than recomputing them on each build. In every case
+presentation layer that loads and presents those results.
+In every case
 the underlying machinery, `knitr` or Quarto, chunks,
 committed inputs, a pinned environment, is the same; only
 how heavily an archetype leans on it changes.
@@ -1021,8 +1020,8 @@ Let us assemble the pieces into a concrete `report.Rmd`,
 as a health scientist beginning a cohort analysis would.
 On the first day, before any data are analyzed, the author
 creates the report and writes its header. A representative
-YAML header, shown here as a static block rather than
-rendered, declares the title, the authorship, the output
+YAML header, shown here as a static, unrendered block,
+declares the title, the authorship, the output
 formats, and the bibliography:
 
 ```yaml
@@ -1048,13 +1047,12 @@ submission and an HTML version for reading on a screen. The
 project that renders the former needs the publishing
 profile and its baked-in LaTeX distribution, while the
 latter needs neither. The `date` field is itself a small
-literate device: rather than a fixed string, it holds an
-inline R expression that inserts the render date, so the
-header cannot claim a date the render did not have. The
-provenance footer discussed below is not declared in this
-header at all; it is applied by the render tooling
-(`make docker-render`, by way of `tools/stamp-render.R`)
-rather than by the YAML.
+literate device: it holds an inline R expression that
+inserts the render date, so the header cannot claim a date
+the render did not have. The provenance footer discussed
+below is not declared in this header at all; it is applied
+by the render tooling (`make docker-render`, by way of
+`tools/stamp-render.R`).
 
 Below the header the author writes a setup chunk that fixes
 the chunk defaults and loads the packages the document
@@ -1114,8 +1112,8 @@ so a document rendered months later would still carry its
 first day's date, silently misrepresenting when the reader's
 copy was actually produced. It is the same seal, applied to
 metadata rather than to a result: the date is computed from
-the render itself rather than pasted in, so it cannot drift
-from the moment it claims to describe.
+the render itself, so it cannot drift from the moment it
+claims to describe.
 :::
 :::
 
@@ -1140,11 +1138,11 @@ The cleaned cohort holds `r n_cohort` records, of which
 Both numbers are inline expressions reading `cohort`, not
 literals typed after a console check, so a later edit to
 `clean_cohort()`, or to the raw extract, changes this
-paragraph on the next render rather than leaving it to drift
+paragraph on the next render instead of leaving it to drift
 the way the orientation's opening story describes. Nothing
 about this passage pins a package or an environment; it is
 the seal, and only the seal, demonstrated on the book's own
-data rather than on a hypothetical one.
+data.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the cohort passage does and does not show
@@ -1231,7 +1229,7 @@ network access and repository state.
 environment, not the document. Confirm that the failure is
 a missing LaTeX toolchain, and provision it by building on
 the publishing profile so that LaTeX is baked into the
-image, rather than installing it as the document renders.
+image, not installed as the document renders.
 Verify that the PDF then renders in the container with
 nothing installed on the fly.
 
@@ -1532,10 +1530,11 @@ The render gate then sits alongside as a separate check
 confirming that the document still builds from those
 outputs.
 
-Byte-identical PDFs are attainable, by setting `SOURCE_DATE_EPOCH` and freezing
-font subsetting, and that this is a fragile route to a
-result the output hashes give directly. The chapter's
-position is that one should hash what is deterministic
+Byte-identical PDFs are attainable, by setting
+`SOURCE_DATE_EPOCH` and freezing font subsetting, but this
+is a fragile route to a result the output hashes give
+directly. The chapter's position is that one should hash
+what is deterministic
 rather than work to make the non-deterministic thing
 deterministic.
 :::
@@ -1568,8 +1567,7 @@ scripts and the pinned environment.
 weight rests almost entirely elsewhere, on `R CMD check`
 and the unit tests, which bind behavior to claims more
 strongly than prose can. A vignette that renders is a
-convenience and a demonstration rather than the
-deliverable.
+convenience and a demonstration, not the deliverable.
 
 **Simulation study.** Renders a report on the results, if
 one exists. The weight rests overwhelmingly on the seed

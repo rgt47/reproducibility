@@ -499,7 +499,7 @@ code has to clear the cache first. (@sec-literate)
 
 []{#gloss-r-cmd-check}**`R CMD check`.** The standard R command that builds a package,
 runs its tests, and applies dozens of standardized checks; here
-it serves as an integrity gate on the compendium's package skin
+it is an integrity gate on the compendium's package skin
 (`R/`, the tests, `DESCRIPTION`). It does not check `analysis/`,
 which `.Rbuildignore` excludes from the build.
 (@sec-compendium, @sec-verification)

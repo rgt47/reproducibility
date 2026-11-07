@@ -147,9 +147,9 @@ locatable. It is not yet L1, because nothing has pinned
 the package versions. It is not yet L2, because nothing
 has pinned the environment. And it is certainly not yet
 L3, because nothing has re-run it and shown the numbers
-to match a recorded baseline. What the compendium provides is the container
-into which the later chapters install those higher
-guarantees.
+to match a recorded baseline. The compendium provides the
+container into which the later chapters install those
+higher guarantees.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the scatter is missing
@@ -237,7 +237,7 @@ can infer from the files themselves.
   checkable by the R build tools.
 - **`R CMD check`.** The standard R command that builds
   a package, runs its tests, and applies dozens of
-  standardized checks; here it serves as a universal
+  standardized checks; here it is a universal
   integrity gate on the compendium's package skin
   (`R/`, the tests, `DESCRIPTION`). It does not check
   `analysis/`, which the build excludes.
@@ -386,7 +386,7 @@ or warns, because that file is part of what gets built.
 
 A new compendium that omits `^analysis$` from
 `.Rbuildignore`, or deletes the line while editing the
-file by hand, does not fail quietly. `R CMD build` then
+file by hand, does not fail silently. `R CMD build` then
 tries to fold the raw data, the derived files, and the
 rendered report into the installable tarball, which can
 make the build slow, bloat the package beyond what CRAN
@@ -839,9 +839,8 @@ teaching content without any change to the workflow.
 
 The gate here is again the universal `R CMD check`, joined
 by a render gate that must succeed for *each* post the
-compendium carries rather than for a single report. The
-multiplicity is the distinguishing feature of the general
-case: a blog compendium is a
+compendium carries. The multiplicity is the distinguishing
+feature of the general case: a blog compendium is a
 render-many, where the manuscript is a render-one and the
 package is a render-none.
 
@@ -1181,8 +1180,8 @@ is the pipeline of `R/cohort.R` and the chunks this book's
 chapters run against it, not a rendered manuscript of its
 own; the applicable gates are therefore the universal
 `R CMD check` and the unit tests, with no render gate
-required. Measured against the Five Pillars rather than the
-archetype table, three artifacts present and two absent is
+required. Measured against the Five Pillars instead, three
+artifacts present and two absent is
 consistent with @sec-levels's own placement of this same
 compendium at L0, locatable, and no further: having a
 source-code pillar and a data pillar is exactly what makes
@@ -1462,7 +1461,7 @@ an equivalent by hand, differently, for every project.
 
 This is the same bargain as any other standard format: the
 structure is
-arbitrary in itself and valuable because other things
+arbitrary in itself and useful because other things
 already understand it.
 :::
 

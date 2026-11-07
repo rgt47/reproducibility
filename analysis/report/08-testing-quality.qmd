@@ -63,8 +63,7 @@ vectors, and basic control flow.
   and say why the second kind breaks under an honest
   refactor?
 - explain why `lintr`, `styler`, and a pre-commit hook
-  belong to the validation register rather than the
-  capture register?
+  belong to the validation register?
 
 **Outline.** The analyst's irreplaceable judgments; the
 paradox stated precisely; `tinytest`'s bare-expectation
@@ -105,7 +104,7 @@ plot_determinant_stack(
 Consider a registry study in which an analyst
 has written a small function to compute a mean
 biomarker value for each treatment arm. The
-function carries a quiet bug: it sums the values
+function carries a simple bug: it sums the values
 but forgets to divide by their count. The
 analysis runs without error. It produces a
 table, a figure, a p-value. Sent to a colleague,
@@ -242,7 +241,7 @@ follows.
   components behave correctly when composed into a
   pipeline, from raw input to final result.
 - **Data-validation test.** A check on the data
-  itself rather than the code: that a value lies in
+  itself, not the code: that a value lies in
   a plausible range, that no impossible ages appear,
   that the expected columns are present.
 - **Reproducibility test.** A check that a recorded
@@ -406,7 +405,7 @@ dated document, committed to the repository (or
 deposited externally, as on the Open Science Framework)
 before the raw data arrive, or before they are
 unblinded. Checking an analysis against it is not an
-`expect_equal()` call but a review step: does the fitted
+`expect_equal()` call but a review step: do the fitted
 model's formula, the stated primary comparison, and the
 decision rule actually implemented match what the plan
 specified? Where the match can be stated mechanically,
@@ -676,8 +675,8 @@ no amount of correct code can prevent, the errors
 that live in the data before the analysis begins. In
 a data-analysis or simulation archetype, where there
 may be few reusable functions to unit-test, the
-data-validation tests are often the heart of the
-suite.
+data-validation tests often carry most of the suite's
+weight.
 
 ### Reproducibility tests
 
@@ -761,7 +760,7 @@ expect_equal(result$lower, baseline$lower,
 
 Three details carry the weight. The path is relative
 to `inst/tinytest/`, where `tinytest` runs the file. The
-guard lets the file exit quietly under `R CMD check`,
+guard lets the file exit early under `R CMD check`,
 which installs the package without `analysis/` (the
 mirror in `inst/testdata/` covers the unit and
 data-validation tests; the baseline test requires the
@@ -863,8 +862,8 @@ and confirm `test-baseline-cohort.R` reports five passes
 `readRDS()`, change `hr` by more than `1e-8` relative,
 write it back, and rerun; the comparison above, run with
 `sample.kind = 'Rejection'` against a baseline recorded
-under `'Rounding'`, is this exact failure captured in
-the chapter rather than only described.
+under `'Rounding'`, is this exact failure, executed in
+the chapter itself.
 :::
 
 A baseline test is what L3 requires. The top rung, as
@@ -948,8 +947,8 @@ its own independent random stream; naive parallelization,
 such as `parallel::mclapply()` with no RNG setup, can
 leave workers sharing or overlapping generator state, so
 that resamples drawn as 'independent' on different cores
-are correlated, which understates the Monte Carlo error
-rather than merely adding to it. The fix is the
+are correlated, which understates the Monte Carlo
+error. The fix is the
 L'Ecuyer-CMRG generator, built for exactly this, which
 R's `RNGkind('L\'Ecuyer-CMRG')` exposes directly and which
 `parallel::clusterSetRNGStream()` applies across the
@@ -1136,7 +1135,7 @@ It is an implementation test: it pins a detail of how
 what it does. A rewrite that preserves the function's
 behavior but removes or renames that counter breaks
 the test for no good reason, training the analyst to
-distrust or delete it rather than to value it.
+distrust or delete it.
 :::
 :::
 
@@ -1469,7 +1468,7 @@ comparison is what a test is.
 In a real compendium, the hand-rolled `expect` gives
 way to the `tinytest` expectations, and the checks
 live in a file under `inst/tinytest/`. The following
-is that file, shown as a static listing rather than
+is that file, shown as a static listing that is not
 run here, and it is exactly the unit test that would
 have caught the bug before it reached a result:
 
@@ -1681,7 +1680,7 @@ give the data-validation suite something real to
 catch. The test file checks each defect before and
 after cleaning, so a change to `clean_cohort()` that
 accidentally fixes or breaks a defect fails a test
-rather than silently altering the baseline.
+instead of silently altering the baseline.
 
 ```r
 # Duplicate before cleaning, gone after
@@ -1774,9 +1773,9 @@ follows from the audit.
    `load_cohort()` and `clean_cohort()` from `R/cohort.R`
    against `analysis/data/raw_data/cohort_raw.csv`, then
    write a data-validation test file that checks, against
-   the real cleaned cohort rather than a hypothetical one,
-   this chapter's four constraints: the expected columns,
-   the enrollment age range, the two coded sex values, and
+   the real cleaned cohort, this chapter's four
+   constraints: the expected columns, the enrollment age
+   range, the two coded sex values, and
    a bound on outcome missingness. Report three numbers a
    grading script could check without fitting any model:
    the raw row count, the cleaned row count, and the
@@ -2085,7 +2084,7 @@ exactly the provenance gap habit 1 exists to close.
 | `expect_equal(a, e, tolerance = 1e-8)` | The baseline-test comparison: a stated, not default, tolerance (habit 5). |
 | `expect_true()`, `expect_false()`, `expect_identical()`, `expect_error()`, `expect_inherits()` | The common `tinytest` expectations beyond equality. |
 | `tinytest::test_package('pkg')` | Runs the suite under `inst/tinytest/` via the `tests/tinytest.R` runner. |
-| `exit_file('message')` | Exits a test file quietly, for a test that needs data `R CMD check` does not install. |
+| `exit_file('message')` | Exits a test file early, for a test that needs data `R CMD check` does not install. |
 | `make lint` / `make style` | Run `lintr` / `styler` inside the project container. |
 | `test-baseline*.R` naming | The convention `zzc verify --full` looks for to certify L3. |
 | Rule of thumb | Test behavior, not implementation; a test should fail only when the contract breaks. |
@@ -2110,8 +2109,7 @@ the argument that a testing framework should not
 itself be a heavy dependency.
 
 For the practice of testing and code quality as
-components of scientific computing rather than as
-software-engineering appendages, the two papers by
+components of scientific computing, the two papers by
 Wilson and colleagues are the standard references:
 the best-practices paper [@wilson2014] and the
 good-enough-practices paper [@wilson2017], the latter

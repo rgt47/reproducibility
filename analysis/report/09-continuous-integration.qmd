@@ -122,7 +122,7 @@ author does not know.
 A lockfile can reference a package version that has
 been pulled from its repository. A Dockerfile can
 depend on a base image whose digest has drifted. A
-script can quietly rely on a file that lives only in
+script can silently rely on a file that lives only in
 the author's home directory and was never committed.
 None of these announce themselves on the machine where
 the work already runs, because on that machine the
@@ -335,7 +335,7 @@ done before CI runs. What CI adds is the repeated,
 adversarial test that the capture already performed is
 sufficient. A captured-but-never-retested compendium
 suffers a slow decay, the failure mode in which a
-declared environment quietly stops rebuilding as its
+declared environment silently stops rebuilding as its
 external references drift, and no one notices because no
 one has tried to rebuild it. CI is the standing test
 that would notice. Removing CI from a repository lowers
@@ -568,7 +568,7 @@ repository in October 2026), and each command exited with a
 nonzero status. The first breakage also shows why the
 setting matters: with `error_on = "error"` the same check
 returned normally, the WARNING printed and ignored.
-Placing `library(sandwich)` in `analysis/` rather than in
+Placing `library(sandwich)` in `analysis/` instead of
 `R/` shows the scope of the first gate: `R CMD check`
 passes, the dependency gate goes red, and the render gate
 goes red too if the report runs that script.
@@ -843,7 +843,7 @@ the common alternative, Docker-in-Docker, requires a
 privileged runner that many institutions do not allow.
 On the plus side, maintaining a repository on
 whichever forge an institution mandates is then a matter of
-translating the dialect rather than abandoning the checks.
+translating the dialect, and the checks carry over.
 On the minus side, a workflow written twice, once per
 dialect, is a workflow maintained twice, and every future
 change must be made in two incompatible formats, a
@@ -856,9 +856,9 @@ shrinks to a thin shim that checks out the code and calls
 `make`. The dialect then differs only in its outermost ten
 lines, and the checking behavior is defined once.
 
-A further design point is that a workflow can adapt
-itself to what the repository contains rather than being
-configured by hand. A feature is treated as present
+A further design point is that a workflow need not be
+configured by hand: it can adapt itself to what the
+repository contains. A feature is treated as present
 exactly when its defining file exists. If `renv.lock` is
 present, the workflow restores the pinned library;
 otherwise it installs from `DESCRIPTION`. If a `Dockerfile`
@@ -1012,8 +1012,8 @@ file exists and ran. Without a baseline test it reports
 the project as rebuilt and tested, at L2, with no baseline
 comparison, and does not stamp L3. Any later change to the
 environment drops the stamp, so a compendium that has
-drifted reverts to unverified automatically, rather than
-carrying a stale claim.
+drifted reverts to unverified automatically and carries
+no stale claim.
 
 Verification compares **computational outputs**, the row count of
 a derived dataset, a fitted
@@ -1071,8 +1071,8 @@ lockfile changed after the last successful verification
 run, the claim is stale: the thing the stamp describes no
 longer exists. The honest statement is that the compendium
 was L3 as of the old lockfile and is unverified now, which
-is exactly why a change to the environment should drop the
-stamp automatically rather than let it carry forward.
+is why a change to the environment should drop the stamp
+automatically.
 :::
 :::
 
@@ -1197,9 +1197,8 @@ axes, the package backend present or absent, the container
 environment present or absent, and asserts, for each, that
 the result passes `R CMD check`, is a loadable workspace,
 and sits at its stated level. The matrix has the following
-shape, with the axes being the capture axes and CI serving
-as the harness that runs the matrix rather than a dimension
-of it.
+shape. Its axes are the capture axes; CI is the harness
+that runs the matrix, not a dimension of it.
 
 | Backend (`renv`) | Environment (Docker) | Level | Assertion |
 |---|---|---|---|
@@ -1215,13 +1214,11 @@ combination and must reach L2 on its own, it is checked as
 a peer of that combination rather than added as a fourth
 column. Second, the configuration that renders a report
 with `renv` on but Docker off is, in practice, the most
-error-prone, and it is exercised explicitly rather than
-left to chance. Because container builds under emulation
-are expensive, the matrix is tiered: the host-only rows run
-on every pull request, and the rows that build an image run
-on merge and on a nightly schedule. The framework thus
-checks its own level claims the way a compendium checks
-its own outputs.
+error-prone, and it is exercised explicitly. Because
+container builds under emulation are expensive, the matrix
+is tiered: the host-only rows run on every pull request,
+and the rows that build an image run on merge and on a
+nightly schedule.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: testing the claim, not just the tool
@@ -1292,7 +1289,7 @@ re-renders `vignettes/intro.Rmd` (or whichever vignette
 files exist) on every push, confirming that the vignette's
 code still runs against the restored library, exactly the
 check a manuscript's report receives. Only a package with
-neither a report nor a vignette has genuinely nothing for
+neither a report nor a vignette has nothing for
 the render gate to do.
 :::
 :::
@@ -1315,7 +1312,7 @@ recording what was run and what was reproduced. The value
 of the exercise lies exactly in its independence: the
 codechecker carries none of the author's undeclared state,
 which is the same property that makes a CI runner effective,
-now embodied in a person rather than a virtual machine. In
+here held by a person instead of a virtual machine. In
 a parallel development, major computing venues have
 formalized artifact review and badging, under which a
 submission's computational artifacts are evaluated and, if
@@ -1327,9 +1324,9 @@ to compel deposition and checking [@stodden2018], and the
 ten-rules literature places independent re-execution among
 its recommendations [@sandve2013].
 
-These schemes validate; they do not capture. They add no
-lockfile and no container. What they add is a second, and
-independent, execution of the analysis. Continuous
+These schemes validate and capture nothing: they add no
+lockfile and no container, only a second, independent
+execution of the analysis. Continuous
 integration is a machine that is not
 yours; independent verification is a person who is not you;
 and both catch, at the last responsible moment before a
@@ -1416,7 +1413,7 @@ loosened until it passes.
 ## Check your understanding: which gate, and why
 
 In the worked example, `R CMD check` passes even though
-`sandwich` is genuinely unpinned. Why does this gate miss
+`sandwich` is in fact unpinned. Why does this gate miss
 the defect that the dependency-manifest gate catches,
 and is that a flaw in `R CMD check`?
 
@@ -1428,9 +1425,9 @@ the chapter. `R CMD check` runs on the package `R CMD
 build` produces, and `.Rbuildignore` excludes
 `analysis/`, so the check never parses, runs, or scans the
 script that calls `library(sandwich)`. The gate is doing
-exactly what it is specified to do, checking the package
-skin; the defect lives one directory outside that skin,
-which is precisely why a compendium needs a second gate
+what it is specified to do, checking the package skin;
+the defect lives one directory outside that skin, which
+is why a compendium needs a second gate
 that does read `analysis/`.
 :::
 :::
@@ -1501,9 +1498,9 @@ shows exactly which package or version entries changed
 between the two commits, narrowing 'something in the
 environment changed' to the one or two packages responsible.
 
-If the analysis is a `targets` pipeline (@sec-pipelines)
-rather than a single script, the diagnostic moves from
-history into the dependency graph. `tar_outdated()` lists
+If the analysis is a `targets` pipeline (@sec-pipelines),
+the diagnostic moves from history into the dependency
+graph. `tar_outdated()` lists
 which targets the pipeline considers stale and therefore
 due to rerun; `tar_visnetwork()` draws the same information
 as a graph, so the analyst can see where in the chain of
@@ -1622,12 +1619,12 @@ cat('Result:', result, '\n')
 ```
 
 The injected package is named, the step would stop with a
-nonzero exit status in real CI, and the failure points
-exactly at the undeclared dependency, which is what the
+nonzero exit status in real CI, and the failure points at
+the undeclared dependency, which is what the
 dependency-manifest gate is for. Restoring `used` to its
 real value (dropping the injected `sandwich`) returns the
-gate to green, exactly as reverting the offending commit
-would on a real runner.
+gate to green, as reverting the offending commit would on
+a real runner.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what this demonstration does and does not show
@@ -1646,7 +1643,7 @@ right ones as missing, but it says nothing about whether a
 real workflow file invokes that logic correctly, restores
 the right library before running it, or actually stops the
 job on failure rather than printing a warning and
-continuing. Those are exactly the cross-boundary and
+continuing. Those are the cross-boundary and
 `error_on` pitfalls the chapter described earlier, and only
 an actual CI run, on an actual fresh runner, can confirm
 them.
@@ -1705,7 +1702,7 @@ saved value.'
 
 *Watch for.* A step that hashes the rendered PDF or HTML.
 The model will often reach for the most visible output, the
-report, which is exactly the wrong thing to hash because its
+report, which is the wrong thing to hash because its
 bytes carry timestamps and font identifiers and change on
 every render.
 
@@ -1737,8 +1734,8 @@ exercise the code paths that matter, not merely one.
 In each case the model is competent at the syntax and
 unreliable about the semantics,
 and the semantics, what the check actually proves and
-whether it can fail for the right reason, are exactly what
-the analyst must verify and cannot delegate.
+whether it can fail for the right reason, are what the
+analyst must verify and cannot delegate.
 
 ## Exercises
 
@@ -2036,8 +2033,8 @@ ships `check` (`R CMD check --as-cran`, building first) and
 `check-renv` (the dependency-manifest gate, run on the
 host) as real targets, along with archetype-specific render
 targets such as `docker-render-book` for a Quarto book, so
-the two `.yml` files above can call them as written rather
-than reimplementing the check logic inline. There is no
+the two `.yml` files above can call them as written,
+without reimplementing the check logic inline. There is no
 plain `make render` target; the render step's actual name
 depends on the archetype (`docker-render-qmd` for a single
 report, `docker-render-book` for a book, `docker-render` for
@@ -2105,7 +2102,7 @@ is written by the author, so it tests what the author
 thought to test, in an environment the author specified,
 against outputs the author chose to compare. A workflow
 that installs a system library the Dockerfile omits, or
-that quietly skips the expensive analysis and checks only
+that silently skips the expensive analysis and checks only
 the cheap one, or that compares against a baseline the
 author generated after the bug was introduced, passes
 indefinitely while the compendium is not reproducible at

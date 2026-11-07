@@ -177,7 +177,7 @@ line, though at real cost in effort. The reason for a
 change is not recoverable from the files at all; it lived
 only in the person who made the change, and once they
 forget it or leave the project, it is gone for good.
-Version control is valuable precisely because the reason
+Version control is useful precisely because the reason
 is the one loss that no amount of careful reading of the
 files themselves can undo.
 :::
@@ -284,7 +284,7 @@ collected here for reference.
   changes.
 - **`.gitignore`.** A file listing path patterns that
   git should not track, used to keep derived outputs,
-  large data, and, critically, sensitive files out of
+  large data, and, above all, sensitive files out of
   the history.
 - **Branch.** A movable name for a line of
   development. The default branch is conventionally
@@ -350,7 +350,7 @@ A commit message reads 'Tighten outlier threshold to 2
 SD per reviewer 2's comment.' Which of the three things
 the `FINAL`-file drawer lost does this message, by
 itself, restore, and which two does it leave to the rest
-of git's model rather than to the message?
+of git's model?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -462,8 +462,7 @@ staged changes, with `git commit`, attaching the
 message. The staging step is not ceremony: it lets a
 single commit hold a coherent subset of the work in
 progress, so that an afternoon's editing across several
-concerns can be recorded as several focused commits
-rather than one indiscriminate lump.
+concerns can be recorded as several focused commits.
 
 ```bash
 # edit analysis.R, then see what has changed
@@ -1070,7 +1069,7 @@ performed only locally is always safe to try again; the
 discarded commits are not immediately deleted and can
 usually be found with `git reflog` if the reset turns out
 to be wrong. The same reflog is what makes `--hard`
-survivable rather than reckless on an unshared branch.
+survivable on an unshared branch.
 
 `git revert <commit>` takes the opposite approach: instead
 of moving `HEAD` backward, it makes a *new* commit whose
@@ -1111,7 +1110,7 @@ git merge sensitivity-analysis
 # commit the result.
 ```
 
-`git status` reports the file as having "unmerged paths,"
+`git status` reports the file as having 'unmerged paths',
 and the file itself now contains both versions, separated
 by conflict markers that git inserts directly into the
 text:

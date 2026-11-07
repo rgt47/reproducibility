@@ -5,9 +5,8 @@ Its examples use R, the `zzcollab` framework, Docker, and
 `renv`, each introduced in the chapter that first requires
 it.
 
-Fittingly for its subject, the book is built as a Quarto
-project: the sources render to HTML and PDF with `quarto
-render`, and wherever the book presents a computed figure
+The book is built as a Quarto project: the sources render
+to HTML and PDF with `quarto render`, and wherever the book presents a computed figure
 or table, that result is generated at build time from the
 code shown beside it, so the printed output and the code
 that produced it cannot drift apart. The table below

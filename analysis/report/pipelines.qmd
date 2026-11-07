@@ -510,7 +510,7 @@ repeating.
 @tbl-pipeline-steps shows the bootstrap costing many times
 more than the model fit. An analyst who changes only the
 color of a figure, then reruns the whole four-step chain
-by hand rather than through a pipeline, pays for which
+by hand, without a pipeline, pays for which
 step unnecessarily, and why does the ratio, rather than
 the absolute millisecond values, survive a change of
 machine?
@@ -527,8 +527,8 @@ differ, often by a large factor, on another machine or
 even on a repeated run of the same one. The ratio between
 the expensive step and the others is far more stable,
 because both numbers move together with the machine's
-speed, which is why the chapter reports the ratio as the
-figure worth trusting rather than the raw milliseconds.
+speed, which is why the chapter reports the ratio, and not
+the raw milliseconds, as the figure worth trusting.
 :::
 :::
 
@@ -563,7 +563,7 @@ silently turn that leading tab into spaces, and Make
 responds with `Makefile:2: *** missing separator. Stop.`
 To see it: take the four-rule Makefile below, replace the
 tab before one recipe line with eight spaces, and run
-`make`. To fix it for good rather than once, configure the
+`make`. For a permanent fix, configure the
 editor to preserve a literal tab inside files named
 `Makefile`, since the error gives a line number but not
 the real cause.
@@ -773,7 +773,8 @@ body of every function a target calls, and of the R
 expression in the target itself, so that editing
 `fit_model()` invalidates the `model` target, and
 everything downstream of it, even though no file has
-changed at all. This is what Make cannot do. A changed
+changed at all, which Make, seeing only files, cannot
+detect. A changed
 function invalidates exactly the targets that use it,
 directly or transitively, and no others; a change to
 `make_figures()` invalidates `figures` and `report` but
@@ -786,8 +787,8 @@ evaluation environment, as a call to `library()` would,
 and by default `targets` does not track a package's
 version or invalidate a target when that version changes.
 Version-sensitivity comes from the lockfile of
-@sec-dependencies, which is why Landau recommends `renv`
-alongside `targets` rather than in place of it.
+@sec-dependencies, which is why Landau recommends using
+`renv` alongside `targets`.
 
 Two commands drive the pipeline. To see the graph,
 `tar_visnetwork()` draws it as an interactive network,
@@ -915,7 +916,7 @@ a manually run analysis cannot guarantee, because the
 human running it may re-run some steps and forget others.
 The pipeline turns 'rebuild the analysis' from a
 remembered sequence into one command whose completeness is
-structural rather than remembered, and in doing so it
+structural, and in doing so it
 removes the 'did I re-run everything?' doubt that
 undermines every validation step. Like continuous
 integration, a pipeline captures no determinant and adds
@@ -982,7 +983,7 @@ replace.
 
 The weight a pipeline tool carries varies sharply across
 the research archetypes; @tbl-archetype-weight in
-@sec-compendium is the reference. It is most valuable for
+@sec-compendium is the reference. It is most useful for
 the **data-analysis** archetype's chain of transforms, run
 and re-run as the cleaning and the model are adjusted, and
 stronger still for a **simulation study**, where `targets`'
@@ -1153,8 +1154,7 @@ nothing, because everything depends on the data. A refinement to
 `figures` and `report`; `raw_data`, `cleaned`, and `model`
 are left untouched, the model fit, the expensive step,
 among them. In current versions of `targets` the console
-marks the untouched targets with a skip count rather than
-naming each one. A change to the wording of the
+reports the untouched targets only as a skip count. A change to the wording of the
 discussion in `report.Rmd` rebuilds `report` alone. At any
 moment `tar_outdated()`
 answers the question the manual workflow could never answer with
@@ -1203,9 +1203,8 @@ as an ordinary R object.
 This chapter has so far reasoned about pipelines through a
 composite analysis. Here is the same two-node graph, raw
 extract to cleaned cohort, applied to this book's own
-compendium, with the cost of each step measured rather than
-asserted, as @tbl-pipeline-steps did for the retinopathy
-example.
+compendium, with the cost of each step measured, as
+@tbl-pipeline-steps did for the retinopathy example.
 
 ```{r}
 #| label: tbl-cohort-pipeline
@@ -1236,8 +1235,7 @@ made to `cohort_raw.csv` today, by hand, the only way to
 know that `clean_cohort()`'s output had gone stale would be
 to remember to re-run this cell, which is exactly the
 end-to-end doubt the orientation opened with, now visited
-on the book's own running example rather than a hypothetical
-one. Expressing this pair as a `tar_target(raw, load_cohort(cohort_path))`
+on the book's own running example. Expressing this pair as a `tar_target(raw, load_cohort(cohort_path))`
 and `tar_target(cleaned, clean_cohort(raw))` would make that
 staleness mechanical rather than remembered, at the cost of
 a two-target scaffold in the pattern of the five-target
@@ -1534,8 +1532,8 @@ set usually forgot that invalidation is transitive.
 
 The prediction is easy here and was hard in exercise 1,
 on the same analysis, because `targets` made the graph
-visible: the reader is reading a dependency structure
-rather than recalling one.
+visible: the reader now reads the dependency structure
+instead of recalling it.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1562,9 +1560,8 @@ anything is stale.
 `targets` avoids this because it hashes the *bodies of the
 functions each target calls*, and the R objects those
 targets produce, rather than the modification times of a
-declared file list. The dependency is discovered from the
-code rather than declared by the analyst, so it cannot be
-declared incompletely.
+declared file list. Because the dependency is discovered
+from the code, the analyst cannot declare it incompletely.
 
 The fair statement of the comparison is that a correctly
 and completely written Makefile would catch this too. The

@@ -473,8 +473,7 @@ snapshot. The project's generated `.Rprofile` installs
 an exit hook that snapshots the library when an
 interactive session ends, and restores missing packages
 when a session begins. A package installed during
-analysis is thus captured rather than lost. The automation
-removes the two most common ways the library and the
+analysis is thus captured. The automation removes the two most common ways the library and the
 lockfile drift apart.
 
 ::: {.callout-tip icon=false}
@@ -550,8 +549,7 @@ $$
 Read left to right, it says that every package the code
 calls must be declared in `DESCRIPTION`, and every
 declared dependency must be pinned in the lockfile. The
-lockfile is the largest set because it additionally
-records the transitive dependencies that the analyst
+lockfile is the largest set because it also records the transitive dependencies that the analyst
 never named directly. Base and recommended packages,
 which every R installation provides, are excluded from
 the code set, so the first inclusion concerns only
@@ -714,8 +712,8 @@ The most common way for a dependency check to fail is
 subtle. It scans the analysis code, pronounces the
 project consistent, and overlooks a package that is used
 only in a vignette or in the rendered manuscript, which
-is exactly where a documentation build quietly breaks on
-a fresh machine. `zzrenvcheck` deliberately scans more
+is exactly where a documentation build breaks on a fresh
+machine. `zzrenvcheck` deliberately scans more
 widely than a plain code scan on this point.
 
 The scan does not look at `.R` scripts alone. It parses
@@ -728,9 +726,9 @@ package: the explicit `library(pkg)` and `require(pkg)`,
 the namespaced `pkg::function()`, and the roxygen2
 directives `@import` and `@importFrom` from which a
 package's `.Rd` help files are generated. In its strict
-mode it widens the search further, into the `tests/`,
-`vignettes/`, and `inst/` directories rather than the
-analysis directories alone. It is correspondingly careful
+mode it widens the search beyond the analysis
+directories, into the `tests/`, `vignettes/`, and `inst/`
+directories. It is correspondingly careful
 about what it ignores: `README` files and the example
 directories (`man/examples`, `inst/examples`) are skipped,
 since the install-and-demonstrate code they usually carry
@@ -875,8 +873,8 @@ With repositories pointed at a dated snapshot, an
 install run today and the same install run next year
 draw from an identical, frozen catalog. The
 lockfile above records exactly this URL in its
-`Repositories` block, so that a restore reproduces not
-only the versions but the source they came from. The
+`Repositories` block, so that a restore reproduces both
+the versions and the source they came from. The
 gain is twofold: fixity, because the catalog cannot
 drift, and speed, because binaries install in seconds
 where source builds take minutes. On Linux the binary
@@ -1150,8 +1148,8 @@ R installation and so need no pin at all, which leaves
 `tibble` as the one contributed package the scan finds.
 This is the L0 the cohort compendium has occupied since
 @sec-levels first placed it there: the code is locatable
-and its dependencies are now *known*, from a real scan
-rather than a guess, but nothing is yet pinned, because
+and its dependencies are now *known*, from a real scan,
+but nothing is yet pinned, because
 this repository carries no `renv.lock`. Running
 `renv::init()` followed by `renv::snapshot()` against these
 two files, and committing the lockfile it writes, is the

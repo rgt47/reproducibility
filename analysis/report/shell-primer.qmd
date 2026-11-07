@@ -137,8 +137,8 @@ cat out.txt
 
 This single character, `>` versus `>>`, is the difference
 between replacing a log file and growing one, and it is worth
-checking deliberately rather than guessing, because the failure
-mode of using `>` by mistake is silent: the file exists, it
+checking deliberately, because the failure mode of using `>`
+by mistake is silent: the file exists, it
 has content, and nothing in the command's own output signals
 that the previous content was discarded.
 

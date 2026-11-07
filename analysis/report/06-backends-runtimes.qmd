@@ -23,8 +23,7 @@ a reviewer who will install nothing, and name the single
 alternative, among Podman, Apptainer, Nix, the conda
 family, and Binder, that reaches the same pinned-environment
 rung @sec-containers reaches with Docker, keyed to the one
-constraint that actually binds rather than to a tool's
-reputation.
+constraint that actually binds.
 
 ```{r}
 #| include: false
@@ -238,7 +237,7 @@ Diagnosing the constraint and locating Nix on the correct
 axis do not excuse the analyst from reporting the rung
 honestly. At best Nix reaches L2, the pinned environment,
 and only once the declaration has actually been run; 'fully
-reproducible' overstates it precisely because no rebuild has
+reproducible' overstates it because no rebuild has
 been verified, which is this chapter's own honest-level
 warning in miniature.
 :::
@@ -289,7 +288,7 @@ The point is contested, which is why many institutions
 either license Docker Desktop or avoid it. Podman carries
 no such restriction. For an analyst
 whose institution has declined to license Docker Desktop,
-Podman reaches exactly the same L2 environment, from the
+Podman reaches the same L2 environment, from the
 same image, at no licensing cost.
 
 ### Apptainer
@@ -297,7 +296,7 @@ same image, at no licensing cost.
 Apptainer, known until its move to the Linux Foundation as
 Singularity, is the runtime built for high-performance
 computing [@kurtzer2017]. Kurtzer and colleagues designed
-it for precisely the setting that defeats Docker on a
+it for the setting that defeats Docker on a
 cluster. It runs unprivileged, integrating with the batch
 schedulers, message-passing libraries, and graphics
 processors that scientific clusters provide. A
@@ -373,7 +372,7 @@ over the same OCI image. The base image, its digest, and
 the package versions are all properties of the image, not
 of the program that runs it, and the level reached is L2
 in either case. Only the launching command differs
-(`podman run` for `docker run`). This is exactly why a
+(`podman run` for `docker run`). This is why a
 runtime swap is the cheapest of the three axes: it changes
 the runner and nothing else.
 :::
@@ -475,7 +474,7 @@ deterministic, reproducible environments that Docker,
 whose reproducibility depends on careful digest and
 snapshot discipline, approaches but does not guarantee
 by construction. On the minus side, the Nix
-model is genuinely alien to the audience, and although
+model is alien to the audience, and although
 `rix` hides much of the language, diagnosing a build that
 has failed still calls for some Nix knowledge. The first
 build is slow and consumes substantial disk. Nix is a host
@@ -495,21 +494,20 @@ input-addressed model, with a smaller R ecosystem; for
 the health scientist it is best understood simply as Nix's
 relation, reaching the same rung by the same idea.
 
-The conda family occupies a genuinely different middle
-ground, and it answers two constraints the container route
-handles awkwardly. Conda [@anaconda2023], with the faster
-resolver `mamba` and the lockfile-oriented `pixi`
-[@pixi2024], installs and runs directly on Windows, without
-the WSL2 or Hyper-V virtual machine a Docker (or Podman)
-image requires there. This is a genuine practical
-advantage, but it is not a guarantee that any given
-package is available: conda-forge's Windows (`win-64`)
-build coverage for R packages is narrower than its Linux
-coverage, so a pipeline that needs a package without a
-`win-64` build still needs a fallback, and 'reproduces
-on Windows' should be read as 'for the packages that
-conda-forge actually ships there' rather than as a blanket
-claim. Conda also spans R and Python
+The conda family occupies a different middle ground, and
+it answers two constraints the container route handles
+awkwardly. Conda [@anaconda2023], with the faster resolver
+`mamba` and the lockfile-oriented `pixi` [@pixi2024],
+installs and runs directly on Windows, without the WSL2
+or Hyper-V virtual machine a Docker (or Podman) image
+requires there. This is a practical advantage, but not a
+guarantee that any given package is available:
+conda-forge's Windows (`win-64`) build coverage for R
+packages is narrower than its Linux coverage, so a
+pipeline that needs a package without a `win-64` build
+still needs a fallback, and 'reproduces on Windows'
+should be read as 'for the packages that conda-forge
+actually ships there'. Conda also spans R and Python
 in a single environment, so the mixed-language analyst
 need not bridge two toolchains.
 For a Windows-only laboratory running a pipeline that mixes
@@ -520,7 +518,7 @@ than from CRAN or the Posit Package Manager, and it pins
 less strictly than Nix. It is a middle-ground option, more
 reproducible than an unpinned
 install and less exacting than Nix. It is the right choice
-precisely when its two native strengths, running directly
+when its two native strengths, running directly
 on Windows and spanning two languages, are the binding
 constraint and the required packages are available there.
 
@@ -600,7 +598,7 @@ Here again the archetype guides the choice. A **blog** or a
 and its results inspected by others, benefits most from
 browser execution. A reader of a teaching post, or a
 reviewer of a manuscript, re-runs the analysis in Binder
-with nothing to install, which is exactly the low-friction
+with nothing to install, which is the low-friction
 path such archetypes want. A blog that renders many posts
 gains the most, since each post becomes independently
 re-runnable by a reader at a link. A **simulation** archetype,
@@ -765,9 +763,9 @@ backend_artifacts
 
 Only the devcontainer file exists, and its own comments say
 plainly that it is a stand-in: it starts from a generic
-`rocker/verse:4.4.0` image rather than one built from this
+`rocker/verse:4.4.0` image, not one built from this
 compendium's own pinned recipe, because that recipe does not
-exist yet. That one file is still a genuine instance of axis
+exist yet. That one file is still an instance of axis
 three, a development container: it lets a collaborator open
 an editor already inside a working R environment, at the
 cost of pinning nothing specific to the cohort analysis
@@ -880,7 +878,7 @@ axes makes that possible?
 ## Answer
 
 All three destinations operate on, or around, the same
-pinned recipe rather than reinstalling it: axis one swaps
+pinned recipe, and none reinstalls it: axis one swaps
 only the program that runs the image (Podman, Apptainer),
 and axis three moves where that same image runs (a hosted
 server), and neither axis asks what packages or base layer
@@ -947,8 +945,8 @@ compliant cluster would submit the script with `sbatch
 run-cohort.sh`.
 
 The `apptainer exec` line is the same command and the same
-flag met in the Pitfall above, applied here to a batch job
-rather than an interactive run. Slurm's own job environment
+flag met in the Pitfall above, applied here to a batch
+job. Slurm's own job environment
 carries login-node variables, module loads, and whatever a
 cluster's site-wide profile sets, into the job by default,
 which is the batch-system version of the leakage the
@@ -1015,7 +1013,7 @@ where each stands.
 - *Watch for.* A model may drop the `--platform` flag, may
   invent an Apptainer `--volume` syntax that differs from
   the real one, or may translate a mutable tag rather than
-  the digest, quietly undoing the pin.
+  the digest, silently undoing the pin.
 - *Verification.* Run the translated command and confirm
   it executes the analysis; confirm the digest, not a tag,
   appears in the Apptainer `docker://` reference; and
@@ -1129,7 +1127,7 @@ word.
 is a property of what is *captured*, and the image is the
 capture. The base image, its digest, the installed package
 versions, and the determinism variables are all properties
-of the image rather than of the program that launches it,
+of the image, not of the program that launches it,
 so swapping the launcher changes nothing that the ladder
 grades. The analysis sits at L2 under either runtime.
 
@@ -1159,7 +1157,7 @@ what makes it acceptable on a shared HPC system where the
 user is not an administrator; the scheduler runs
 `apptainer exec analysis.sif ...` directly. As an
 archival deposit, the SIF is a single immutable file
-with a checksum, which is exactly the shape an archive
+with a checksum, which is the shape an archive
 wants: it can be uploaded to a repository, assigned a DOI,
 and verified on download by rehashing.
 
