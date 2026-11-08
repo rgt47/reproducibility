@@ -113,7 +113,8 @@ plot_determinant_stack <- function(captures = character(0),
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(axis.text.x = ggplot2::element_blank(),
                   panel.grid = ggplot2::element_blank(),
-                  legend.position = 'bottom')
+                  legend.position = 'bottom',
+                  plot.title.position = 'plot')
 }
 
 #' Generate alt text for [plot_determinant_stack()]

@@ -63,14 +63,19 @@ nrow(cohort)
 **Autogradable value:** `nrow(cohort)` = `337`.
 
 **Rubric.** A correct answer reports 337 rows and places
-the compendium at L0 (locatable). The missing artifact for
-the next rung, L1, is a lockfile (`renv.lock`) recording
-the exact version of `tibble`, `utils`, and every other
-package the analysis calls.
+the compendium from the `file.exists()` checks the exercise
+asks for. On the repository as of 2026-11-07, `renv.lock` is
+present and `Dockerfile` absent, so the compendium is at L1
+(package-pinned), and the missing artifact for L2 is a
+container recipe. The chapter's `repo_state` chunk computes
+this at render time and is the key. The lockfile records
+`tibble` and every other non-base package; base packages
+such as `stats` and `utils` have no record.
 
 **Common errors.** Claiming L1 because the code is under
 version control (version control is L0); confusing 'pinned'
-with 'committed'.
+with 'committed'; reporting a rung from memory rather than
+from the checks.
 
 ## Chapter 4: Version Control {#sec-ig-vc}
 
@@ -82,20 +87,32 @@ intersect(c('mrn', 'patient_name', 'dob'), names(raw))
 #> [1] "mrn"          "patient_name" "dob"
 ```
 
+```bash
+git check-ignore -v analysis/data/raw_data/cohort_raw.csv
+#> .gitignore:40:analysis/data/raw_data/*   analysis/data/raw_data/cohort_raw.csv
+git log --all --oneline -- inst/testdata/cohort_raw.csv
+```
+
 **Autogradable values:** `nrow(raw)` = `338`; all three
-identifier columns present.
+identifier columns present; the excluding line is the
+directory pattern `analysis/data/raw_data/*` (the line
+number may differ if `.gitignore` is edited).
 
 **Rubric.** A correct answer reports 338 rows (the raw
-extract before cleaning, including the planted duplicate)
-and names all three identifier-shaped columns. It also
-explains that in a real project any one of them would
-require gitignoring the raw directory. The extract is synthetic, so
-the current gitignore entry is correct practice, not a
-violation.
+extract before cleaning, including the planted duplicate),
+names all three identifier-shaped columns, and identifies
+the directory pattern, not a single filename, as what
+excludes the extract. For the `git log` step it explains
+that the oldest commit listed holds an earlier copy of the
+extract at `inst/testdata/`, identifier columns included:
+the ignore pattern protected one path, and the same bytes
+entered the history through a second path. The current
+fixture at that path carries no identifier columns, but the
+old copy remains in history until the history is rewritten.
 
 **Common errors.** Using `nrow(cohort)` (337) instead of
-`nrow(raw)` (338); not distinguishing the raw from the
-cleaned extract.
+`nrow(raw)` (338); concluding from `git check-ignore` alone
+that the identifier columns never entered the history.
 
 ## Chapter 5: The Research Compendium {#sec-ig-ch03}
 
@@ -106,28 +123,28 @@ nrow(raw)
 #> [1] 338
 nrow(cohort)
 #> [1] 337
-pillars <- c(
-  file.exists('Dockerfile'),
-  file.exists('renv.lock'),
-  file.exists('.Rprofile')
-)
-sum(pillars)
-#> [1] 1
 ```
 
+The pillar count comes from the chapter's pillars chunk,
+which checks five artifacts (`Dockerfile`, `renv.lock`,
+`.Rprofile`, `R/cohort.R`, and the generator
+`analysis/scripts/simulate_cohort.R`) and prints
+`sum(pillars)`; that output is the key.
+
 **Autogradable values:** `nrow(raw)` = `338`;
-`nrow(cohort)` = `337`; `sum(pillars)` = `1`.
+`nrow(cohort)` = `337`; `sum(pillars)` = `4` on the
+repository as of 2026-11-07.
 
-**Rubric.** A correct answer reports all three numbers and
-identifies `.Rprofile` as the one directly-checked pillar
-present. Adding the two pillars the script does not check
-(source code under version control and the committed
-generator) brings the total to three of five, with
-`Dockerfile` and `renv.lock` absent.
+**Rubric.** A correct answer reports the three numbers,
+names the missing pillar (`Dockerfile`), and places the
+compendium at L1: the lockfile is present and the container
+recipe is not. Four of five pillars is L1, not 80 percent of
+the way to L2, because the rung is set by which pillar is
+missing, not by how many are present.
 
-**Common errors.** Claiming the compendium is at L1 because
-three pillars are present; not distinguishing which pillars
-the script checks from the full five-pillar count.
+**Common errors.** Placing the compendium at L2 or
+'between rungs' on the pillar count; checking the gitignored
+CSV rather than the committed generator.
 
 ## Chapter 6: Dependencies {#sec-ig-ch04}
 
@@ -136,23 +153,25 @@ deps <- renv::dependencies(
   c('R/cohort.R', 'analysis/scripts/simulate_cohort.R')
 )
 unique(deps$Package)
-#> [1] "stats"  "tibble" "utils"
+#> [1] "stats"    "survival" "tibble"   "utils"    "withr"
 ```
 
-**Autogradable values:** `unique(deps$Package)` =
-`c("stats", "tibble", "utils")`; contributed packages
-requiring a lockfile entry = `"tibble"` only.
+**Autogradable values:** five referenced packages;
+contributed (non-base) packages = `survival`, `tibble`,
+`withr`, so the count is `3`. The chapter's
+`tbl-cohort-deps` chunk computes both at render time.
 
-**Rubric.** A correct answer identifies three referenced
-packages, explains that `stats` and `utils` are base
-packages excluded from the lockfile, and concludes that
-`tibble` is the only contributed package. `simulate_cohort.R`
-contributes zero rows because every function it calls is a
-base-package function or a primitive.
+**Rubric.** A correct answer applies the chapter's counting
+rule: base packages are those `installed.packages(priority =
+'base')` lists (`stats`, `utils`), and recommended packages
+such as `survival` count, because `renv` records them. It
+notes that all three are pinned in the committed lockfile.
+`simulate_cohort.R` contributes no rows because it has no
+`library()` or `pkg::` reference.
 
-**Common errors.** Listing all three packages as needing
-lockfile entries; not checking the generator script
-separately.
+**Common errors.** Excluding `survival` as a recommended
+package; listing `stats` and `utils` as needing lockfile
+entries; not checking the generator script separately.
 
 ## Chapter 7: Containers {#sec-ig-ch05}
 
@@ -172,8 +191,10 @@ file.exists('Dockerfile')
 `file.exists('Dockerfile')` = `FALSE`.
 
 **Rubric.** A correct answer reports all three values. The
-`Dockerfile` is absent because the compendium has not yet
-reached L2. The `ENV` line needed for thread-count
+`Dockerfile` is absent (as of 2026-11-07), so the
+compendium is at L1, with the lockfile recording R 4.6.1; a
+recipe for L2 starts from `rocker/r-ver:4.6.1`, matching
+the lockfile's R. The `ENV` line needed for thread-count
 reproducibility is `OMP_NUM_THREADS=1` together with
 `OPENBLAS_NUM_THREADS=1`.
 
@@ -194,15 +215,17 @@ c(
     file.path(repo_root, '.devcontainer', 'devcontainer.json')))
 ```
 
-**Expected result:** `FALSE, FALSE, FALSE, TRUE` (only the
-devcontainer file present at the time of writing).
+**Expected result:** `TRUE, FALSE, FALSE, TRUE` as of
+2026-11-07 (`renv.lock` and the devcontainer present); the
+chapter's artifact-check chunk prints the current values.
 
 **Rubric.** A qualitative answer is expected here. A correct
-answer identifies Nix via `rix` (axis two) as the backend
-that could lift the compendium to L2 today without a Docker
-image. The reason is twofold: axis one needs an image to
-swap the runtime on, and there is none yet, and axis
-three's only existing artifact pins a generic environment.
+answer places the compendium at L1 (lockfile present) and
+identifies Nix via `rix` (axis two) as the backend that could
+lift it to L2 without a Docker image. The reason is twofold:
+axis one needs an image to swap the runtime on, and there is
+none yet, and axis three's only existing artifact pins a
+generic environment.
 
 **Common errors.** Treating the devcontainer as evidence of
 L2 (it points at a generic image, not a compendium-specific
@@ -300,12 +323,16 @@ assertions that pass trivially (e.g., `expect_true(TRUE)`).
 ## Chapter 12: Continuous Integration {#sec-ig-ch09}
 
 ```r
-used <- unique(renv::dependencies('R/cohort.R')$Package)
+script <- 'R/cohort.R'
+locked <- names(renv::lockfile_read('renv.lock')$Packages)
+used <- unique(renv::dependencies(script)$Package)
 base_pkgs <- rownames(installed.packages(priority = 'base'))
-missing <- setdiff(used, c('tibble', 'ggplot2', 'stats',
-                            'utils', base_pkgs))
+missing <- setdiff(used, c(locked, base_pkgs))
 length(missing)   # 0
 ```
+
+The chapter's solution box executes these lines at render
+time (chunk `ci-ex7-key`), so the value it prints is the key.
 
 **Autogradable values:** `length(missing)` = `0`;
 after appending `library(sandwich)`, `missing2` =
@@ -323,30 +350,33 @@ testing the planted `library(sandwich)` scenario.
 
 ## Chapter 13: Archiving and Sharing {#sec-ig-ch10}
 
-```r
-file.exists('LICENSE')
-#> [1] TRUE
-file.exists('DESCRIPTION')
-#> [1] TRUE
-any(grepl('raw_data', readLines('.gitignore')))
-#> [1] TRUE
+The chapter's chunk `cohort-deposit-checks` executes the
+checks at render time; its printed vector is the key. On the
+repository as of this guide it reports `LICENSE`,
+`DESCRIPTION`, and `renv.lock` present, no `Dockerfile` and
+no `.dockerignore`, and both the extract and an invented
+second filename ignored.
+
+```bash
+git check-ignore --no-index -v analysis/data/raw_data/cohort_raw.csv
+git check-ignore --no-index -v analysis/data/raw_data/my_extract.csv
 ```
 
-**Autogradable values:** all three booleans = `TRUE`.
+**Autogradable values:** both commands name the same
+directory pattern, `analysis/data/raw_data/*`.
 
-**Rubric.** A correct answer reports all three `TRUE` and
-explains that none of the three file-system findings would
-need to change for real patient-level data. `LICENSE` and
-`DESCRIPTION` are needed regardless. The `.gitignore` entry
-is already correct practice: the CSV is generated from a
-committed script rather than tracked directly, matching the
-pattern the chapter prescribes for data with
-identifier-shaped columns. What changes for real data is
-the deposit itself (a data-availability statement and a
-synthetic stand-in, rather than the real extract), not the
-file-system checks.
+**Rubric.** A correct answer shows that the invented
+filename is ignored, and explains why that is the check that
+matters: a rule naming one file protects only that file,
+while the directory pattern protects any extract saved
+there, and a text search of `.gitignore` cannot tell the two
+apart. It then names at least one check that must still
+change or be added before real data: a `.dockerignore` that
+excludes the data directory must exist before any
+`Dockerfile` copies the project into an image, and the
+deposit itself changes (a data-availability statement and a
+synthetic stand-in in place of the extract).
 
-**Common errors.** Stating that the third check would need
-to change (it already demonstrates correct practice);
-confusing the file-system audit with the deposit
-decision.
+**Common errors.** Testing only the existing filename;
+stating that no check needs to change for real data;
+confusing the file-system audit with the deposit decision.

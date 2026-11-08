@@ -21,8 +21,8 @@ plan was written.
 1. Parameters. 2. Evidence labels and method. 3. Stage 1 inputs.
 4. Executive summary. 5. Findings 29 to 45. 6. Correctness register.
 7. Topic additions. 8. House rules and render checks.
-9. Phases 19 to 25. 10. What not to do. 11. Decisions D13 to D24.
-12. Limitations. The agents' reports are in `docs/third-review/`;
+9. Phases 19 to 25. 10. What not to do. 11. Decisions D13 to D25.
+12. Implementation record. 13. Limitations. The agents' reports are in `docs/third-review/`;
 every finding below cites them by file name.
 
 ## 1. Parameters
@@ -696,7 +696,52 @@ AskUserQuestion once Section 7 is complete.
 | D23 PDF answers | End of each chapter, PDF only | Phase 24 |
 | D24 PDF tagging | Trial the `book` class with `pdf-standard: ua-2`, measure, adopt only if acceptable | Phase 24, on its own branch |
 
-## 12. Limitations
+D25 (reopened Phase 0, author, 2026-11-07): `CITATION.cff` keeps
+`CC-BY-NC-SA-4.0`; its abstract states the dual licensing, and
+Chapter 13 no longer claims a Zenodo deposit would record the code
+license correctly from that file.
+
+## 12. Implementation record
+
+### Phase 19 (E1, Tier 1), branch `phase-19-tier1`, 2026-11-07
+
+Five agents edited disjoint chapter files from a shared brief; the
+lead made the shared-file changes and verified. Each line states
+how the item was checked.
+
+| Item | Result | Evidence |
+|---|---|---|
+| T1-1 one-file ignore | `.gitignore` now ignores `analysis/data/raw_data/*` except `README.md`; Ch 13 checks an invented second filename with `git check-ignore`; exercise, solution, and key rewritten | V: `git check-ignore --no-index -v` on three names; README not ignored |
+| T1-2 LLM rule | `_llm-rule.qmd` (institution, IRB, and agreement must all permit; NIH NOT-OD-25-081 stated accurately) included in all 12 chapters with an LLM section; chapter-specific sentences kept | V: 12 includes by grep; old wording absent |
+| T1-3 GxP rewrite | 'Regulated records' warning callout in the PHI response, step 3; cheat-sheet row | I |
+| T1-4 digest | index versus manifest digest; pin the index and always pass `--platform linux/amd64`; Apple Silicon section moved after the pinning section; recipe computed from the lockfile (`rocker/r-ver:4.6.1`) | I; V: old wording absent by grep; agent ran the inline expressions |
+| T1-5 Apptainer | `--cleanenv --no-home --bind "$PWD"` with `Rscript --vanilla`; Slurm script passes `SLURM_*` back with `--env`; check answer and cheat sheet corrected | I (answer read in full); Apptainer not run |
+| T1-6 reset | `--hard` no longer called safe; reflog recovers commits, not uncommitted edits | I |
+| T1-7 Cox oracle | `inst/tinytest/test-fit-cox.R` added (5 assertions, complete-case oracle plus a metamorphic check); chapter text matches it | V: suite 357/357 |
+| T1-8 PHI rule | negation restored | I |
+| T1-9 CFR | 'discern'; IQ/OQ/PQ attributed to qualification practice; FDA 2003 scope guidance added to `references.bib` (`fdapart11scope2003`, URL returns 200); Validation Hub sentence corrected | V: URL; I: text. Guidance title from memory, Phase 25 |
+| T1-10 own state | repository statements computed inline in Chs 3, 4, 5, 6, 7, 8, 10, 13 and the colophon; instructor keys for Chs 3 to 8, 12, 13 updated; test fixture replaced (D16) | V: fixture reproduces the baseline at 1e-8; agents ran every inline expression |
+| T1-11 CITATION.cff | see D25 | I |
+
+Also done in this phase, because the clean-render checks of Section
+8 required it: the three accidental example lists rewrapped and a
+lint added to `test-manuscript-invariants.R` (28 assertions); the 12
+cheat-sheet links pointed at their anchors; and the 14 R warnings in
+Chapter 5 traced to a Unicode circle in `fig-gates` that the PDF
+device cannot encode, replaced by point shapes that also separate
+the universal and selective statuses by shape (Finding 45, partly).
+
+Not done, carried forward: the Finding 33 items other than those
+above are confirmed still present by the readers and go to Phase 20
+(pacman, Chapter 9 hashing, `.Rprofile` seed, 'not statistical',
+`LC_NUMERIC`, `testthat`) and Phases 21 and 22 (glossary notes,
+trusted research environments); git-dependent chunks in Chapters 4
+and 13 fall back to an 'unavailable' wording when git is absent at
+render time, which CI should be checked for; the nested callout in
+the Chapter 4 PHI list was checked in the rendered HTML and PDF
+(below).
+
+## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human
   second readers are needed for the regulatory, restricted-data, and

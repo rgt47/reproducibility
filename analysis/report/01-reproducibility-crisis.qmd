@@ -271,8 +271,7 @@ use.
   updated over time.
 - **Research compendium.** The self-describing bundle
   of code, data, and text that travels as the unit of
-  a reproducible analysis, developed in
-  @sec-compendium.
+  a reproducible analysis, developed in @sec-compendium.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -829,7 +828,11 @@ hazard, the `stringsAsFactors` default of R 4.0.0. The
 file `R/cohort.R` closes it the way this chapter has
 argued an analyst should, by setting the argument
 explicitly rather than trusting whatever the installed R
-happens to default to.
+happens to default to. The extract itself is not in the
+repository, only the script that generates it, so a
+reader with a fresh clone first runs
+`Rscript analysis/scripts/simulate_cohort.R` from the top
+directory to write `analysis/data/raw_data/cohort_raw.csv`.
 
 ```{r}
 raw <- load_cohort('../data/raw_data/cohort_raw.csv')
@@ -885,17 +888,12 @@ We turn finally to the use of a large language model as
 an assistant. A model is a capable assistant for the
 material of this chapter, provided the analyst treats its
 output as a draft to be verified rather than an authority
-to be trusted. One rule governs every prompt in this
-book. Never paste or upload protected health information,
-identifiable data, or data under a data use agreement,
-nor outputs derived from them, into a model unless the
-endpoint is approved by the reader's institution for that
-data. Describe the structure instead, with column names,
-types, and a small synthetic example. Coding agents that
-read the working tree see
-whatever files are there, so they belong only in projects
-whose data they are allowed to see. Three uses recur, and
-each carries a specific verification burden.
+to be trusted.
+
+{{< include _llm-rule.qmd >}}
+
+Three uses recur, and each carries a specific
+verification burden.
 
 **Prompt.** 'Explain the difference between
 reproducibility, replicability, and robustness, and

@@ -565,10 +565,13 @@ calls must be declared in `DESCRIPTION`, and every
 declared dependency must be pinned in the lockfile. The
 lockfile is the largest set because it also records the
 transitive dependencies that the analyst never named
-directly. Base and recommended packages, which every R
-installation provides, are excluded from the code set.
-The first inclusion therefore concerns only contributed
-packages.
+directly. Base packages, which every R installation
+provides at the R version's own version, are excluded
+from the code set. Recommended packages such as
+`survival` also ship with R, but they are versioned
+independently of it and `renv` records them in the
+lockfile, so they stay in. The first inclusion therefore
+concerns every package that is not base.
 
 The invariant needs one qualification. Its strict
 form, with `DESCRIPTION` as the binding middle term,
@@ -1138,12 +1141,11 @@ every day.
 
 ## The cohort's own dependencies
 
-The running cohort compendium has no `renv.lock` yet, so
-in this section we apply the chapter's method to it.
-`renv::dependencies()` scans a file for the packages its
-code actually references and returns one row per package
-found. That is exactly the scan `renv::snapshot()` would
-run before writing a lockfile.
+In this section we apply the chapter's method to the
+running cohort compendium. `renv::dependencies()` scans a
+file for the packages its code actually references and
+returns one row per package found. That is exactly the
+scan `renv::snapshot()` runs before writing a lockfile.
 
 ```{r}
 #| label: tbl-cohort-deps
@@ -1155,24 +1157,46 @@ deps <- renv::dependencies(
 )
 deps_tbl <- unique(deps[, c('Source', 'Package')])
 deps_tbl$Source <- basename(deps_tbl$Source)
+found_pkgs <- sort(unique(deps$Package))
+base_pkgs <- rownames(installed.packages(priority = 'base'))
+found_base <- intersect(found_pkgs, base_pkgs)
+contributed <- setdiff(found_pkgs, base_pkgs)
+has_lockfile <- file.exists('../../renv.lock')
+lock_pkgs <- if (has_lockfile) {
+  names(renv::lockfile_read('../../renv.lock')$Packages)
+} else {
+  character(0)
+}
+unpinned <- setdiff(contributed, lock_pkgs)
 knitr::kable(deps_tbl, row.names = FALSE)
 ```
 
-`R/cohort.R` references `stats`, `tibble`, and `utils`.
-Of these, `stats` and `utils` are base packages that ship
-with every R installation and so need no pin at all. That
-leaves `tibble` as the one contributed package the scan
-finds. This is the L0 the cohort compendium has occupied
-since @sec-levels first placed it there. The code is
-locatable and its dependencies are now *known*, from a
-real scan, but nothing is yet pinned, because this
-repository carries no `renv.lock`. Running `renv::init()`
-followed by `renv::snapshot()` against these two files,
-and committing the lockfile it writes, is the single step
-that would lift the cohort compendium to L1. This is
-exactly as the orientation above describes for the
-hypothetical registry study, and it is the step this
-book's own repository has not yet taken.
+`R/cohort.R` references
+`r knitr::combine_words(found_pkgs, before = '\x60')`.
+Of these, `r knitr::combine_words(found_base, before = '\x60')`
+are base packages: they ship with every R installation,
+their version is the R version's, and a lockfile records
+no entry for them. The counting rule for the rest is
+whether `renv` records the package in the lockfile. A
+recommended package such as `survival` also ships with
+the standard R binaries, but it is versioned and updated
+independently of R, so `renv` pins it like any other, and
+we count it as contributed. Under that rule the scan finds
+`r length(contributed)` contributed packages,
+`r knitr::combine_words(contributed, before = '\x60')`.
+The code is locatable and its dependencies are *known*,
+from a real scan rather than from memory. Whether they are
+also pinned is a question for the lockfile.
+`file.exists('renv.lock')` at the project root is
+`r has_lockfile`, and of the contributed packages the
+scan finds, the lockfile leaves `r length(unpinned)`
+unrecorded. The package-versions layer is therefore
+`r if (has_lockfile && length(unpinned) == 0) 'pinned, and the cohort compendium has reached at least L1' else 'not yet pinned, and the cohort compendium remains at L0'`.
+For a compendium without a lockfile, `renv::init()`
+followed by `renv::snapshot()`, and a commit of the
+lockfile it writes, is the single step that lifts it from
+L0 to L1, exactly as the orientation above describes for
+the hypothetical registry study.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: why no rows for the simulator
@@ -1204,20 +1228,9 @@ lockfile instruction can pin the wrong thing or nothing
 at all. Each of the following triples pairs a useful
 prompt with what the analyst must watch for and verify.
 
-::: {.callout-important}
-## Restricted data
+{{< include _llm-rule.qmd >}}
 
-One rule comes first (habit 3). Never paste or upload
-protected health information, identifiable records, or
-data held under a data use agreement, nor outputs derived
-from them, into a model unless your institution has
-approved that endpoint for that data. Dependency questions
-rarely need data at all. Where one does, describe the
-structure instead, the column names and types or a
-synthetic example. A coding agent that runs `renv`
-commands for you can also read the project's files, so run
-one only in projects whose data it is allowed to see.
-:::
+Dependency questions rarely need data at all.
 
 **Prompt.** 'My collaborator cloned our project and the
 packages are missing. Write the R command they should
@@ -1313,9 +1326,13 @@ recorded URL should then appear in the lockfile's
    `analysis/scripts/simulate_cohort.R` from the running
    cohort compendium, as @tbl-cohort-deps does. Report
    the number of distinct contributed (non-base) packages
-   the scan finds and name them. Then explain, from the
-   scan alone and without reading `simulate_cohort.R`,
-   why that file is permitted to contribute zero rows.
+   the scan finds and name them, counting a recommended
+   package such as `survival` as contributed because
+   `renv` pins it, and treating a package as base when
+   `installed.packages(priority = 'base')` lists it. Then
+   explain, from the scan alone and without reading
+   `simulate_cohort.R`, why that file is permitted to
+   contribute zero rows.
 
 8. This exercise returns to the version-control chapter's
    discipline of distinguishing what must be committed

@@ -1,0 +1,28 @@
+::: {.callout-important}
+## Restricted data
+
+One rule comes first (habit 3). Never paste or upload
+protected health information, identifiable records, or data
+held under a data use agreement, nor outputs derived from
+them, into a model or a coding agent unless three conditions
+all hold. The institution has approved that endpoint for
+that class of data. The IRB protocol and the consent permit
+the processing. The data use agreement, or the provider's
+terms, permits it. If any of the three is unclear, the
+answer is no.
+
+The third condition is the one most often missed.
+Institutional approval of a tool does not override the terms
+under which a data provider released the data. NIH, for
+example, treats sharing controlled-access data with
+third-party generative AI tools through prompts as a breach
+of the data use certification, and a model trained on such
+data as a derivative that may not be distributed without
+approval [@nihgenai2025].
+
+Describe the structure instead: the column names and types,
+or a small synthetic example generated from the data
+dictionary, never edited from real rows. A coding agent sees
+whatever files are in its working tree, so run it in a
+checkout or container where the real data is not mounted.
+:::

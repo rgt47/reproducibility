@@ -142,3 +142,17 @@ for (f in names(sources)) {
     )
   }
 }
+
+# An indented continuation line that begins with a cross-reference
+# label followed by a period or parenthesis is parsed by Pandoc as an
+# example-list marker inside a list item, and the reference vanishes
+# from the rendered page. Rewrapping prose produced three such lines.
+example_marker <- '^\\s+@[A-Za-z][A-Za-z0-9_:-]*[.)](\\s|$)'
+for (f in names(sources)) {
+  hits <- grep(example_marker, sources[[f]])
+  expect_equal(
+    length(hits), 0L,
+    info = paste('no list-item line begins with @label. in', f,
+                 if (length(hits)) paste('at line', hits[1]) else '')
+  )
+}

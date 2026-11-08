@@ -16,8 +16,10 @@ if (!exists('load_cohort')) {
 
 # Three tiers, in order of preference. The first two find the real
 # extract in the source tree, which is what the book's own teaching
-# describes; the third is a package-shipped fixture mirror
-# (inst/testdata/, byte-identical to the source-tree copy) that lets
+# describes; the third is a package-shipped fixture (inst/testdata/)
+# with the same rows and duplicate structure but no identifier
+# columns: patient_name and dob are dropped and each record number is
+# replaced by a pseudonymous study id. It lets
 # these tests actually run under R CMD check and test_package(),
 # where analysis/ does not exist because .Rbuildignore excludes it.
 # Without this tier, every cohort test silently reports zero

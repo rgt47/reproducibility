@@ -1263,6 +1263,26 @@ cohort_steps <- tibble(
 kable(cohort_steps, align = 'llrr')
 ```
 
+```{r}
+#| label: cohort-rung
+#| include: false
+has_lock <- file.exists('../../renv.lock')
+has_docker <- file.exists('../../Dockerfile')
+cohort_rung <- if (has_lock && has_docker) {
+  'L2'
+} else if (has_lock) {
+  'L1'
+} else {
+  'L0'
+}
+cohort_state <- c(
+  'neither a lockfile nor a Dockerfile',
+  'a lockfile but no Dockerfile',
+  'a Dockerfile but no lockfile',
+  'both a lockfile and a Dockerfile'
+)[1 + has_lock + 2 * has_docker]
+```
+
 The two functions are already, in effect, a two-rule
 pipeline. `clean_cohort()` consumes what `load_cohort()`
 produces, and nothing downstream exists yet. No later
@@ -1278,8 +1298,9 @@ and `tar_target(cleaned, clean_cohort(raw))` would make
 that staleness mechanical rather than remembered. The cost
 would be a two-target scaffold in the pattern of the
 five-target one shown in Exercise 3's solution below.
-Doing so would not move this compendium off the L0 rung
-@sec-levels places it at, since a pipeline pins no
+The repository holds `r cohort_state`, which places the
+compendium at `r cohort_rung`. Adding the pipeline would
+not move it off that rung, since a pipeline pins no
 determinant. It would only make the one existing
 transform trustworthy to rebuild without having to recall
 that it exists.
@@ -1302,10 +1323,9 @@ hashes the corrected CSV's new contents and the `cleaned`
 target depends on `raw`. No, the rung would not change.
 The pipeline would still pin no package version, no R
 runtime, and no operating system. The compendium would
-therefore remain at whichever rung the lockfile and the
-container, both still absent at this point in the book,
-would place it. The
-pipeline only guarantees that a rebuild, once triggered,
+therefore remain at `r cohort_rung`, the rung set by
+what the repository holds (`r cohort_state`), whatever
+`tar_outdated()` reports. The pipeline only guarantees that a rebuild, once triggered,
 rebuilds the right things.
 :::
 :::
@@ -1316,18 +1336,16 @@ A language model is a fluent author of Makefiles and
 `targets` pipelines. Its characteristic failures are worth
 anticipating, because they bear directly on the one
 discipline this chapter rests on, the honesty of the
-dependency declarations. A pipeline is described to a
-model by its structure: the scripts, the files each reads
-and writes, and the column names and types of the data.
-It is never described by pasting the data, a printed data
-frame, or a log of row-level output. Patient-level,
-identifiable, or agreement-restricted data and outputs
-derived from them go only to an endpoint the institution
-has approved for that data. A coding agent asked to
-convert or run a pipeline will execute it and so read
-every input it touches. It is therefore run only in
-projects whose data it is allowed to see, or against a
-synthetic extract of the same structure.
+dependency declarations.
+
+{{< include _llm-rule.qmd >}}
+
+For a pipeline, the structure to describe is the scripts,
+the files each reads and writes, and the column names and
+types of the data. A printed data frame or a log of
+row-level output is derived output under the rule. A
+coding agent asked to convert or run a pipeline will
+execute it and so read every input it touches.
 
 **Prompt.** 'Write a Makefile for my analysis: I have a cleaning
 script, a modeling script, and a report.'

@@ -1695,17 +1695,14 @@ plausible-looking workflow can still be wrong. We give
 three prompt patterns, each with what to watch for and
 what the analyst must independently verify.
 
-CI touches data in ways that are easy to miss, so one rule
-comes first. Never paste or upload protected health
-information, identifiable records, or data covered by a
-data-use agreement, nor outputs derived from them, into a
-model unless your institution has approved that endpoint
-for that data. A CI log that prints rows of a failing
-render or test is such an output. Describe the structure
-instead: the workflow file, the error message, column
-names and types, a synthetic example. A coding agent
-reads the files in its repository, so run one only in a
-compendium whose data it is permitted to see.
+{{< include _llm-rule.qmd >}}
+
+CI touches data in ways that are easy to miss. A CI log
+that prints rows of a failing render or test is a derived
+output in the sense of the rule above, so a log excerpt is
+pasted only after those rows are removed. For CI work the
+structure to describe is the workflow file and the error
+message.
 
 **Prompt.** 'Write a GitHub Actions workflow that runs `R
 CMD check` on my compendium inside the `rocker/tidyverse`
@@ -1835,17 +1832,22 @@ and cannot delegate.
 
 7. **Cumulative: gate the cohort compendium.** Using the
    pattern of 'Demonstrating a gate on the cohort
-   compendium', run
-   `used <- unique(renv::dependencies('R/cohort.R')$Package)`
-   and compute
-   `missing <- setdiff(used, c('tibble', 'ggplot2', 'stats', 'utils', rownames(installed.packages(priority = 'base'))))`.
+   compendium', run the following from the repository root
+   (not from `analysis/report/`), so that the pinned set is
+   read from the real lockfile rather than typed:
+   `script <- 'R/cohort.R'`,
+   `used <- unique(renv::dependencies(script)$Package)`,
+   `locked <- names(renv::lockfile_read('renv.lock')$Packages)`,
+   and
+   `missing <- setdiff(used, c(locked, rownames(installed.packages(priority = 'base'))))`.
    Report the length of `missing` (an autogradable answer:
-   a single integer). Then add the line `library(sandwich)`
-   to a copy of `R/cohort.R` on disk, re-run the same two
-   lines against the copy, and report the exact character
-   vector `missing` now contains (a second autogradable
-   answer: one package name, spelled exactly as it would
-   appear in a real CI log).
+   a single integer). Then copy `R/cohort.R` to a new file,
+   add the line `library(sandwich)` to the copy, set
+   `script` to the copy's path, re-run the `used` and
+   `missing` lines, and report the exact character vector
+   `missing` now contains (a second autogradable answer:
+   one package name, spelled exactly as it would appear in
+   a real CI log).
 
 8. **Spacing: commit before you compute, revisited.** This
    exercise returns to the commit discipline of Chapter 4
@@ -2170,10 +2172,26 @@ analysis do what the paper says'.
 The solution for this exercise is in the
 [Instructor Guide](instructor-guide.qmd#sec-ig-ch09),
 which is available to course instructors. Self-study
-readers who want to check their answer can compare the
-two autogradable values against those reported in the
-chapter's own 'Demonstrating a gate on the cohort
-compendium' section.
+readers can check both autogradable values against the
+chunk below, which runs the exercise's own lines against
+this repository's lockfile at render time.
+
+```{r}
+#| label: ci-ex7-key
+script <- '../../R/cohort.R'
+locked_real <- names(renv::lockfile_read('../../renv.lock')$Packages)
+base_pkgs <- rownames(installed.packages(priority = 'base'))
+used <- unique(renv::dependencies(script, quiet = TRUE)$Package)
+missing <- setdiff(used, c(locked_real, base_pkgs))
+length(missing)
+
+script <- file.path(tempdir(), 'cohort_copy.R')
+invisible(file.copy('../../R/cohort.R', script, overwrite = TRUE))
+cat('library(sandwich)\n', file = script, append = TRUE)
+used <- unique(renv::dependencies(script, quiet = TRUE)$Package)
+missing <- setdiff(used, c(locked_real, base_pkgs))
+missing
+```
 :::
 
 ::: {.callout-note icon=false collapse=true}

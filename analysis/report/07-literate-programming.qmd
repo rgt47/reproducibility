@@ -1191,21 +1191,13 @@ exactly the fluency that plants landmines. Three exchanges
 illustrate the pattern of use and the verification the
 analyst must supply.
 
-::: {.callout-important}
-## Restricted data
+{{< include _llm-rule.qmd >}}
 
-A literate document mixes code with data and results, so it
-is easy to paste too much (habit 3). Never paste or upload
-protected health information into a model unless the
-endpoint is approved by the reader's institution for that
-data. The same rule holds for identifiable or
-agreement-restricted data, and for outputs derived from
-them (a rendered table of small cells included). Describe
-the structure instead, with column names, types, and a
-synthetic example. A coding agent asked
-to render the document reads the data it renders, so it
-belongs only in projects whose data it is allowed to see.
-:::
+A literate document mixes code with data and results, so
+it is easy to paste too much. The derived outputs the rule
+covers include a rendered table of small cells, and a
+coding agent asked to render the document reads the data
+it renders.
 
 **Prompt.** 'Write a `knitr` chunk that loads `dplyr` and
 `survival` and reads the CSV at

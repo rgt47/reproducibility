@@ -7,13 +7,20 @@ it.
 
 The book is built as a Quarto project, and the sources
 render to HTML and PDF with `quarto render`. Wherever we
-present a computed figure or table, that result is
-generated at build time from the code shown beside it. In
-this way the printed output and the code that produced it
-cannot drift apart. The table below
-follows the same discipline: every cell is read from the
-session that rendered this copy of the book, not typed by
-hand.
+present a computed figure or table, that result was
+produced by executing the code shown beside it, not typed
+by hand. It was not necessarily produced by the build
+that made this copy. The book renders with Quarto's
+`freeze: auto` setting, under which a page's code is
+re-executed only when that page's source file changes;
+otherwise the results stored in the freeze cache at its
+last execution are replayed. A change to a package
+version, a data file, or a function under `R/` does not
+by itself trigger re-execution. A printed result
+therefore agrees with the code beside it as of that
+page's last execution. The table below follows the same
+discipline: every cell is read from the R session that
+last executed this page.
 
 ```{r}
 #| label: tbl-colophon
@@ -33,6 +40,9 @@ pkg_versions <- vapply(pkg_deps, function(p) {
 
 lockfile_present <- file.exists(
   file.path('..', '..', 'renv.lock')
+)
+dockerfile_present <- file.exists(
+  file.path('..', '..', 'Dockerfile')
 )
 
 quarto_version <- Sys.getenv('QUARTO_VERSION', unset = NA)
@@ -64,11 +74,15 @@ knitr::kable(
 The last row is the book's own honest reproducibility
 disclosure, made the same way the book asks every analysis
 to make it: by naming the artifact rather than asserting
-the level. As of this build there is no `renv.lock` for the
-book's own source, so the table above reports `no`.
-Pinning the book's own environment to the L1 and L2
-standard the later chapters teach is planned but not yet
-complete. The day that lockfile exists, this colophon will
-report `yes` automatically, with no prose change required.
+the level. When this page last executed, an `renv.lock`
+for the book's own source
+`r if (lockfile_present) 'was present' else 'was absent'`,
+so the table reports
+'`r if (lockfile_present) 'yes' else 'no'`'. This
+sentence and the table are computed in the same
+execution, so they cannot disagree with each other. A
+lockfile is the L1 artifact. The L2 step, a `Dockerfile`
+that pins the operating system and the R runtime,
+`r if (dockerfile_present) 'is also in place' else 'is not yet in place'`.
 
 Last rendered: see the build timestamp on the homepage.

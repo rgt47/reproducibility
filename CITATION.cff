@@ -11,9 +11,11 @@ authors:
     email: rgthomas@ucsd.edu
     affiliation: University of California, San Diego
 abstract: >
-  Reproducible research compendium created with zzcollab v0.3.0.
-  Contains all data, code, and computational environment needed to reproduce
-  the analyses.
+  Research compendium for the book Reproducible Research for the
+  Health Sciences. It contains the analysis code, the script that
+  generates the synthetic cohort, and the package lockfile. The
+  repository carries two licenses, CC BY-NC-SA 4.0 for the prose,
+  figures, and tables and CC0 1.0 for all code; see LICENSE.
 keywords:
   - reproducible-research
   - research-compendium

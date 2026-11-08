@@ -585,10 +585,10 @@ the moment the function was upgraded to `fit_cox()`
 returning a `coxph`, which does not. Testing the
 interface ('does `coef()` return numeric values?')
 survives that migration; testing the class does not.
-The book's own `fit_cox()` is exactly this migration:
-the test suite above required only a new test file
-for `fit_cox()`, not a repair of the existing
-integration test for `fit_model()`.
+The book's own compendium does not perform this
+migration: `fit_cox()` was added beside `fit_model()`
+rather than replacing it, and its tests sit in a file
+of their own, `inst/tinytest/test-fit-cox.R`.
 
 The integration test does not re-check what the unit
 tests already cover. Instead it checks the seams: that
@@ -1283,20 +1283,40 @@ three practices that fill it out for testing
 specifically.
 
 **Computer system validation.** Under 21 CFR 11.10(a),
-a regulated electronic record system must be validated
+a closed system that creates, modifies, maintains, or
+transmits regulated electronic records must be validated
 'to ensure accuracy, reliability, consistent intended
-performance, and the ability to discriminate invalid or
+performance, and the ability to discern invalid or
 altered records' [@cfr21part11]. The same standard is
 reflected in parallel form in European Medicines Agency
 expectations for computerized systems in the same
 regulatory setting. This is validation of the system
 across its lifecycle, documented once and maintained by a
-change-control process, not a one-time test run. A
-`tinytest` suite that passes is evidence toward this
-standard. It is not, by itself, the standard, which also
-demands documented
-installation qualification, operational qualification,
-and a record of who approved each change and when.
+change-control process, not a one-time test run. The
+regulation does not say how that validation is shown.
+Installation, operational, and performance qualification
+(IQ, OQ, and PQ) come from qualification practice, in
+which a system qualification typically executes all
+three [@nicholls2020], not from the text of 11.10. The
+requirement's reach is also narrower than its wording
+suggests. FDA's 2003 guidance on the scope and
+application of Part 11 states that the agency will
+exercise enforcement discretion over the Part 11
+validation requirement, while the predicate rules, the
+underlying good clinical and manufacturing practice
+regulations, still apply [@fdapart11scope2003]. The R
+Validation Hub concludes
+that Part 11 is not relevant or mandatory for
+statistical analysis software itself, though elements of
+it apply when R is used as part of a validated system
+[@nicholls2020]. What an inspector asks in practice is
+whether the statistical computing environment is in a
+documented, validated state under the sponsor's standard
+operating procedures and the predicate rules. A
+`tinytest` suite that passes is evidence toward that
+state. It is not, by itself, that state, which also
+rests on qualification records and a record of who
+approved each change and when.
 
 **Double programming.** Independent of any code-based
 test, a regulated submission is commonly checked by
@@ -1331,10 +1351,15 @@ package. The second is, for each intended-for-use
 package, to assess its purpose, maintenance practice,
 community usage, and existing test coverage. The third
 is to have a qualified reviewer record a documented risk
-judgment. Higher risk earns additional targeted testing;
-lower risk, such as base R or a long-established
-tidyverse package, earns 'trusted' status with no
-further work. The `riskmetric`
+judgment. Higher risk earns additional targeted testing.
+Base R and the recommended packages are treated as
+minimal risk. For other widely used packages, such as
+the tidyverse, the white paper says only that there is a
+reasonable case to treat their maintainers as a trusted
+resource, and leaves that decision to each organization.
+Whatever the risk score, tests are still required for
+the statistical modeling functions of an
+intended-for-use package. The `riskmetric`
 package operationalizes several of these metrics so the
 assessment does not start from nothing. This is a
 judgment about trustworthiness layered on top of the
@@ -1346,10 +1371,11 @@ for it.
 
 A compendium has a committed `renv.lock`, a passing
 `tinytest` suite, and a documented sign-off that
-`dplyr` 1.1.4 has been risk-assessed as trusted. A
-regulator asks whether the system is validated under
-21 CFR 11.10(a). What is missing from the three items
-given?
+`dplyr` 1.1.4 has been risk-assessed as trusted. An
+inspector asks whether the statistical computing
+environment is in a documented, validated state under
+the sponsor's standard operating procedures. What is
+missing from the three items given?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -1359,14 +1385,17 @@ system validation by itself, and the three together are
 not automatically enough either. The lockfile is
 capture; the test suite is software validation in this
 chapter's sense; the risk assessment is a package-level
-trust judgment. 21 CFR 11.10(a) asks for documented
-evidence that the system as a whole reliably does what
-it purports to do across its lifecycle, maintained
-through a change-control process. That requires
-installation and operational qualification records and
-sign-off on each subsequent change. It is not met by a
-snapshot alone of the code, the tests, and one
-package's status at a single point in time.
+trust judgment. A validated state is defined by the
+sponsor's procedures and required by the predicate
+rules, not by these artifacts. It concerns the
+environment as a whole across its lifecycle, maintained
+through a change-control process. Under qualification
+practice that means installation, operational, and
+performance qualification records, and sign-off on each
+subsequent change; 11.10(a) itself names none of these.
+It is not met by a snapshot alone of the code, the
+tests, and one package's status at a single point in
+time.
 :::
 :::
 
@@ -1548,21 +1577,12 @@ the same as tests that are correct. The analyst's
 verification duty is heaviest exactly where the
 model is most fluent.
 
-::: {.callout-important}
-## Restricted data
+{{< include _llm-rule.qmd >}}
 
-Tests sit close to the data, so one rule comes first
-(habit 3). Never paste or upload protected health
-information, identifiable records, or data covered by a
-data-use agreement into a model unless your institution
-has approved that endpoint for that data. The same holds
-for outputs derived from them, such as a failing test's
-printout of offending rows. Describe the structure instead: the data
-dictionary, column names and types, and a synthetic
-example such as the book's simulated cohort. A coding
-agent reads the files in its project, so run one only
-where it is permitted to see the data.
-:::
+Tests sit close to the data, so the derived outputs the
+rule covers include a failing test's printout of
+offending rows. The book's simulated cohort is a
+suitable synthetic example to describe instead.
 
 **Prompt.** 'Here is my `calculate_mean` function.
 Write `tinytest` unit tests for it, including edge
@@ -1660,20 +1680,39 @@ based on `r res$n_events` events from
 
 **Unit tests of `fit_cox()`.** A unit test checks
 the contract of one function in isolation. For
-`fit_cox()` the contract is: return a `coxph` object
-whose coefficient for `I(bmi/5)` is finite, and
-whose event count equals the number of non-missing
-outcomes in the input.
+`fit_cox()` the contract is about which rows the model
+uses. `coxph()` drops every row with a missing value on
+any variable it reads, so the model uses the complete
+cases on `followup_days`, `incident_dm`, `bmi`,
+`age_at_enroll`, and `sex`, and its event count is the
+number of events among those cases, not the number of
+non-missing outcomes. The oracle is computed from the data
+directly rather than from the fit, so a change to the
+exclusion rule fails the test. The assertions below are in
+`inst/tinytest/test-fit-cox.R`.
 
 ```r
-expect_true(inherits(fit, 'coxph'),
-  info = 'fit_cox returns a coxph object')
-expect_true(is.finite(coef(fit)['I(bmi/5)']),
-  info = 'BMI coefficient is finite')
+model_vars <- c('followup_days', 'incident_dm', 'bmi',
+                'age_at_enroll', 'sex')
+complete <- stats::complete.cases(cohort[, model_vars])
+
+expect_equal(fit$n, sum(complete),
+  info = 'the model uses the complete cases on its variables')
 expect_equal(fit$nevent,
-             sum(!is.na(cohort$incident_dm)),
-  info = 'event count equals non-missing outcomes')
+             sum(cohort$incident_dm[complete] == 1),
+  info = 'the event count is the events among complete cases')
+expect_true(fit$nevent < sum(!is.na(cohort$incident_dm)),
+  info = 'events are fewer than non-missing outcomes')
 ```
+
+On the cleaned cohort the model uses `r fit$n` of the
+`r nrow(cohort)` rows, and its `r fit$nevent` events are
+the rows among them with `incident_dm` equal to 1. A
+count of non-missing outcomes, here
+`r sum(!is.na(cohort$incident_dm))`, would count the
+zeros as events too. The same file also removes the age of one event
+row and checks that exactly one event and one row leave
+the model.
 
 **Integration test of the pipeline.** An integration
 test checks that the pipeline stages compose

@@ -902,7 +902,7 @@ pins the layers the lockfile cannot reach.
 The worked example above follows a composite
 biostatistician. We now perform the same placement
 exercise on this book's own running cohort compendium, as
-it actually stands at this point in the book.
+it stands in this repository when the chapter is rendered.
 
 ```{r}
 raw <- load_cohort('../data/raw_data/cohort_raw.csv')
@@ -914,46 +914,83 @@ nrow(cohort)
 The extract loads and cleans without error, and
 `clean_cohort()` drops the one duplicated `mrn` the
 Conventions page describes, leaving the row count shown
-above. That is already more than nothing. The code that
-produces it is checked into this repository's version
-control, so a reader of this book can find `R/cohort.R`
-and `analysis/data/raw_data/cohort_raw.csv` and read
-exactly what ran. By the ladder's own definition that is
-**L0, locatable**, and no further. At the time this
-chapter is being written, the repository carries no
-`renv.lock` and no Dockerfile. The package-versions layer
-and the environment layer are both left to whatever R and
-whatever packages happen to be installed on the machine
-that runs this chunk. The chapters on pinning packages
+above. Whether the compendium is locatable, and whether
+anything beneath the code is pinned, is a question about
+which artifacts the repository holds, so we check rather
+than assert it.
+
+```{r}
+repo_state <- c(
+  source_code = file.exists('../../R/cohort.R'),
+  data_generator = file.exists('../scripts/simulate_cohort.R'),
+  lockfile = file.exists('../../renv.lock'),
+  dockerfile = file.exists('../../Dockerfile')
+)
+repo_state
+rung <- if (repo_state[['lockfile']] && repo_state[['dockerfile']]) {
+  'L2'
+} else if (repo_state[['lockfile']]) {
+  'L1'
+} else {
+  'L0'
+}
+rung_name <- c(
+  L0 = 'locatable', L1 = 'pinned packages',
+  L2 = 'pinned environment'
+)[[rung]]
+next_artifact <- c(
+  L0 = 'a lockfile, `renv.lock`',
+  L1 = 'a container recipe, a `Dockerfile`',
+  L2 = 'a baseline test that passes after a clean rebuild'
+)[[rung]]
+```
+
+The code is under version control, so a reader of this
+book can find `R/cohort.R` and read exactly what ran. The
+extract itself is not committed; the repository holds the
+generator, `analysis/scripts/simulate_cohort.R`, which
+writes the synthetic extract from a fixed seed. That much
+is L0, locatable. The lockfile entry above is
+`r repo_state[['lockfile']]` and the Dockerfile entry is
+`r repo_state[['dockerfile']]`, so on its capture
+artifacts this compendium is at
+**`r rung`, `r rung_name`**. What it still lacks for the
+next rung is `r next_artifact`. Any layer that no present
+artifact pins is left to whatever R, system libraries, and
+packages happen to be installed on the machine that runs
+this chunk. The chapters on pinning packages
 (@sec-dependencies) and pinning the environment
-(@sec-containers) are exactly the chapters that will lift
-this same compendium to L1 and then L2. The verification
-chapter (@sec-verification) is the one that can lift it
-to L3, once a baseline test compares a quantity computed
-from `cohort` against a value recorded today. The reader
-who returns to this cell after reading those later
-chapters is looking at the same two lines of code. What
-will have changed is everything underneath them.
+(@sec-containers) teach the artifacts that mark L1 and
+L2. The verification chapter (@sec-verification) is the
+one that can lift the compendium to L3, once a baseline
+test compares a quantity computed from `cohort` against a
+value recorded today; the chunk above does not look for
+one, so it never reports L3. The reader who returns to
+this cell after reading those later chapters is looking at
+the same lines of code. What changes, as artifacts are
+added, is the rung those lines print.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the compendium's own rung
 
-Right now, before any later chapter's work has been
-applied, what rung does this book's own cohort compendium
-sit at, and what is the single artifact whose absence
-keeps it from the next rung?
+Reading only the `repo_state` output above, what rung
+does this book's own cohort compendium sit at, and what
+is the single artifact whose absence keeps it from the
+next rung?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-L0, locatable: the loading and cleaning code is under
-version control and a reader can find and read it, but
-nothing computational is pinned. The missing artifact for
-the next rung, L1, is a lockfile, `renv.lock`, recording
-the exact version of `tibble`, `utils`, and every other
-package the two functions call. Chapter 6 adds exactly
-that artifact; chapter 7 adds the container that closes
-the following gap to L2.
+`r rung`, `r rung_name`, as the `repo_state` chunk above
+prints. The code is under version control, which is L0.
+L1 requires a lockfile, `renv.lock`, recording the exact
+version of `tibble` and every other non-base package the
+two functions call; base packages such as `stats` and
+`utils` have no record of their own because the R version
+fixes them. L2 requires a container recipe as well. The
+artifact the compendium still lacks for the next rung is
+`r next_artifact`. @sec-dependencies teaches the lockfile
+and @sec-containers the container recipe.
 :::
 :::
 
@@ -963,19 +1000,15 @@ We turn finally to the use of a large language model,
 which is a capable assistant for reasoning about levels.
 However, it is confident in a register that this chapter
 has just taught the reader to distrust, and its
-confidence is not calibrated to the honest level. Never
-paste or upload protected health information,
-identifiable or agreement-restricted data, or outputs
-derived from them, into a model unless the endpoint is
-approved by the reader's institution for that data.
-Describe the structure instead. A directory listing can
-itself be identifying when file names carry site or
-participant codes. List only the code, configuration, and
-lock files, and leave data directories out. A coding agent opened in the project reads
-every file it can reach, so it belongs only in projects
-whose data it is allowed to see. The following triples
-illustrate productive prompts and the verification each
-demands.
+confidence is not calibrated to the honest level.
+
+{{< include _llm-rule.qmd >}}
+
+A directory listing can itself be identifying when file
+names carry site or participant codes. List only the code,
+configuration, and lock files, and leave data directories
+out. The following triples illustrate productive prompts
+and the verification each demands.
 
 **Prompt.** 'Here is the listing of my project's code and
 configuration files, with the data directories omitted.
@@ -1072,10 +1105,13 @@ inference at hand.
    protect against it.
 
 7. Run `cohort <- clean_cohort(load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
-   and report `nrow(cohort)`. State the single rung of the L0
-   to L3 ladder this book's own cohort compendium occupies
-   today, and name the one committed artifact, absent right
-   now, that would be needed to lift it to the next rung.
+   and report `nrow(cohort)`. Then check `file.exists()` for
+   `renv.lock` and `Dockerfile` at the project root, as the
+   `repo_state` chunk in 'The cohort, continued' does. From
+   that output alone, state the single rung of the L0 to L3
+   ladder this book's own cohort compendium occupies, and
+   name the one committed artifact, absent when you run the
+   check, that would be needed to lift it to the next rung.
 
 8. This exercise returns to the computational-versus-statistical
    distinction of Chapter 2 (@sec-crisis). That chapter shows
