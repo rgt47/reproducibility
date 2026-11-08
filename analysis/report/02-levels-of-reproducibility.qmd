@@ -33,7 +33,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 45 minutes.
+**Reading time.** About 40 minutes.
 
 **Prerequisites.** Chapter 1 (the introduction), for the
 first, informal pass at the determinant stack this

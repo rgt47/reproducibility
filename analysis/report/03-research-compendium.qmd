@@ -34,7 +34,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 50 minutes.
+**Reading time.** About 60 minutes.
 
 **Prerequisites.** @sec-levels, for the L0-L3 ladder
 vocabulary this chapter uses when it places a compendium
@@ -66,13 +66,13 @@ answer:**
 
 **Outline.**
 
+- Where this sits on the stack: locatable, and nothing
+  pinned yet.
 - Orientation: a cohort analysis that is a scatter, not
   an object.
 - The analyst's contribution: naming the archetype,
   fixing the raw-and-derived boundary, deciding what
   becomes a function.
-- Where this sits on the stack: locatable, and nothing
-  pinned yet.
 - The compendium as the unit of reproducible work: where
   the idea comes from.
 - The R package as the compendium container: `R CMD

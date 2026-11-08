@@ -36,7 +36,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 60 minutes.
+**Reading time.** About 50 minutes.
 
 **Prerequisites.** @sec-dependencies and @sec-containers,
 for the lockfile and the container. With these in hand,
@@ -74,12 +74,13 @@ Knuth to Buckheit and Donoho. We next follow the R
 lineage from Sweave to Quarto. With that history in
 hand, we develop the sealed render, apply the same seal
 to inline numbers, and catalog the landmines that break
-the seal. We then consider HTML or PDF and the toolchain
-each needs, and explain why a render will not hash the
-same twice. The later sections treat literate
-programming across the archetypes, the write-as-you-go
-doctrine, the cohort continued, a worked example, and
-collaborating with an LLM. Lastly, the chapter closes
+the seal. Quarto's freeze and knitr's cache, which let a
+render skip the code, come next. We then consider HTML or
+PDF and the toolchain each needs, and explain why a render
+will not hash the same twice. The later sections treat
+literate programming across the archetypes, the
+write-as-you-go doctrine, a worked example, the cohort
+continued, and collaborating with an LLM. Lastly, the chapter closes
 with exercises, a cheat sheet, and further reading.
 :::
 

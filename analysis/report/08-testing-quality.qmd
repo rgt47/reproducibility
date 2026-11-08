@@ -36,7 +36,7 @@ cohort.
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 45 minutes.
+**Reading time.** About 65 minutes.
 
 **Prerequisites.** @sec-levels, for the L0-L3 ladder and
 the capture-versus-validation vocabulary this chapter
@@ -75,7 +75,8 @@ trial, and separate Monte Carlo error from a change of
 sampler. We then distinguish behavior from
 implementation, treat linting, styling, and the
 pre-commit gate, and set out what 'validation' means in
-regulated work. The later sections show how the
+regulated work, before turning to how one analyst reviews
+another's code. The later sections show how the
 emphasis shifts across archetypes, give a worked
 example of the paradox itself, discuss collaborating
 with an LLM, and apply all four kinds of test to the

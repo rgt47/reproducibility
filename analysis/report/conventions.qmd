@@ -29,7 +29,13 @@ are also set in monospace.
 
 Each numbered chapter opens with a card. The card gives an
 estimated reading time and names the earlier chapters and
-the statistical knowledge the chapter assumes. It also
+the statistical knowledge the chapter assumes. The time is
+computed, not guessed: the prose words before the
+exercises, plus ten words for each line of code, read at
+200 words a minute and rounded to five minutes. It excludes
+the exercises, whose time depends on the reader. A test
+fails when a card drifts more than five minutes from the
+rule. It also
 lists three to five objectives, phrased as questions the reader should be
 able to answer by the end, and a short outline of what
 follows. A reader who already knows the

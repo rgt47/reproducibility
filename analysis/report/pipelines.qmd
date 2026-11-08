@@ -22,17 +22,6 @@ on anyone's memory. That command rests on a dependency
 graph that a tool, not an analyst, walks to decide what
 has gone stale and what has not.
 
-The plan of the chapter is as follows. We shall first
-locate the pipeline on the determinant stack and name the
-failure it exists to prevent. We then express the
-analysis as a dependency graph and build that graph with
-two tools, GNU Make and an R-native package. With the
-tools in hand,
-we ask what a pipeline does, and does not, add to the
-ladder, and how heavily it bears on each archetype.
-Lastly, we survey the tools beyond R, work a full example,
-and return to the running cohort.
-
 ```{r}
 #| include: false
 # Loads the shared stack-diagram function so the fig-alt option
@@ -111,6 +100,8 @@ answer:**
   `targets` pipeline.
 - The cohort, continued: the compendium's own two-step
   graph, timed.
+- A language model inside the pipeline: a dependency no
+  rung pins, and its responses kept as data.
 :::
 
 ## Where this sits on the stack

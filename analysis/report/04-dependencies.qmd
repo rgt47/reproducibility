@@ -36,7 +36,7 @@ does not reach.
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 50 minutes.
+**Reading time.** About 45 minutes.
 
 **Prerequisites.** @sec-levels, for the L0-L3 ladder,
 the determinant stack, and the capture-versus-validation

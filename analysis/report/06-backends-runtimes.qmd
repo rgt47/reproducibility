@@ -38,7 +38,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 35 minutes.
+**Reading time.** About 45 minutes.
 
 **Prerequisites.** @sec-containers, for the Docker recipe,
 the digest pin, and the dated snapshot that every
@@ -84,7 +84,8 @@ then choose among the alternatives with a comparison
 table keyed to the binding constraint, and ask which
 route would apply to this book's own compendium today.
 The chapter closes with a worked example of one pinned
-image and three destinations, followed by collaborating
+image and three destinations and a second, Apptainer under
+Slurm on a cluster, followed by collaborating
 with an LLM, exercises, a cheat sheet, and further
 reading.
 :::

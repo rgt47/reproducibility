@@ -37,7 +37,7 @@ to work.
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 50 minutes.
+**Reading time.** About 70 minutes.
 
 **Prerequisites.** Chapter 11 (@sec-testing) supplies
 `tinytest`, the four kinds of test, and the baseline test
@@ -71,9 +71,9 @@ line by line; no YAML is written from scratch here.
   manuscript, and a simulation each run only the checks
   appropriate to them?
 
-**Outline.** We begin with the analyst's three
-irreplaceable judgments and with where CI sits on the
-stack. We then turn to the machine that is not yours, to
+**Outline.** We begin with where CI sits on the stack, a
+captured environment that nobody has yet rebuilt, and the
+analyst's three irreplaceable judgments. We then turn to the machine that is not yours, to
 the three gates and where their bugs hide, to secrets,
 tokens, and pinned actions, and to two CI dialects. The
 middle of the chapter treats verification and level L3,

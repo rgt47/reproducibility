@@ -37,7 +37,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 40 minutes.
+**Reading time.** About 55 minutes.
 
 **Prerequisites.** @sec-levels, for the L0-L3 ladder and
 the capture-versus-validation vocabulary this chapter
@@ -70,12 +70,12 @@ answer:**
 
 **Outline.**
 
+- Where this sits on the stack: the layers a container
+  pins.
 - Orientation: a lockfile that restored and still
   computed a different number.
 - The analyst's contribution: three judgments no tool
   automates.
-- Where this sits on the stack: the layers a container
-  pins.
 - What the lockfile leaves standing: the operating
   system, the system libraries, the R runtime.
 - Images and containers: the vocabulary, and the Rocker
@@ -88,9 +88,9 @@ answer:**
   thread count.
 - Profiles as base images, and a first look at the
   two-layer team model.
+- Worked example: one project walked from L1 to L2.
 - The cohort, continued: what the compendium's own
   Dockerfile would still need.
-- Worked example: one project walked from L1 to L2.
 :::
 
 ## Where this sits on the stack

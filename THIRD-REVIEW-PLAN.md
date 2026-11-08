@@ -840,6 +840,19 @@ sentences, plus the include's paragraph repeated in twelve
 chapters), and two new exercises with solutions. From 600 pages at
 the start of the review the book is now 11 percent longer.
 
+### Phase 23 (reading times and defective duplication), branch `phase-23-length`, 2026-11-08
+
+The author approved one exception to D18's no-cuts rule: the agents
+paragraph in the shared restricted-data include becomes one sentence.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Reading times | One stated rule (body prose words plus ten per code line, at 200 words a minute, rounded to five) applied to all twelve cards; six cards moved by more than five minutes (Ch 5 50 to 60, Ch 7 40 to 55, Ch 8 35 to 45, Ch 9 60 to 50, Ch 11 45 to 65, Ch 12 50 to 70); the rule is stated on the Conventions page | V: `test-reading-times.R` recomputes each card and fails beyond five minutes (6 of 12 failed on the old cards) |
+| Roadmap and Outline pairs | Outlines reordered to match the text in Chs 4, 5, 7, 9, 12; Phase 22 sections added to the Outlines of Chs 9 (freeze), 10 (LLM in the pipeline), 11 (code review), and the HPC worked example to Ch 8; the Ch 10 roadmap paragraph, which ended before the new section, removed (the Outline covers it) | I: headings extracted per chapter and compared |
+| Not changed | Roadmaps that agree with their Outlines (Ch 4) are duplication without a defect and stay under D18 | |
+| D19 include | Agents paragraph cut to one sentence pointing to `sec-llm-delegate` | I |
+| Render | Clean; 664 pages (unchanged: the shortened paragraph moved no page break) | V; suite 426/426 |
+
 ## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human

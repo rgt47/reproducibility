@@ -49,7 +49,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 60 minutes.
+**Reading time.** About 65 minutes.
 
 **Prerequisites.** @sec-crisis and @sec-levels, for the
 determinant stack and the L0 rung that this chapter's
@@ -87,9 +87,9 @@ answer:**
 
 **Outline.**
 
+- Where this sits on the stack.
 - Orientation: the drawer of `FINAL` files, and the
   object that replaces it.
-- Where this sits on the stack.
 - The analyst's contribution: three judgments no tool
   automates.
 - What version control records, and what it cures.
