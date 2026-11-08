@@ -134,10 +134,10 @@ if (!identical(gen_path, raw_path) && file.exists(gen_path)) {
 
 # --- determinism (same session): the same seed, the same answer ----
 
-expect_equal(bootstrap_ci(cohort, n = 50), bootstrap_ci(cohort, n = 50),
+expect_equal(bootstrap_ci(cohort, B = 50), bootstrap_ci(cohort, B = 50),
              info = 'a seeded bootstrap is deterministic')
-expect_true(unname(bootstrap_ci(cohort, n = 50)['lower']) <
-            unname(bootstrap_ci(cohort, n = 50)['upper']),
+expect_true(unname(bootstrap_ci(cohort, B = 50)['lower']) <
+            unname(bootstrap_ci(cohort, B = 50)['upper']),
             info = 'the interval is ordered')
 expect_equal(run_primary_analysis(raw_path)$estimate,
              run_primary_analysis(raw_path)$estimate,

@@ -4,12 +4,13 @@
 \alias{bootstrap_ci}
 \title{Bootstrap a confidence interval for the HbA1c odds ratio}
 \usage{
-bootstrap_ci(x, n = 1000, seed = 20260908)
+bootstrap_ci(x, B = 1000, seed = 20260908)
 }
 \arguments{
 \item{x}{A cleaned cohort.}
 
-\item{n}{Number of bootstrap replicates.}
+\item{B}{Number of bootstrap replicates. It is called \code{B}, not
+\code{n}, because \code{n} conventionally means the sample size.}
 
 \item{seed}{Seed set before resampling. Recording it is not
 optional: the RNG kind must also be fixed for the result to
@@ -25,4 +26,9 @@ single-result form of a reproducibility check. The seed is set
 with \code{withr::with_seed()}, which also restores the caller's
 generator state on exit, so calling this function does not
 disturb any random stream the caller was already running.
+}
+\details{
+The bounds are Monte Carlo estimates: at a different seed they
+move by about one Monte Carlo standard error, which shrinks as
+\code{1 / sqrt(B)}. Report only the digits that error supports.
 }

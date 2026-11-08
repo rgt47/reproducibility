@@ -1071,7 +1071,10 @@ the project as rebuilt and tested, at L2, with no baseline
 comparison, and does not stamp L3. Any later change to the
 environment drops the stamp. A compendium that has
 drifted therefore reverts to unverified automatically and
-carries no stale claim.
+carries no stale claim. In regulated work, the stamp is not
+a validation record: it carries no signer, no stated meaning
+of a signature, and no quality review, which a controlled
+record of validation status requires.
 
 But what, precisely, should be compared? Verification
 compares **computational outputs**, such as the row count

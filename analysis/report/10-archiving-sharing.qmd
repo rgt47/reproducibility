@@ -1874,8 +1874,19 @@ seed and the replicate count, since the full run is too
 expensive to reproduce on demand. The gate added is the
 correspondence check: the reduced pipeline under the
 recorded seed must regenerate the leading replicates of
-the deposited full results. That is what lets a reader
-verify the machinery without paying for the study.
+the deposited full results. That holds only when a
+replicate's draws are fixed by its index: a seed or
+random-number stream per replicate (the per-task streams
+of @sec-testing), or one serial stream that the reduced
+pipeline consumes in exactly the same order. A full run
+made in parallel on streams assigned per worker does not
+qualify, because the stream a replicate drew from depends
+on the worker count. The Monte Carlo standard error of
+each reported summary belongs in the deposit as well, so
+that a reader can tell a changed result from Monte Carlo
+noise. The check
+is what lets a reader verify the machinery without paying
+for the study.
 :::
 
 ::: {.callout-note icon=false collapse=true}

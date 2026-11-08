@@ -356,8 +356,15 @@ draws a sample is reproducible only if the algorithm
 behind the seed is also fixed. The change of the default
 `sample.kind` in R 3.6.0 broke exactly this, silently,
 for every analysis that had set a seed under the old
-default. Given that simulation studies, multiple
-imputation, and bootstrap confidence intervals are staples
+default: the same seed now drew different samples, so no
+seeded result regenerated digit for digit. Whether a
+result also changed as a statistical matter is a separate
+question. @sec-testing answers it on the book's cohort
+(@tbl-baseline-rng): the shift is a fraction of one Monte
+Carlo standard error, so the bound reproduces
+statistically although not seed-exactly. Given that
+simulation studies, multiple imputation, and bootstrap
+confidence intervals are staples
 of health research, the RNG kind is a first-order concern.
 The locale is the second. `sort()` and `order()` on a
 character vector depend on `LC_COLLATE`, so an analysis

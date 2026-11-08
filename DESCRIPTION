@@ -7,6 +7,7 @@ Description: Data analysis workspace for the reproducibility project.
 License: CC0
 Imports:
     tibble,
+    parallel,
     stats,
     utils,
     ggplot2,

@@ -112,6 +112,16 @@ same conclusion on new data. That is a vital matter, but a
 different one. We are careful throughout to keep the
 computational question of re-execution distinct from it.
 
+Nor is the book a manual of computer-system validation for
+regulated work. Where we touch 21 CFR Part 11, qualification,
+or validation in the regulatory sense, we do so to keep the
+vocabulary straight and to mark where a regulated setting
+asks for more. A reader preparing analyses for submission
+should treat those passages as orientation only. The
+governing documents are the regulations themselves, the
+sponsor's standard operating procedures, and guidance such as
+the R Validation Hub's [@nicholls2020].
+
 ## Reading it in one quarter
 
 We have written the book for a one-quarter, ten-week
