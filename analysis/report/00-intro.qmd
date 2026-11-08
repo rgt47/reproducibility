@@ -36,8 +36,8 @@ moment had passed.
 This book is about closing that gap. Its subject is
 computational reproducibility, by which we mean the
 property that a computational result can be regenerated,
-byte for byte or number for number, by another person on
-another machine at a later time. That is a narrower claim
+within a stated tolerance, by another person on another
+machine at a later time. That is a narrower claim
 than scientific replication, and we shall be careful to
 keep the two apart throughout. It is nonetheless a claim
 that a great deal of published health-sciences research
@@ -64,7 +64,8 @@ methods, code, and conditions of analysis. That is, it is
 a statement about re-execution. *Replicability* is
 obtaining consistent results across studies aimed at
 answering the same question, each with its own data. It is
-a statement about the robustness of a scientific finding.
+a statement about whether a scientific finding holds on new
+data.
 The two are independent. A result can be perfectly
 reproducible and entirely wrong, if the code faithfully
 regenerates a mistaken number every time. Conversely, a
@@ -81,9 +82,10 @@ Reproducibility so defined is a spectrum. @peng2011 arranged
 computational work along a scale from the merely
 published, through code available, code and data
 available, and linked and executable, to fully
-replicable. He argued that reproducibility is 'a minimum
-standard for judging scientific claims when full
-independent replication is impractical'. We take from Peng
+replicable. He argued that 'reproducibility has the
+potential to serve as a minimum standard for judging
+scientific claims when full independent replication of a
+study is not possible'. We take from Peng
 the idea that reproducibility comes in degrees, and that
 honesty about which degree one has reached is itself a
 scientific virtue. We shall develop that idea into the
@@ -112,8 +114,9 @@ completion. They also found that the vast majority carried
 no description of their dependencies at all. These
 analyses could not be made to run a second time, so the
 question of whether they reached the right conclusion
-never arose. The scholarship, in Claerbout's phrase, was
-advertised but never delivered.
+never arose. The scholarship, in Buckheit and Donoho's
+paraphrase of Claerbout, was advertised but never
+delivered.
 
 Setting the four studies beside one another, as in
 @fig-failure-rates, makes the shape of the problem visible.
@@ -169,22 +172,25 @@ ggplot(studies, aes(x = reorder(study, rate), y = rate)) +
   )
 ```
 
-The figure tells us how often re-execution fails. It does
-not tell us why, and that question is taken up next.
+The figure tells us how often replication and re-execution
+fail. It does not tell us why, and that question is taken
+up next.
 
 ## Why the failures are computational, not statistical
 
 The reasons re-execution fails point directly at the
 remedy. Consider two changes to R itself, each silent and
 each capable of altering a published result. In R 3.6.0
-the default random-number algorithm changed. Code that set
-a seed and drew a sample therefore obtained different
-draws before and after the release, with no error and no
-warning. In R 4.0.0 the `stringsAsFactors` default flipped
-from `TRUE` to `FALSE`. Code reading a data frame then
-silently produced character columns where it once produced
-factors. This change in turn altered the behavior of every
-model that treated those columns as categorical. Neither
+the default algorithm that `sample()` uses to turn a seed
+into draws changed. Code that set a seed and drew a sample
+therefore obtained different draws before and after the
+release, with no error and no warning. In R 4.0.0 the
+`stringsAsFactors` default flipped from `TRUE` to `FALSE`.
+Code reading a data frame then silently produced character
+columns where it once produced factors. Any code that
+depended on factor-specific behavior, such as the ordering
+of levels or a function that requires a factor, behaved
+differently as a result. Neither
 change was a bug; both were improvements. Both would
 nonetheless break the exact reproduction of an analysis
 written under the old default, and neither would announce
@@ -257,11 +263,11 @@ namely the environment, the packages, the source, and the
 locale and time zone. It leaves the rest (the numerical
 libraries, the random-number discipline, the graphics
 device, intrinsic non-determinism) to the base image or to
-convention. It appears that reproducibility tooling in
-general has an adoption problem more than a capability
-problem. @saju2025 found that most deposited code
-supplements carry no dependency description at all, even
-though mature, free, documented tools for that exact
+convention. Reproducibility tooling in general has an
+adoption problem more than a capability problem.
+@saju2025 found that most deposited code supplements
+carry no dependency description at all, even though
+mature, free, documented tools for that exact
 problem have existed for years. The task of this book is
 therefore to make existing capability teachable and
 routine. It is also to state plainly, at each level of the
@@ -296,9 +302,10 @@ material as optional. The four parts proceed as follows.
   system and runtime with a container (@sec-containers); and
   the alternatives, from Nix to Podman to Apptainer
   (@sec-backends).
-- **Part III, Validation.** Literate programming and the
-  rendered report (@sec-literate); automating the analysis
-  with make and targets (@sec-pipelines); testing and code
+- **Part III, Validation.** The practices that let a pinned
+  analysis be re-run and checked: literate programming and
+  the rendered report (@sec-literate); automating the
+  analysis with make and targets (@sec-pipelines); testing and code
   quality (@sec-testing); and continuous integration and
   verification (@sec-verification).
 - **Part IV, Collaboration and stewardship.** Sharing a

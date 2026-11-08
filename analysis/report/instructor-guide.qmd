@@ -194,14 +194,16 @@ file.exists('Dockerfile')
 `Dockerfile` is absent (as of 2026-11-07), so the
 compendium is at L1, with the lockfile recording R 4.6.1; a
 recipe for L2 starts from `rocker/r-ver:4.6.1`, matching
-the lockfile's R. The `ENV` line needed for thread-count
-reproducibility is `OMP_NUM_THREADS=1` together with
+the lockfile's R. The `ENV` instruction that pins the thread
+count sets `OMP_NUM_THREADS=1` together with
 `OPENBLAS_NUM_THREADS=1`.
 
 **Common errors.** Reporting `unique(cohort$sex)` (two
 strings) rather than `length(unique(cohort$sex))` (the
-integer 2); not identifying the thread-count `ENV` line as
-the missing Dockerfile addition.
+integer 2); naming only `OMP_NUM_THREADS`, when the
+showcase `ENV` instruction also sets `OPENBLAS_NUM_THREADS=1`
+because the Rocker image links R against OpenBLAS, which
+reads its own variable.
 
 ## Chapter 8: Backends and Runtimes {#sec-ig-ch06}
 
@@ -281,9 +283,9 @@ list(
 **Rubric.** A correct answer reports 337 rows and includes
 a `_targets.R` fragment with a `format = 'file'` target
 for the CSV. After the first `tar_make()`, a second run
-with no file changed should report both targets as already
-up to date, confirmed by `tar_outdated()` returning an
-empty result.
+with no file changed should report all three targets
+(`raw_file`, `raw`, `cleaned`) as already up to date,
+confirmed by `tar_outdated()` returning an empty result.
 
 **Common errors.** Omitting the `format = 'file'` target
 for the CSV (meaning file-content changes would not
@@ -335,7 +337,8 @@ The chapter's solution box executes these lines at render
 time (chunk `ci-ex7-key`), so the value it prints is the key.
 
 **Autogradable values:** `length(missing)` = `0`;
-after appending `library(sandwich)`, `missing2` =
+after appending `library(sandwich)` and re-running the
+same line, `missing` =
 `"sandwich"`.
 
 **Rubric.** A correct answer reports zero undeclared

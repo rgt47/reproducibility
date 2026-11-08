@@ -24,12 +24,12 @@ Rule 3 (2013)
 pkgload::load_all('../..', quiet = TRUE)
 ```
 
-By the end of this chapter we shall be able to pin the
+By the end of this chapter you will be able to pin the
 exact version of every package an analysis uses. A
 colleague who restores the lockfile a year from now will
 then run the same code against the same packages as the
 original run, rather than whatever happens to be current
-on their machine. We shall also be able to say precisely
+on their machine. You will also be able to say precisely
 which layer of the determinant stack that pin does and
 does not reach.
 
@@ -61,7 +61,8 @@ to `renv` itself is assumed.
   code, the `DESCRIPTION`, and the lockfile, and run the
   automated check that keeps the three in agreement?
 - Configure a dated snapshot of a package repository so
-  that a restore draws fixed, pre-compiled binaries?
+  that a restore draws fixed versions, as pre-compiled
+  binaries where the platform is served?
 - Delimit what `renv` does and does not pin, and thus
   explain why a lockfile alone cannot reach the
   pinned-environment level?
@@ -117,7 +118,7 @@ code changed. What changed is that `dplyr` had moved
 from version 1.1.0 to 1.2.1, a grouping default had
 been refined, and one intermediate summary was
 computed over a slightly different partition.
-Unfortunately, the number in the published table can no
+The number in the published table can no
 longer be regenerated, and the student cannot say with
 certainty which number was correct.
 
@@ -701,8 +702,19 @@ how R was started. We confirmed the failure on a scratch project
 whose code called `dplyr` without declaring it: the
 command above printed 'Validation failed' and exited
 with status 1. `zzrenvcheck` is not on CRAN, so the CI
-job installs it first, with
-`remotes::install_github('rgt47/zzrenvcheck')`. A drift
+job installs it first. The gate tool is itself a
+dependency of the evidence it produces, so the job pins
+it to one commit rather than to whatever the default
+branch holds on the day of the run:
+
+```r
+remotes::install_github(
+  'rgt47/zzrenvcheck@6f53235668cb4048c1ae793d64b10d6505bf69a2'
+)
+```
+
+That commit is `zzrenvcheck` 0.10.0, the version whose
+behavior this section describes. A drift
 that escaped the developer's machine therefore fails the
 build rather than being silently repaired. This forces
 the contributor to commit the fix instead of letting the
@@ -874,9 +886,10 @@ library has since moved on. The Posit Package Manager
 resolves both problems by offering dated snapshots of
 CRAN. A snapshot URL freezes the repository as it stood
 on one calendar day. A request for a package then
-returns the version that was current on that date, and
-returns it as a pre-compiled binary rather than as
-source to be built.
+returns the version that was current on that date, and,
+on a platform the manager serves, returns it as a
+pre-compiled binary rather than as source to be built.
+On Linux that requires the URL form described below.
 
 The mechanism is a URL that embeds a date.
 
@@ -959,8 +972,8 @@ layer beneath it as the next machine happens to provide.
 @ushey2020 designed `renv` to solve the package problem
 and no more; the environment problem is out of its scope
 by design. An analysis equipped with a faithful lockfile
-has reached L1, pinned packages, and is exposed at L2 and
-below. Closing that remaining gap is the work of the
+has reached L1, pinned packages, and every layer beneath
+the packages remains exposed. Closing that remaining gap is the work of the
 container, and it is where @sec-containers begins.
 
 ::: {.callout-note icon=false collapse=true}
@@ -978,8 +991,11 @@ Not necessarily. `renv` pins the package versions, not the
 R interpreter itself. A successful restore under a
 different R version means the packages installed, not that
 they behave identically under that R. The lockfile's `R`
-block records which R version wrote it, but restoring does
-not enforce or warn on a mismatch by itself. Closing this
+block records which R version wrote it, but it neither
+installs nor enforces that version. When the project
+loads under a different minor release of R, `renv` prints
+a one-line notice naming both versions, and then proceeds
+under the R it was given. Closing this
 exposure is the work of the container in @sec-containers,
 which pins the R runtime along with the packages.
 :::
@@ -1013,7 +1029,7 @@ script runs, it loads version-specific packages at run
 time. A `groundhog.library()` call carries a date, and
 the packages current on that date are loaded for that
 session. It needs no project library and no snapshot
-step. That is, it trades `renv`'s explicit committed
+step. In effect, it trades `renv`'s explicit committed
 lockfile for a date-stamped call evaluated against the
 repository's history. The cost of that convenience is
 that the pin now lives inside the script's control flow
@@ -1098,8 +1114,9 @@ lock_diff <- tibble(
 knitr::kable(lock_diff)
 ```
 
-Four of the six pins moved between the two snapshots.
-Three of the moves are patch-level (`tidyr`, `survival`,
+Between the two snapshots,
+`r sum(lock_diff$changed != '')` of the
+`r nrow(lock_diff)` pins moved. Three of the moves are patch-level (`tidyr`, `survival`,
 and `rlang`), the kind that ordinarily preserve
 behavior but occasionally do not. One is a minor
 version bump (`dplyr`, from 1.1.0 to 1.2.1) of the sort
@@ -1209,10 +1226,10 @@ as `rnorm()` and `sample()`. Is this a bug in the scan?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-No. `rnorm()` and `sample()` live in the `stats` package,
-and `stats`, like `utils`, is a base package bundled with
-every R installation rather than a contributed package a
-lockfile needs to pin. The scan is working as intended. It
+No. `rnorm()` lives in the `stats` package and `sample()`
+in the `base` package. Both, like `utils`, are base
+packages bundled with every R installation rather than
+contributed packages a lockfile needs to pin. The scan is working as intended. It
 reports contributed-package dependencies, the ones whose
 version can actually drift between machines. It correctly
 stays silent about a script that happens to need nothing
@@ -1247,7 +1264,7 @@ running it the installed versions match the lockfile.
 Run the check gate and confirm the triad holds.
 
 **Prompt.** 'Explain why my `renv.lock` includes
-`roxygen2` and `testthat` when my analysis never calls
+`roxygen2` and `tinytest` when my analysis never calls
 them, and whether I should remove them.'
 
 *Watch for.* A model may assert flatly that any unused
@@ -1425,9 +1442,10 @@ dependency, new package entries appear in the lockfile
 that the reader never installed by name. This is because
 the lockfile captures the full transitive closure rather
 than the packages the reader asked for. And the `R` block
-at the top of the file is untouched, which is the point of
-@tbl-lockdiff: the changed column flags packages, and the
-lockfile pins the R version separately from them.
+at the top of the file is untouched. It records the R
+version under which the snapshot ran, but it does not
+install or enforce that version (Exercise 6), and
+upgrading a package does not change it.
 
 The relation to @tbl-lockdiff is that the table shows the
 same structure in synthetic form. Each row is a package,
@@ -1547,11 +1565,16 @@ nothing beneath them. The R version is recorded in the
 lockfile but not supplied by it. The operating system, the
 system libraries, the locale, the time zone, and the
 numerical libraries are all outside its scope. L2 requires
-an artifact that carries those, which is what
-@sec-containers is about.
+an artifact that fixes the operating system, the R
+runtime, and the system libraries, which is what
+@sec-containers is about. Even L2 does not guarantee the
+numerical libraries: an image determines which BLAS is
+installed, but the thread count and the CPU still vary.
 
 For a concrete unpinned determinant, the numerical-library
-layer is the cleanest example. Two machines can hold
+layer is the cleanest example of what a lockfile misses,
+though no rung of the ladder fixes it completely. Two
+machines can hold
 identical pinned package sets and still link against
 different BLAS implementations, reference BLAS on one and
 Apple's Accelerate or Intel MKL on the other. Because
@@ -1585,10 +1608,12 @@ own 'The cohort's own dependencies' section.
 ## Exercise 8
 
 `renv::init()` writes a generated `.gitignore` inside
-`renv/` that excludes `library/`, `sandbox/`, `staging/`,
-and its own `local/` cache. It leaves `activate.R`,
-`settings.json`, and the lockfile `renv.lock` at the
-project root to be committed. The rule follows the same
+`renv/`. Under `renv` 1.2.3's default settings it
+excludes `library/`, `local/` (local package sources),
+`cellar/`, `lock/`, `python/`, `sandbox/`, and `staging/`.
+It leaves `renv/activate.R` and `renv/settings.json` to be
+committed, along with the lockfile `renv.lock` at the
+project root. The rule follows the same
 line the version-control chapter draws between what must
 be committed and what must never be. Here it is applied to
 a different kind of large, regenerable, and
@@ -1601,8 +1626,10 @@ description from which the library can be
 *rebuilt* on any machine. If the library itself were
 committed, a collaborator on a different operating system
 or architecture would receive compiled binaries built for
-someone else's platform. `renv::restore()` would either
-refuse to use these or use them incorrectly. Moreover,
+someone else's platform. Because their versions match the
+lockfile, `renv::restore()` would likely treat them as
+already installed, and a package with compiled code would
+then fail when it loads. Moreover,
 the repository would grow by orders of magnitude for
 content that `renv::restore()` already knows how to
 regenerate from the one file that actually matters.
@@ -1630,9 +1657,9 @@ the package documentation for `renv`. Its introductory
 and collaboration vignettes are the fastest route to
 fluent daily use, and its treatment of the cache and of
 custom repositories repays study once the basics are in
-hand. The relationship of `renv` to its predecessor
-`packrat`, and its place in the wider stack, is set out
-compactly in the survey portions of @sec-intro.
+hand. The glossary entry
+[`renv` and `packrat`](glossary.qmd#gloss-renv-and-packrat)
+summarizes the relationship of `renv` to its predecessor.
 
 For the date-based alternatives, @chan2023 presents
 `rang` and its strategy of reconstructing a historical

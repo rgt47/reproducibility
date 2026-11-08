@@ -15,14 +15,14 @@ Principles for Scientific Data Management and Stewardship*
 ```
 :::
 
-By the end of this chapter the reader will be able to
-decide what belongs in a team's slow-moving environment
-layer versus its fast-moving package layer. We shall
-also be able to state plainly why the committed
-Dockerfile rather than the pushed image is the
-reproducibility guarantee. Finally, we shall be able to
-deposit a compendium so that it outlives the laptop, the
-registry, and the forge it was built on.
+By the end of this chapter you will be able to decide
+what belongs in a team's slow-moving environment layer
+and what in its fast-moving package layer. You will also
+be able to state plainly why the committed Dockerfile
+rather than the pushed image is the reproducibility
+guarantee, and to deposit a compendium so that it
+outlives the laptop, the registry, and the forge it was
+built on.
 
 ```{r}
 #| include: false
@@ -35,11 +35,20 @@ pkgload::load_all('../..', quiet = TRUE)
 **Reading time.** About 55 minutes.
 
 **Prerequisites.** Chapter 6 (@sec-dependencies) supplies
-the renv lockfile and the union model this chapter
-extends to a team. Chapter 7 (@sec-containers) supplies
-the digest-pinned Docker image this chapter archives and
-whose guarantee it relocates from the image to the
-Dockerfile. Chapter 3 (@sec-levels) supplies the L0-L3
+the renv lockfile this chapter extends to a team. The
+rule for that extension, the union model, under which
+the project lockfile records every package any
+contributor has installed, is introduced in this
+chapter. Chapter 7 (@sec-containers) supplies the
+digest-pinned Docker image this chapter archives, whose
+guarantee it relocates from the image to the
+Dockerfile, and a first look at the two-layer team model
+this chapter develops. Chapter 8 (@sec-backends), which
+the core path marks optional, is the source of the
+single-file SIF image used in the deposit; the archiving
+section explains the one command the deposit needs, so
+that chapter is not required. Chapter 3 (@sec-levels)
+supplies the L0-L3
 ladder every honest claim in this chapter is stated
 against. Chapter 4 (@sec-version-control) supplies the
 commit rule this chapter's restricted-data section makes
@@ -51,7 +60,7 @@ answer:**
 
 - Can you explain the two-layer team model and decide
   which layer a given package decision belongs to under
-  the renv union model?
+  the union model?
 - Can you state why the committed Dockerfile, and not the
   pushed image, is the reproducibility guarantee, and
   choose a registry and a forge with vendor independence
@@ -70,12 +79,12 @@ answer:**
 
 **Outline.**
 
+- Where this sits on the stack: what archiving captures
+  and what it only validates.
 - Orientation: a laboratory whose environment nobody can
   reconstruct two years later.
 - The analyst's contribution: three judgments no tool
   automates.
-- Where this sits on the stack: what archiving captures
-  and what it only validates.
 - Sharing with a team: the two-layer model.
 - Sharing with the world: archiving, and what changes
   when the data are restricted.
@@ -91,28 +100,29 @@ answer:**
 
 ## Where this sits on the stack
 
-This chapter pins no layer of the determinant stack for
-the first time. Both of its halves, sharing with a team
-and archiving with the world, are stated as adding no new
-rung. Yet it is not neutral with respect to the stack
-either, and the two things it does are different in kind.
+This chapter fixes no new version of anything on the
+determinant stack, and neither of its halves, sharing
+with a team and archiving with the world, adds a rung.
+It still does two things to the stack, and they differ
+in kind.
 
-@fig-stack-archiving marks both. Archiving is the first
-point in the book where the *input data* layer moves from
-merely locatable to durably findable. That is, it moves
-from a team's repository, which a forge outage or a
-departed contributor can erase, to a persistent
-identifier that continues to resolve after the project
-ends. No earlier chapter made that move. It is therefore
-marked as captured here, even though it pins no new
-version and fixes no new byte. Stewardship, by contrast,
-pins nothing new about the packages or the operating
-system; the union lockfile and the digest-pinned image
-already did that capturing in @sec-dependencies and
-@sec-containers. What stewardship does is confirm, using
-`rang` or an archived image, that those pins can still be
-resolved after they have aged. This validates a layer
-already captured elsewhere.
+@fig-stack-archiving marks both. Archiving pins the
+*input data* layer more tightly than any earlier
+chapter, which is the second sense of 'captures' in the
+[Conventions](conventions.qmd). The compendium of
+@sec-compendium made the data locatable in a team's
+repository, which a forge outage or a departed
+contributor can erase. A deposit moves them to a
+persistent identifier that continues to resolve after
+the project ends. The layer is marked as captured here
+for that reason, although no new version or byte is
+fixed. Stewardship, by contrast, pins nothing new about
+the packages or the operating system; the lockfile of
+@sec-dependencies and the digest-pinned image of
+@sec-containers already did that capturing. What
+stewardship does is confirm, using `rang` or an archived
+image, that those pins still resolve after they have
+aged. It validates layers already captured elsewhere.
 
 ```{r}
 #| label: fig-stack-archiving
@@ -166,10 +176,10 @@ them apart. The first is collaboration: sharing a
 compendium with a team while it is under active
 development, so that contributors do not drift into
 mutually incompatible environments. The second is
-archiving and stewardship. That is, the finished
-compendium is deposited so that it remains findable and
-executable long after the project ends, and recovered
-when the pins have decayed. Both sit at the top of the
+archiving and stewardship: depositing the finished
+compendium so that it remains findable and executable
+long after the project ends, and recovering it when the
+pins have decayed. Both sit at the top of the
 reproducibility ladder and add no new rung.
 Sharing a compendium changes nothing about its
 level: an L2 compendium shared with a team is still an
@@ -228,8 +238,9 @@ tool makes them.
    belongs to. Fixing too much makes the team rigid and
    slows every contributor; fixing too little lets the
    environment fracture. The base image, the R version,
-   and the system libraries are almost always the
-   lead's to fix; the analysis packages are almost
+   the system libraries, and the packages every project
+   in the lab uses are almost always the lead's to fix;
+   the packages one project's analysis needs are almost
    always the members' to add. The awkward cases in
    between (a version of a system library that one
    sub-study needs and the others do not) are decided
@@ -238,11 +249,11 @@ tool makes them.
 2. **When to deposit, at what depth, and at what level
    to claim.** An archival deposit is a public and
    permanent act, and the honest disclosure of the
-   level reached is part of the deposit. Consider
-   depositing a compendium and labeling it
-   'reproducible' without stating whether it has been
-   verified, or whether the environment was pinned by
-   digest or merely by tag. That misrepresents the work.
+   level reached is part of the deposit. Depositing a
+   compendium and labeling it 'reproducible' without
+   stating whether it has been verified, or whether the
+   environment was pinned by digest or merely by tag,
+   misrepresents the work.
    The analyst decides when the compendium is ready and
    which artifacts accompany it. The analyst also decides
    which data the consent and the data-use agreement
@@ -273,7 +284,11 @@ tool makes them.
 - **Two-layer team model.** A division of a project
   into a slow-moving environment layer, fixed once by a
   team lead, and a fast-moving package layer, extended
-  by every contributor.
+  by every contributor. The environment layer is the
+  team image: the operating system, the R version, the
+  system libraries, and the packages every project in
+  the lab uses, pinned by digest. The package layer is
+  the project lockfile.
 - **Union model.** The rule that the project lockfile
   records the union of every package any contributor
   has installed, so that a rebuilt image carries what
@@ -331,11 +346,12 @@ We begin with collaboration. The design starts from one
 observation: the two things a team shares change at
 very different rates.
 The computational environment (the operating system,
-the R version, and the system libraries) is chosen at
-most a handful of times over the life of a project. The
-set of R packages, by contrast, changes almost weekly
-as the analysis grows. Consider a model that forces both
-to be renegotiated on the same schedule. It will either
+the R version, the system libraries, and the packages
+every project in the lab uses) is chosen at most a
+handful of times over the life of a project. The set of
+packages one project needs, by contrast, changes almost
+weekly as the analysis grows. A model that forces both
+to be renegotiated on the same schedule will either
 freeze the packages to the cadence of the environment,
 which is too slow, or churn the environment to the
 cadence of the packages, which is too disruptive. The
@@ -346,9 +362,12 @@ governance.
 
 **Layer 1 is the environment, and it is lead-governed.**
 A designated team lead selects a base image at the
-project's start, resolves it to an immutable content
-digest, and fixes it for every collaborator. This is
-the slow-moving half. It corresponds to pillar one, the
+project's start and builds on it a team image carrying
+the packages every project in the lab uses, as
+@sec-containers sketched. The lead resolves that image
+to an immutable content digest and fixes it for every
+collaborator. This is the slow-moving half. It
+corresponds to pillar one, the
 computational environment, and it is where the L1-to-L2
 transition of the ladder is secured. The lead builds
 this environment once, and the whole team reuses it.
@@ -360,10 +379,11 @@ matter of seconds. For reproducibility, the larger gain
 is that every collaborator works from the same fixed
 floor.
 
-**Layer 2 is the package set, and it is
+**Layer 2 is the project's package set, and it is
 contributor-governed under the union model.** Each
-member installs the packages their part of the work
-requires, freely and without coordination. The project
+member installs, on top of the team image, the packages
+their part of the work requires, freely and without
+coordination. The project
 lockfile at any moment records the *union* of everything
 anyone has installed. The shared image is rebuilt from
 that lockfile periodically rather than on every change.
@@ -423,8 +443,8 @@ content digest and the package snapshot is dated, as
 @sec-containers urged. A recipe pinned by a mutable tag,
 or drawing on a rolling snapshot, reconstructs at best a
 functionally equivalent environment whose content may
-have drifted. Unfortunately, even a correctly
-digest-pinned, dated-snapshot rebuild is not guaranteed
+have drifted. Even a correctly digest-pinned,
+dated-snapshot rebuild is not guaranteed
 byte-for-byte identical at the image level, because
 per-layer timestamps ordinarily differ between builds.
 Matching content is the guarantee a pinned recipe gives,
@@ -433,8 +453,11 @@ reproducible-build tooling (@sec-containers). A team that treats the
 pushed image as authoritative, and lets the Dockerfile
 drift out of step with it, has converted its compendium
 from something reconstructable into something that
-merely happens to exist. That is the regression to L0
-that honest disclosure is meant to catch.
+merely happens to exist. The committed lockfile still
+holds L1, but the environment layer is no longer
+captured by anything the compendium contains, so the
+compendium has regressed below L2. That regression is
+what honest disclosure is meant to catch.
 
 ### Registries and the forge
 
@@ -535,10 +558,17 @@ high-performance-computing runtime, builds a single
 Singularity Image Format file from a digest-pinned Docker
 image. That SIF, or equivalently an OCI image exported as
 a tarball, is checksummable and depositable as one
-object. Consider a compendium archived as its source tree
-plus a pinned Dockerfile plus the built environment as a
-single file. It is reproducible by two independent
-routes. A reader may rebuild from the recipe or, if the
+object. The deposit needs one command,
+`apptainer build env.sif docker://<image>@sha256:<digest>`,
+which pulls the image by its digest, flattens its layers,
+and writes them to a single read-only file. A reader who
+skipped @sec-backends needs nothing more for this
+chapter, and a reader without Apptainer can write the
+tarball with Docker alone, using `docker save`. A
+compendium archived as its source tree, a pinned
+Dockerfile, and the built environment as a single file
+is reproducible by two independent routes. A reader may
+rebuild from the recipe or, if the
 recipe's inputs have decayed, may run the archived
 environment directly. Depositing both is belt and
 suspenders, and for a result that matters it is worth
@@ -707,15 +737,19 @@ stricter. Patient-level data do not go into an open
 deposit unless three conditions hold. They must have been
 formally de-identified, and the consent and the agreement
 must both permit public release. The responsible data
-steward or IRB must also have confirmed it in writing. In their
-place, a deposit may carry the code, the tests, the
-lockfile, the Dockerfile, and the archived image, always.
-It may carry de-identified data, only where the data's
-steward has made that determination, or a synthetic
-stand-in, labeled as such. For data that may be shared
-under agreement but not opened to the world, it may
-carry a citation to a controlled-access repository such
-as dbGaP. None of these substitutes removes the
+steward or IRB must also have confirmed it in writing. In
+their place, a deposit may take four routes:
+
+- the code, the tests, the lockfile, the Dockerfile, and
+  the archived image, always;
+- de-identified data, only where the data's steward has
+  made that determination;
+- a synthetic stand-in, labeled as such;
+- for data that may be shared under agreement but not
+  opened to the world, a citation to a controlled-access
+  repository such as dbGaP.
+
+None of these substitutes removes the
 obligation to read the consent form and the data-use
 agreement first. The deposit's data-availability
 statement must say, exactly, which of these routes was
@@ -853,20 +887,22 @@ data steward.
 
 ### Funder and journal obligations
 
-We have so far treated the deposit as the analyst's own
-decision. In practice, everything the four routes above
-implement is a response to an obligation that exists
-before the analysis begins. That obligation is a funder's
-data-sharing policy and, later, a journal's reporting
-requirement. Both predate the deposit and shape what the
+Everything the four routes above implement is a response
+to an obligation that exists before the analysis begins:
+a funder's data-sharing policy and, later, a journal's
+reporting requirement. Both predate the deposit and
+shape what the
 deposit must contain.
 
 **The funder side.** The NIH Data Management and Sharing
 Policy applies to proposals due on or after 25
 January 2023. It requires that an applicant submit a Data
-Management and Sharing Plan as part of the budget
-justification at the time of application, not drafted
-after data collection is underway [@nihdms2020]. NIH
+Management and Sharing Plan at the time of application,
+not drafted after data collection is underway
+[@nihdms2020]. The Plan goes in the 'Other Plan(s)'
+attachment of the research plan; only a brief summary
+and the associated costs go in the budget and its
+justification [@nihdmswriting]. NIH
 program staff review the Plan for completeness rather
 than scoring it. However, once an award is made, the
 approved Plan becomes a term and condition of that award.
@@ -902,7 +938,7 @@ evaluation [@collinstripodai2024]. A separate item, 18e,
 asks the same question of the data. Naming code
 availability as its own item, distinct from data
 availability, is what makes TRIPOD+AI concrete where a
-general journal policy is often vague. That is, an author
+general journal policy is often vague: an author
 completing the checklist cannot satisfy 18f by describing
 only the data.
 
@@ -969,19 +1005,20 @@ article the deposit outlives.
 We must extend the same honesty to the tools this book
 has taught, and to the framework it uses as its running
 example. Frameworks that compose the whole determinant
-stack are young. By its own accounting, the framework
-firmly pins roughly four of the ten determinants of
-computational reproducibility. These are the environment,
-the packages, the source, and much of the session
-configuration. It leaves others (the numerical
-libraries, the fonts and graphics device, and intrinsic
-non-determinism) to the base image or to convention. Its
-own system review describes it candidly as a strong
-scaffolding tool rather than a finished guarantor of
-reproducibility. The review also notes the
-sustainability risk that attends a small maintainer base.
-That is, a single principal author is a bus factor of
-one, and the tool's future depends on that one person.
+stack are young. Measured against the
+`r nrow(determinant_layers())` layers of the determinant
+stack in @sec-levels, the framework firmly pins roughly
+four: the operating system and system libraries, the R
+runtime, the package versions, and the analysis code,
+with much of the session configuration besides. It
+leaves the rest (the hardware, the numerical libraries,
+the input data, and intrinsic non-determinism) to the
+base image, to the analyst, or to convention. Its own
+system review describes it candidly as a strong
+scaffolding tool rather than a finished guarantor of reproducibility. The review also notes the
+sustainability risk that attends a small maintainer
+base: a single principal author is a bus factor of one,
+and the tool's future depends on that one person.
 The appropriate response is to disclose its reach
 accurately, the same discipline the honest-level callout
 demands of any analysis. The evidence that disclosure
@@ -1028,8 +1065,8 @@ protected.
 
 We turn now to how the machinery varies, or does not,
 across the archetypes. The team and archiving machinery
-is archetype-agnostic. That is, the two-layer model, the
-union lockfile, the registry and forge choices, the DOI
+is archetype-agnostic: the two-layer model, the union
+lockfile, the registry and forge choices, the DOI
 deposit, and the `rang` recovery path apply to every
 archetype; @tbl-archetype-weight in @sec-compendium is
 the reference. What varies is the final act of
@@ -1062,8 +1099,8 @@ it not need to worry about?
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-It needs everything archetype-agnostic. That is, it
-needs the two-layer model while the study was developed
+It needs everything archetype-agnostic. It needs the
+two-layer model while the study was developed
 by a team, and the committed Dockerfile as the
 guarantee. It also needs a DOI-minting deposit carrying
 the code and the archived environment, and an honest
@@ -1129,10 +1166,14 @@ contributors are added, so a member who rebuilds the
 image at any point inherits everything the team needs up
 to that point. Because it is a union and not a running
 total, a package a contributor installs that the team
-already has does not enlarge it. Ana adds three packages,
-but one of them, `here`, was already in the lockfile from
-the initial base. The union therefore grows by only two,
-from three to five. Ana never installs `sf`, yet after
+already has does not enlarge it. Ana adds
+`r length(added_sets[[2]])` packages, but one of them,
+`here`, was already in the lockfile from the initial
+base. The union therefore grows by only
+`r contributions$union_n[2] - contributions$union_n[1]`,
+from `r contributions$union_n[1]` to
+`r contributions$union_n[2]`. Ana never installs `sf`,
+yet after
 the quarterly rebuild her environment carries it, because
 Cai did, and the lockfile records the union.
 
@@ -1224,9 +1265,10 @@ pinned package is pulled from CRAN before `rang` or a
 successor tool can recover it. The archived-image route
 fails if the SIF or OCI file itself is lost or becomes
 unreadable by a future runtime. Depositing both means a
-reader needs only one of the two to still work. Given how
-little either artifact costs to include, this is cheaper
-insurance than it looks.
+reader needs only one of the two to still work. The
+archived image is often a gigabyte or more, so the
+second route is not free, but for a result that matters
+it is worth its size.
 :::
 :::
 
@@ -1381,8 +1423,9 @@ No. The checks are structural: a license file exists, a
 `DESCRIPTION` agrees with it, the capture files exist,
 and git would exclude the data directory. None of
 them is evidence that the analysis has been rebuilt from a
-clean environment and its outputs compared against
-recorded values. That is what an L3 claim requires. A
+clean environment and its outputs compared against a
+committed baseline within a stated tolerance. That is
+what an L3 claim requires. A
 compendium can pass every structural check above and
 still be no higher than L2, because files that capture
 the environment are not evidence that anyone rebuilt it.
@@ -1440,11 +1483,12 @@ Nor does it know the terms of the data-use agreement, and it will
 often write 'all data are available in the deposited
 compendium' for a deposit that holds none.
 
-*Verification.* Rewrite the level claim yourself against
-the honest-level standard. Say verified only if you ran
-`zzc verify` or its equivalent and the outputs matched.
-Say pinned if you pinned but did not re-run. Name the DOI
-you actually minted, not a placeholder. Check every
+*Verification.* Rewrite the level claim by hand against
+the honest-level standard. Say verified only if
+`zzc verify` or its equivalent was run and its baseline
+test passed; say pinned if the environment was pinned
+but not re-run. Name the DOI actually minted, not a
+placeholder. Check every
 sentence about the data against what the deposit holds
 and against the agreement, and name the access route for
 anything withheld.
@@ -1569,8 +1613,10 @@ No single correct answer. The criterion to apply is
 **how often the package changes and how many contributors
 need it**.
 
-The **environment layer** holds what everyone needs and
-nobody changes: the tidyverse, `knitr` and `rmarkdown`, the
+The **environment layer** is the team image. Beyond the
+operating system, R, and the system libraries, it holds
+the packages every project needs and nobody changes: the
+tidyverse, `knitr` and `rmarkdown`, the
 plotting stack, anything requiring system libraries that
 are expensive to install. Baking these into the image means
 each contributor pays the install cost zero times rather
@@ -1600,8 +1646,15 @@ resolution is to put the *system libraries* in the image
 and leave the R package in the lockfile.
 
 A package pinned to an unusual version for one analysis
-belongs in the package layer regardless of how widely it
-is used, because the image cannot carry two versions.
+belongs in that project's package layer, however widely
+the package itself is used. The team image serves every
+project in the lab and should carry the version most of
+them use. One project's lockfile can record the unusual
+version and restore it into the project library, which
+takes precedence over the image's copy, without imposing
+it on the other projects. Within a single project the
+union lockfile still records one version per package, so
+that project's contributors must agree on it.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1673,7 +1726,9 @@ to its forge in ways it should not have been.
 **Where the CI logic should live.** In a `Makefile`, or an
 equivalent single entry point, so that both forges' CI
 files reduce to a shim naming an image and calling
-`make check`, `make render`, `make check-renv`. The
+`make check`, `make check-renv`, and the render target
+that matches the archetype (`make docker-render` for an
+`.Rmd` report; there is no plain `make render`). The
 migration then touches one thin file rather than the
 check logic, and the same commands run locally. That
 incidental benefit makes the arrangement worth adopting
@@ -1726,10 +1781,15 @@ and saying so is part of the statement's honesty.
 **Defending the claim against the honest-level standard**
 means checking three things and being willing to have the
 answer come out lower than one would like. Is there a
-lockfile? Then L1. Is there an artifact pinning the runtime
-and system libraries? Then L2. Is there *evidence* (a CI
-log, a verification report, recorded output hashes) that
-a rebuild regenerated the recorded outputs? Only then L3.
+lockfile? Then L1. Is there, in addition, an artifact
+pinning the runtime and system libraries? Then L2. Is
+there *evidence* (a CI log or a verification report) that
+a baseline test passed within a stated tolerance after a
+clean rebuild? Only then L3. A recorded hash of an output
+file is not that evidence. A matching hash shows that the
+file has not changed, but L3 is defined by agreement with
+a committed baseline within a tolerance, which a hash
+cannot express.
 
 The last clause of the statement above is the one that
 makes it honest, and it is the clause most authors omit.
@@ -1923,8 +1983,8 @@ items is doing real work.
 | `docker run --rm <img> find / -xdev -path '*raw_data*'` | Confirms no restricted data were copied into the built image |
 | `apptainer build out.sif docker://<img>@sha256:...` | Exports a digest-pinned image as a single archival file |
 | `renv.lock` + `Dockerfile`, committed | The reproducibility guarantee; the pushed image is a cache, not the record |
-| Two-layer model | Environment is lead-governed and slow; packages are contributor-governed and fast, under the union model |
-| Union lockfile | Records every contributor's packages cumulatively; never shrinks; rebuild periodically, not on every install |
+| Two-layer model | The team image (operating system, R, system libraries, lab-wide packages) is lead-governed and slow; the project lockfile is contributor-governed and fast, under the union model |
+| Union lockfile | Records every contributor's packages cumulatively; never shrinks unless deliberately pruned; rebuild periodically, not on every install |
 | `rang::resolve(pkgs, snapshot_date = ...)` | Reconstructs a period-correct environment from a date when no lockfile survives |
 | Recorded run date | The single fact a retrospective recovery (`rang`) needs most |
 | Restricted data (@sec-restricted-deposit) | Code and environment, always; data only de-identified, synthetic, or controlled-access, per the agreement (habit 3) |
@@ -1973,8 +2033,8 @@ items is doing real work.
 
 ## In conclusion
 
-In conclusion, the book's argument comes down to four
-points. Reproducibility, we have maintained throughout,
+The book's argument comes down to four points.
+Reproducibility, we have maintained throughout,
 is not a badge a project either holds or lacks. It is a
 level a project reaches. The discipline is to reach as
 high as the work warrants and to say plainly how high
@@ -1993,14 +2053,15 @@ with any toolchain, can be placed and compared.
 
 Second, the rungs are reached by two different kinds of
 work, and conflating them is the source of much
-confusion. Capture fixes the inputs and sets the level.
-Pinning the packages and the environment is capture,
-which carries a compendium as far as L2. The last rung,
-L3, is reached not by capture but by an act of
-verification. Regenerating the outputs and confirming
-they match is what certifies the verified state. Running
-`zzc verify` once is therefore what lifts a pinned L2
-compendium to a verified L3 one. Automated re-checking is
+confusion. Capture fixes the inputs and sets the level
+from L0 to L2. Pinning the packages and the environment
+is capture, which carries a compendium as far as L2. The
+last rung, L3, is reached not by capture but by an act
+of verification: a clean rebuild after which a baseline
+test passes within a stated tolerance. Running
+`zzc verify` once, with such a baseline test in place,
+is therefore what lifts a pinned L2 compendium to a
+verified L3 one. Automated re-checking is
 distinct from that act. Continuous integration reruns the
 verification on every change and certifies that the L3
 state still holds, but it adds no rung of its own.
@@ -2014,10 +2075,10 @@ compendium, and it is not only a manuscript. The same
 machinery, the same pillars, and the same ladder serve a
 data analysis, a simulation study, an R package, a blog,
 and a scholarly manuscript alike. The archetypes differ
-only in their directory layout and in whether a report is
-rendered. They differ also in the last mile of
-publication: a package submission, a deployed website, or
-a deposit beside an article.
+only in their directory layout, in whether a report is
+rendered, and in the last mile of publication: a package
+submission, a deployed website, or a deposit beside an
+article.
 
 Fourth, and above all, the goal is reproducibility
 matched honestly to the level actually reached. The
@@ -2028,11 +2089,11 @@ convention, and an honest practitioner discloses the
 difference. A verified L3 compendium and a locatable L0
 script are both legitimate outputs of a scientific
 process; what is not legitimate is to present the second
-as the first. Consider the reader who finishes this book
-with the judgment to name the level a given analysis has
-reached, across whatever archetype the work takes, and
-the honesty to claim no more. That reader has learned the
-one thing the book most wished to teach.
+as the first. The reader who finishes this book with the
+judgment to name the level a given analysis has reached,
+across whatever archetype the work takes, and the
+honesty to claim no more, has learned the one thing the
+book most wished to teach.
 
 The introduction named seven habits that recur across
 every chapter since. They are worth gathering here, once

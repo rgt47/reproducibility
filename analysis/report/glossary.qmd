@@ -100,12 +100,16 @@ filesystem. (@sec-containers)
 
 []{#gloss-container-image}**Container image.** A packaged environment, built from a
 recipe, that carries the operating system, the system libraries,
-and the language runtime, and runs identically wherever a
-container runtime runs. (@sec-levels)
+and the language runtime. It fixes the files a run starts from,
+not the machine: thread counts and the CPU still vary, and an
+image built for one processor architecture runs on another only
+under emulation, where numerical results can differ.
+(@sec-levels)
 
 []{#gloss-controlled-access}**Controlled access.** A deposit arrangement in which a
-repository holds restricted data behind an approval process,
-rather than releasing it on request. Its purpose is to honor a
+repository holds restricted data and releases them only to
+approved users under an agreement, rather than to anyone who
+downloads. Its purpose is to honor a
 data-use agreement and the terms a participant consented to
 while the record stays discoverable and citable.
 (@sec-archiving)
@@ -255,8 +259,9 @@ commits, `show` prints one commit's message and its diff
 together. (@sec-version-control)
 
 []{#gloss-git-switch-and-git-merge}**`git switch` and `git merge`.** Move between branches and
-rejoin them. A merge commit is the only commit with two parents,
-which is what records that two lines of work came back together.
+rejoin them. A merge commit is a commit with more than one
+parent (usually two), which is what records that lines of work
+came back together.
 (@sec-version-control)
 
 []{#gloss-git-tag}**`git tag`.** Marks a particular commit permanently, such as
@@ -504,10 +509,14 @@ it is an integrity gate on the compendium's package skin
 which `.Rbuildignore` excludes from the build.
 (@sec-compendium, @sec-verification)
 
-[]{#gloss-rang-groundhog-and-capsule}**`rang`, `groundhog`, and `capsule`.** Lighter alternatives to
-a lockfile that reconstruct a package set from a date. Useful
-when no lockfile survives, and an approximation rather than a
-record. (@sec-dependencies)
+[]{#gloss-rang-groundhog-and-capsule}**`rang`, `groundhog`, and `capsule`.** Alternatives and
+complements to a lockfile workflow. `rang` reconstructs a package
+set from a date and needs no prior lockfile; `groundhog` loads
+packages as of a date written into the script in advance;
+`capsule` layers a lazier discipline over `renv`, materializing
+the pinned library only when the work is reproduced or checked.
+Only `rang` helps when no lockfile survives, and its result is an
+approximation rather than a record. (@sec-dependencies)
 
 []{#gloss-raw-versus-derived-data}**Raw versus derived data.** Immutable original inputs versus
 the processed datasets regenerated from them by code.
@@ -749,7 +758,10 @@ expectations, which is why this book uses it. (@sec-testing)
 []{#gloss-two-layer-team-model}**Two-layer team model.** A division of a project into a
 slow-moving environment layer, fixed once by a team lead, and a
 fast-moving package layer, extended by every contributor.
-(@sec-archiving)
+The environment layer is the team image (the operating system,
+the R version, the system libraries, and the packages every
+project in the lab uses), pinned by digest; the package layer is
+the project lockfile. (@sec-archiving)
 
 
 ## U {.unnumbered .unlisted}

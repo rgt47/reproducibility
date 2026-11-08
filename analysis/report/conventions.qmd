@@ -28,9 +28,9 @@ are also set in monospace.
 ## The chapter card
 
 Each numbered chapter opens with a card. The card gives an
-estimated reading time and the chapters and the
-statistical knowledge it assumes. It also lists three to
-five objectives, phrased as questions the reader should be
+estimated reading time and names the earlier chapters and
+the statistical knowledge the chapter assumes. It also
+lists three to five objectives, phrased as questions the reader should be
 able to answer by the end, and a short outline of what
 follows. A reader who already knows the
 material can check the objectives and skip ahead.
@@ -42,7 +42,8 @@ hardware at the base to intrinsic non-determinism at the
 top (@sec-levels works through all nine). Most chapters
 open with a figure placing that chapter on the stack. In
 that figure the layers the chapter **captures** (pins for
-the first time) are drawn in full color. The layers it
+the first time, or pins more tightly than an earlier
+chapter did) are drawn in full color. The layers it
 **validates** (checks without itself pinning anything new)
 are outlined. Every such figure is a call to the same
 function, `plot_determinant_stack()`, and its alt text is
@@ -121,7 +122,7 @@ example 'habit 4', rather than restating it.
 
 ## The two datasets
 
-We work two datasets in the book, and each has a different
+We use two datasets in the book, and each has a different
 job.
 
 `survival::diabetic` is real. It holds 394 records from

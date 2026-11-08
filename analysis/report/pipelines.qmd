@@ -15,7 +15,7 @@ Rule 2 (2013)
 :::
 
 This chapter concerns the multi-step analysis that
-someone runs by hand, script after script. By its end we
+someone runs by hand, script after script. By its end you
 will be able to replace the running of such an analysis
 with a single command whose completeness does not depend
 on anyone's memory. That command rests on a dependency
@@ -128,8 +128,8 @@ We therefore mark, in @fig-stack-pipelines, the
 analysis-code and input-data layers as validated here, not
 captured. This is the same reading @sec-testing gives its
 own test suite for the same two layers, though by a
-different mechanism. That is, a test suite checks that the
-code is *correct* on some input. A pipeline checks only
+different mechanism: a test suite checks that the code is
+*correct* on some input, where a pipeline checks only
 that an output is *current* with respect to whatever input
 it was last given, correct or not.
 
@@ -280,10 +280,10 @@ and no pipeline tool makes them.
    analyst omits from a rule is a dependency the tool
    cannot see, and an omitted prerequisite is exactly how a
    stale output slips through. `targets` infers a great
-   deal automatically, but it too can be defeated. A step
-   that reads a file without declaring it as a file
-   target, or that reaches for global state the tool cannot
-   trace, will do so. Getting the declared dependencies to match the
+   deal automatically, but it too can be defeated, by a
+   step that reads a file without declaring it as a file
+   target, or that reaches for global state the tool
+   cannot trace. Getting the declared dependencies to match the
    real ones is the analyst's responsibility, and a
    pipeline's correctness rests on it.
 
@@ -292,10 +292,10 @@ and no pipeline tool makes them.
    package, fix an environment, or establish that a result
    is correct. An analyst who says 'the analysis is
    reproducible' because `tar_make()` runs to completion
-   has claimed more than the pipeline delivers. The
-   overreach is the same, in exactly the way and for
-   exactly the reasons, as treating the sealed render of
-   @sec-literate as by itself a reproducibility guarantee.
+   has claimed more than the pipeline delivers. This is
+   the same overreach, for the same reasons, as treating
+   the sealed render of @sec-literate as a
+   reproducibility guarantee.
    The pipeline secures the act of re-running. The level
    reached is a separate question, settled by the
    lockfile, the container, and the verification of the
@@ -459,7 +459,7 @@ and the argument below depends on that untidiness.
 
 ```{r}
 #| label: tbl-pipeline-steps
-#| tbl-cap: 'The retinopathy analysis expressed as a dependency graph, with the cost of each step measured rather than asserted. The timings are from one run on one machine and will differ on another, and repeated runs on the same machine have varied by several-fold; even the ratios between steps should be read as illustrative, not as a stable property of the analysis. Note that the two expensive steps sit at the end, so an edit to the plotting code that forced a full rebuild would waste almost all of the total.'
+#| tbl-cap: 'The retinopathy analysis expressed as a dependency graph, with the cost of each step measured rather than asserted. The timings are from one run on one machine and will differ on another, and repeated runs on the same machine have varied by several-fold; even the ratios between steps should be read as illustrative, not as a stable property of the analysis. Note that the expensive step sits at the end, so an edit to the plotting code that forced a full rebuild would waste almost all of the total.'
 
 library(tibble)
 library(knitr)
@@ -501,33 +501,49 @@ steps <- tibble(
 kable(steps, align = 'llr')
 ```
 
-On this build the bootstrap costs about
-`r round(t_boot / max(t_fit, 1))` times the model fit,
-and the two steps above it are too fast to measure at
-all. An analyst who re-runs everything after changing a
-label pays for the bootstrap to learn nothing. We note
-that the ratio is itself an inline expression, for the
-reason @sec-literate gives. Had it been typed, the next
-machine to build the book would have made it false.
+```{r}
+#| label: pipeline-steps-prose
+#| include: false
+t_total <- t_load + t_clean + t_fit + t_boot
+boot_share <- floor(100 * t_boot / t_total)
+```
+
+On this build the bootstrap took `r t_boot` milliseconds,
+at least `r boot_share` percent of the four steps' total,
+and none of the other three took more than
+`r max(t_load, t_clean, t_fit)` milliseconds. An analyst who re-runs everything after changing a
+label pays for the bootstrap to learn nothing. Every
+figure in these two paragraphs is an inline expression,
+for the reason @sec-literate gives: had they been typed,
+the next machine to build the book would have made them
+false.
 
 The table also carries a caveat about itself. These
 timings are computed when the book is built, so they
 describe the build machine and not the reader's. A slower
-machine would show different absolute values. The ratio
-between the last row and the others is what survives.
-This is the same distinction the verification chapter
-draws between a result worth recording and a measurement
-worth repeating.
+machine would show different absolute values, and so can
+a second run on the same machine. Even the ratio of the
+bootstrap to the model fit is unstable. The fit took
+`r t_fit` milliseconds on this build, a quantity so small
+that a millisecond or two of timer noise in that
+denominator moves the ratio several-fold from one run to
+the next. What held in every
+repeated run is the ordering: the bootstrap dominates the
+total, and the steps before it are negligible. That
+ordering, not any single number, is what the table
+supports. This is the same distinction the verification
+chapter draws between a result worth recording and a
+measurement worth repeating.
 
 ::: {.callout-note icon=false collapse=true}
-## Check your understanding: reading the measured ratio
+## Check your understanding: reading the measured costs
 
-@tbl-pipeline-steps shows the bootstrap costing many times
-more than the model fit. An analyst who changes only the
-color of a figure, then reruns the whole four-step chain
-by hand, without a pipeline, pays for which step
-unnecessarily? And why does the ratio, rather than the
-absolute millisecond values, survive a change of machine?
+@tbl-pipeline-steps shows the bootstrap taking almost all
+of the total time. An analyst who changes only the color
+of a figure, then reruns the whole four-step chain by
+hand, without a pipeline, pays for which step
+unnecessarily? And which feature of the table should be
+expected to survive a change of machine?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -538,11 +554,13 @@ bootstrap consumes; a selective rebuild would skip it
 entirely. The absolute timings are properties of the one
 machine that happened to build this chapter. They will
 differ, often by a large factor, on another machine or
-even on a repeated run of the same one. The ratio between
-the expensive step and the others is far more stable,
-because both numbers move together with the machine's
-speed. That is why the chapter reports the ratio, and not
-the raw milliseconds, as the figure worth trusting.
+even on a repeated run of the same one. The ratio of the
+bootstrap to the fit is not stable either, because the
+fit's few milliseconds sit near the timer's resolution.
+What survives is the ordering: the bootstrap is by far
+the largest step, and it takes nearly all of the total.
+The table is read for which step dominates, not for any
+one number.
 :::
 :::
 
@@ -575,14 +593,19 @@ indented with a literal tab.
 ## Pitfall
 
 A text editor set to insert spaces for indentation will
-silently turn that leading tab into spaces, and Make
-responds with `Makefile:2: *** missing separator. Stop.`
-To see it: take the four-rule Makefile below, replace the
-tab before one recipe line with eight spaces, and run
-`make`. For a permanent fix, configure the
-editor to preserve a literal tab inside files named
-`Makefile`, since the error gives a line number but not
-the real cause.
+silently turn that leading tab into spaces, and what Make
+says then depends on the line. To see it, take the
+four-rule Makefile below and replace the tab before
+`Rscript make_figures.R` with eight spaces. GNU Make
+stops with `Makefile:5: *** missing separator (did you
+mean TAB instead of 8 spaces?).  Stop.` With four spaces
+the hint disappears, and the bare 'missing separator'
+names a line but not the cause. A spaced recipe that
+contains a colon, such as the `rmarkdown::render()` line
+of the first rule, raises no error at all. Make reads it
+as one more rule, and `report.html` is left with no
+recipe. For a permanent fix, configure the editor to
+preserve a literal tab inside files named `Makefile`.
 :::
 
 The analysis of
@@ -641,8 +664,7 @@ is nothing to be done. This is the selective rebuild of
 the previous section, implemented with nothing more than
 the file system's clock.
 
-Unfortunately, the timestamp rule is also Make's
-principal limitation. Make knows only whether a file is
+The timestamp rule is also Make's principal limitation. Make knows only whether a file is
 newer, not whether its contents have changed. Touching a
 file without editing it will trigger a needless rebuild.
 More subtly, a change that does not alter a file's
@@ -704,7 +726,7 @@ targets that connect those functions into a graph, in a
 special script named `_targets.R` at the project root.
 Each target is created by `tar_target()`, which names the
 target and gives the R expression that produces it.
-`Targets` reads those expressions and notices that one
+The package reads those expressions and notices that one
 target's expression mentions another target's name. From
 this it infers the dependency graph automatically, with
 no colons and no prerequisites to maintain by hand. A
@@ -775,8 +797,8 @@ hashes**, so that a file touched but not changed does not
 trigger a rebuild. The hashing is not unconditional,
 however. When the `trust_timestamps` option is left
 unset, `targets` chooses by file system. On a file system
-with precise time stamps it trusts them. That is, it
-compares a tracked file's modification time with the one
+with precise time stamps it trusts them: it compares a
+tracked file's modification time with the one
 it recorded and recomputes the hash only if the two
 differ. A file whose content changed while its time stamp
 did not is therefore *not* caught. Such changes are rare
@@ -959,9 +981,13 @@ pipeline without CI still requires a human to remember to
 run it; CI without a pipeline must hard-code the sequence
 of steps that the pipeline would have derived from the
 graph. Together they close the loop. A change is pushed,
-a clean machine rebuilds exactly what the change made
-stale, and the result is checked, with no act of memory
-anywhere in the chain.
+a clean machine rebuilds the analysis, and the result is
+checked, with no act of memory anywhere in the chain. On
+a clean runner the `_targets/` store is absent, because
+it is not in the checkout, so the rebuild runs the whole
+graph, which is itself the clean-rebuild test. A runner
+rebuilds only what a change made stale when the store is
+restored between runs, from a cache or a cloud store.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the composed claim
@@ -1170,9 +1196,9 @@ the way each target's expression names the targets before
 it. With the file in place, `tar_visnetwork()` draws the
 graph, and the analyst confirms it carries the intended
 structure of @fig-pipeline-dag. Every node is initially
-colored 'outdated' because nothing has been built yet. We
-note that the figure is a simplified linear schematic of
-the chain from raw data to report. The actual dependency
+colored 'outdated' because nothing has been built yet.
+@fig-pipeline-dag is a simplified linear schematic of the
+chain from raw data to report. The actual dependency
 graph is more connected. The `_targets.R` declares that
 `figures` depends on both `model` and `cleaned` and that
 `report` depends on both `model` and `figures`. Hence
@@ -1204,8 +1230,9 @@ from the lockfile of @sec-dependencies. Thus `tar_make()`
 re-executes against fixed packages and a fixed R. The
 continuous-integration workflow of @sec-verification is
 given one core instruction, to restore the environment and
-run `tar_make()`. Every push then rebuilds exactly the
-stale targets on a clean machine. The 'did I re-run
+run `tar_make()`. Every push then rebuilds the whole
+pipeline on a clean machine, since the runner starts
+without a `_targets/` store. The 'did I re-run
 everything?' doubt is answered, permanently, by a machine
 that is not the author's.
 
@@ -1293,11 +1320,25 @@ know that `clean_cohort()`'s output had gone stale would
 be to remember to re-run this cell. That is exactly the
 end-to-end doubt the orientation opened with, now visited
 on the book's own running example. Expressing this pair
-as a `tar_target(raw, load_cohort(cohort_path))`
-and `tar_target(cleaned, clean_cohort(raw))` would make
-that staleness mechanical rather than remembered. The cost
-would be a two-target scaffold in the pattern of the
-five-target one shown in Exercise 3's solution below.
+as three targets would make that staleness mechanical
+rather than remembered:
+
+```r
+list(
+  tar_target(raw_file, cohort_path, format = 'file'),
+  tar_target(raw, load_cohort(raw_file)),
+  tar_target(cleaned, clean_cohort(raw))
+)
+```
+
+The `raw_file` target is what makes `targets` watch the
+CSV's contents. Without it, a lone
+`tar_target(raw, load_cohort(cohort_path))` would track
+only the value of the string `cohort_path`, and a
+corrected CSV at the same path would leave `raw`
+current. The cost is a three-target scaffold in the
+pattern of the five-target one shown in Exercise 3's
+solution below.
 The repository holds `r cohort_state`, which places the
 compendium at `r cohort_rung`. Adding the pipeline would
 not move it off that rung, since a pipeline pins no
@@ -1308,25 +1349,26 @@ that it exists.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the pipeline would, and would not, fix
 
-Suppose `cohort_raw.csv` is corrected after this chunk was
-last run, and a `targets` pipeline wrapping `load_cohort()`
-and `clean_cohort()` is added. What would `tar_outdated()`
-report, and would adding it change the compendium's rung on
-the L0 to L3 ladder?
+Suppose the three-target pipeline above has been built
+once, and `cohort_raw.csv` is then corrected. What would
+`tar_outdated()` report, and would adding the pipeline
+change the compendium's rung on the L0 to L3 ladder?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-`tar_outdated()` would report both targets, `raw` and
-`cleaned`, as out of date, because the file-tracked target
-hashes the corrected CSV's new contents and the `cleaned`
-target depends on `raw`. No, the rung would not change.
+`tar_outdated()` would report all three targets,
+`raw_file`, `raw`, and `cleaned`, as out of date. The
+file target `raw_file` hashes the corrected CSV's new
+contents, `raw` depends on `raw_file`, and `cleaned`
+depends on `raw`. No, the rung would not change.
 The pipeline would still pin no package version, no R
 runtime, and no operating system. The compendium would
 therefore remain at `r cohort_rung`, the rung set by
 what the repository holds (`r cohort_state`), whatever
-`tar_outdated()` reports. The pipeline only guarantees that a rebuild, once triggered,
-rebuilds the right things.
+`tar_outdated()` reports. The pipeline only guarantees
+that a rebuild, once triggered, rebuilds the right
+things.
 :::
 :::
 
@@ -1358,7 +1400,8 @@ cleaning script sources. The Makefile then looks complete
 but will fail to rebuild when the undeclared input
 changes. It may also use spaces where Make demands a
 literal tab to indent recipes, a classic error that
-produces the opaque message 'missing separator'.
+produces a 'missing separator' message or, on a recipe
+line containing a colon, no error at all.
 
 *Verification.* Check every rule against what each step actually
 reads and writes: list, for each script, its real inputs, and
@@ -1439,12 +1482,13 @@ a baseline (L3), and state the level actually reached.
    and check your prediction.
 
 4. Demonstrate the difference between Make's and `targets`'
-   staleness checks. In your `targets` pipeline, edit a function
-   body in a way that changes the result but leaves every file's
-   modification time as `targets` sees it, and confirm that
-   `targets` invalidates the dependent targets. Explain, in one
-   or two sentences, why an equivalent edit could be missed by a
-   Makefile that tracked only the script files' timestamps.
+   staleness checks. Choose a helper function that one of your
+   scripts sources from a file the Makefile of exercise 2 does
+   not list as a prerequisite. Edit its body in a way that
+   changes the result, and confirm that `targets` invalidates
+   the dependent targets. Explain, in one or two sentences, why
+   the same edit could be missed by a Makefile that tracked
+   only the script files' timestamps.
 
 5. State, in the book's capture-versus-validation terms, what
    your pipeline has and has not added to the reproducibility of
@@ -1462,7 +1506,7 @@ a baseline (L3), and state the level actually reached.
    corresponding role instead.
 
 7. Run `cohort <- clean_cohort(load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
-   and report `nrow(cohort)`. Then write the two-target
+   and report `nrow(cohort)`. Then write the three-target
    `_targets.R` fragment that wraps `load_cohort()` and
    `clean_cohort()` on this path, following the `raw_file`
    and `raw` split of Exercise 3's solution, and state what
@@ -1557,13 +1601,13 @@ declares the targets that call them:
 list(
   tar_target(
     raw_file,
-    'data/raw_data/cohort.csv',
+    'data/raw_data.csv',
     format = 'file'
   ),
   tar_target(raw, read_raw(raw_file)),
-  tar_target(cleaned, clean_cohort(raw)),
+  tar_target(cleaned, clean_data(raw)),
   tar_target(model, fit_model(cleaned)),
-  tar_target(figures, make_figures(model))
+  tar_target(figures, make_figures(model, cleaned))
 )
 ```
 
@@ -1732,10 +1776,12 @@ baseline test.
 The missing artifact for L3 is a baseline test, a test that
 recomputes a reported quantity and compares it with a value
 committed to the repository within a stated tolerance.
-Adding the pipeline run as the step that triggers that test
-inside continuous integration, as this chapter's worked
-example does, is what turns the green run from a statement
-about re-execution into evidence for L3.
+Making the pipeline run the step that triggers that test
+inside continuous integration, as @sec-verification
+describes, is what turns the green run from a statement
+about re-execution into evidence for L3. This chapter's
+worked example stops short of that step: it has no
+baseline test.
 :::
 
 ## Cheat sheet {#sec-cheat-pipelines}
@@ -1752,7 +1798,7 @@ about re-execution into evidence for L3.
 | `tar_outdated()` | Lists what a `tar_make()` would rebuild, without running anything |
 | `tar_visnetwork()` | Draws the dependency graph, colored by up to date or out of date |
 | `tar_render()` / `tar_quarto()` | Tracks a report's own source as well as the targets it reads |
-| Capture vs. validation | A pipeline captures no determinant; it validates that an output is current (habit 5) |
+| Capture vs. validation | A pipeline captures no determinant; it validates that an output is current |
 | Honest claim | 'The pipeline re-executes reliably' is not 'the analysis is reproducible'; name the rung separately |
 
 ## Further reading

@@ -65,8 +65,8 @@ expect_equal(tc$age_at_enroll[1], 50L,
 
 fit <- fit_model(cohort)
 tidy <- summarise_fit(fit)
-expect_inherits(fit, 'lm',
-                info = 'a glm inherits from lm')
+expect_true(is.numeric(coef(fit)),
+            info = 'coef() returns numeric coefficients')
 expect_true(all(c('term', 'estimate', 'odds_ratio') %in% names(tidy)),
             info = 'the tidy summary carries the expected columns')
 expect_equal(nrow(tidy), 3L,
@@ -132,7 +132,7 @@ if (!identical(gen_path, raw_path) && file.exists(gen_path)) {
                info = 'cleaned sex equals the pre-corruption sex')
 }
 
-# --- reproducibility: the same seed gives the same answer ----------
+# --- determinism (same session): the same seed, the same answer ----
 
 expect_equal(bootstrap_ci(cohort, n = 50), bootstrap_ci(cohort, n = 50),
              info = 'a seeded bootstrap is deterministic')

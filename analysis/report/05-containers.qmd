@@ -17,14 +17,14 @@ for Reproducible Research* (2015)
 ```
 :::
 
-By the end of this chapter we will be able to write a
+By the end of this chapter you will be able to write a
 Dockerfile that reaches L2, pinned environment, rather
-than one that merely looks reproducible. That is, we
-will write a recipe whose base is named by an immutable
-digest and whose installer fetches from a dated snapshot
-of the package repository. Its locale, time zone, and
-thread count will be declared in the recipe instead of
-inherited from whichever machine happens to run it.
+than one that merely looks reproducible. Its base will be
+named by an immutable digest, and its installer will
+fetch from a dated snapshot of the package repository.
+Its locale, time zone, and thread count will be declared
+in the recipe instead of inherited from whichever machine
+happens to run it.
 
 ```{r}
 #| include: false
@@ -82,6 +82,8 @@ answer:**
   project.
 - Making the image itself reproducible: pinning by
   digest and by dated snapshot.
+- Apple Silicon and multi-architecture images: why a
+  digest needs a fixed platform.
 - Environment-variable determinism: locale, time zone,
   thread count.
 - Profiles as base images, and a first look at the
@@ -98,8 +100,7 @@ the two layers beneath the packages. These are the
 operating system with its system libraries, and the R
 runtime itself. @fig-stack-containers marks both as
 captured on the shared determinant stack of @sec-levels.
-We note that the chapter captures nothing above those
-two layers. A container that pins the operating system
+The chapter captures nothing above those two layers. A container that pins the operating system
 and the R version still restores whatever the lockfile
 says about packages, which is the layer
 @sec-dependencies already captures.
@@ -157,10 +158,11 @@ background. We begin with what a container is, and
 proceed to the Rocker project that supplies R-specific
 containers. We then take up the two refinements that
 make a container itself reproducible rather than merely
-convenient, followed by the environment variables that
-govern determinism. We close with the profiles, a short
-menu of base environments, and a first look at how a
-team shares one.
+convenient, and the complication that multi-architecture
+images bring to a recent Mac. The environment variables
+that govern determinism follow. We close with the
+profiles and the team model, then work one project from
+L1 to L2 and check this book's own compendium.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the lockfile missed
@@ -283,7 +285,7 @@ wrong with that reasoning.
 The choice of base must match the archetype, not the
 maximum. A bigger image is not free. It inflates the
 image, slows every rebuild, and, more importantly,
-obscures what the analysis actually depends on. That is,
+obscures what the analysis actually depends on, because
 anything the base happens to carry no longer shows up as
 a declared dependency in the lockfile. An R-package
 archetype that builds on a publishing base, for
@@ -316,7 +318,9 @@ linear algebra. A package that needs GDAL will not
 install on a machine that lacks it, and the lockfile
 cannot supply it, because GDAL is not an R package. The
 third is the R interpreter itself. A lockfile pins the
-packages but not the R version. As we saw in the
+packages but not the R version: its `R` block records
+the version, and nothing in it can install that version.
+As we saw in the
 introduction, a change between R releases can alter a
 result silently: the random-number default that changed
 in R 3.6.0, the `stringsAsFactors` default that flipped
@@ -342,14 +346,15 @@ not an R package and so cannot appear in a lockfile.
 
 The operating system supplies the C library and the
 locale and sorting conventions every package was
-compiled against, and it is not installed by `install.
-packages()`. The system libraries, such as GDAL or
-`libxml2`, are compiled non-R software that packages
+compiled against, and it is not installed by
+`install.packages()`. The system libraries, such as GDAL
+or `libxml2`, are compiled non-R software that packages
 link against but do not bundle, so `renv` has nothing to
 record about them. The R interpreter itself is the
 program the lockfile's `install.packages()` calls run
-inside, not a package those calls install, so its
-version is recorded nowhere in the lockfile. All three
+inside, not a package those calls install. Its version
+is recorded in the lockfile's `R` block, but the
+lockfile cannot install it. All three
 need something beneath the package manager, which is the
 container's job.
 :::
@@ -364,7 +369,7 @@ recipe from a meal, or a class from an object.
 
 An **image** is a frozen filesystem plus metadata. It
 is, quite literally, a snapshot of a fully installed
-computer. That is, it holds an operating system, the
+computer: it holds an operating system, the
 system libraries, a particular R, a particular set of R
 packages, and the configuration that ties them
 together. All of this is captured as a single read-only
@@ -771,8 +776,8 @@ lockfile is restored inside it.
 
 See the pinning actually hold by building the image
 twice and confirming the two builds carry the same
-content. That is, they should carry the same operating
-system and the same R and package versions. This can be
+content: the same operating system and the same R and
+package versions. This can be
 checked, for example, by comparing `renv::status()` and
 the installed apt and R package versions across the two
 builds. Do not test this by comparing the two image
@@ -1067,7 +1072,11 @@ Dockerfile sets `OPENBLAS_NUM_THREADS=1` alongside
 `OMP_NUM_THREADS=1`. Setting the OpenMP and the BLAS
 thread counts to one together, rather than either alone,
 removes thread count as a source of variation in the
-order of summation. The cost is a little speed, traded
+order of summation. The image determines which BLAS is
+installed, but no rung of the ladder guarantees this
+layer. An L2 image run on a different CPU, or with these
+variables overridden at run time, can still move the
+last digits. The cost is a little speed, traded
 for run-to-run stability on the same image. Whether that
 trade is worth making is the analyst's judgment, and a
 container lets that judgment be recorded and enforced
@@ -1159,8 +1168,9 @@ archetype; only the base changes.
   container is run with a larger core allocation. Here
   the analyst must weigh the determinism point above.
   More cores may speed the simulation while changing the
-  last bits of a result, so `OMP_NUM_THREADS` and the
-  random-number discipline of @sec-dependencies deserve
+  last bits of a result, so the thread variables
+  (`OMP_NUM_THREADS` and `OPENBLAS_NUM_THREADS`) and the
+  seeding discipline of @sec-compendium deserve
   particular care.
 - A **blog** archetype renders many posts rather than one
   report, and is well served by the publishing or
@@ -1195,9 +1205,8 @@ software nobody asked for.
 
 ## A first look at the two-layer team model
 
-A container fixes an environment for one analyst. But
-how does a team share one? A team needs every member to
-share the same environment, and this introduces a
+A container fixes an environment for one analyst. A team
+needs one shared environment, and this introduces a
 wrinkle we shall only sketch here and develop fully in
 @sec-archiving. Building an image from a Rocker base and
 a full package set takes many minutes. It would be
@@ -1427,8 +1436,10 @@ compendium's own `renv.lock` records:
 - the three determinism variables this chapter argued for,
   `LANG`/`LC_ALL` set to a fixed locale, `TZ=UTC`, and
   `OMP_NUM_THREADS`/`OPENBLAS_NUM_THREADS` set to a
-  deliberate value, since the cohort's own model fit uses
-  a bootstrap whose last digits the thread count can move;
+  deliberate value, since the compendium's
+  `bootstrap_ci()` refits the model many times, and a
+  multithreaded BLAS could move the last digits of the
+  interval it reports;
 - a `WORKDIR`, a `COPY renv.lock renv.lock`, and the same
   two-step `renv` install and `renv::restore()` pattern,
   so the packages the compendium's scripts load are
@@ -1555,7 +1566,8 @@ contributions, and it is not one to delegate.
    role of `TZ` and locale in the image.
 
 5. Explain, to a colleague who has never met the idea,
-   why setting `OMP_NUM_THREADS=1` can change the last
+   why setting `OMP_NUM_THREADS=1` together with
+   `OPENBLAS_NUM_THREADS=1` can change the last
    digits of a bootstrap confidence interval or a
    mixed-model estimate. State clearly what is traded
    away by fixing it, and name one analysis where you
@@ -1571,14 +1583,14 @@ contributions, and it is not one to delegate.
 
 7. (Cumulative) Run
    `raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')`
-   and `cohort <- clean_cohort(raw)`, as in 'The cohort,
-   continued' above. Report three things: `nrow(cohort)`;
-   the number of distinct values of `cohort$sex` after
-   cleaning; and whether `file.exists('Dockerfile')`
-   evaluates to `TRUE` or `FALSE` when run from the
-   compendium's root. Then name the one line this chapter's
-   showcase Dockerfile would need to add to pin the thread
-   count the cohort's bootstrap depends on.
+   and `cohort <- clean_cohort(raw)` from the compendium's
+   root. Report three things: `nrow(cohort)`; the number
+   of distinct values of `cohort$sex` after cleaning; and
+   whether `file.exists('Dockerfile')` evaluates to `TRUE`
+   or `FALSE` there, as 'The cohort, continued' above
+   checks. Then name the instruction in this chapter's
+   showcase Dockerfile that pins the thread count, and
+   say why it sets two variables rather than one.
 
 8. (Spacing) This exercise returns to the lockfile of
    Chapter 6, 'Pinning Packages with renv' (@sec-dependencies).
@@ -1590,22 +1602,33 @@ contributions, and it is not one to delegate.
 ## Solutions
 
 Attempt an exercise before expanding its solution. The first
-asks the reader to inspect an image on their own machine, so
-the values will vary; the reasoning is what the box records.
+asks you to inspect an image on your own machine, so the
+values will vary; the reasoning is what the box records.
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 1
 
-The tag and the digest are found together:
+The tag and the digest are found together by asking the
+registry, which needs no pull:
 
 ```bash
-docker pull rocker/r-ver:4.4.0
-docker inspect --format='{{index .RepoDigests 0}}' rocker/r-ver:4.4.0
+docker buildx imagetools inspect rocker/r-ver:4.4.0
 ```
 
-The tag is `rocker/r-ver:4.4.0`; the digest is the
-`sha256:...` string, and it will differ from any value
-printed here.
+The tag is `rocker/r-ver:4.4.0`. The `Digest:` line near
+the top is the index digest, the one a `FROM` line pins;
+the `Manifests:` list below it gives the digest of each
+platform's image, `linux/amd64` among them. The values may
+differ from any printed in this book, because the tag can
+since have been repointed. A copy already pulled reports
+the digest it was pulled under, which is not necessarily
+what the tag resolves to today:
+
+```bash
+docker pull --platform linux/amd64 rocker/r-ver:4.4.0
+docker image inspect --format '{{index .RepoDigests 0}}' \
+  rocker/r-ver:4.4.0
+```
 
 **What can change under the tag.** A tag is a mutable
 label, a name someone chose to point at an image. The
@@ -1786,9 +1809,12 @@ two eight-thread runs. A bootstrap interval or a
 mixed-model estimate is built on many such reductions, so
 the difference propagates to the reported bounds.
 
-Setting `OMP_NUM_THREADS=1` removes the variability by
-removing the parallelism: there is one summation order and
-it is the same every time.
+Setting `OMP_NUM_THREADS=1` together with
+`OPENBLAS_NUM_THREADS=1`, for the OpenBLAS the Rocker
+image carries, removes the variability by removing the
+parallelism: there is one summation order and it is the
+same every time on that image and CPU. Either variable
+alone can leave the other source of threads in place.
 
 **What is traded away.** Speed, and potentially a great
 deal of it. A mixed model on a large dataset, or a
@@ -1808,7 +1834,7 @@ irrelevant against the cost of a discrepancy an auditor
 cannot explain. For exploratory work during development,
 the trade is usually not worth making.
 
-One refinement: one can develop with threads and fix the
+One refinement: you can develop with threads and fix the
 count only for the final verified run, which recovers
 most of the speed and all of the determinism where it
 matters.
@@ -1819,7 +1845,7 @@ matters.
 
 **The most likely cause** is that `renv::restore()` did
 not restore into the library the session is actually
-using, or did not run against the lockfile the analyst
+using, or did not run against the lockfile the collaborator
 believes it did. In practice this resolves to one of a
 few things. The project may have been opened from a
 directory where the lockfile is absent, so `restore()`
@@ -1873,8 +1899,9 @@ recorded, from the repository recorded, so two restores of
 the same lockfile install the same packages. It guarantees
 nothing about the operating system, the system libraries a
 package links against, or the version of R itself that
-runs those packages. None of those three is an R package,
-and so none of them has an entry in the lockfile.
+runs those packages. None of those three is an R package.
+The lockfile's `R` block records the R version, but the
+lockfile can install none of the three.
 
 The specific gap this chapter's container closes is
 exactly those three: the `FROM` line fixes the operating
@@ -1901,7 +1928,8 @@ the lockfile could not prevent and the container does.
 | `WORKDIR /project` | Keeps `renv` out of the image root, where it refuses to initialize. |
 | `COPY renv.lock renv.lock` + `renv::restore()` | Restores the exact package set inside the fixed environment. |
 | `docker build --platform linux/amd64` | Selects the `amd64` entry of an index, so a Mac builds the same image as CI and the cluster; required on Apple Silicon for `amd64`-only bases such as `rocker/tidyverse:4.4.0`. |
-| `docker inspect --format='{{index .RepoDigests 0}}'` | Finds the digest a tag currently resolves to. |
+| `docker buildx imagetools inspect image:tag` | Asks the registry for the index digest a tag currently resolves to, and each platform's manifest digest. |
+| `docker image inspect --format '{{index .RepoDigests 0}}' image:tag` | Reports the digest a local copy was pulled under, which may be stale. |
 | Rule of thumb | Compare content (`renv::status()`, package lists) across two builds to verify pinning; never compare digests, which differ by default even when content is identical (habit 4). |
 
 ## Further reading

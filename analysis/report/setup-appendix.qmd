@@ -3,13 +3,10 @@
 @sec-containers teaches what a container is and why pinning a
 base image by digest matters. This appendix is narrower and more
 mundane. Its subject is getting Docker itself to run at all, on
-the three machines most readers actually sit down at, before any
-of that chapter's content applies. We take up Docker on `arm64`
+the machines most readers actually sit down at, before any of
+that chapter's content applies. We take up Docker on `arm64`
 laptops, `--platform linux/amd64` emulation and its consequences,
-Windows and WSL2, and locked-down institutional laptops. A 2026
-expert review of this book judged that without such guidance,
-'weeks 2 to 4' of a course built on it are lost to installation
-trouble instead of spent on the material itself. We add no
+Windows and WSL2, and locked-down institutional laptops. We add no
 reproducibility theory here. The appendix is a checklist for the
 moment before the first `docker build` succeeds.
 
@@ -21,12 +18,12 @@ published for both `linux/amd64` and `linux/arm64`, so on an Apple
 Silicon Mac (an `arm64` host) it builds natively without any flag.
 `rocker/tidyverse` and `rocker/verse` at 4.4.0, the bases of the
 tidyverse and publishing profiles, publish a `linux/amd64` entry
-only, so the Mac has nothing native to match and the flag
-`--platform linux/amd64` is the only way to get a build at all.
-For either kind of base, the flag is what makes a Mac build the
-same image that a CI runner or an `x86` cluster builds, which is
-why this book passes it to every build. It is not an
-optimization. The reader is referred to that section before this
+only, so the Mac has nothing native to match, and the flag
+`--platform linux/amd64` is not an optimization but the only way
+to get a build at all. For either kind of base, the flag is what
+makes a Mac build the same image that a CI runner or an `x86`
+cluster builds, which is why this book passes it to every build.
+That section of @sec-containers is worth reading before this
 one. What follows is the practical sequence for a reader sitting
 at such a machine for the first time.
 
@@ -100,10 +97,13 @@ line endings. Git on Windows commonly checks out text files with
 CRLF line endings by default (`core.autocrlf=true`), while this
 book's shell scripts, Dockerfiles, and R scripts assume LF, the
 Linux convention a container's shell expects. A script that
-looks identical in an editor can fail inside a container with an
-`exec format error` or a shebang that silently does not match.
-The reason is that a trailing `\r` is part of the first line's
-interpreter path as far as the kernel is concerned. Cloning inside WSL2's own
+looks identical in an editor can fail inside a container with
+`/bin/bash^M: bad interpreter: No such file or directory` when a
+shell runs it, or a bare `no such file or directory` when the
+container runtime executes it directly. The reason is that a
+trailing `\r` is part of the first line's interpreter path as far
+as the kernel is concerned, and no interpreter of that name
+exists. Cloning inside WSL2's own
 filesystem, where Git's Linux default is LF, avoids this
 entirely; cloning on the Windows side and later copying into WSL2
 does not.
@@ -111,9 +111,7 @@ does not.
 ## Locked-down institutional laptops
 
 A reader with no administrator rights cannot install Docker
-Desktop at all. The same expert review named this constraint as
-common and often treated as an afterthought in course
-materials. Unfortunately, nothing on the laptop itself will fix
+Desktop at all, and nothing on the laptop itself will fix
 this. The options instead route around it through other
 infrastructure, in roughly increasing order of how much it is
 worth asking for:
@@ -159,7 +157,7 @@ assuming the Dockerfile itself is wrong:
 | `docker version` | Separates client-only output (Desktop not running) from a full client-and-server response. |
 | Is `--platform` set, and does the base image publish an `arm64` entry? | An `amd64`-only base on an `arm64` host needs the flag explicitly, and a missing flag there is a pull failure, not a slow build. A multi-architecture base such as `rocker/r-ver` builds without it, natively, but then yields an `arm64` image rather than the `amd64` one CI and the cluster run. |
 | Docker Desktop's allotted disk and memory (Settings > Resources) | A build that stalls rather than errors often has hit a memory or disk ceiling Docker Desktop itself enforces, independent of the host machine's total resources. |
-| Is the project under `/mnt/c` on WSL2, or on Windows' own filesystem? | Either one is the likely source of a build that is slow specifically on Windows and not elsewhere; moving the clone inside WSL2's Linux filesystem is the fix. |
+| On WSL2, is the project on the Windows filesystem (reached as `/mnt/c/...`) rather than in WSL2's own Linux filesystem (`/home/<user>/...`)? | A Windows-side clone is the likely source of a build that is slow specifically on Windows and not elsewhere; cloning again from inside the WSL2 terminal, into the Linux filesystem, is the fix. |
 
 On the machine this book was written on (Apple Silicon, Docker
 Desktop with the `desktop-linux` context), `docker version`

@@ -16,17 +16,16 @@ Scientific Containers for Mobility of Compute* (2017)
 ```
 :::
 
-By the end of this chapter we will be able to look at
-any one of three situations and name the single
-alternative to Docker that fits it. The situations are a
-job a cluster's scheduler refuses to run under Docker, a
-laboratory that has declined to license Docker Desktop,
-and a reviewer who will install nothing. The alternative
-named is the one, among Podman, Apptainer, Nix, the
-conda family, and Binder, that reaches the same
-pinned-environment rung @sec-containers reaches with
-Docker. The choice is keyed to the one constraint that
-actually binds.
+By the end of this chapter you will be able to take any
+of three situations and name the one alternative to
+Docker that fits, chosen by the constraint that actually
+binds. The situations are a job a cluster's scheduler
+refuses to run under Docker, a laboratory that has
+declined to license Docker Desktop, and a reviewer who
+will install nothing. The alternatives are Podman,
+Apptainer, Nix, the conda family, and Binder, each a
+route to the pinned-environment rung that
+@sec-containers reaches with Docker.
 
 ```{r}
 #| include: false
@@ -129,7 +128,8 @@ Consider three health scientists who cannot simply follow
 the Docker recipe of the previous chapter. The first runs
 a large simulation study that must execute on a shared
 university cluster, where the scheduler will not grant her
-the administrative privileges a Docker daemon requires. The
+the administrative privileges that Docker's standard,
+root-owned daemon requires. The
 second works in a laboratory of Windows machines and a
 pipeline that mixes R with Python, a combination that sits
 awkwardly inside the Rocker images. The third has prepared
@@ -206,9 +206,13 @@ chapter.
   Docker, Podman, and Apptainer can all consume. A Docker
   image is an OCI image.
 - **Daemon.** A background system service that runs
-  continuously with elevated privilege. Docker relies on
-  one; Podman and Apptainer do not, which is why they run
-  without administrative rights.
+  continuously with elevated privilege. A standard Docker
+  installation relies on one; Podman and Apptainer do
+  not, which is why they run without administrative
+  rights. Docker also has a rootless mode, but its
+  prerequisites are usually installed by an
+  administrator, so on a shared cluster it is rarely
+  available to an ordinary user.
 - **Rootless.** Able to run under an ordinary user
   account, without the `root` superuser privilege. A
   requirement on shared clusters, where users are not
@@ -219,9 +223,9 @@ chapter.
   directly.
 - **Purely functional package manager.** A package
   manager, such as Nix, in which the installed result is
-  a deterministic function of the declared inputs, so
-  that the same declaration yields a deterministic,
-  reproducible environment.
+  treated as a function of the declared inputs, so that
+  the same declaration, on the same platform, resolves
+  to the same set of packages and dependencies.
 - **Input-addressed.** Identified by a hash of the build
   inputs rather than by a mutable name, so that a
   reference cannot silently point at different content
@@ -261,7 +265,7 @@ pinned to its base by content digest and installing its
 packages from a dated snapshot, is a standard OCI image.
 Docker is the program that ran it, but the image does not
 belong to Docker; any OCI-compatible runtime can run it.
-Selecting a different runtime therefore changes one
+Selecting a different runtime changes one
 parameter. The base image, the digest pin, the dated
 snapshot, and the lockfile all carry over unchanged, and
 only the command that launches the container differs.
@@ -400,17 +404,20 @@ reaching the pinned environment by a different mechanism.
 
 Nix is a purely functional, input-addressed package
 manager [@dolstra2004]. 'Purely functional' means that the
-installed environment is a deterministic function of a
-declaration: given the same declaration, Nix reconstructs
-the same package set and dependency graph, on any
-machine, at any later time. 'Input-addressed' means that
-every built component is identified by a hash of its
-inputs. A reference therefore cannot silently come to
-mean something else, which is the mutable-tag failure we
+installed environment is a function of a declaration:
+given the same declaration, Nix reconstructs the same
+package set and dependency graph on the same platform,
+at a later time. 'Input-addressed' means that every
+built component is identified by a hash of its inputs.
+A reference therefore cannot silently come to mean
+something else, which is the mutable-tag failure we
 guarded against in @sec-containers by pinning digests.
-Dolstra, in the work that introduced Nix, made
-deterministic build the organizing principle of the
-design, and that property is what recommends Nix here.
+Input addressing fixes what goes into each build, not
+that every build produces bit-identical output, and the
+platform still matters. Dolstra, in the work that
+introduced Nix, made this purely functional model the
+organizing principle of the design, and that property is
+what recommends Nix here.
 
 The decisive fact for our purposes is that a single Nix
 declaration fixes the R version, the R packages, and the
@@ -451,7 +458,7 @@ Nix language to recognize its shape; a minimal
 ```nix
 let
   pkgs = import (fetchTarball
-    "https://github.com/NixOS/nixpkgs/archive/<rev>.tar.gz")
+    "https://github.com/rstats-on-nix/nixpkgs/archive/<date>.tar.gz")
     {};
   rpkgs = with pkgs.rPackages; [ dplyr ggplot2 targets ];
   system_packages = with pkgs; [ R glibcLocales ];
@@ -461,11 +468,19 @@ pkgs.mkShell {
 }
 ```
 
-The pinned `nixpkgs` revision, written as `<rev>` above, is
-the analogue of the base-image digest: it fixes the exact
+The pinned `nixpkgs` snapshot, written as `<date>` above,
+is the analogue of the base-image digest: it fixes the
 set of package definitions from which the environment is
-built. Entering the environment is then a single command,
-and no image is built:
+built. Current versions of `rix` point at a dated branch
+of `rstats-on-nix/nixpkgs`, a fork of `nixpkgs` its
+maintainers keep for R, rather than at a commit of the
+main `NixOS/nixpkgs` repository. The generated
+`fetchTarball` usually carries no `sha256` of the
+archive. The pin is only as fixed as that dated
+branch is kept; replacing the date with a full commit
+hash, and adding the archive's `sha256`, makes it
+stricter. Entering the environment is then a single
+command, and no image is built:
 
 ```bash
 $ nix-shell default.nix
@@ -480,11 +495,11 @@ form, and the reader will encounter both in the wild.
 
 Nix has trade-offs on both sides. On the plus side, it
 delivers the entire environment pillar in one mechanism
-and reaches L2 without the container machinery. It gives
-deterministic, reproducible environments that Docker,
-whose reproducibility depends on careful digest and
-snapshot discipline, approaches but does not guarantee
-by construction. On the minus side, the Nix model is
+and reaches L2 without the container machinery. Its
+input-addressed builds pin the whole dependency graph
+from one declaration, where Docker reaches a comparable
+pin only through careful digest and snapshot
+discipline. On the minus side, the Nix model is
 alien to the audience. Although `rix` hides much of the
 language, diagnosing a build that has failed still calls
 for some Nix knowledge. The first
@@ -513,7 +528,7 @@ installs and runs directly on Windows, without the WSL2
 or Hyper-V virtual machine a Docker (or Podman) image
 requires there. This is a practical advantage, but not a
 guarantee that any given package is available.
-Unfortunately, conda-forge's Windows (`win-64`) build
+Conda-forge's Windows (`win-64`) build
 coverage for R packages is narrower than its Linux
 coverage. A pipeline that needs a package without a
 `win-64` build therefore still needs a fallback, and
@@ -536,14 +551,16 @@ the required packages are available there.
 ::: {.callout-important}
 ## The honest level
 
-This chapter's own practice reaches L2, the pinned
-environment, by as many as five different routes: Podman,
-Apptainer, Nix through `rix`, a Binder session, or a
-devcontainer. However, it performs on none of them the
-verification that would lift any one of them to L3, a
-clean rebuild compared against a recorded baseline
-within a stated tolerance. A `default.nix` or a SIF file
-in a repository is a claim of L2, no more, until
+This chapter describes as many as five routes to L2, the
+pinned environment: Podman, Apptainer, Nix through `rix`,
+a Binder session, or a devcontainer. Describing a route
+is not taking it, and 'The cohort, continued' below
+computes which, if any, the book's own compendium has
+taken. Even a route taken is not verified until a clean
+rebuild is compared against a recorded baseline within a
+stated tolerance, which is what L3 requires. A
+`default.nix` or a SIF file in a repository is a claim of
+L2, no more, until
 @sec-verification's baseline test has actually been run
 (habit 7).
 :::
@@ -587,12 +604,26 @@ serves it as an interactive session reached by a single
 link. For the health scientist the appeal is that a
 reviewer clicks a link and is inside the running
 environment, with no Docker, no Nix, and no local
-installation of any kind. The limitation returns us to the
-honest-level theme. The Binder session reaches L2 for the
-life of the session, on a server that pins the
-environment, but it pins nothing on the reviewer's own
-machine, and it does not persist. It suits demonstration and review; it is
-not an archival guarantee.
+installation of any kind.
+
+Two qualifications follow from how Binder works. First,
+the service, through its `repo2docker` tool, builds its
+own image from the repository's configuration files; it
+does not pull a registry digest. A `.binder/` directory
+of `install.R` and `runtime.txt` files yields
+an environment resolved on Binder's server, not the
+digest-pinned image of @sec-containers. Binder runs that
+pinned image only when the configuration is a
+`.binder/Dockerfile` whose `FROM` line names the digest,
+and the image must also serve Jupyter, which a
+`rocker/binder` base provides, with
+`jupyter-rsession-proxy` for RStudio. Second, the public
+service limits each session's memory and lifetime. The
+honest level is then L2 for the life of the session, and
+only when the image is the pinned one. Nothing is pinned
+on the reviewer's own machine, and the session does not
+persist. Binder suits demonstration and review; it is not
+an archival guarantee.
 
 Development containers, and the hosted Codespaces service
 built on them, bring the same pinned environment into an
@@ -633,9 +664,12 @@ for how long?
 
 No; the environment lives entirely on Binder's hosted
 server, and nothing is pinned on the reviewer's machine. The
-session reaches L2 for as long as it runs, because the
-server-side container is the same pinned image the
-compendium ships. The pin does not persist once the
+session reaches L2 for as long as it runs only if the
+configuration is a `.binder/Dockerfile` built `FROM` the
+compendium's digest-pinned image. A configuration of
+`install.R` and `runtime.txt` files makes Binder resolve
+its own environment, which is not the compendium's pin.
+Even then the pin does not persist once the
 session ends, which is why Binder serves demonstration and review
 rather than archiving.
 :::
@@ -685,7 +719,7 @@ comparison <- tibble(
     "the default local runtime",
     "licensing constraint; rootless Linux",
     "an HPC cluster; archival SIF",
-    "maximum rigour; deterministic builds",
+    "maximum rigor; input-addressed builds",
     "a Nix-aligned site",
     "Windows-only or mixed R and Python",
     "a reviewer who installs nothing",
@@ -716,10 +750,10 @@ pinning. When a **reviewer must install nothing**,
 the choice is Binder, which serves the running environment
 in a browser for the life of a session. When the project
 demands **maximum rigor** and the team can absorb the
-learning curve, the choice is Nix through `rix`, which
-gives deterministic, reproducible builds and reaches L2
-without a container. And when the obstacle is a **licensing
-constraint**, an institution that has not licensed Docker
+learning curve, the choice is Nix through `rix`, whose
+input-addressed builds reach L2 without a container. And
+when the obstacle is a **licensing constraint**, an
+institution that has not licensed Docker
 Desktop, the choice is Podman. Podman reaches the
 identical L2 environment from the identical image at no
 licensing cost. The default, for the analyst under none of these
@@ -870,10 +904,11 @@ directly, R, packages, and system libraries, from a
 declaration alone, with no Docker image to build first.
 Axis one is unavailable as long as the check shows no
 `Dockerfile`, because there is then no image for Podman
-or Apptainer to run. Axis three's one existing
-artifact, the devcontainer, pins a generic image rather than
-this compendium's own recipe, so it does not yet reach L2
-for the cohort analysis specifically.
+or Apptainer to run. A devcontainer, axis three, reaches
+L2 for the cohort analysis only if it builds from this
+compendium's own pinned recipe; one that starts from a
+generic image, as the paragraph above reports when it
+does, does not.
 :::
 :::
 
@@ -936,11 +971,22 @@ $ apptainer exec --cleanenv --no-home --bind "$PWD" \
 ```
 
 Finally, when the paper is submitted, a reviewer wishes to
-re-run the principal figure without installing anything. A
-`.binder/` configuration in the compendium lets Binder
-build the same environment on a hosted server and serve it
-in the browser, reached by a single link in the cover
-letter.
+re-run the principal figure without installing anything.
+The compendium carries a one-line `.binder/Dockerfile`
+that starts from the same digest. This works only because
+the group built `cohort-env` on a `rocker/binder` base,
+so the image already serves Jupyter and RStudio:
+
+```dockerfile
+FROM ghcr.io/lab/cohort-env@sha256:9f2c...
+```
+
+Binder builds from that file on a hosted server and
+serves the environment in the browser, reached by a
+single link in the cover letter. A `.binder/` of
+`install.R` and `runtime.txt` would instead make Binder
+resolve an environment of its own, which is not the pin
+the laptop and the cluster share.
 
 The three destinations used three tools, drawn from two of
 the three axes, and one image throughout. The pinning was
@@ -1061,7 +1107,7 @@ that does not should request one core.
 This script's `#SBATCH` directive syntax is inspected
 against standard Slurm usage, not verified end to end.
 No Slurm cluster was available to actually submit it. The
-script should therefore be treated as an illustrative
+script should be treated as an illustrative
 template to adapt to a given site's partition names and
 resource limits, not as a script copied and run
 unexamined.
@@ -1206,8 +1252,9 @@ stands.
    any other missing artifact to be built first.
 
 8. This exercise returns to the digest pinning of Chapter 7
-   (@sec-containers). Take a `FROM rocker/verse@sha256:...`
-   line from that chapter's Dockerfile and write (a) the
+   (@sec-containers). Take any digest-pinned base line
+   from that chapter, such as `FROM rocker/r-ver@sha256:...`,
+   and write (a) the
    `apptainer build` command that would convert the image it
    names into a SIF, and (b) one sentence stating why the
    SIF's own checksum differs from the Docker digest even
@@ -1226,7 +1273,7 @@ result.
 
 ```bash
 podman run --rm -v "$PWD":/project -w /project \
-  <image>@sha256:... Rscript analysis/scripts/run.R
+  <image>@sha256:... Rscript analysis/run.R
 ```
 
 The container starts and the analysis runs, with no
@@ -1298,11 +1345,16 @@ rix::rix(
 )
 ```
 
-The pinned `nixpkgs` revision appears near the top of the
-generated `default.nix`, in the `fetchTarball` or
-`fetchFromGitHub` expression that imports `nixpkgs`. It is
-a full git commit hash of the `nixpkgs` repository,
-accompanied by a `sha256` of the fetched archive.
+The pinned `nixpkgs` snapshot appears near the top of the
+generated `default.nix`, in the `fetchTarball` expression
+that imports `nixpkgs`. In current versions of `rix` it is
+a dated branch of the `rstats-on-nix/nixpkgs` fork, a URL
+ending in a date such as `2024-10-01.tar.gz`, and it
+usually carries no `sha256` of the fetched archive. Older
+versions of `rix`, and hand-written declarations, may
+instead name a commit of `NixOS/nixpkgs`. Whichever you
+find, a full commit hash with a `sha256` is the stricter
+pin, and a date is only as fixed as its branch is kept.
 
 **What would change if the revision were altered.**
 Essentially everything below the R packages, and some of
@@ -1342,8 +1394,9 @@ installs nothing.
 
 **(c) A simulation study destined for a shared cluster.**
 Axis one again, but a different tool: Apptainer, because
-a shared cluster will not grant the root daemon Docker
-requires. The SIF also doubles as the archival record.
+a shared cluster will not grant the root daemon a
+standard Docker installation requires. The SIF also
+doubles as the archival record.
 
 **(d) A Windows-only pipeline mixing R and Python.** Axis
 two, a different environment model: the conda family, and
@@ -1364,7 +1417,7 @@ A serviceable reply:
 > artifact, so it reaches L2 as cleanly as a container
 > does and arguably more transparently. What it does not
 > reach is L3, because pinning an environment is capture
-> and L3 is validation: it needs evidence that the
+> and L3 is verification: it needs evidence that the
 > analysis was rebuilt from the pinned definition and
 > regenerated its recorded outputs within a stated
 > tolerance, which a baseline test establishes and Nix
@@ -1394,24 +1447,28 @@ daemon. The SIF is built once from the digest-pinned image
 and dispatched to every node.
 
 **The blog archetype** most naturally uses remote
-execution, a CI runner that renders the site and publishes
-it, or Binder if readers are to run the posts themselves.
-Its work is a render on every push, which is small, and
-its audience is on the web.
+execution: Binder, if readers are to run the posts
+themselves. Its audience is on the web, and each post is
+small enough for a browser session. The render on every
+push is a separate matter, the continuous integration of
+@sec-verification, which is not one of this chapter's
+three axes.
 
 **Why the pinning is nonetheless identical.** Both are
 built from the same compendium machinery: the same
 digest-pinned base image, the same dated snapshot, the
 same restored lockfile, the same determinism variables.
 The SIF is a conversion of that image, not a different
-environment, and the CI runner pulls that same image.
+environment, and a Binder session reaches the same pin
+only when its `.binder/Dockerfile` starts from that
+digest.
 Neither archetype changes what is captured; they differ
 only in where the captured environment is executed and by
 what program.
 
 The backends and runtimes are an axis of *delivery*, and the
 reproducibility level is set on an axis of *capture*. A
-simulation on a cluster and a blog in CI can sit on
+simulation on a cluster and a blog in Binder can sit on
 exactly the same rung, because they are running the same
 pinned thing in different places.
 :::
@@ -1434,16 +1491,16 @@ chapter's own 'The cohort, continued' section.
 
 ```bash
 apptainer build cohort-env.sif \
-  docker://rocker/verse@sha256:<the digest from Chapter 7>
+  docker://rocker/r-ver@sha256:<the digest from Chapter 7>
 ```
 
 (b) The SIF's checksum is computed over the bytes of the
 converted single-file archive, not over the Docker image's
-layers. Converting a deterministic input through a
-different format therefore produces a different set of
-bytes, and so a different hash, even though the
-conversion itself was deterministic and the input digest
-was pinned.
+layers. Converting a pinned input into a different format
+therefore produces a different set of bytes, and so a
+different hash, even though the input digest was pinned.
+The SIF also embeds build metadata, so two conversions of
+the same digest need not hash alike either.
 What is pinned is the *input* to the conversion; the SIF's
 own checksum is evidence about the *output*, and the two
 need not, and do not, match.
@@ -1458,7 +1515,7 @@ need not, and do not, match.
 | `apptainer exec --cleanenv --no-home --bind "$PWD" x.sif Rscript --vanilla ...` | Runs the SIF with host environment variables cleared, the host `$HOME` unmounted, only the project directory bound, and no R startup file read; `--cleanenv` alone clears variables only (see the Pitfall above). |
 | `rix::rix(r_ver=, r_pkgs=, project_path=)` | Generates a `default.nix` pinning R, packages, and system libraries together. |
 | `nix-shell default.nix` | Enters the Nix-declared environment; no image is built. |
-| `.binder/` configuration | Lets Binder build and serve the compendium's container in a browser, per session. |
+| `.binder/Dockerfile` | Lets Binder serve the compendium's pinned image in a browser, per session, when its `FROM` line names the digest; `install.R` and `runtime.txt` make Binder resolve its own environment instead. |
 | `.devcontainer/devcontainer.json` | Lets an editor or Codespaces open the pinned environment directly. |
 | Rule of thumb | Diagnose the binding constraint first; it selects the axis, and usually the tool. |
 | Rule of thumb | A runtime swap (axis one) changes the runner only; the image, digest, and packages carry over unchanged. |

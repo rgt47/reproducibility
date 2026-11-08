@@ -741,6 +741,49 @@ render time, which CI should be checked for; the nested callout in
 the Chapter 4 PHI list was checked in the rendered HTML and PDF
 (below).
 
+### Phase 20 (E2, Tier 2 and voice), branch `phase-20-tier2`, 2026-11-08
+
+Six agents edited disjoint files from one brief
+(`docs/third-review/phase20/BRIEF.md`), which fixed one canonical
+statement of each ladder rule (Finding 41) before any edit. Their
+item-by-item reports are in `docs/third-review/phase20/`; each row
+there carries its own evidence label. The lead applied the
+shared-file changes and verified as below.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Tier 2 register, Chs 1 to 13 and back matter | Each row of Section 6 fixed, already fixed, or deferred with a reason (agent reports) | Agents: `run_chapter.R` on every changed chapter, `errors 0 warnings 0` (Ch 9 keeps one pre-existing error that is an artifact of running `knitr::inline_expr()` outside knitr; it renders) |
+| Ladder (Finding 41) | BLAS 'no rung' and the sampler default-versus-override rule aligned in Chs 2, 3, 5, 6, 7, 12; a four-row default-versus-override table in Ch 3; Docker-only matrix row in Ch 12 now L0 | I; table checked in the PDF (column widths fixed) |
+| Finding 33 remainder | pacman (Ch 9, rewritten after running `renv::dependencies()`, which does see `p_load()` arguments); Ch 9 verification no longer hashing; `.Rprofile` seed moved to the analysis code; 'not statistical'; `LC_NUMERIC` (run); `testthat` to `tinytest` (Ch 6) | V for pacman and `LC_NUMERIC`; I otherwise |
+| Voice (Finding 36) | Objectives, exercises, and solutions in 'you' (D17); garbled splits and the logic defects listed in Finding 36 repaired; 'That is,' now 0 to 3 per chapter (23 in all); 'Unfortunately,' 0 in every chapter | V: grep counts |
+| Compute, not type | New inline values in Chs 6, 10, 11, 12, 13 (lockfile pins changed, pipeline timing shares, row counts, the 197-eye count, layer count, GitLab image against the lockfile R) | V: agents' runs; I: rendered text sampled |
+| D21 | Ch 12 shows `actions/checkout@3d3c42e…` (v7.0.1); `@v4` tag examples now `@v7`; `.github/workflows/render-book.yml` pinned to the same SHA with `fetch-depth: 0` (the git-history chunks of Chs 4 and 13); `.github/dependabot.yml` added | V: SHA from `gh api`; workflow not run on CI |
+| `zzrenvcheck` pin | Chs 6 and 12 install `@6f53235…` (0.10.0); no tag for 0.10.0 exists | V: `gh api` |
+| Shared files | `references.bib` (`nihdmswriting`, URL 200; `nhsrap2024` note); glossary two-layer entry; `test-cohort.R` uses `is.numeric(coef(fit))` and labels the same-session block as determinism; instructor keys for Chs 7, 10, 12 | V: suite 357/357 |
+| Render | Clean HTML and PDF: no log warnings, no unresolved references or citations, no example lists, no `href="@`, no literal entities; 628 pages (614 before) | V |
+| Lost anchors or citations | None: every section, figure, table, glossary, and cheat-sheet id and every citation key in `HEAD` survives | V: `ids_cites.py` |
+
+Deferred, as the brief scoped: Monte Carlo SE, `B = 1000`, parallel
+seeding, and the Ch 11 Ex 5 tolerance solution (Phase 21); reading
+times and the Ch 10 roadmap and Outline pair (Phase 23); the
+capture-versus-validation figure wording, which lives in
+`R/stack_diagram.R` (Phase 24, with Finding 41's glossary
+alignment). Claims resting on expert knowledge only (rix, Binder,
+Apptainer SIF metadata, `tar_outdated()`, `R CMD check` exit status
+on a WARNING, `setup-renv` and the autoloader, the Peng wording, the
+NHS RAP five criteria, 21 CFR 11.50(a) elements) are listed in the
+agent reports for Phase 25.
+
+Items for the author: (1) the credits typo was read as 'the book's
+house style'; 'series' may have been meant; (2) Conventions now
+defines 'captures' as 'pins for the first time, or pins more
+tightly than an earlier chapter did', matching the roxygen of
+`R/stack_diagram.R`; (3) a `v0.10.0` tag in `zzrenvcheck` would
+allow a readable pin, and zzcollab's `templates/Makefile` installs
+it unpinned (tool issues, not changed here); (4) Ch 3 keeps 'about
+four of ten' as the framework review's own count on a finer split,
+against the book's nine layers.
+
 ## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human

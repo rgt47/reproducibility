@@ -15,10 +15,10 @@ Computational Science* (2011)
 ```
 :::
 
-By the end of this chapter the reader will be able to
-look at any repository, one's own or someone else's, and
-say exactly which of four rungs it has reached. The
-reader will also be able to say what still stands between
+By the end of this chapter you will be able to look at
+any repository, your own or someone else's, and say
+exactly which of four rungs it has reached. You will
+also be able to say what still stands between
 it and the next one, rather than reach for the
 unfalsifiable claim 'fully reproducible.'
 
@@ -77,18 +77,18 @@ answer:**
   which rungs secure which.
 - The ladder: capture sets the level, validation
   confirms it.
-- The cohort, continued: placing this book's own
-  compendium on the ladder, today.
 - Reproduced, replicated, and a warning about the words.
 - Two numbering schemes, and which this book uses.
 - The ladder grades every archetype.
 - No framework pins the whole stack.
 - Worked example: one analysis walked up all four rungs.
+- The cohort, continued: placing this book's own
+  compendium on the ladder, today.
 :::
 
 ## Orientation
 
-To illustrate, consider a registry study of thirty-day
+Consider a registry study of thirty-day
 readmission after heart failure. The analyst fits a
 mixed-effects model, draws a forest plot, and reports an
 adjusted odds ratio of 1.24. The script runs, the
@@ -97,11 +97,16 @@ later a reader requests the code, downloads it, and runs
 it on a fresh laptop. The model fits, but differently. A
 package that the analysis relied upon has changed its
 default optimizer, and the estimate now returned is 1.19.
-Which number is the finding? The question is not
-statistical.
-The statistics were the same on both machines. What
-differed was everything underneath the statistics, and
-the analyst never recorded it.
+Which number is the finding? The discrepancy is
+computational in origin. The model specified was the same
+on both machines; what differed was everything underneath
+it, and the analyst never recorded it. Its size, however,
+is a statistical finding. An estimate that moves from 1.24
+to 1.19 when only the optimizer changes signals a flat or
+ill-conditioned likelihood, or a fit that has not
+converged. It should be checked, for example by refitting
+under several optimizers with `lme4::allFit()`, and
+reported as optimizer-sensitive.
 
 This chapter is about naming that 'everything
 underneath', and about grading how much of it a given
@@ -115,12 +120,13 @@ out the stack layer by layer. We then define the ladder
 that this book uses to say how far down the stack a
 particular effort has reached: L0 locatable, L1 pinned
 packages, L2 pinned environment, and L3 verified. With
-the ladder in hand, we place this book's own compendium
-on it and consider how the words 'reproduced' and
-'replicated' have shifted across the literature. Lastly,
-we examine how the ladder grades each archetype, admit
-that no framework pins the whole stack, and walk one
-analysis up all four rungs.
+the ladder in hand, we consider how the words
+'reproduced' and 'replicated' have shifted across the
+literature, and how the framework's own numbering differs
+from ours. Lastly, we examine how the ladder grades each
+archetype, admit that no framework pins the whole stack,
+walk one analysis up all four rungs, and then place this
+book's own compendium on the ladder.
 
 The ladder is the conceptual backbone of everything
 that follows. Every later chapter is, in effect, an
@@ -137,8 +143,10 @@ flinching, the rung one has actually reached.
 ## Check your understanding: what changed, and what did not
 
 In the registry-study story above, the code and the data
-were unchanged between the two runs. What changed, and
-why does calling the discrepancy 'statistical' mischaracterize it?
+were unchanged between the two runs. What changed, why
+does calling the discrepancy purely 'statistical'
+mischaracterize its origin, and what statistical question
+does it nonetheless raise?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -146,13 +154,18 @@ why does calling the discrepancy 'statistical' mischaracterize it?
 A package the analysis depended on changed its default
 optimizer between the two runs. That change sits on the
 package-versions layer of the determinant stack, not on
-the analysis code or the data. The statistics performed
-were identical on both machines; what differed was an
-unpinned determinant beneath them. Calling it
-'statistical' hides a computational failure behind a
-word that belongs to a different kind of disagreement.
-That kind concerns the data or the model, not what
-version of software ran.
+the analysis code or the data. The model specified was
+identical on both machines; what differed was an unpinned
+determinant beneath it. Calling the discrepancy purely
+'statistical' hides a computational failure behind a word
+that belongs to a different kind of disagreement, one
+about the data or the model. Its size is still a
+statistical question. An estimate that moves when only the
+optimizer changes comes from a poorly conditioned or
+unconverged fit, so it should be refit under other
+optimizers and reported as optimizer-sensitive. Pinning
+the package makes that fragile estimate reproducible; it
+does not make it trustworthy.
 :::
 :::
 
@@ -246,8 +259,9 @@ collected here for reference.
   the exact version of every package an analysis used.
 - **Container image.** A packaged environment, built
   from a recipe, that carries the operating system, the
-  system libraries, and the language runtime, and runs
-  identically wherever a container runtime runs.
+  system libraries, and the language runtime, and
+  provides the same environment wherever a container
+  runtime for its platform runs.
 - **RNG kind.** The random-number algorithm in force,
   set by `RNGkind()`. Two runs with the same seed but a
   different kind draw different numbers.
@@ -262,8 +276,9 @@ against some data. However, the code and the data are
 only the two topmost of a tall stack of dependencies.
 The result is a function of the whole stack, not of its
 top two layers alone. Arranging the determinants from the
-hardware upward to the analysis logic yields, depending
-on how finely one splits them, nine or ten layers.
+hardware upward to the analysis logic yields the nine
+layers this book uses; a finer split, such as one that
+separates the document toolchain, yields ten or more.
 
 At the base sits the **hardware**: the processor
 architecture, its instruction-set extensions, and the
@@ -292,14 +307,14 @@ shape the session before any user code runs. It
 comprises the random-number kind set by `RNGkind()`, the
 contrasts used for factor variables, and the number of
 printed `digits`. It also comprises the locale that
-governs sorting and decimal marks, and the time zone that
-governs date arithmetic. Then come the two layers the
+governs sorting, and the time zone that governs date
+arithmetic. Then come the two layers the
 analyst actually writes. These are the **analysis
 code**, including every `set.seed()` call and the order
 of execution, and the **input data**, its content and its
 integrity. Finally, threaded through the whole stack,
-sits **intrinsic non-determinism**. That is, the use of
-the wall-clock, race conditions in parallel code, and
+sits **intrinsic non-determinism**: the use of the
+wall-clock, race conditions in parallel code, and
 iteration over unordered structures are each capable of
 producing a different answer on two runs of identical
 inputs.
@@ -314,7 +329,12 @@ happens to provide. @fig-determinant-stack maps the stack
 against the rung of the ladder that first secures each
 layer. Three layers (the hardware, the numerical
 libraries, and intrinsic non-determinism) are secured by
-no rung of the capture ladder at all.
+no rung of the capture ladder at all. The numerical
+libraries are the case most often misread. A container
+image determines which BLAS is installed, but the ladder
+does not require that library to be fixed, and the thread
+count and the processor still vary between machines. No
+rung therefore guarantees this layer.
 
 ```{r}
 #| label: fig-determinant-stack
@@ -327,32 +347,55 @@ plot_determinant_stack(
   title = 'Which rung first secures each layer')
 ```
 
-Two features of the session-configuration layer deserve
-a word, because they are the layers most often forgotten
-by an analyst who has already adopted a lockfile and a
-container. The random-number kind is the more dangerous.
-An analysis that seeds its generator and draws a sample
-is reproducible only if the algorithm behind the seed is
-also fixed. The change of the default `sample.kind` in
-R 3.6.0 broke exactly this, silently, for every analysis
-that had set a seed under the old default. Given that
-simulation studies, multiple imputation, and bootstrap
-confidence intervals are staples of health research, the
-RNG kind is a first-order concern. The locale is the
-second. `sort()` and `order()` on a
-character vector depend on `LC_COLLATE`, and the parsing
-of a decimal mark depends on `LC_NUMERIC`. An analysis
+Two settings of the session-configuration layer deserve
+a word, because they are the settings most often
+forgotten by an analyst who has already adopted a
+lockfile and a container. The random-number kind is the
+more dangerous. An analysis that seeds its generator and
+draws a sample is reproducible only if the algorithm
+behind the seed is also fixed. The change of the default
+`sample.kind` in R 3.6.0 broke exactly this, silently,
+for every analysis that had set a seed under the old
+default. Given that simulation studies, multiple
+imputation, and bootstrap confidence intervals are staples
+of health research, the RNG kind is a first-order concern.
+The locale is the second. `sort()` and `order()` on a
+character vector depend on `LC_COLLATE`, so an analysis
 developed under one locale and re-run under another can
-therefore reorder a table or misread a number without
-any error.
+reorder a table without any error. The decimal mark is a
+different matter. R keeps `LC_NUMERIC` at 'C' and warns if
+code changes it, so base parsing reads '.' as the decimal
+mark whatever the system locale. A file written with
+decimal commas is read as text unless the reading function
+is told otherwise, for example with `dec = ','` in
+`read.csv()`.
+
+The RNG kind also shows why a setting can belong to two
+layers at once. The R release sets the *default* kind, so
+the default is part of the R runtime and is fixed at L2.
+Code or a project `.Rprofile` can *override* the default,
+and an override is session configuration, fixed only by an
+explicit `RNGkind()` call in the analysis code. The same
+distinction between a default and an override recurs
+across the stack, and the table below states it for the
+settings this book returns to most often.
+
+| Setting | What fixes the default | What can override it | What closes the override |
+|----------------------------|--------------------|--------------------------|--------------------------|
+| RNG kind (`sample.kind`) | The R release (R runtime, L2) | Code, `.Rprofile`, a package | An explicit `RNGkind()` call in the analysis |
+| `stringsAsFactors` | The R release (R runtime, L2) | The argument in each call | Writing the argument in the code |
+| Locale and time zone | The image or the host (L2 when the image sets them) | `Sys.setlocale()`, `Sys.setenv(TZ = )` | Setting them in the image or in the analysis |
+| BLAS and LAPACK | The image or the host (no rung) | The library path, the thread count | No rung; fixing the thread count narrows it, and a stated tolerance absorbs what remains |
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: locating a failure on the stack
 
 An epidemiologist reports that a colleague, re-running
-her cohort analysis, obtained an incidence rate identical
-to five decimal places but a different value in the sixth.
-The code, the data, the package versions, and the
+her cohort analysis, obtained a least-squares regression
+coefficient identical to five decimal places but a
+different value in the sixth. The fit was computed as
+`solve(crossprod(X), crossprod(X, y))` on a large design
+matrix. The code, the data, the package versions, and the
 operating system were all identical. Which layer of the
 determinant stack is the most likely culprit, and is the
 discrepancy a bug?
@@ -363,10 +406,12 @@ discrepancy a bug?
 Neither the code nor the data nor the pinned layers can
 be at fault, since all were identical. A discrepancy
 confined to the low-order digits is the signature of the
-numerical-library layer. The two machines used a
-different BLAS implementation, or the same one with a
-different thread count, and so the floating-point
-summations were reordered. It is not a bug in the
+numerical-library layer. `crossprod()` hands the matrix
+product to the BLAS, and `solve()` hands the linear
+system to LAPACK. The two machines used a different BLAS
+implementation, or the same one with a different thread
+count, and so the floating-point summations were
+reordered. It is not a bug in the
 analysis. It is the reason that byte-for-byte identity
 across different hardware is a stronger claim than
 number-for-number agreement on a fixed architecture.
@@ -498,8 +543,8 @@ separates L1 from L2. Likewise, reaching L3 is not the
 same act as earning a venue's reproduction badge, which is
 awarded by reviewers under that venue's own policy. The
 reader who needs a badge should read the venue's current
-definition directly. We note that the L-scheme adds no
-new definition of reproducibility. It maps these graded
+definition directly. The L-scheme adds no new definition
+of reproducibility. It maps these graded
 views onto artifacts a tool can detect, so that the level
 of a repository can be determined mechanically and
 reported honestly, rather than asserted by its author.
@@ -527,9 +572,10 @@ that carries none of the author's undeclared state. It
 therefore catches the silent decay that a
 captured-but-never-retested analysis suffers, and the
 'works on my machine' failure at its source. The
-laboratory has moved from L2, a pinned environment
-asserted to reproduce, toward L3, a pinned environment
-shown to reproduce.
+laboratory has moved from L2 asserted to L2 confirmed: the
+environment is shown to build and the code to run. A
+baseline test, comparing regenerated outputs with recorded
+values, is what would make it L3.
 :::
 :::
 
@@ -586,8 +632,8 @@ attached the two words in the opposite direction along
 the re-execution axis. The other is a set of biomedical
 and other field-specific usages, which a reader may still
 encounter, where 'reproduce' names an independent study
-rather than a re-run. Unfortunately, a reader who carries
-the sense of the words from one of those older documents
+rather than a re-run. A reader who carries the sense of
+the words from one of those older documents
 into a current one will be misled. The misreading happens
 silently and without any error to warn them, in exactly
 the manner of a shifted package default. This book
@@ -650,9 +696,10 @@ collected. The fix is to write 'replicated', not
 
 This chapter defines the ladder rather than climbing it.
 Its one executed placement, the cohort compendium in
-'The cohort, continued' below, itself sits at no higher
-than L0 at the time of writing. The lift to L1 and L2 is
-left to the chapters this ladder points toward.
+'The cohort, continued' below, is computed from the
+repository's artifacts each time the chapter renders,
+not asserted here. Every rung above the one that section
+prints is left to the chapters this ladder points toward.
 :::
 
 ## Two numbering schemes, and which this book uses
@@ -763,13 +810,13 @@ input's output against a value committed earlier.
 
 ## No framework pins the whole stack
 
-Unfortunately, reaching L2 or L3 does not pin the entire
-determinant stack, and no present framework pins all of
-it.
+Reaching L2 or L3 does not pin the entire determinant
+stack, and no present framework pins all of it.
 
-By its own published accounting, the framework this book
-uses robustly pins something like four of the ten
-determinants. These are the operating system and system
+By its own published accounting, which splits the stack
+more finely than this chapter into about ten
+determinants, the framework this book uses robustly pins
+about four. These are the operating system and system
 libraries (as strongly as its base image is pinned), the
 R package versions (nominally, through the lockfile), the
 locale and time zone, and the source code. It leaves
@@ -780,13 +827,12 @@ LAPACK implementation is inherited from the base image
 fixes the thread count but not the library). The
 integrity of external data is recorded by provenance but
 not by checksum, and the fonts and the graphics device
-are pinned only for some profiles. It appears that the
-whole class of integrative frameworks currently leaves
-these layers exposed, and an honest L2 or L3 claim names
-them. The reader will therefore find, at each rung of the
-ladder in the chapters ahead, an explicit account of what
-is secured and what remains exposed. That account
-includes the framework this book teaches.
+are pinned only for some profiles. We know of no
+integrative framework that currently pins these layers,
+and an honest L2 or L3 claim names them. The reader will
+therefore find, at each rung of the ladder in the
+chapters ahead, an explicit account of what is secured
+and what remains exposed. That account includes the framework this book teaches.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: naming the gap honestly
@@ -851,12 +897,17 @@ pinned by its content digest. The image carries a fixed
 operating system, a fixed R, and the system libraries the
 packages need, and the lockfile restores inside it. The
 folder is now at **L2, pinned environment**. It will build
-and run identically on the colleague's laptop, on a
+the same environment on the colleague's laptop, on a
 reviewer's, and on a server. Because the analyst computes
 bootstrap confidence intervals for the hazard ratio, the
-analyst also sets the RNG kind and a seed in the project
-`.Rprofile`. This closes a session-configuration exposure
-that L2 does not close by default.
+analyst also sets the RNG kind with an explicit
+`RNGkind()` call in `analysis.R`, and passes a seed at the
+call that draws the resamples. Neither goes in the project
+`.Rprofile`. A seed set at session start makes every draw
+depend on whatever consumed random numbers earlier in the
+session, the rule @sec-testing develops. This closes a
+session-configuration exposure that L2 does not close by
+default.
 
 Finally the analyst adds a verification step, developed in
 @sec-verification. The step rebuilds the image from clean
@@ -869,9 +920,11 @@ change. The folder is now at **L3, verified**. That is,
 the reported hazard ratio has been shown to regenerate,
 not merely asserted to. The honest reproducibility
 statement for the paper can now name the rung, the
-artifacts, and the one layer that remains outside the
-guarantee: the cross-architecture numerical determinism
-of the bootstrap.
+artifacts, and the layers that remain outside the
+guarantee. No rung pins the hardware, the numerical
+libraries, or intrinsic non-determinism. For this
+analysis they amount chiefly to the cross-architecture
+numerical determinism of the bootstrap.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: which rung, which artifact
@@ -1069,8 +1122,8 @@ inference at hand.
 
 ## Exercises
 
-1. For an analysis of your own, list the nine or ten layers
-   of the determinant stack and, for each, state whether your
+1. For an analysis of your own, list the nine layers of
+   the determinant stack and, for each, state whether your
    current setup pins it, and by what artifact. Identify the
    lowest layer you have left unpinned.
 
@@ -1125,21 +1178,23 @@ inference at hand.
 ## Solutions
 
 Attempt an exercise before expanding its solution. Two of
-these ask the reader to work with an analysis or a paper of
-their own, so they have no single correct answer; for those
-the box says what a good answer establishes.
+these ask you to work with an analysis or a paper of your
+own, so they have no single correct answer; for those the
+box says what a good answer establishes.
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 1
 
 No single correct answer. What a good answer establishes is
-that the reader can name the layers in order and attach an
+that you can name the layers in order and attach an
 artifact, or an admission, to each.
 
-We work up from the base. The **hardware** is pinned by
+Work up from the base. The **hardware** is pinned by
 nothing short of running on the same machine. The
-**numerical libraries** are pinned by the container image
-if it fixes the BLAS, and otherwise not at all. The
+**numerical libraries** are pinned by no rung. The
+container image determines which BLAS is installed, but
+the ladder does not require it to be fixed, and the thread
+count and the processor still vary. The
 **operating system and system libraries** are pinned by
 the container image. The **R runtime** is likewise pinned
 by the container image, and merely *recorded* by the
@@ -1153,12 +1208,12 @@ checksum or an archived deposit, and are often only
 locatable. Lastly, **intrinsic non-determinism**, such as
 parallel reduction order, is pinned by nothing.
 
-Most readers find their lowest unpinned layer is either the
+Your lowest unpinned layer is most likely either the
 numerical libraries or the session configuration, and both
-answers are common and honest. A reader who finds their
-lowest unpinned layer is the input data has discovered
-something more urgent than anything this chapter teaches,
-because the analysis is not reconstructable at all.
+answers are common and honest. If your lowest unpinned
+layer is the input data, you have discovered something
+more urgent than anything this chapter teaches, because
+the analysis is not reconstructable at all.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1175,11 +1230,10 @@ container recipe, or another artifact pinning the runtime
 and the system libraries? That is L2. Is there evidence
 that the outputs were regenerated from the pinned
 definition and compared with recorded values within a
-stated tolerance? Such evidence would be a baseline test
-and the CI log or verification report showing it pass.
-That is L3. A CI log that only shows the code ran is not
-enough. Stop at the highest rung for which an artifact is
-actually present.
+stated tolerance, shown by a baseline test and a CI log or
+verification report of it passing? That is L3. A CI log
+that only shows the code ran is not enough. Stop at the
+highest rung for which an artifact is actually present.
 
 The reproducibility statement should then claim that rung
 and no more. For the common L0 case: 'The analysis code and
@@ -1197,13 +1251,14 @@ merely modest.
 Two determinants an image does not pin, with a
 circumstance for each.
 
-**The numerical libraries, when the image does not fix
-them.** An image built on a base that links against a
-BLAS chosen at run time, or one run on hosts that expose
-different thread counts, will reorder floating-point
-summations. Two runs of the same image on two machines can
-then return an incidence rate agreeing to five decimal
-places and differing in the sixth. The image pinned the
+**The numerical libraries.** An image built on a base
+that links against a BLAS chosen at run time, or one run
+on hosts that expose different thread counts or
+processors, will reorder floating-point summations. Two
+runs of the same image on two machines can then return a
+least-squares coefficient, computed through `crossprod()`
+and `solve()`, agreeing to five decimal places and
+differing in the sixth. The image pinned the
 software and not the arithmetic beneath it.
 
 **The session configuration, specifically the RNG kind.**
@@ -1237,11 +1292,11 @@ Docker, and unit testing. It is a statement about tool
 adoption, and it is read from the bottom up, so Level 4
 implies the first three as well.
 
-What it tells us about the architectural ladder is
+What it tells you about the architectural ladder is
 therefore quite a lot, but indirectly and with one gap. The
 presence of `renv` implies the machinery for L1; the
 presence of Docker implies the machinery for L2. What it
-does not tell us is whether any of it has been
+does not tell you is whether any of it has been
 *verified*, because the tool scale counts adoption and the
 architectural ladder grades locking and verification. A
 project can hold every tool in the list and have never
@@ -1258,8 +1313,8 @@ showing that the container was rebuilt from the recipe,
 the analysis re-run, and its outputs compared with
 recorded values within a stated tolerance. Absent that,
 the honest reading of 'Level 4' is L2. Inspecting
-`renv.lock` and the Dockerfile tells us the capture
-artifacts exist; only the CI record tells us the capture
+`renv.lock` and the Dockerfile tells you the capture
+artifacts exist; only the CI record tells you the capture
 works.
 :::
 
@@ -1276,9 +1331,9 @@ research.
 The reviewer read it in an artifact-badging frame, where
 the pair of words attaches to re-execution rather than to
 new data. Under the current 2020 ACM vocabulary the two
-conventions actually agree, so the reviewer's request is
-not simply a misreading of the current standard. The
-miscommunication traces to one of two places. One is the
+conventions actually agree, so the current standard cannot
+explain the request. The miscommunication traces to one of
+two places. One is the
 pre-2020 ACM badging, which attached the two words in the
 opposite direction. The other is a field usage in which
 'reproduce' names an independent study rather than a
@@ -1341,10 +1396,10 @@ after the environment is fixed. Two runs of the identical
 image produce different draws if the code sets the sampler
 differently, or if a mounted `.Rprofile` does. The
 protection lies in an explicit declaration, which a
-heavier container cannot supply. That is, set `RNGkind()`
-in the analysis, record it alongside the seed, and treat
-it as part of the analysis code rather than part of the
-environment.
+heavier container cannot supply. Concretely, set
+`RNGkind()` in the analysis, record it alongside the
+seed, and treat it as part of the analysis code rather
+than part of the environment.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1362,11 +1417,14 @@ own 'The cohort, continued' section.
 ## Exercise 8
 
 The layer is the **R runtime** layer of this chapter's
-determinant stack, not the package-versions layer above it
-and not the analysis code below it. The sampler that turns
-a seed into a draw is a default behavior of R itself. The
-change arrived with a new R release rather than with a
-new package version or an edited script.
+determinant stack, not the package-versions layer above
+it, and not the analysis code further up. The sampler
+that turns a seed into a draw is, by default, a behavior
+of R itself. The change arrived with a new R release
+rather than with a new package version or an edited
+script. Exercise 6 places the RNG kind in the session
+configuration instead because there the analysis
+*overrides* the default; here the default itself moved.
 
 By this chapter's own stack figure, the R runtime is
 secured only at **L2, pinned environment**, the same rung
@@ -1374,9 +1432,9 @@ that secures the operating system and system libraries.
 A lockfile at L1 fixes the packages but not the R version
 underneath them. So an L0 or L1 analysis in 2018 would
 have had no protection at all. Whichever R release the
-reader happened to install would supply whichever sampler
-that release shipped. Only an analysis built from a
-container image pinned to an R release predating 3.6.0
+person re-running it happened to install would supply
+whichever sampler that release shipped. Only an analysis
+built from a container image pinned to an R release predating 3.6.0
 would have run the old sampler regardless of when it was
 restored. That protection is exactly what the L1-to-L2
 step of this chapter's worked example buys, and what a

@@ -25,11 +25,11 @@ pkgload::load_all('../..', quiet = TRUE)
 A function that silently sums instead of averaging will
 pass every rung of the reproducibility ladder and still
 be wrong on every machine that runs it. By the end of
-this chapter the reader will be able to say, of any
+this chapter you will be able to say, of any
 computational result, whether it has merely been
-reproduced or actually checked. To tell the difference
-in an analysis of one's own, we develop the four kinds
-of test, plus a baseline test of the kind
+reproduced or actually checked. To make that distinction
+in your own analyses, the chapter develops the four
+kinds of test, among them the baseline test that
 @tbl-baseline-rng demonstrates on the book's own running
 cohort.
 
@@ -67,16 +67,20 @@ vectors, and basic control flow.
   belong to the validation register?
 
 **Outline.** We begin with the analyst's irreplaceable
-judgments and then state the paradox precisely. We next
-introduce `tinytest`'s bare-expectation style and work
-the four kinds of test on the cohort and the retinopathy
-trial. We then distinguish behavior from implementation,
-and treat linting, styling, and the pre-commit gate. The
-later sections show how the emphasis shifts across
-archetypes, give a worked example of the paradox itself,
-and discuss collaborating with an LLM. Lastly, the
-chapter closes with exercises, a cheat sheet, and
-further reading.
+judgments, state the paradox precisely, and treat a
+pre-specified analysis plan as an oracle. We next
+introduce `tinytest`'s bare-expectation style, work the
+four kinds of test on the cohort and the retinopathy
+trial, and separate Monte Carlo error from a change of
+sampler. We then distinguish behavior from
+implementation, treat linting, styling, and the
+pre-commit gate, and set out what 'validation' means in
+regulated work. The later sections show how the
+emphasis shifts across archetypes, give a worked
+example of the paradox itself, discuss collaborating
+with an LLM, and apply all four kinds of test to the
+running cohort. The chapter closes with exercises, a
+cheat sheet, and further reading.
 :::
 
 ## Where this sits on the stack
@@ -165,13 +169,6 @@ That confirmation is itself a test, of a
 particular kind we shall meet below as the
 baseline test, so the topmost level is defined
 by a test.
-
-The plan of the chapter is as follows. We shall
-begin with the human judgments that no testing tool
-can make, and then develop the four kinds of test in
-turn. We next take up code quality as a second
-validation feature. Lastly, we close with the way the
-emphasis shifts across archetypes.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the paradox
@@ -531,8 +528,9 @@ of the sort a health study might produce.
 
 A unit test checks that one function behaves as
 intended on inputs whose correct outputs are known
-independently. The `calculate_mean` function of the
-orientation is the canonical case. Its contract is
+independently. The mean function of the orientation,
+here called `calculate_mean`, is the canonical case.
+Its contract is
 that it returns the arithmetic mean, and the oracle
 is arithmetic done by hand:
 
@@ -564,7 +562,7 @@ integration test runs the pipeline end to end and
 checks the result:
 
 ```r
-# inst/tinytest/test-cohort.R
+# abridged from inst/tinytest/test-cohort.R
 raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 cohort <- clean_cohort(raw)
 fit <- fit_model(cohort)
@@ -618,7 +616,9 @@ It is included here for a reason beyond
 illustration: every cell in it can be counted
 by hand from the data, which is precisely the
 property an oracle needs. A test asserting that the
-untreated arm contains 197 eyes is checkable by
+untreated arm contains
+`r sum(survival::diabetic$trt == 0)` eyes, written as
+that literal number, is checkable by
 someone who does not trust the function that
 produced it. A test asserting that it contains
 `nrow(subset(d, trt == 0))` eyes is not a test at
@@ -658,7 +658,7 @@ or on a corrected export, for reasons having nothing
 to do with a defect.
 
 ```r
-# inst/tinytest/test-cohort.R
+# abridged from inst/tinytest/test-cohort.R
 raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 cohort <- clean_cohort(raw)
 
@@ -749,7 +749,8 @@ saveRDS(result, 'inst/baseline/cohort_baseline.rds')
 ```
 
 ```r
-# inst/tinytest/test-baseline-cohort.R
+# inst/tinytest/test-baseline-cohort.R, abridged: the
+# real file also searches fallback paths for both files
 raw_path <- '../../analysis/data/raw_data/cohort_raw.csv'
 if (!file.exists(raw_path)) {
   exit_file('raw extract absent; run simulate_cohort.R')
@@ -761,11 +762,16 @@ result <- run_canonical_analysis(raw_path)
 
 expect_equal(result$n_rows, baseline$n_rows,
   info = 'cleaned row count matches baseline')
+expect_equal(result$n_events, baseline$n_events,
+  info = 'event count matches baseline')
 expect_equal(result$hr, baseline$hr, tolerance = 1e-8,
   info = 'Cox HR matches committed baseline')
 expect_equal(result$lower, baseline$lower,
   tolerance = 1e-8,
   info = 'lower CI bound matches committed baseline')
+expect_equal(result$upper, baseline$upper,
+  tolerance = 1e-8,
+  info = 'upper CI bound matches committed baseline')
 ```
 
 Three details carry the weight. The path is relative
@@ -998,8 +1004,8 @@ baseline test does, addresses that second problem.
 
 Each of the four kinds catches defects the others do
 not see, and @fig-test-coverage sets four
-representative defects against them. We read the
-bottom row first. Re-execution
+representative defects against them. Start with the
+bottom row. Re-execution
 alone, with no test of any kind, catches none of the
 four, because every one of these defects is
 deterministic and will reproduce perfectly. That row is
@@ -1068,10 +1074,15 @@ manuscript reported.
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-(a) An integration test on the pipeline,
-which would see the changed row count, or a
-data-validation test asserting the expected sample
-size. (b) A data-validation test on the age range.
+(a) A data-validation test asserting the expected
+sample size, or an integration test that asserts the
+cleaned row count. The integration test shown earlier
+checks only the shape of the model summary, so it
+would need that line added. The book's baseline test
+would also catch it, because it compares the cleaned
+row count with the recorded one, though it was not
+written for that purpose. (b) A data-validation test
+on the age range.
 (c) A unit test against a hand-computed standard
 deviation. (d) A baseline test comparing the seeded
 result with a value recorded before the upgrade and
@@ -1266,7 +1277,10 @@ it fixes the environment; removing it drops the
 analysis from L2 to L1. The rule of thumb is that
 removing a capture feature lowers the level, while
 removing a validation feature leaves the level
-unchanged and only stops the checking.
+unchanged and only stops the checking. There is one
+exception: the baseline test is the evidence L3
+requires, so removing it drops an analysis from L3 to
+L2.
 :::
 :::
 
@@ -1277,7 +1291,7 @@ statistical and software-engineering sense: checking that
 code is correct, that data meet a constraint, that a
 result regenerates. In pharmaceutical, medical-device, and
 other FDA- or EMA-regulated work, 'validation' names a
-narrower and more procedural idea. @sec-levels's warning
+broader and more procedural idea. @sec-levels's warning
 box introduces the distinction; this section develops the
 three practices that fill it out for testing
 specifically.
@@ -1614,10 +1628,10 @@ frame with these columns.'
 
 *Watch for.* The model will propose generic checks,
 non-missing identifiers, numeric outcomes, that are
-reasonable but do not encode *the analyst's* domain.
+reasonable but do not encode *your* domain.
 The dictionary gives types and codes. It does not give
 the protocol's eligibility ages, the plausible range
-of BMI in the study population, or how much outcome
+of BMI in your population, or how much outcome
 missingness the analysis can tolerate, so the model
 will invent those bounds.
 
@@ -1656,9 +1670,7 @@ proportional-hazards model fit to the cleaned extract,
 with BMI expressed per 5 kg/m^2 so that the hazard
 ratio has a clinically natural scale. The analysis
 runs clean only after `clean_cohort()` has repaired
-the four planted defects. Uncleaned, it would still
-run, but it would fit a different model on 338 rows
-with the duplicate and the miscoded sex included.
+the four planted defects.
 
 ```{r}
 #| label: cohort-canonical-fit
@@ -1676,7 +1688,10 @@ The hazard ratio for BMI per 5 kg/m^2 is
 `r round(res$hr, 2)` (95% CI
 `r round(res$lower, 2)`--`r round(res$upper, 2)`),
 based on `r res$n_events` events from
-`r nrow(cohort)` cleaned rows.
+`r nrow(cohort)` cleaned rows. Uncleaned, the analysis
+would still run, but it would fit a different model to
+the `r nrow(raw)`-row raw extract, with the duplicate
+and the miscoded sex included.
 
 **Unit tests of `fit_cox()`.** A unit test checks
 the contract of one function in isolation. For
@@ -1716,10 +1731,12 @@ the model.
 
 **Integration test of the pipeline.** An integration
 test checks that the pipeline stages compose
-correctly end to end. That is, `load_cohort` feeds
+correctly end to end: `load_cohort` feeds
 `clean_cohort` feeds `fit_cox` feeds `summarise_cox`,
 and the final result is a list with the expected
-names and no `NA` values.
+names and no `NA` values. This listing and the two
+after it are illustrative and abridged, and the book's
+suite does not run them as written.
 
 ```r
 result <- run_canonical_analysis(cohort_path)
@@ -1774,7 +1791,7 @@ expect_equal(result$lower, baseline$lower,
 ```
 
 A failure here means either the extract changed
-(check `md5sum cohort_raw.csv`), the `survival`
+(check `shasum -a 256 cohort_raw.csv`), the `survival`
 package version changed (check `renv.lock`), the R
 version changed (check `sessionInfo()`), or the
 model specification changed (check the diff of
@@ -1850,9 +1867,9 @@ follows from the audit.
 
 ## Solutions
 
-Attempt an exercise before expanding its solution. These
-exercises are performed on the reader's own functions and
-data, so the code will vary; the boxes record the form the
+Attempt an exercise before expanding its solution. You
+perform these exercises on your own functions and data,
+so the code will vary; the boxes record the form the
 answer should take and the reasoning behind it.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1888,9 +1905,9 @@ The wrong-type case comes from the same contract,
 asserting that the function refuses input it cannot
 handle rather than returning something misleading.
 
-A reader who finds they cannot state where an expected
-value came from has usually written a change-detector
-rather than a test.
+If you cannot state where an expected value came from,
+you have usually written a change-detector rather than
+a test.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1931,27 +1948,32 @@ what no amount of environment capture can.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-The four constraints, in the form the chapter uses:
+The four constraints, written for the running cohort in
+the form the chapter uses; your own dataset will have
+its own names and bounds:
 
 ```r
 # inst/tinytest/test-data-cohort.R
-cohort <- readRDS('../../analysis/data/derived_data/cohort.rds')
+raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
 
 expect_true(
-  all(c('id', 'age', 'sex', 'outcome') %in% names(cohort)),
+  all(c('mrn', 'age_at_enroll', 'sex', 'incident_dm') %in%
+        names(cohort)),
   info = 'the expected columns are present'
 )
 expect_true(
-  all(cohort$age >= 18 & cohort$age <= 105, na.rm = TRUE),
-  info = 'age lies within the enrolled range'
+  all(cohort$age_at_enroll >= 18 &
+        cohort$age_at_enroll <= 105, na.rm = TRUE),
+  info = 'age lies within the enrollment criteria'
 )
 expect_true(
-  all(cohort$sex %in% c('F', 'M', 'Other')),
-  info = 'sex takes only coded levels'
+  all(cohort$sex %in% c('F', 'M')),
+  info = 'sex takes only its two coded levels'
 )
 expect_true(
-  mean(is.na(cohort$outcome)) < 0.05,
-  info = 'outcome missingness stays under five percent'
+  mean(is.na(cohort$incident_dm)) < 0.15,
+  info = 'outcome missingness stays under fifteen percent'
 )
 ```
 
@@ -2177,15 +2199,14 @@ compact, rule-by-rule form, and situate readable code
 and recorded results within a general reproducibility
 discipline.
 
-For the connection between testing and the highest
-rung of the ladder, the reader is referred forward to
-@sec-verification. There the reproducibility test of
-this chapter reappears at the scale of the whole
-compendium as output verification. The reader is also
-referred to @sec-levels for the capture-and-validation
-distinction that places testing in the validation
-register. Peng's early
-account of reproducibility as a spectrum [@peng2011]
-remains the clearest short statement of why confirming
-a result, and not merely producing it, is a minimum
-scientific standard.
+The connection between testing and the highest rung
+of the ladder is taken up in @sec-verification, where
+the reproducibility test of this chapter reappears at
+the scale of the whole compendium as output
+verification. @sec-levels gives the
+capture-and-validation distinction that places testing
+in the validation register. Peng's early account of
+reproducibility as a spectrum [@peng2011] remains the
+clearest short statement of why reproducibility is a
+minimum scientific standard when full independent
+replication is not possible.

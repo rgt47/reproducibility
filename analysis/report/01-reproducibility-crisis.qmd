@@ -15,10 +15,10 @@ on Reproducibility* (2016)
 ```
 :::
 
-By the end of this chapter the reader will be able to
-look at a re-execution failure like the auditor's below
-and say, concretely, whether the fault is statistical or
-computational. The reader will also be able to name the
+By the end of this chapter you will be able to look at a
+re-execution failure like the auditor's below and say,
+concretely, whether the fault is statistical or
+computational. You will also be able to name the
 specific silent default most likely responsible, and to
 place the original analysis on the ladder this book
 develops in full in @sec-levels.
@@ -89,39 +89,9 @@ answer:**
   in `load_cohort()`.
 :::
 
-## Where this sits on the stack
-
-This chapter diagnoses rather than pins. Moreover,
-@sec-levels has not yet drawn the distinction between
-capturing a layer and validating one, so the figure below
-is careful not to claim either. We name instead, in prose,
-the layers of the determinant stack most responsible for
-the re-execution failures the evidence below documents.
-These are the R runtime itself and the session
-configuration riding on top of it. The RNG-kind
-comparison below and the `stringsAsFactors` comparison in
-'The cohort, continued' each show an unpinned layer
-behaving exactly as badly as the chapter claims. No
-lockfile, no container, and no
-[baseline test](glossary.qmd#gloss-baseline-test) appears
-until later chapters, so @fig-stack-crisis highlights
-nothing. Its point is the blank stack itself, which
-@sec-levels gives a name to and every later chapter's
-figure will mark.
-
-```{r}
-#| label: fig-stack-crisis
-#| fig-cap: 'The determinant stack of @sec-levels, with no layer captured or validated. This chapter diagnoses, in prose, why re-execution fails on two of these layers, the R runtime and the session configuration, but pins nothing and checks nothing pinned; the chapters that follow are the ones that mark this figure.'
-#| fig-alt: !expr determinant_stack_alt()
-#| fig-width: 7
-#| fig-height: 4.4
-plot_determinant_stack(
-  title = 'A diagnosis, not yet a capture or a validation')
-```
-
 ## Orientation
 
-To illustrate, consider a situation that every
+Consider a situation that every
 quantitative health scientist eventually meets. A
 biostatistician on a clinical-trial team runs the primary
 analysis and obtains the treatment effect and its
@@ -169,7 +139,8 @@ about the computation had been fixed. The ladder is
 developed in full in @sec-levels; here we use it only
 to name what was missing.
 
-The chapter proceeds as follows. After setting out the
+The chapter proceeds as follows. After locating the
+chapter on the determinant stack and setting out the
 judgments that belong to the analyst, we review the
 evidence that re-execution fails, separating replication
 studies from re-execution studies. We then fix three
@@ -204,6 +175,36 @@ found and still fail to regenerate its own number, as this
 one did.
 :::
 :::
+
+## Where this sits on the stack
+
+This chapter diagnoses rather than pins, and since
+@sec-levels has not yet drawn the distinction between
+capturing a layer and validating one, the figure below
+claims neither. The prose names the layers of the
+determinant stack most responsible for
+the re-execution failures the evidence below documents.
+These are the R runtime itself and the session
+configuration riding on top of it. The RNG-kind
+comparison below and the `stringsAsFactors` comparison in
+'The cohort, continued' each show an unpinned layer
+behaving exactly as badly as the chapter claims. No
+lockfile, no container, and no
+[baseline test](glossary.qmd#gloss-baseline-test) appears
+until later chapters, so @fig-stack-crisis highlights
+nothing. Its point is the blank stack itself, which
+@sec-levels gives a name to and every later chapter's
+figure will mark.
+
+```{r}
+#| label: fig-stack-crisis
+#| fig-cap: 'The determinant stack of @sec-levels, with no layer captured or validated. This chapter diagnoses, in prose, why re-execution fails on two of these layers, the R runtime and the session configuration, but pins nothing and checks nothing pinned; the chapters that follow are the ones that mark this figure.'
+#| fig-alt: !expr determinant_stack_alt()
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  title = 'A diagnosis, not yet a capture or a validation')
+```
 
 ## The analyst's contribution
 
@@ -391,7 +392,7 @@ vocabulary of this field is genuinely contested, and a
 reader who does not fix it will be confused by the
 literature. Goodman and colleagues surveyed the usage and
 found that the same words carry opposite meanings in
-different research communities. That is, one field's
+different research communities: one field's
 'reproducibility' is another field's 'replication'
 [@goodman2016]. We adopt the distinctions of the National
 Academies, whose 2019 consensus report offers the
@@ -483,10 +484,10 @@ archived code and data by a single command
 [@claerbout1992]. Their standard was demanding. The
 phrasing that has become the field's motto is Buckheit
 and Donoho's paraphrase of it [@buckheit1995;
-@claerbout1992]. On that view, the published article is
-merely the advertisement of the scholarship. The
-scholarship itself is the full computational apparatus
-that produced the figures.
+@claerbout1992]: the published article is merely the
+advertisement of the scholarship, and the scholarship
+itself is the full computational apparatus that produced
+the figures.
 
 Reproducibility so understood is a spectrum. Peng
 arranged computational work along a scale, from the
@@ -572,11 +573,11 @@ steadier erosion of package churn, the phenomenon by
 which working code rots as the packages beneath it are
 updated. A modern analysis may depend on dozens or
 hundreds of packages, each with its own release history
-and its own breaking changes. It is this churn that
-Trisovic and colleagues measured when they found that
-most deposited R scripts did not run when tested years
-after the original deposit [@trisovic2022]. The scripts
-had not changed; their dependencies had.
+and its own breaking changes. Much of this churn, along
+with missing files and hard-coded paths, is what Trisovic
+and colleagues measured when they found that most
+deposited R scripts did not run when tested years after
+the original deposit [@trisovic2022].
 
 These are instances of a general phenomenon that we
 shall develop fully in @sec-levels. A computational
@@ -618,9 +619,10 @@ report exists at all, and which validation gates
 apply. However, all share the same determinant stack,
 and so all are exposed to the same silent shifts. An R package
 with no report to render can still be broken by a
-changed `sample.kind`. A simulation study, whose whole
-output is a set of random draws, is more exposed to
-the RNG change than any manuscript. And a teaching
+changed `sample.kind`. A simulation study that resamples,
+permutes, or randomizes through `sample()` is more exposed
+to the RNG change than any manuscript, since its whole
+output is a function of those draws. And a teaching
 blog that renders forty posts inherits the churn of
 every package any post loads.
 
@@ -647,12 +649,15 @@ Accelerate) return results that are numerically
 equivalent but not bit-identical, and a sign flip or
 reordering of components can make the difference
 visible in a plot. A lockfile pins the R packages but
-says nothing about the system libraries the packages
-link against. Those live below the package layer, at
-L2 rather than L1, and are fixed only by controlling
-the environment itself, the subject of @sec-containers.
-Setting a seed does not help because the difference is
-not stochastic.
+says nothing about the numerical libraries the packages
+link against, which live below the package layer. A
+container image (@sec-containers) determines which BLAS
+is installed, but no rung of the ladder requires that
+library to be fixed, and the thread count and the
+processor still vary between machines. No rung therefore
+guarantees this layer, as @sec-levels explains. Setting
+a seed does not help because the difference is not
+stochastic.
 :::
 :::
 
@@ -779,11 +784,16 @@ depend on the seed together with the RNG kind. This is
 the determinant stack in miniature:
 the code fixed one layer, the seed, and left another,
 the sampler, to whatever the running version of R
-supplied. Pinning the R version, which we reach at L2
-with a container, is what closes this particular gap.
-Recording the RNG kind in the session
-configuration, meanwhile, is what makes the gap
-visible in the interim.
+supplied. Two things set the sampler, and they are fixed
+at different points. The R release sets the *default*
+kind, so the default belongs to the R runtime, and
+pinning the R version, which we reach at L2 with a
+container, fixes it. Code or a project `.Rprofile` can
+*override* that default, however, and an override is
+session configuration, fixed only by an explicit
+`RNGkind()` call in the analysis code. Recording the RNG
+kind alongside the seed makes either gap visible in the
+interim.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -803,16 +813,17 @@ sampler rather than two declared ones.
 ## Check your understanding: the seed was never enough
 
 @tbl-rng-kind holds the seed and the code fixed, and
-varies only the RNG kind. Which single word in the
-chapter's own vocabulary names what the seed, by itself,
-fails to pin?
+varies only the RNG kind. Which term in the chapter's
+own vocabulary names what the seed, by itself, fails to
+pin?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-The RNG kind, set by `RNGkind()`, which is part of the
-session configuration rather than of the seed. The seed
-fixes the starting point; the kind fixes what the
+The RNG kind, set by `RNGkind()`. Its default comes with
+the R release, and an override set in code is part of the
+session configuration; neither is part of the seed. The
+seed fixes the starting point; the kind fixes what the
 generator does with it. Recording a seed without the
 kind is recording half of a determinant.
 :::
@@ -962,12 +973,12 @@ work, so it cannot be listed as an author, but its
 contribution should not go unmentioned either. Record
 which model, or model family and version, was used, and
 roughly when, with the same discipline this chapter
-already asks for an R package. That is, 'R 4.4.1, glmnet
-4.1-8' and 'a general-purpose language model, accessed
-October 2026' belong in the same methods paragraph.
-Unfortunately, unlike a package version, a model's output
-is not a fixed, reproducible artifact. Model behavior
-drifts across versions, and providers retire and replace
+already asks for an R package. For example, 'R 4.4.1,
+glmnet 4.1-8' and 'a general-purpose language model,
+accessed October 2026' belong in the same methods
+paragraph. Unlike a package version, however, a model's
+output is not a fixed, reproducible artifact. Model
+behavior drifts across versions, and providers retire and replace
 model identifiers over time. Even repeated calls to one
 unchanged version are not guaranteed to return identical
 output. The text a model produced in January may
@@ -1037,9 +1048,10 @@ sessionInfo() snapshot narrows an R version mismatch.
 
 8. This exercise returns to the informal, first-pass
    account of silently shifting R defaults given in
-   Chapter 1 (@sec-intro), which mentions the
-   `stringsAsFactors` flip without naming which layer of
-   the determinant stack it belongs to. Using this
+   Chapter 1 (@sec-intro). That chapter names the
+   determinant stack informally and mentions the
+   `stringsAsFactors` flip, but does not say which layer
+   of the stack the flip occupies. Using this
    chapter's own vocabulary, state which layer that
    change occupies, and explain in one sentence why
    naming the layer, rather than merely noting that a
@@ -1048,8 +1060,8 @@ sessionInfo() snapshot narrows an R version mismatch.
 ## Solutions
 
 Attempt an exercise before expanding its solution. Several
-exercises in this chapter ask the reader to work with an
-article or a study of their own choosing, so they have no
+exercises in this chapter ask you to work with an article
+or a study of your own choosing, so they have no
 single correct answer. For those the box says what a good
 answer establishes, and names the failure modes worth
 looking for.
@@ -1067,12 +1079,12 @@ installs but at a newer version, a hard-coded path, a file
 that was never deposited, a script that assumes a working
 directory: these are computational failures. They are
 the ones this book addresses. A number that regenerates
-exactly but that the reader believes was the wrong number
-to compute is a statistical disagreement, and no amount
-of environment capture touches it. Most readers find that
-their failures are overwhelmingly of the first kind, which
-is the point of the exercise and matches what Trisovic and
-colleagues measured at scale [@trisovic2022].
+exactly but that you believe was the wrong number to
+compute is a statistical disagreement, and no amount of
+environment capture touches it. You will most likely find
+that your failures are overwhelmingly of the first kind,
+which is the point of the exercise and matches what
+Trisovic and colleagues measured at scale [@trisovic2022].
 
 On the placement, the honest default for a deposited
 analysis is L0. Code and data that can be located and
@@ -1081,10 +1093,10 @@ supply. A deposit that also carries a lockfile is L1,
 and one carrying a container recipe is L2. A deposit
 carrying evidence that the outputs were regenerated from
 a clean rebuild and matched recorded values within a
-stated tolerance is L3. We note that the rung is set by
-what the authors deposited, not by whether the code
-happened to run on the reader's machine. An analysis can
-be L0 and still run, because the reader was lucky. It can
+stated tolerance is L3. The rung is set by what the
+authors deposited, not by whether the code happened to
+run on your machine. An analysis can be L0 and still
+run, because you were lucky. It can
 also be L1 and still fail, because the lockfile pinned
 packages and something below them moved.
 :::
@@ -1114,11 +1126,11 @@ reproducibility
 failure impugns the record but leaves open whether the
 finding is true. A robustness failure shows the finding
 depends on a choice, which weakens it without refuting
-it. A replication failure is evidence that the effect is
-not there. A reader who argues instead that
-reproducibility is most damaging, on the grounds that it
-undermines the ability to evaluate the other two at all,
-has made a reasonable case and should say so explicitly.
+it. A replication failure is direct evidence against the
+effect. If you argue instead that reproducibility is most
+damaging, on the grounds that it undermines the ability to
+evaluate the other two at all, you have made a reasonable
+case and should say so explicitly.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1149,11 +1161,13 @@ narrow margin, a rerun under the other sampler can move
 it across that boundary.
 
 A seed is therefore not a sufficient record of a
-stochastic analysis. The seed pins the
-starting point, but the RNG kind determines what the
-generator does with it, and the RNG kind is a session
-configuration that neither a lockfile nor a container
-necessarily fixes. An analysis that depends on a
+stochastic analysis. The seed pins the starting point,
+but the RNG kind determines what the generator does with
+it. A lockfile does not fix the kind at all. A container
+that pins the R release fixes the *default* kind, but an
+override set in code or in a project `.Rprofile` is
+session configuration, which only an explicit `RNGkind()`
+call in the analysis fixes. An analysis that depends on a
 bootstrap should record `RNGkind()` alongside the seed,
 or set it explicitly.
 :::
@@ -1183,7 +1197,7 @@ shows. For a blog, the pinned package versions, since
 posts are written once and read for years while the
 packages beneath them move.
 
-A reader who answers 'the data' for every archetype has
+If you answered 'the data' for every archetype, you have
 not made an error so much as missed the exercise, which
 is to notice that the binding constraint moves.
 :::
@@ -1272,15 +1286,17 @@ chapter's own 'The cohort, continued' section.
 
 Chapter 1 mentions, in passing, 'a default that shifted
 between releases of R' and later names the specific
-instance, the `stringsAsFactors` flip, without placing it
-on any stack of layers. At that point in the book no such
-stack has been defined yet. This chapter's own stack
-figure (@fig-stack-crisis) and its 'Why the failures are
-computational, not statistical' section supply the name.
-That is, `stringsAsFactors` is a default of the **R
-runtime**. It is secured only at L2, the same rung that
-secures the operating system and the system libraries,
-and not by a lockfile at L1.
+instance, the `stringsAsFactors` flip. It also names the
+stack informally, the language runtime among its layers,
+but it does not say which layer the flip occupies. This
+chapter's own stack figure (@fig-stack-crisis) and its
+'Why the failures are computational, not statistical'
+section supply the name: `stringsAsFactors` is a default
+of the **R runtime**. The runtime *default* is secured
+only at L2, the same rung that secures the operating
+system and the system libraries, and not by a lockfile at
+L1. The exposure itself can be closed earlier, in code,
+as `load_cohort()` does in 'The cohort, continued'.
 
 Naming the layer converts a story into a diagnosis with
 a remedy attached.

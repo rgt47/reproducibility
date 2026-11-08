@@ -1,0 +1,8 @@
+# Opens pull requests when a pinned action has a newer release, so
+# the SHA pins in .github/workflows do not silently age (Decision D21).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

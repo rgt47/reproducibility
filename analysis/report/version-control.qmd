@@ -17,12 +17,12 @@ Reproducibility and Increased Transparency in Science*
 ```
 :::
 
-This chapter has three practical aims. By its end we will
+This chapter has three practical aims. By its end you will
 be able to write a commit history that answers 'what
-changed and why' for any analysis we run. We will be able
-to build a `.gitignore` that keeps protected health
+changed and why' for any analysis you run. You will be
+able to build a `.gitignore` that keeps protected health
 information out of a repository before the first commit
-rather than after a breach. Finally, we will be able to
+rather than after a breach. Finally, you will be able to
 state exactly which single rung of the reproducibility
 ladder a GitHub URL has actually earned, and which it has
 not.
@@ -31,10 +31,11 @@ We begin by placing version control on the determinant
 stack and naming the failure it cures. We then set out
 the analyst's three judgments, the git model, and the
 reading of a history, before turning to what must never
-be committed. Branches and remotes follow, and we close
-the exposition with what git does not do. A worked
-example, a note on collaborating with an LLM, and the
-exercises complete the chapter.
+be committed. Branches, the undoing of mistakes and
+merge conflicts, and remotes follow, and we close the
+exposition with what git does not do. A worked example,
+a note on collaborating with an LLM, and the exercises
+complete the chapter.
 
 ```{r}
 #| include: false
@@ -93,6 +94,7 @@ answer:**
 - Reading the history: the log and the diff.
 - What must never be committed: `.gitignore` and PHI.
 - Branches, lightly.
+- Undoing things, and merge conflicts.
 - The remote: GitHub, GitLab, and collaboration.
 - What git does not do.
 - Worked example: an untracked folder to a tagged
@@ -156,9 +158,9 @@ system keeps a single working copy of each file. It
 records, as a separate and complete history, every state
 that copy has passed through, together with a note on
 each change saying what it was and why it was made. The
-five `FINAL` files collapse back into one `analysis.R`,
-and the four snapshots become four entries in a history
-that can be read, searched, and, if need be, restored.
+drawer of copies collapses back into one `analysis.R`,
+and each copy becomes an entry in a history that can be
+read, searched, and, if need be, restored.
 The tool that has won this role, across the sciences and
 across software of every kind, is git. The service that
 most often hosts a git history on the network is GitHub,
@@ -194,11 +196,11 @@ files themselves can undo.
 :::
 
 It is also the foundation in a precise, technical
-sense. @sec-compendium made the compendium the unit of
-reproducible work, and @sec-levels placed the bare
-compendium at the bottom rung of the ladder, L0
-locatable. The artifact that marks L0 is exactly a
-version-controlled repository. That is, an analysis is
+sense. The next chapter, @sec-compendium, makes the
+compendium the unit of reproducible work, and
+@sec-levels placed the bare compendium at the bottom
+rung of the ladder, L0 locatable. The artifact that marks
+L0 is exactly a version-controlled repository. That is, an analysis is
 locatable when, and only when, it is under version
 control and can therefore be found, read, and referred
 to by a second person. Everything the later chapters add
@@ -237,10 +239,10 @@ much as the commands are.
    whose messages say why each change was made is a
    readable record of decisions.
 
-3. **Deciding when to branch and when to tag.** Does a
-   piece of work warrant a branch of its own? Does a
-   particular state of the analysis warrant a permanent
-   tag? These are design decisions about the shape of
+3. **Deciding when to branch and when to tag.** Whether
+   a piece of work warrants a branch of its own, and
+   whether a particular state of the analysis warrants a
+   permanent tag, are design decisions about the shape of
    the history. They are cheap to make and expensive
    to omit. The state of the code at the moment a
    manuscript was submitted is worth a tag, and no tool
@@ -298,7 +300,9 @@ collected here for reference.
   the history.
 - **Branch.** A movable name for a line of
   development. The default branch is conventionally
-  called `main`.
+  called `main`, although git itself still names it
+  `master` unless told otherwise, as with
+  `git init -b main`.
 - **Remote.** A copy of the repository hosted
   elsewhere, typically on GitHub or GitLab, used for
   backup, distribution, and collaboration. `origin` is
@@ -330,9 +334,9 @@ statement of the lines added and removed. Git computes
 the diff on demand from the snapshots it stores, since
 git keeps full snapshots, not diffs. Lastly, it loses the
 *reason for each change*, the single most valuable and
-most perishable piece of information about an analysis. Why was the
-outlier-exclusion threshold changed from three standard
-deviations to two? A dated file cannot say. A commit
+most perishable piece of information about an analysis.
+Why was the outlier-exclusion threshold changed from
+three standard deviations to two? A dated file cannot say. A commit
 whose message reads 'Tighten outlier threshold to 2 SD
 per reviewer 2's comment' says exactly why, and the
 record stays with the code.
@@ -394,8 +398,13 @@ the project directory.
 
 ```bash
 cd diabetes-cohort
-git init
+git init -b main
 ```
+
+The `-b main` names the first branch `main`; without it,
+git as of version 2.56 names it `master`, and the
+`git push -u origin main` commands later in this chapter
+would then fail.
 
 The second idea, and the central one, is the **commit**.
 A commit is a snapshot of the tracked files at one
@@ -420,9 +429,9 @@ commit's hash, in a tag, a manuscript, or a colleague's
 clone, can detect that the history leading to it was
 later changed.
 
-But how much evidence is tamper-evidence? Unfortunately,
-it is weaker than it sounds, and the reader headed for
-regulated work should know exactly how much weaker. The
+But how much evidence is tamper-evidence? It is weaker
+than it sounds, and anyone headed for regulated work
+should know exactly how much weaker. The
 author's name and e-mail address, and both dates a commit
 carries, are whatever the committer's own git client
 supplies. Setting `GIT_AUTHOR_DATE` and
@@ -448,9 +457,9 @@ a verified identity. Another is a forge configured to
 protect the main branch against force-pushes and to log
 pushes, reviews, and merges on its own servers with its
 own clock. Even then, a git history is not, by itself,
-the audit trail that U.S. regulations for electronic
-records require. That trail must be secure,
-computer-generated, and time-stamped, and must record
+the audit trail that FDA's regulations require of
+electronic records in the studies they cover. That trail
+must be secure, computer-generated, and time-stamped, and must record
 operator actions independently [@cfr21part11]. Within
 those limits, a well-kept history is an honest and very
 useful record of how an analysis was built. The rest of
@@ -594,9 +603,9 @@ commit_history <- tibble::tibble(
                    '2026-02-09', '2026-02-12',
                    '2026-02-18', '2026-02-24',
                    '2026-03-02')),
-  author = c('r.thomas', 'r.thomas', 'r.thomas',
-             'a.okafor', 'r.thomas', 'a.okafor',
-             'r.thomas'),
+  author = c('analyst.a', 'analyst.a', 'analyst.a',
+             'analyst.b', 'analyst.a', 'analyst.b',
+             'analyst.a'),
   message = c(
     'Initialize compendium and .gitignore',
     'Add cleaning script for registry extract',
@@ -697,10 +706,10 @@ anything held under a data-use agreement that forbids
 redistribution must never go into a git history. The
 rule admits no exception: not even briefly on a branch
 that is never merged, and not even in a local repository
-that will ever be pushed. A commit is permanent by design and, once pushed, copied to
-every clone. The gravest and least intuitive fact about
-git is that its ordinary commands only ever *add* to the
-history. Suppose a file containing protected health
+that will ever be pushed. A commit is permanent by
+design and, once pushed, copied to every clone. The
+gravest and least intuitive fact about git is that its
+ordinary commands only ever *add* to the history. Suppose a file containing protected health
 information is committed, and the mistake is noticed and
 the file deleted in a later commit. The file is gone from
 the working tree but *remains in full in the history*. It
@@ -794,9 +803,12 @@ been cleaned; the rewrite reaches only the copies it is
 run on and pushed to.
 
 A `.gitignore` is a small file, and its content depends
-on the archetype of the compendium. This is the concrete
-point at which the archetypes of @sec-compendium touch
-this chapter. The reproducibility machinery is identical
+on the archetype of the compendium, a classification the
+next chapter, @sec-compendium, develops in full. For now
+two archetypes suffice: a data-analysis compendium, whose
+deliverable is a set of results from data, and an
+R-package compendium, whose deliverable is reusable
+code. The reproducibility machinery is identical
 across archetypes; the list of files to ignore is not. A
 **data-analysis compendium** ignores its *derived outputs
 and its raw data*. These are the regenerable tables and
@@ -1063,7 +1075,8 @@ git merge sensitivity-analysis
 
 The mental model is the one given above: a branch is a
 movable name for a line of development, and `main` is
-merely the branch git creates by default. Nothing about
+merely the name given to the first branch, here by
+`git init -b main`. Nothing about
 branching changes the commit model; it only lets two
 lines of commits coexist and later rejoin. We keep the
 treatment light here. We shall return to the
@@ -1356,25 +1369,38 @@ git pull
 
 Consider a team working across sites, a clinical trial
 with several participating centers, a multi-institution
-consortium. For such a team the dominant model on GitHub
-and GitLab is **fork-and-pull-request** (GitLab calls the
-latter a *merge request*, the same thing under another
-name). A contributor *forks* the canonical repository,
-making a personal copy on the remote, and works on a
-branch of that fork. The contributor then opens a **pull
-request** proposing that their branch be merged into the
-canonical repository. The pull request is a unit of
-review. The maintainers see exactly the diff being
-proposed, discuss it inline, request changes, and merge it
-only when satisfied. In a regulated multi-site analysis,
-the pull request is a documented, attributable,
-reviewable gate through which every change to the shared
-analysis passes. Its record, who proposed what, who
-reviewed it, what was said, and when it was merged, is
-held on the forge's servers rather than asserted by a
-client. It therefore complements the commit history with
-a record of the *review* of each change that is harder to
-backdate.
+consortium. Such a team works in one of two models on
+GitHub and GitLab. In the **shared-repository** model,
+every contributor has write access to one repository,
+works on a branch of it, and the `main` branch is
+protected so that nothing reaches it without review. This
+is the usual arrangement for a private trial repository,
+where forking is often disabled. In the
+**fork-and-pull-request** model, a contributor without
+write access *forks* the canonical repository, making a
+personal copy on the remote, and works on a branch of
+that fork. In either model the contributor opens a **pull
+request** (GitLab calls it a *merge request*, the same
+thing under another name) proposing that the branch be
+merged into `main`. The pull request is a unit of review.
+The maintainers see exactly the diff being proposed,
+discuss it inline, request changes, and merge it only
+when satisfied. In a multi-site analysis, the pull
+request is a documented, attributable, reviewable gate
+through which every change to the shared analysis passes.
+Its record, who proposed what, who reviewed it, what was
+said, and when it was merged, is held on the forge's
+servers rather than asserted by a client. It therefore
+complements the commit history with a record of the
+*review* of each change that is harder to backdate. That
+record is review evidence, not by itself a regulated
+signature. An approval on a forge does not, by default,
+carry the printed name, the date and time, and the
+meaning of the signature that 21 CFR 11.50(a) requires
+of a signed electronic record [@cfr21part11]. Whether it
+counts as a controlled approval depends on the
+organization's validated configuration of the forge and
+on its SOPs.
 
 The last piece of the remote's vocabulary is the pair
 **tags and releases**, and they matter to reproducibility
@@ -1505,7 +1531,7 @@ history.
 
 ```bash
 cd diabetes-cohort
-git init
+git init -b main
 # write .gitignore FIRST, ignoring raw_data and credentials
 git status   # confirm the extract is NOT listed as trackable
 ```
@@ -1515,7 +1541,7 @@ is ignored does the analyst make the first commit, the one
 that lifts the folder to L0, locatable.
 
 ```bash
-git add .gitignore analysis/scripts/ DESCRIPTION
+git add .gitignore DESCRIPTION
 git commit -m "Initialize compendium and .gitignore"
 ```
 
@@ -1588,8 +1614,8 @@ from committing, branching, or tagging.
 ## Collaborating with an LLM
 
 A language model is a fluent assistant for git, which is
-a domain rich in memorized command recipes. Unfortunately,
-precisely that fluency is the hazard. The model will
+a domain rich in memorized command recipes. Precisely
+that fluency is the hazard. The model will
 confidently produce a command that does what was asked and
 more, including irreversible operations, and it does not
 know which of the analyst's files are sensitive. A coding
@@ -1635,8 +1661,8 @@ analysis project.'
 *Watch for.* A generic R `.gitignore` (the standard
 `.Rhistory`, `.RData`, `.Rproj.user/` list) that omits the
 one category that matters most, the raw data and
-credentials specific to the analyst's *own* project. A
-chat model has not seen the analyst's directory. A coding
+credentials specific to *your own* project. A chat model
+has not seen your directory. A coding
 agent may have listed it, but a file's name does not say
 whether it holds PHI. An agent that opened the files to
 find out has already read the data, which is why it
@@ -1736,8 +1762,8 @@ description into an accountable record.
 ## Solutions
 
 Attempt an exercise before expanding its solution. The first
-two ask the reader to work in their own directories, so what
-they produce will vary; the boxes say what a good answer
+two ask you to work in your own directories, so what you
+produce will vary; the boxes say what a good answer
 establishes.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1765,10 +1791,10 @@ chapter insists that a commit is an atomic unit of one
 idea with a message attached. The message is the only part
 of the record that cannot be reconstructed later.
 
-A reader who finds that they *can* answer why, because
-they named the files carefully, has demonstrated the
-`FINAL` method working at its best. That reader should
-notice how much of the reasoning fits in a filename.
+If you find that you *can* answer why, because you named
+the files carefully, you have demonstrated the `FINAL`
+method working at its best. Notice, then, how much of
+the reasoning fits in a filename.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1821,33 +1847,40 @@ why rewriting shared history is treated as a serious act.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-The two files share most of their content and differ in a
-way that follows from what each archetype produces.
+Your own files will differ in detail. Taking the two
+samples in this chapter as the model answer, they barely
+overlap, and the difference follows from what each
+archetype produces.
 
-Common to both: `.Rproj.user/`, `.Rhistory`, `.RData`,
-`.DS_Store`, and `renv/library/`, which is a local install
-tree reconstructable from the lockfile and must never be
-committed.
+Common to both: the editor and operating-system cruft,
+`.Rhistory`, `.RData`, and `.DS_Store`.
 
-In the **data-analysis** file but not the package one:
-patterns for rendered outputs, `*.html` and `*.pdf`, since
-the report is a product the code regenerates; the derived
-data directory, or selected paths within it; and, most
-importantly, the raw-data extract if it carries protected
-information.
+In the **data-analysis** file but not the package one: the
+raw-data extract, `analysis/data/raw_data/*`, which carries
+the protected information; the regenerable outputs,
+`analysis/figures/*`, `analysis/tables/*`, and the rendered
+`*.pdf` and `*.html` reports, since the report is a product
+the code regenerates; and `.Renviron`, `*.pem`, and
+`.Rproj.user/`.
 
-In the **R-package** file but not the analysis one:
-`inst/doc/`, which holds built vignettes, and `src/*.o`
-and `src/*.so`, the compiled object files. These exist
-only if the package carries compiled code and are rebuilt
-on every install.
+In the **R-package** file but not the analysis one: the
+build artifacts, `*.tar.gz` and `*.Rcheck/`; the compiled
+object files `src/*.o` and `src/*.so`, which exist only if
+the package carries compiled code and are rebuilt on every
+install; and `docs/`, the generated pkgdown site.
 
-The explanation to give for each difference has the same
-shape. An archetype ignores what it *generates* and
-commits what it *is*. A data-analysis compendium generates a
-report and so ignores it. A package generates compiled
-objects and built vignettes and so ignores those. Neither
-ignores its own source.
+The last three analysis-only lines are differences of the
+abridged samples, not of the archetypes. Credentials and
+editor state can appear in any project, so a package
+repository should ignore `.Renviron`, `*.pem`, and
+`.Rproj.user/` as well. A good answer says so.
+
+The explanation to give for each remaining difference has
+the same shape. An archetype ignores what it *generates*
+and commits what it *is*. A data-analysis compendium
+generates a report and so ignores it. A package generates
+a tarball, check output, compiled objects, and a website,
+and so ignores those. Neither ignores its own source.
 
 The one line that is not a matter of archetype is the data
 carrying protected health information. It is ignored in
@@ -1910,20 +1943,25 @@ cd <study>
 git remote add upstream https://github.com/<coord>/<study>.git
 
 # 2. Branch from an up-to-date main.
-git fetch upstream && git checkout -b fix/outlier-threshold upstream/main
+git fetch upstream
+git switch -c fix/outlier-threshold upstream/main
 
 # 3. Commit the change.
 git add R/clean_cohort.R
-git commit -m 'Raise outlier threshold to 4 SD per DSMB request'
+git commit -m 'Raise outlier threshold to 4 SD per SAP amendment 2'
 
 # 4. Push to the fork and open a pull request.
 git push origin fix/outlier-threshold
 ```
 
 What each step records that a direct push would not. The
-**fork** establishes that the contributor did not hold
-write access to the canonical analysis, so the change could
-not enter without someone else's action. The **branch**
+**fork** lets a contributor without write access to the
+canonical analysis propose a change, which then cannot
+enter without someone else's action. (A fork does not show
+that the contributor lacked write access; anyone may fork.
+On a private trial repository with forking disabled, a
+branch of the shared repository with a protected `main`
+plays the same role.) The **branch**
 separates the proposal from the accepted state, so the
 history of `main` contains only what was agreed. The
 **commit** is the same in either workflow and records what
@@ -1931,14 +1969,22 @@ and why. The **pull request** is the artifact that carries
 everything a direct push destroys. It holds the proposed
 diff before it was accepted, the discussion, any requested
 changes and the revisions answering them, the identity of
-the approver, and the timestamp of the approval. The **merge** records
-that the approval preceded the entry into `main`.
+the approver, and the timestamp of the approval. The
+**merge** records that the approval preceded the entry
+into `main`.
 
 The compressed version of the answer: the commit history
 answers 'what changed and why'; the pull request answers
 'who checked it, and did they agree'. A direct push to
 `main` answers only the first, and in a multi-site trial
-the second question has auditors too.
+the second question has auditors too. In a regulated
+trial, the approval is review evidence rather than, by
+itself, an electronic signature under 21 CFR 11.50(a);
+whether it serves as one depends on the sponsor's
+validated configuration and SOPs. The analysis change
+behind the commit is itself approved through the
+sponsor's own process, here an amendment to the
+statistical analysis plan, not through the pull request.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1955,12 +2001,13 @@ locked, and the code sits at the top of that stack.
 package versions, since nothing in a git repository
 records which version of `dplyr` produced the numbers. The
 second is the environment beneath them, the R runtime,
-the operating system, and the system libraries. A reader
-may equally name the numerical libraries or the session
+the operating system, and the system libraries. You may
+equally name the numerical libraries or the session
 configuration and be right, since the repository touches
-neither. The common wrong answer is to name the data, which version
-control *can* pin for a small committed dataset, though
-usually does not for a large or protected one.
+neither. The common wrong answer is to name the data,
+which version control *can* pin for a small committed
+dataset, though usually does not for a large or protected
+one.
 
 **A rewritten sentence.** 'The analysis code is version
 controlled and deposited at [location], so the exact code
@@ -1999,16 +2046,22 @@ and the copy entered the history by another.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 8
 
-**The rung is unchanged by the deletion.** The repository
-that is hosted on GitHub today is still locatable, so L0
-holds and a reviewer can find and read it. This is so even
-though its visible history begins with yesterday's single
-commit. Nothing about `git init` run fresh touches the
-lockfile or the container. Those files, if they still sit
-in the working tree, are tracked again by the new history
-and restore the analysis to L1 and L2 exactly as before.
-Package pinning and environment pinning are properties of
-*files*, not of the commit chain that records them.
+**The rung is L2, unchanged by the deletion.** The
+repository that is hosted on GitHub today is still
+locatable, so L0 holds and a reviewer can find and read
+it. This is so even though its visible history begins
+with yesterday's single commit. Nothing about `git init`
+run fresh touches the lockfile or the container. Those
+files, if they still sit in the working tree, are tracked
+again by the new history and hold the analysis at L1 and
+L2 exactly as before. Package pinning and environment
+pinning are properties of *files*, not of the commit chain
+that records them. If the analysis had reached L3, its
+baseline test is a file too and survives, but the CI
+runs that showed it passing were attached to commits that
+no longer exist. L3 is reached only by verification, so it
+must be shown again by a fresh run of that test after a
+clean rebuild.
 
 **What is lost, and what is not.** The lockfile and the
 container restore the analysis's position on the capture
@@ -2031,10 +2084,10 @@ container rebuild was never designed to protect.
 
 | Command or rule | What it does |
 |---|---|
-| `git init` | Starts tracking the current directory as a repository. |
+| `git init -b main` | Starts tracking the current directory as a repository, with the first branch named `main`. |
 | `git add <file>` | Stages a change for the next commit. |
 | `git commit -m '...'` | Records the staged changes with a message. |
-| `git status` | Shows staged, unstaged, and untracked files; read it before every commit (habit 1). |
+| `git status` | Shows staged, unstaged, and untracked files; read it before every commit (habit 3). |
 | `git log --oneline` | Lists commits, most recent first, by hash and message. |
 | `git show <hash>` | Displays one commit's full diff. |
 | `git switch -c <name>` | Creates and switches to a new branch. |
