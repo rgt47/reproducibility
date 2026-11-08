@@ -910,11 +910,12 @@ verification burden.
 reproducibility, replicability, and robustness, and
 give a health-sciences example of each.'
 
-*Watch for.* Models frequently conflate the first two
-terms, or adopt the reversed convention that some
-fields use, because both usages are well represented
-in their training data. The example offered may be
-plausible-sounding but mislabeled.
+*Watch for.* Check whether the answer conflates the
+first two terms, or adopts the reversed convention that
+some fields use; both usages are common in the
+literature. Check also that each example carries the
+label it deserves, since a plausible example can still
+be mislabeled.
 
 *Verification.* Check the definitions against the
 National Academies framing [@nas2019] adopted in this
@@ -922,6 +923,16 @@ chapter, and confirm that the example labeled
 'reproducibility' concerns re-executing the same code
 on the same data, not re-collecting data. Do not
 accept the term assignment without this check.
+
+*A better prompt.* 'Using the three definitions pasted
+below, which follow the National Academies report, give
+one health-sciences
+example each of a failure of reproducibility, of
+replicability, and of robustness. For each, state what
+was held fixed (code, data, analysis) and what changed.
+Do not use any other convention. After each example,
+quote the sentence of the definition it satisfies, so
+that I can check the label.'
 
 **Prompt.** 'My results changed after I upgraded R.
 What could have caused this and how do I diagnose it?'
@@ -945,16 +956,18 @@ the demonstration above; for `stringsAsFactors`, by
 inspecting a column's class) before acting on it. If an
 agent did the investigating, run `git diff` on
 `renv.lock` and the code afterward, so that a repair it
-made silently is seen before it is committed.
+made silently is seen before it is committed. The
+lockfile is a protected path, and the decision to change
+it stays with you (@sec-llm-delegate).
 
 **Prompt.** 'Write a paragraph for my methods section
 stating that my analysis is fully reproducible.'
 
-*Watch for.* The model will readily assert a level of
-reproducibility that the project has not reached,
-because it is completing a pattern, not auditing the
-compendium. A confident claim of full reproducibility
-is exactly the overstatement the honest-level caution
+*Watch for.* Check whether the draft asserts a level of
+reproducibility that the project has not reached. The
+model has not audited the compendium; it has only the
+request. A confident claim of full reproducibility is
+exactly the overstatement the honest-level caution
 warns against.
 
 *Verification.* Establish which rung of the ladder the
@@ -962,33 +975,103 @@ analysis has genuinely reached, and edit the paragraph
 to claim that rung and no higher. The claim is your
 responsibility, not the model's.
 
-A final discipline belongs beside these three. If a large
-language model contributed to the code, prose, or analysis
-behind a paper, disclose that use. Current editorial
-guidance, including from the International Committee of
-Medical Journal Editors, treats AI assistance as something
-to be stated in the manuscript, not something that confers
-authorship. A model cannot take responsibility for the
-work, so it cannot be listed as an author, but its
-contribution should not go unmentioned either. Record
-which model, or model family and version, was used, and
-roughly when, with the same discipline this chapter
-already asks for an R package. For example, 'R 4.4.1,
-glmnet 4.1-8' and 'a general-purpose language model,
-accessed October 2026' belong in the same methods
-paragraph. Unlike a package version, however, a model's
-output is not a fixed, reproducible artifact. Model
-behavior drifts across versions, and providers retire and replace
-model identifiers over time. Even repeated calls to one
-unchanged version are not guaranteed to return identical
-output. The text a model produced in January may
-therefore not be the text it would produce from the same
-prompt in June, or even twice in the same afternoon. A
-citation that says only 'written with AI assistance'
-gives a future reader no way to audit what was used. By
-contrast, 'model family X, approximately version Y,
-queried in month Z' at least narrows the search the way a
-sessionInfo() snapshot narrows an R version mismatch.
+### What to delegate to a coding agent {#sec-llm-delegate}
+
+A coding agent does not only read; it runs commands,
+edits files, commits, and pushes if its credentials
+allow. Settle the division of labor before it starts.
+
+The agent may scaffold, edit code on a branch, run the
+tests, and open a pull request (@sec-version-control);
+the analyst reviews and merges. Three cautions govern
+that review. First, a self-report is not an observation.
+'The tests pass' is a claim, so read the run log
+yourself. Second, an agent asked to make a failure go
+away can change the check instead of the code: an
+expected value, a baseline, a tolerance, or a CI step
+allowed to fail. Treat as protected the paths that hold
+checks and inputs, in this book's layout
+`inst/tinytest/`, `inst/baseline/`, `renv.lock`,
+`.github/workflows/`, and `analysis/data/raw_data/`, and
+read every diff that touches them line by line. Third,
+irreversible actions stay with the analyst: pushing to a
+registry, minting a DOI, depositing, rewriting history,
+force-pushing, and merging. Withhold the credentials
+that would let the agent take them.
+
+An agent can also be steered by what it reads. A
+downloaded README, an issue comment, a CI log, or a data
+file can carry instructions that the agent follows as if
+they were yours. OWASP lists this risk, prompt
+injection, first among the risks of LLM applications and
+states that no fool-proof prevention is known
+[@owasp2025llm01]. Its entry on excessive agency
+recommends least privilege and human approval of
+high-impact actions [@owasp2025llm06], which is the
+division above.
+
+The data boundary has to be the filesystem. An agent
+sees whatever its working tree holds, and an ignore
+setting is a request the agent is expected to honor, not
+a control the operating system enforces. Run the agent
+where the real data are not mounted, against synthetic
+rows generated from the data dictionary.
+
+### Disclosing and recording model use {#sec-llm-disclosure}
+
+If a large language model contributed to the code, prose,
+or analysis behind a paper, disclose that use. The
+International Committee of Medical Journal Editors bars
+AI tools from authorship, because a tool cannot be
+responsible for the accuracy, integrity, and originality
+of the work, and places that responsibility on the human
+authors [@icmje2026ai]. It also asks authors to describe
+their use of AI at submission, in the cover letter and in
+the appropriate section of the manuscript. Journals
+differ about which section that is. Place the statement
+where the target journal's instructions say, and name the
+use in the cover letter as well.
+
+A usable statement has the parts of a package citation:
+
+> `<tool name>`, `<version or model identifier>`,
+> `<provider>`, used `<dates>` to `<purpose>` on
+> `<files or sections>`; output reviewed and verified by
+> `<author>`.
+
+A statement that says only 'written with AI assistance'
+gives a future reader no way to audit what was used. Give
+the identifier exactly as the interface or the API
+reported it, as 'R 4.4.1, glmnet 4.1-8' gives a package,
+not an approximate version. Unlike a package version,
+however, a model's output is not a fixed, reproducible
+artifact. Model behavior drifts across versions, and
+providers retire and replace model identifiers over time.
+Even repeated calls to one unchanged version are not
+guaranteed to return identical output. The text a model
+produced in January may therefore not be the text it
+would produce from the same prompt in June, or even twice
+in the same afternoon. The identifier narrows the search,
+the way a `sessionInfo()` snapshot narrows an R version
+mismatch, but it cannot regenerate the text. Keep the
+prompts, and the transcripts where the interface allows,
+as files in the compendium.
+
+The compendium is where this provenance belongs, as it is
+for every other input. Commit a file `LLM-USE.md`, or a
+section of the README, with one row per use: the date,
+the tool and its identifier, the purpose, the affected
+files, the path to the prompt file, and the verification
+performed. A commit that an agent made should say so,
+in the commit message or in a trailer line used
+consistently, such as `Assisted-by: <tool name>`, so that
+the history shows which changes a person wrote.
+
+Funders set their own rules. NIH will not treat an
+application substantially developed by AI as the
+applicant's original idea [@nihnot25132], and it
+prohibits its peer reviewers from using generative AI to
+analyze applications or write critiques [@nihnot23149].
 
 ## Exercises
 

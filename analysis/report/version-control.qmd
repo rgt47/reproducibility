@@ -58,7 +58,10 @@ Statistically, nothing is required. R knowledge assumed:
 none beyond reading a short script. The git and shell
 commands that make up most of this chapter are
 independent of R, and the two R chunks that appear are
-read for their output, not written by the reader.
+read for their output, not written by the reader. Git
+itself must be installed and configured; the preflight in
+the setup appendix ([Git preflight](setup-appendix.qmd#sec-git-preflight)) checks both in a
+few minutes.
 
 **By the end of this chapter you will be able to
 answer:**
@@ -404,7 +407,11 @@ git init -b main
 The `-b main` names the first branch `main`; without it,
 git as of version 2.56 names it `master`, and the
 `git push -u origin main` commands later in this chapter
-would then fail.
+would then fail. The git preflight of the setup appendix
+([Git preflight](setup-appendix.qmd#sec-git-preflight)) sets `main` as the default once per
+machine, together with the name and e-mail address every
+commit records. It is worth running before this chapter's
+first command.
 
 The second idea, and the central one, is the **commit**.
 A commit is a snapshot of the tracked files at one
@@ -557,6 +564,19 @@ git log --oneline
 git log --oneline -- analysis/scripts/
 ```
 
+In a scratch copy of the worked example below, three commits
+in, the compact view reads as follows. Each line is the
+abbreviated hash and the summary line of the message, most
+recent first.
+
+```bash
+# output abridged, from git 2.56.0
+git log --oneline
+#> c7d4711 Tighten outlier threshold to 2 SD per reviewer 2
+#> a9aa55f Add cleaning script for registry extract
+#> 936e050 Initialize compendium and .gitignore
+```
+
 The **diff** is the complementary view. Where the log
 lists the changes, the diff gives the content of one.
 `git diff` shows the changes in the working tree that
@@ -574,6 +594,25 @@ git show a1b2c3d
 
 # what changed between two points in the history?
 git diff a1b2c3d f4e5d6c
+```
+
+Here is the diff from the same scratch repository, taken just
+before the third commit, when one line of the cleaning script
+had been edited. A line beginning `-` is the committed version
+and a line beginning `+` is its replacement. The unmarked lines
+are context, and the `@@` header gives their position.
+
+```bash
+# output abridged, from git 2.56.0
+git diff
+#> diff --git a/analysis/scripts/01-clean.R b/analysis/scripts/01-clean.R
+#> --- a/analysis/scripts/01-clean.R
+#> +++ b/analysis/scripts/01-clean.R
+#> @@ -1,3 +1,3 @@
+#>  cohort <- read.csv('analysis/data/raw_data/extract.csv')
+#>  cohort <- subset(cohort, age >= 18)
+#> -sd_cut <- 3
+#> +sd_cut <- 2
 ```
 
 Together the log and the diff answer the two questions
@@ -1402,6 +1441,13 @@ counts as a controlled approval depends on the
 organization's validated configuration of the forge and
 on its SOPs.
 
+The same gate serves when the contributor is a coding agent.
+The agent works on a branch of its own and opens a pull
+request; the analyst reads the diff, reviews it, and alone
+decides whether to merge. The agent's account of its change
+is a description to check against the diff, not a substitute
+for reading it (@sec-llm-delegate).
+
 The last piece of the remote's vocabulary is the pair
 **tags and releases**, and they matter to reproducibility
 specifically. A tag is a permanent, human-readable name
@@ -1520,8 +1566,10 @@ To make the chapter concrete, we take the
 incident-diabetes cohort of the running example from an
 untracked folder to a tagged, remotely hosted repository.
 We stay at the level of the commands and the judgment
-behind them. The shell sessions below are illustrative and
-are not executed.
+behind them. The shell sessions below are not executed when
+the book renders. The outputs shown with `#>` were captured
+once, on 2026-11-08, from a scratch copy of the example with a
+synthetic identity, and are abridged.
 
 The analyst begins with a folder of scripts and a registry
 extract. The very first act, before a single commit, is to
@@ -1533,17 +1581,57 @@ history.
 cd diabetes-cohort
 git init -b main
 # write .gitignore FIRST, ignoring raw_data and credentials
-git status   # confirm the extract is NOT listed as trackable
+git status --untracked-files=all   # is the extract listed?
+```
+
+The flag matters. Plain `git status` collapses a directory
+that holds no tracked files into one line, here `analysis/`,
+so it cannot show whether the extract inside is ignored.
+Run on a scratch copy of this example, the full listing names
+the extract before the `.gitignore` is written and omits it
+after, and `git check-ignore -v` names the rule responsible.
+
+```bash
+# output abridged, from git 2.56.0
+# before .gitignore
+git status --untracked-files=all
+#> Untracked files:
+#>   DESCRIPTION
+#>   analysis/data/raw_data/extract.csv
+#>   analysis/scripts/01-clean.R
+
+# after .gitignore
+git status --untracked-files=all
+#> Untracked files:
+#>   .gitignore
+#>   DESCRIPTION
+#>   analysis/scripts/01-clean.R
+
+git check-ignore -v analysis/data/raw_data/extract.csv
+#> .gitignore:1:analysis/data/raw_data/  analysis/data/raw_data/extract.csv
 ```
 
 Only once `git status` confirms that the sensitive extract
 is ignored does the analyst make the first commit, the one
-that lifts the folder to L0, locatable.
+that lifts the folder to L0, locatable. Its output names the
+branch, marks the commit as the root of the history, and
+lists the files it records.
 
 ```bash
 git add .gitignore DESCRIPTION
 git commit -m "Initialize compendium and .gitignore"
+# output abridged, from git 2.56.0
+#> [main (root-commit) 936e050] Initialize compendium and .gitignore
+#>  2 files changed, 4 insertions(+)
+#>  create mode 100644 .gitignore
+#>  create mode 100644 DESCRIPTION
 ```
+
+A commit that stops instead with 'Please tell me who you are'
+means git has no identity on this machine. The
+[Git preflight](setup-appendix.qmd#sec-git-preflight) sets it, and
+[When git refuses](setup-appendix.qmd#sec-git-refuses) lists this and
+the other refusals a first push can meet.
 
 Work proceeds as a sequence of small, message-bearing
 commits: the cleaning script, the derived cohort table,
@@ -1567,7 +1655,20 @@ remote and pushing.
 ```bash
 git remote add origin https://github.com/lab/diabetes-cohort.git
 git push -u origin main
+# output abridged, from git 2.56.0 (local stand-in remote)
+#>  * [new branch]      main -> main
+#> branch 'main' set up to track 'origin/main'.
+git status
+#> On branch main
+#> Your branch is up to date with 'origin/main'.
 ```
+
+The last line of the push is the one to look for: the local
+`main` now tracks the remote's, so a later bare `git push` or
+`git pull` knows where to go. The scratch run pushed to a
+local bare repository rather than to a forge, so its output
+omits the forge's own progress lines. A push that is refused
+instead is diagnosed from [When git refuses](setup-appendix.qmd#sec-git-refuses).
 
 A collaborator at a second site forks the repository, adds
 a site-specific adjustment on a branch of their fork, and
@@ -1615,10 +1716,10 @@ from committing, branching, or tagging.
 
 A language model is a fluent assistant for git, which is
 a domain rich in memorized command recipes. Precisely
-that fluency is the hazard. The model will
-confidently produce a command that does what was asked and
-more, including irreversible operations, and it does not
-know which of the analyst's files are sensitive. A coding
+that fluency is the hazard. Check every command it proposes
+for operations beyond what was asked, irreversible ones
+above all; the model does not know which of the analyst's
+files are sensitive. A coding
 agent that works in the repository can read those files,
 run git itself, and push. It is therefore run only in
 projects whose data it is allowed to see, and never with
@@ -1635,13 +1736,12 @@ labor.
 data three commits ago. Give me the git commands to remove
 it.'
 
-*Watch for.* The model will supply a history-rewriting
-recipe (`git filter-repo`, or the older `filter-branch`, or
-a `reset`) and present it as a clean fix. It cannot know
-whether the offending commit was ever pushed to a remote.
-That is the fact that determines whether removal is even
-possible, and the model will not, on its own, raise the
-breach question.
+*Watch for.* A history-rewriting recipe (`git filter-repo`,
+or the older `filter-branch`, or a `reset`) presented as a
+clean fix. The model cannot know whether the offending
+commit was ever pushed to a remote. That is the fact that
+determines whether removal is even possible, so check
+whether the answer raises the breach question at all.
 
 *Verification.* Treat the exposure, not the git command, as
 the primary problem. Establish first whether the commit was
@@ -1653,7 +1753,12 @@ five-step procedure earlier in this chapter gives, and in
 a repository of regulated records only as the approved,
 documented change its third step requires. Check that the
 recipe covers the forge's caches, forks, and every
-collaborator's clone.
+collaborator's clone. A coding agent asked the same question
+does not stop at a recipe: it can run the rewrite and the
+force-push itself. The breach assessment, the decision to
+rewrite, and the force-push stay with the analyst. At most
+the agent prepares the commands on a fresh clone, for the
+analyst to read and run (@sec-llm-delegate).
 
 **Prompt.** 'Write a `.gitignore` for my R health-data
 analysis project.'
@@ -1675,6 +1780,15 @@ restricted dataset. Confirm with `git status` that each is
 untracked before the first commit. The generic patterns
 are safe to accept; the project-specific sensitive paths are
 yours to supply.
+
+*A better prompt.* 'Below is the directory tree of my R
+analysis compendium, file names only, with no file opened.
+Write a `.gitignore` that excludes `analysis/data/raw_data/`,
+`.Renviron` and any other credential file, and regenerable
+outputs, but keeps the code, `renv.lock`, and the synthetic
+cohort tracked. Label each line generic or project-specific,
+and list the commands that would show me each sensitive path
+is ignored.'
 
 **Prompt.** 'Write good commit messages for these changes.'
 
@@ -2094,7 +2208,9 @@ container rebuild was never designed to protect.
 | `git remote add origin <url>`; `git push -u origin main` | Connects to, and first pushes to, a remote. |
 | `git tag -a v1.0 -m '...'` | Marks one commit permanently, e.g. at submission (@sec-archiving anchors to this). |
 | `!pattern` in `.gitignore` | Re-includes a path otherwise ignored, e.g. a data dictionary beside an ignored extract. |
+| `git check-ignore -v <path>` | Names the `.gitignore` rule that ignores a path, or prints nothing if none does. |
 | `git rm --cached <file>` | Untracks a file already committed; does not erase it from the history. |
+| Git refuses | Look up the message in [When git refuses](setup-appendix.qmd#sec-git-refuses); run the [Git preflight](setup-appendix.qmd#sec-git-preflight) once per machine. |
 | `git filter-repo --sensitive-data-removal` | Rewrites every commit to remove a file; only on a fresh clone, only before re-pushing. Where records are regulated, only as an approved, documented controlled change. |
 | Rule of thumb | PHI, credentials, and restricted data are never committed; deleting them later does not remove them from the history. |
 | Rule of thumb | Version control reaches L0 only; it pins the analysis code, not the packages or the environment. |
@@ -2111,8 +2227,11 @@ container rebuild was never designed to protect.
   written for data scientists rather than software
   engineers. It motivates GitHub as the collaboration
   substrate with the working analyst's concerns foremost.
-  Her longer online work *Happy Git and GitHub for the
-  useR* is the companion practical manual.
+  The longer online book by Bryan and colleagues, *Happy
+  Git and GitHub for the useR* [@bryanhappygit], is the
+  companion practical manual. The setup appendix points to
+  its chapters on installing git, identity, and
+  credentials.
 - @wilson2017 and @sandve2013 place version control among
   the good practices of reproducible computational
   research. The former treats it as one of a set of habits

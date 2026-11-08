@@ -231,10 +231,20 @@ should be Findable, Accessible, Interoperable, and Reusable,
 formulated for data and later adapted for research software.
 (@sec-archiving)
 
+[]{#gloss-five-safes}**Five Safes.** A framework for controlled data access: safe
+projects, safe people, safe settings, safe data, and safe
+outputs. (@sec-tre)
+
 []{#gloss-forge}**Forge.** A platform that hosts a version-controlled repository
 and runs its continuous integration. GitHub and GitLab are the
 two principal forges; GitLab is frequently self-hosted by
 universities. (@sec-verification, @sec-archiving)
+
+[]{#gloss-freeze}**Freeze (Quarto).** A project option under which a render
+reuses a document's stored results from `_freeze/` instead of
+executing its code. With `freeze: auto`, a document re-executes
+only when its source changes, not when its data, packages, or R
+change. (@sec-freeze)
 
 
 ## G {.unnumbered .unlisted}
@@ -409,6 +419,10 @@ against; the known correct answer. (@sec-testing)
 
 ## P {.unnumbered .unlisted}
 
+[]{#gloss-output-checking}**Output checking.** Review of every result leaving a trusted
+research environment against statistical disclosure control
+rules, such as minimum cell counts. (@sec-tre)
+
 []{#gloss-package-churn}**Package churn (code rot).** The gradual breakage of
 once-working code as the packages beneath it are updated over
 time. (@sec-crisis)
@@ -487,6 +501,17 @@ selects the `FROM` image. (@sec-containers)
 []{#gloss-progressive-disclosure}**Progressive disclosure.** The property that one layout
 supports a project's evolution from one archetype to another
 with no reorganization. (@sec-compendium)
+
+[]{#gloss-prompt-injection}**Prompt injection.** Instructions embedded in content a model
+or agent reads (a README, an issue, a CI log, a data file) that
+it then follows as if the user had given them.
+(@sec-llm-delegate)
+
+[]{#gloss-protected-path}**Protected path.** A file or directory, such as
+`inst/tinytest/`, `inst/baseline/`, `renv.lock`, or
+`.github/workflows/`, whose every change the analyst reviews line
+by line before merging, whoever or whatever made it.
+(@sec-llm-delegate)
 
 []{#gloss-pull-request}**Pull request (merge request).** A proposal, made on the
 remote, to merge one branch or fork into another, reviewed
@@ -765,6 +790,12 @@ top-level expectation calls [@vanderloo2020]. (@sec-testing)
 []{#gloss-tinytest-and-testthat}**`tinytest` and `testthat`.** R testing frameworks. `tinytest`
 has no dependencies and its test files are plain scripts of bare
 expectations, which is why this book uses it. (@sec-testing)
+
+[]{#gloss-trusted-research-environment}**Trusted research environment.** A secure computing
+environment, operated by a data provider, in which approved
+researchers analyze data that never leave it; outputs are
+released only after output checking. Also called a secure data
+environment or a data enclave. (@sec-tre)
 
 []{#gloss-two-layer-team-model}**Two-layer team model.** A division of a project into a
 slow-moving environment layer, fixed once by a team lead, and a

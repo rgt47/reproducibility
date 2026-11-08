@@ -1253,8 +1253,8 @@ Dependency questions rarely need data at all.
 packages are missing. Write the R command they should
 run.'
 
-*Watch for.* A model may suggest reinstalling packages
-by hand with `install.packages()`, or may propose
+*Watch for.* Check for advice to reinstall packages by
+hand with `install.packages()`, or to run
 `renv::snapshot()`, either of which is wrong for a fresh
 clone. The correct answer is `renv::restore()`.
 
@@ -1263,12 +1263,20 @@ the lockfile rather than writing it, and that after
 running it the installed versions match the lockfile.
 Run the check gate and confirm the triad holds.
 
+With a coding agent the suggestion becomes an action.
+An agent that runs `renv::snapshot()` in a fresh clone
+can overwrite the lockfile with the state of whatever
+library it finds there. Treat `renv.lock` as a protected
+path: read its diff line by line before any commit that
+touches it, and keep the decision to change it with the
+analyst (@sec-llm-delegate).
+
 **Prompt.** 'Explain why my `renv.lock` includes
 `roxygen2` and `tinytest` when my analysis never calls
 them, and whether I should remove them.'
 
-*Watch for.* A model may assert flatly that any unused
-package should be purged, missing the deliberate
+*Watch for.* Check for a flat assertion that any unused
+package should be purged, which misses the deliberate
 convention by which test infrastructure is pinned while
 pure development tooling is not. The distinction is a
 judgment, not a rule the model can read off the file.
@@ -1284,11 +1292,11 @@ stated convention.
 **Prompt.** 'Set my repository to a dated Posit Package
 Manager snapshot for 2026-06-29.'
 
-*Watch for.* A model may produce a URL with the wrong
-path structure, an implausible date, or a mirror that
-does not offer binaries for the analyst's platform. It
-may also silently assume a Linux distribution codename
-that does not match the analyst's system.
+*Watch for.* Check the URL for the wrong path
+structure, an implausible date, or a mirror that does
+not offer binaries for the analyst's platform. Check
+also for a Linux distribution codename assumed without
+comment that does not match the analyst's system.
 
 *Verification.* Check the constructed URL against the
 Posit Package Manager documentation, confirm the date is
@@ -1296,6 +1304,15 @@ the one you intend, and confirm that an install actually
 draws binaries rather than falling back to source. The
 recorded URL should then appear in the lockfile's
 `Repositories` block.
+
+*A better prompt.* 'My analysis runs on Ubuntu 24.04
+(codename `noble`) with the R version recorded in the
+attached `renv.lock`. Write the `options(repos = ...)`
+call that points at the Posit Package Manager CRAN
+snapshot dated 2026-06-29, in the form that serves Linux
+binaries for that codename. Change no package version.
+Tell me how to confirm that an install draws a binary
+rather than building from source.'
 
 ## Exercises
 

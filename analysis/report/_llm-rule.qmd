@@ -25,4 +25,11 @@ or a small synthetic example generated from the data
 dictionary, never edited from real rows. A coding agent sees
 whatever files are in its working tree, so run it in a
 checkout or container where the real data is not mounted.
+
+An agent also acts: it runs commands, edits files, and can
+commit and push. Let it work on a branch and propose changes
+by pull request. Review every change to tests, baselines, the
+lockfile, and CI configuration line by line, and keep merges,
+pushes, deposits, and history rewrites for yourself
+(@sec-llm-delegate).
 :::

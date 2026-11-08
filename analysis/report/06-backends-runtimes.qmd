@@ -1149,8 +1149,9 @@ inside it.
 
 A language model is a capable assistant for the mechanics
 of this chapter and a poor judge of its trade-offs. The
-commands and recipes it helps with carry no data, and the
-prompts should keep it that way.
+commands and recipes it helps with need no data, but they
+can name it, and the prompts should keep them from doing
+so.
 
 {{< include _llm-rule.qmd >}}
 
@@ -1162,49 +1163,59 @@ whatever `-v` or `--bind` names is visible to an agent
 that runs them. The following triples show where each
 stands.
 
-**Translating a Docker command to another runtime.**
+**Prompt.** 'Convert this `docker run` command to the
+equivalent Podman and Apptainer commands, preserving the
+bind mount and the digest-pinned image.'
 
-- *Prompt.* 'Convert this `docker run` command to the
-  equivalent Podman and Apptainer commands, preserving the
-  bind mount and the digest-pinned image.'
-- *Watch for.* A model may drop the `--platform` flag, may
-  invent an Apptainer `--volume` syntax that differs from
-  the real one, or may translate a mutable tag rather than
-  the digest, silently undoing the pin.
-- *Verification.* Run the translated command and confirm
-  it executes the analysis; confirm the digest, not a tag,
-  appears in the Apptainer `docker://` reference; and
-  confirm the bind mount exposes the working tree as
-  expected.
+*Watch for.* Check that the `--platform` flag survives,
+that the Apptainer bind syntax is the real one and not an
+invented `--volume` form, and that the digest, not a
+mutable tag, was translated. A tag in place of the digest
+silently undoes the pin.
 
-**Generating a Nix declaration.**
+*Verification.* Run the translated command and confirm
+it executes the analysis; confirm the digest, not a tag,
+appears in the Apptainer `docker://` reference; and
+confirm the bind mount exposes the working tree as
+expected.
 
-- *Prompt.* 'Write a `rix::rix()` call that pins R 4.4.1
-  with dplyr, ggplot2, and targets, producing a
-  `default.nix`.'
-- *Watch for.* A model may hand-write raw Nix rather than
-  the `rix` call requested, may omit the `nixpkgs` revision
-  that is the whole point of the pin, or may name packages
-  that do not exist under `pkgs.rPackages`.
-- *Verification.* Run the `rix` call, inspect the generated
-  `default.nix` for a concrete pinned revision, and enter
-  the environment with `nix-shell` to confirm the packages
-  load. A declaration that builds is the only evidence that
-  counts.
+*A better prompt.* 'Convert the attached `docker run`
+command, which uses `--platform linux/amd64`, a digest-pinned
+image, and one bind mount of the working tree, to Podman
+and to Apptainer. Keep the digest, the platform, and the
+mount target unchanged, and add no other mounts. For each
+command, give the check that shows which image digest ran
+and which host directory the container could see.'
 
-**Advising on which alternative to adopt.**
+**Prompt.** 'Write a `rix::rix()` call that pins R 4.4.1
+with dplyr, ggplot2, and targets, producing a
+`default.nix`.'
 
-- *Prompt.* 'My analysis mixes R and Python and my lab uses
-  Windows. Should I use Nix, Podman, or conda?'
-- *Watch for.* A model may recommend the most fashionable
-  tool rather than the one that fits the constraint, and
-  may overstate a tool's rigor, presenting conda as
-  reaching the same level as Nix.
-- *Verification.* Check the recommendation against the
-  binding constraint: mixed languages on Windows point to
-  the conda family, whatever a tool's general reputation.
-  The analyst, not the model, owns the honest statement of
-  the level reached.
+*Watch for.* Check that the answer is the `rix` call
+requested rather than hand-written raw Nix, that the
+`nixpkgs` revision, the whole point of the pin, is
+present, and that every package exists under
+`pkgs.rPackages`.
+
+*Verification.* Run the `rix` call, inspect the generated
+`default.nix` for a concrete pinned revision, and enter
+the environment with `nix-shell` to confirm the packages
+load. A declaration that builds is the only evidence that
+counts.
+
+**Prompt.** 'My analysis mixes R and Python and my lab uses
+Windows. Should I use Nix, Podman, or conda?'
+
+*Watch for.* Check whether the recommendation follows the
+constraint or a tool's general reputation, and whether it
+overstates a tool's rigor, for example by presenting
+conda as reaching the same level as Nix.
+
+*Verification.* Check the recommendation against the
+binding constraint: mixed languages on Windows point to
+the conda family, whatever a tool's general reputation.
+The analyst, not the model, owns the honest statement of
+the level reached.
 
 ## Exercises
 

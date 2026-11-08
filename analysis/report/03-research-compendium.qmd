@@ -77,8 +77,12 @@ answer:**
   the idea comes from.
 - The R package as the compendium container: `R CMD
   check` as a universal gate, and its limit.
+- Building and maintaining the package skeleton: the
+  `usethis` and `devtools` commands.
 - The Five Pillars.
 - The directory layout, concretely.
+- The README and the data dictionary, including the
+  README's computational requirements.
 - The five archetypes, each with a health-sciences
   example.
 - Progressive disclosure: one layout, several stages.
@@ -470,6 +474,120 @@ verification apparatus apply.
 :::
 :::
 
+## Building and maintaining the package skeleton {#sec-package-skeleton}
+
+The R-package skin need not be written by hand. Two
+packages automate it: `usethis` writes the files of the
+skin, and `devtools` runs the development loop on top of
+them. The chunk below lists the commands a compendium
+needs, in the order a new project meets them.
+
+```{r}
+#| label: skeleton-tools
+lock <- jsonlite::read_json('../../renv.lock')
+lock_pkgs <- names(lock$Packages)
+skeleton_tools <- c('usethis', 'devtools', 'pkgdown',
+                    'pkgload', 'tinytest')
+in_lock <- skeleton_tools %in% lock_pkgs
+names(in_lock) <- skeleton_tools
+in_lock
+```
+
+```{r}
+#| label: skeleton-tools-text
+#| include: false
+code_list <- function(x) {
+  if (length(x) == 0) {
+    return('none')
+  }
+  x <- paste0('`', x, '`')
+  if (length(x) < 2) {
+    return(x)
+  }
+  paste(paste(x[-length(x)], collapse = ', '), 'and',
+        x[length(x)])
+}
+skeleton_absent <- code_list(skeleton_tools[!in_lock])
+skeleton_present <- code_list(skeleton_tools[in_lock])
+desc <- read.dcf('../../DESCRIPTION')
+desc_license <- desc[1, 'License']
+desc_suggests <- trimws(desc[1, 'Suggests'])
+```
+
+```{r}
+#| label: skeleton-commands
+#| eval: false
+# Not run here: several of these packages are outside
+# renv.lock (see the text).
+usethis::create_package('cohortstudy')
+usethis::use_r('cohort')
+usethis::use_cc0_license()
+usethis::use_package('survival')
+tinytest::setup_tinytest('.')
+usethis::use_pkgdown()
+
+devtools::load_all()
+devtools::document()
+devtools::check()
+pkgdown::build_site()
+```
+
+We do not run the second chunk. Of the five tools it
+calls, `r skeleton_absent` are not recorded in this
+repository's `renv.lock`, so running them would step
+outside the pinned library; only `r skeleton_present` are
+recorded. That absence is defensible for development
+tools, since what they produce (`DESCRIPTION`,
+`NAMESPACE`, the help files in `man/`) is committed. A
+reproducer uses those files without rerunning the tools,
+and can run `R CMD check` from the shell with none of
+them installed.
+
+The first six calls run once, or once per new file.
+`create_package()` writes `DESCRIPTION`, `NAMESPACE`, and
+`R/`, the minimal skin of the previous section. `use_r()`
+creates or opens a file in `R/`, the place where a
+function comes under the check. The license call writes
+the `License` field and a license file. This compendium's
+`DESCRIPTION` records `r desc_license`. The call that
+writes `CC0` is `use_cc0_license()`, and the choice of
+license is argued in @sec-archiving. `use_package()` adds a package
+to `Imports`, which is how the undeclared-import WARNING
+of the previous section is cleared. Because the book tests
+with `tinytest` [@vanderloo2020], its `setup_tinytest()`
+takes the place of the `use_testthat()` most tutorials
+show. It creates `inst/tinytest/` and the runner
+`tests/tinytest.R`, and adds `tinytest` to `Suggests`,
+where this compendium's `DESCRIPTION` has
+`r desc_suggests`.
+
+The next three calls form the loop that is repeated while
+the code in `R/` changes. `load_all()` makes the
+package's functions available in the session by
+simulating a build, an install, and an attach, and
+@wickham2023 recommend it over `source()` for package
+work. It is supplied by `pkgload`, which this chapter's
+own first chunk calls directly. `document()` turns the
+roxygen comments above each function into help files and
+regenerates `NAMESPACE`. `check()` builds the tarball and
+runs `R CMD check` on it, the gate of the previous
+section, with the same blind spot for `analysis/`. A
+useful habit is to run `check()` before any commit that
+touches `R/`, `DESCRIPTION`, or the tests.
+
+`pkgdown` builds a website from the help files, the
+README, and any vignettes. `use_pkgdown()` runs once and
+writes `_pkgdown.yml`; `build_site()` is rerun to refresh
+the site. A site is documentation, not a gate. It earns
+its place in the R-package archetype, whose users read
+reference pages, and is seldom worth maintaining for a
+data analysis. The full treatment of each step, and of
+the many `usethis` helpers not shown, is *R Packages*
+(2e) by Wickham and Bryan [@wickham2023]. Its chapter 'The
+Whole Game' runs the loop end to end on a toy package,
+its 'Website' chapter covers `pkgdown`, and an appendix
+treats `R CMD check` in detail.
+
 ## The Five Pillars
 
 Having settled the container, we turn to what it holds.
@@ -687,6 +805,134 @@ A reproducer who can rerun the pipeline but cannot tell what
 regenerate the numbers but cannot interpret them.
 :::
 :::
+
+### The README's computational requirements {#sec-readme-requirements}
+
+A README that names the command still leaves a
+reproducer guessing what the command needs. The template
+README of the Social Science Data Editors, written for
+replication packages, gives this a section of its own,
+'Computational requirements' [@vilhuber2022readme].
+Adapted to an R compendium, that section asks for the
+first four items below, and the template's 'List of
+tables and programs' supplies the fifth.
+
+- **Software and versions.** The R version and every
+  package, each at the version the author used. In a
+  compendium the lockfile carries the list, and the
+  README names the R version, points to `renv.lock`, and
+  names the image digest once there is one.
+- **Randomness.** A fixed seed, not one taken from the
+  clock, and a statement of where each seed is set, or a
+  statement that no random numbers are drawn. The
+  template warns that parallel work and the order in
+  which programs run both need care.
+- **Runtime.** The wall-clock time of a full run, in a
+  coarse category such as under ten minutes, and any
+  storage needed beyond the repository itself.
+- **Hardware.** The operating system, processor, and
+  memory of the machine on which that time was measured.
+- **A map from outputs to code.** Every table and
+  figure, by its number in the manuscript, beside the
+  program (and, where useful, the line) that produces
+  it.
+
+```{r}
+#| label: readme-requirements
+#| include: false
+lock_r_version <- lock$R$Version
+key_pkgs <- c('survival', 'withr', 'tinytest')
+key_versions <- vapply(key_pkgs, function(p) {
+  lock$Packages[[p]]$Version
+}, character(1))
+gen_path <- '../scripts/simulate_cohort.R'
+gen_lines <- readLines(gen_path)
+seed_line <- grep('^set\\.seed\\(', gen_lines)[1]
+seed_call <- trimws(gen_lines[seed_line])
+boot_seed <- formals(bootstrap_cox_ci)$seed
+boot_b <- formals(bootstrap_cox_ci)$B
+raw_csv <- '../data/raw_data/cohort_raw.csv'
+run_secs <- system.time({
+  canonical <- run_canonical_analysis(raw_csv)
+  boot <- bootstrap_cox_ci(clean_cohort(load_cohort(raw_csv)))
+})[['elapsed']]
+run_category <- if (run_secs < 600) {
+  'under 10 min'
+} else if (run_secs < 3600) {
+  'under 1 hour'
+} else {
+  'over 1 hour'
+}
+output_map <- data.frame(
+  output = c('Synthetic extract', 'Cox HR for BMI, 95% CI',
+             'Bootstrap interval', 'Recorded baseline',
+             'Baseline check (L3)'),
+  code = c('analysis/scripts/simulate_cohort.R',
+           'R/cohort.R: run_canonical_analysis()',
+           'R/cohort.R: bootstrap_cox_ci()',
+           'analysis/scripts/generate_baseline.R',
+           'inst/tinytest/test-baseline-cohort.R')
+)
+map_files <- c('analysis/scripts/simulate_cohort.R', 'R/cohort.R',
+               'analysis/scripts/generate_baseline.R',
+               'inst/tinytest/test-baseline-cohort.R',
+               'inst/baseline/cohort_baseline.rds')
+stopifnot(all(file.exists(file.path('../..', map_files))),
+          !is.na(seed_line))
+root_readme <- file.exists('../../README.md')
+readme_excerpt <- c(
+  '## Computational requirements',
+  '',
+  paste0('- Software: R ', lock_r_version,
+         ', packages as in renv.lock'),
+  '  (restore with renv::restore()); key packages',
+  paste0('  ', paste(key_pkgs, key_versions, collapse = ', '),
+         '.'),
+  paste0('- Randomness: ', basename(gen_path), ' calls'),
+  paste0('  ', seed_call, ' once, at line ', seed_line, ';'),
+  paste0('  bootstrap_cox_ci() sets seed ', boot_seed,
+         ' (B = ', boot_b, ')'),
+  '  with withr::with_seed(). Sampler kinds:',
+  paste0('  ', paste(RNGkind(), collapse = ', '), '.'),
+  paste0('- Runtime: ', format(round(run_secs, 1), nsmall = 1),
+         ' s for the analysis and bootstrap'),
+  paste0('  (', run_category, ').'),
+  paste0('- Hardware: ', R.version$platform, ', ',
+         parallel::detectCores(), ' logical cores.'),
+  '',
+  '| Output                 | Produced by |',
+  '|------------------------|-------------|',
+  paste0('| ', formatC(output_map$output, width = -22), ' | ',
+         output_map$code, ' |')
+)
+```
+
+This book's cohort compendium makes a compact example.
+Its repository `r if (root_readme) 'has' else 'does not yet have'`
+a `README.md` at the root, so the excerpt below is the
+section such a file would carry. Every value in it,
+from the R version to the seed's line number and the
+runtime, is read from the repository or measured when
+this chapter is rendered, which is the same rule the
+README itself should follow.
+
+```{r}
+#| label: readme-excerpt
+#| echo: false
+#| results: asis
+cat('```markdown', readme_excerpt, '```', sep = '\n')
+```
+
+Two points in the excerpt are easy to miss. The extract
+and the bootstrap draw from separate seeds, and the
+README says where each is set, because a reader who finds
+only one may assume the other draws from the clock. The
+runtime and hardware are those of the machine that last
+rendered this chapter, not of the reader's; they tell a
+reproducer whether a run is expected to take seconds or
+days, not what their own run will take. The excerpt also
+omits memory, which base R does not report in a portable
+way; an author measures it and adds the figure by hand.
 
 ## Project-oriented paths: `here`, not `setwd()`
 
@@ -1316,14 +1562,14 @@ rather than file contents.
 a cohort analysis. Propose a research-compendium directory
 structure and tell me which files go where.'
 
-*Watch for*: a plausible layout that silently guesses the
+*Watch for.* A plausible layout that silently guesses the
 raw-and-derived boundary, placing a file the model cannot
 distinguish as input or output into the wrong directory.
 Watch also for an omission of the R-package skin
 (`DESCRIPTION`, `NAMESPACE`) that quietly forfeits the
 `R CMD check` gate.
 
-*Verification*: confirm by hand that every file in
+*Verification.* Confirm by hand that every file in
 `raw_data/` is a genuine immutable input and every file in
 `derived_data/` is regenerable from code, because this is
 the analyst's judgment and not the model's. Confirm the
@@ -1332,17 +1578,24 @@ establish that the proposed structure is in fact checkable,
 remembering that the check covers `R/` and the tests, not
 the scripts under `analysis/`.
 
+*A better prompt.* 'Below is a list of the file names in
+my cohort analysis, with no contents, and a note of which
+files the data office sent me. Propose a compendium layout
+with an R-package skin (`DESCRIPTION`, `NAMESPACE`, `R/`,
+`analysis/`). For each file, say raw or derived and why;
+mark any file you cannot classify rather than guessing.
+Then list the commands I should run to check the layout.'
+
 **Prompt.** 'Which archetype should this project be, and
 which validation gates apply?'
 
-*Watch for*: a default to the manuscript archetype, since
-that is the most common case in the model's training data.
-The default appears even when the project has no report and
-is really a package or a simulation study. Watch also for a
-confident enumeration of gates that includes a render gate
-for a project that renders nothing.
+*Watch for.* Check whether the answer defaults to the
+manuscript archetype when the project has no report and is
+really a package or a simulation study. Check also whether
+it lists, with confidence, a render gate for a project
+that renders nothing.
 
-*Verification*: decide the archetype yourself from the
+*Verification.* Decide the archetype yourself from the
 project's actual deliverable, a document, a function, or a
 set of stored simulation results, and then check that the
 gates the model lists match @tbl-archetypes for that
@@ -1352,22 +1605,27 @@ tell that the model has guessed the archetype wrongly.
 **Prompt.** 'Write the unit tests that should gate this
 compendium.'
 
-*Watch for*: tests that assert only that functions exist or
+*Watch for.* Tests that assert only that functions exist or
 that a script runs without error, which are structural
 checks rather than correctness tests. For a simulation
 compendium, watch also for an absence of any test that the
 seeded output is reproducible.
 
-*Verification*: read each generated test and confirm it
+*Verification.* Read each generated test and confirm it
 checks a value the analysis actually depends on, not merely
 that code executes. For a simulation study, add or verify a
 test that compares the seeded output with a baseline
 recorded in an earlier session and committed, within a
 stated tolerance (@sec-testing). That is the property the
-archetype exists to protect and the one a model is most
-likely to omit. A second call in the same
+archetype exists to protect, so check for it first. A
+second call in the same
 session agrees with the first even when the generator has
-changed, so it does not test this.
+changed, so it does not test this. If an agent writes the
+tests, it can also run them and edit them until they pass.
+The expected values and the recorded baseline stay with
+the analyst, who reads every change under `inst/tinytest/`
+and `inst/baseline/` before it is merged
+(@sec-llm-delegate).
 
 ## Exercises
 

@@ -1372,6 +1372,82 @@ things.
 :::
 :::
 
+## A language model inside the pipeline {#sec-llm-in-pipeline}
+
+The rest of this chapter treats every step as code the
+analyst controls. A step that sends text to a language
+model is different in kind. Examples include coding
+free-text clinical notes for smoking status and extracting
+a variable from a radiology report. In the terms of
+@sec-levels, the model is a dependency that no rung pins.
+It runs remotely, under an identifier the provider can
+update or retire, and it need not return the same output
+twice for the same input. A lockfile cannot record it, and
+a container cannot hold it.
+
+The remedy is to treat the responses as data rather than
+as computation. Four practices follow.
+
+- **Cache responses as versioned derived data.** Store them
+  in a committed file, one row per input, keyed by a hash
+  of the input text, the prompt version, and the model
+  identifier, and let the pipeline read that file. The
+  `_targets/` store is not enough on its own, because it is
+  absent from a fresh clone, and a rebuild there would
+  query the model again.
+- **Record the model and its settings.** Each row carries
+  the model identifier the endpoint reported, the
+  parameters sent, and the date of the query.
+- **Version prompts as code.** A prompt is a file in the
+  compendium, changed only by commit, and its hash enters
+  the key.
+- **Treat a re-query as a new measurement.** Responses
+  obtained again, after a change of prompt or model or the
+  loss of the originals, are a second rater's codes, not a
+  re-execution. Report their agreement with the first set
+  rather than presenting them as the same result.
+
+The inputs fall under the restricted-data rule of the next
+section before any query is made. Clinical notes are among
+the most identifying records a study holds. The responses
+derived from them inherit the notes' restrictions, which
+decides where the cache may be deposited.
+
+The fragment below is illustrative and abridged, and it is
+not run. The query itself lives in a separate script that
+the analyst runs by hand and whose new rows the analyst
+reviews before committing. `tar_make()` never contacts the
+endpoint: `join_responses()` matches each note to its row
+and stops with a list of the missing keys rather than
+filling them.
+
+```r
+# _targets.R (illustrative and abridged; not run)
+library(targets)
+tar_source('R')
+
+list(
+  tar_target(notes_file, 'analysis/data/raw_data/notes.csv',
+             format = 'file'),
+  tar_target(prompt_file, 'analysis/prompts/smoking-v2.txt',
+             format = 'file'),
+  tar_target(responses_file,
+             'analysis/data/derived_data/smoking-responses.csv',
+             format = 'file'),
+  tar_target(notes, read_notes(notes_file)),
+  tar_target(
+    smoking,
+    join_responses(notes, responses_file, prompt_file,
+                   model_id = '<model identifier>')
+  )
+)
+```
+
+A clean rebuild then reproduces the coded data exactly.
+The claim it supports is correspondingly narrow: the
+analysis is reproducible given the committed responses,
+not the model's coding of the notes.
+
 ## Collaborating with an LLM
 
 A language model is a fluent author of Makefiles and
@@ -1392,16 +1468,16 @@ execute it and so read every input it touches.
 **Prompt.** 'Write a Makefile for my analysis: I have a cleaning
 script, a modeling script, and a report.'
 
-*Watch for.* A model will readily produce plausible rules,
-but it cannot know the analyst's true dependencies, and it
-will guess. It may omit a prerequisite, a configuration
-file the modeling script reads, a helper script the
-cleaning script sources. The Makefile then looks complete
-but will fail to rebuild when the undeclared input
-changes. It may also use spaces where Make demands a
-literal tab to indent recipes, a classic error that
-produces a 'missing separator' message or, on a recipe
-line containing a colon, no error at all.
+*Watch for.* The model cannot know the analyst's true
+dependencies, so check every rule for a guessed one. Look
+for an omitted prerequisite, such as a configuration file
+the modeling script reads or a helper script the cleaning
+script sources. Such a Makefile looks complete but fails
+to rebuild when the undeclared input changes. Check also
+for spaces where Make demands a literal tab to indent
+recipes, a classic error that produces a 'missing
+separator' message or, on a recipe line containing a
+colon, no error at all.
 
 *Verification.* Check every rule against what each step actually
 reads and writes: list, for each script, its real inputs, and
@@ -1414,18 +1490,17 @@ rebuild, which reveals the missing prerequisite.
 
 **Prompt.** 'Convert my scripts to a `targets` pipeline.'
 
-*Watch for.* A model may reach for `format = 'file'`
-incorrectly. More commonly, it may write targets that read
-files directly inside the target expression without
-declaring them as file targets. `targets` then cannot see
-the dependency and will not rebuild when the file changes.
-It may also leave the scripts as scripts, called for their
-side effects, rather than refactoring them into functions
-that return values. That defeats the object-tracking that
-is the whole reason to prefer `targets` over Make. A third
-common error is a report target that calls
-`rmarkdown::render()` inside a plain `tar_target()`, which
-never tracks the report's source.
+*Watch for.* Check for `format = 'file'` used incorrectly,
+and for targets that read files directly inside the target
+expression without declaring them as file targets.
+`targets` then cannot see the dependency and will not
+rebuild when the file changes. Check also that the scripts
+were refactored into functions that return values, not
+left as scripts called for their side effects, which
+defeats the object-tracking that is the whole reason to
+prefer `targets` over Make. Finally, check for a report
+target that calls `rmarkdown::render()` inside a plain
+`tar_target()`, which never tracks the report's source.
 
 *Verification.* Confirm that every external file the pipeline
 depends on is a `tar_target(..., format = 'file')` and that
@@ -1439,20 +1514,40 @@ change to a function fails to invalidate a downstream target,
 the dependency is not being tracked and the pipeline is lying
 about what is current.
 
-**Prompt.** 'I set up a `targets` pipeline, so my analysis is now
-reproducible, right?'
+*A better prompt.* 'Convert the three attached scripts to a
+`targets` pipeline. Their inputs and outputs are listed
+below, with column names and types but no data. Refactor
+each step into a function in `R/` that returns a value,
+declare every file the pipeline reads as a
+`format = 'file'` target, and render the report with
+`tar_render()`. Then list, for each function, the targets
+an edit to it should invalidate, so that I can check the
+list against `tar_outdated()`.'
 
-*Watch for.* A model will often affirm this, conflating a
-working pipeline with a reproducible analysis, the same
-conflation @sec-literate warned of for the sealed render. A
-pipeline that runs is not thereby pinned, environment-fixed, or
-verified.
+**Prompt.** 'Add a step to my pipeline that sends each
+free-text note to `<tool name>` and codes it as current,
+former, or never smoker.'
 
-*Verification.* Answer the level question explicitly. The
-pipeline secures re-execution; it says nothing about packages,
-environment, or correctness. Ask whether there is a lockfile
-(L1), a container (L2), and a verification of the outputs against
-a baseline (L3), and state the level actually reached.
+*Watch for.* Check where the call sits. A call inside a
+target expression makes every rebuild of that target a
+fresh query, so a corrected upstream file or a
+`tar_destroy()` silently re-codes every note, unchanged
+ones included, as a new measurement. Check also that the model identifier, the
+parameters, and the prompt appear in committed files
+rather than in the code's defaults.
+
+*Verification.* Restructure the step as @sec-llm-in-pipeline
+describes: responses in a committed file, keyed by input
+hash, prompt, and model identifier, and a pipeline that
+reads that file and never calls the endpoint. Then run
+`tar_make()` from a fresh clone with the network disabled
+and confirm that it completes. Before any note is sent,
+apply the restricted-data rule above. If a coding agent
+builds the step, the analyst runs the query script,
+reviews the new responses, and commits them; an agent
+that runs `tar_make()` or `tar_destroy()` should do so only
+in a checkout where the real notes are not mounted
+(@sec-llm-delegate).
 
 ## Exercises
 
@@ -1521,6 +1616,18 @@ a baseline (L3), and state the level actually reached.
    to L3 ladder this project occupies, and name the one
    artifact, absent here, whose addition would be needed to
    reach the next rung.
+
+9. Take the illustrative `_targets.R` fragment of the
+   section on a language model inside the pipeline
+   (@sec-llm-in-pipeline). For each of four situations,
+   state which targets `tar_outdated()` would list and what
+   the next `tar_make()` would do: (a) a fresh clone, with
+   the response file committed and no `_targets/` store;
+   (b) a corrected spelling in one note; (c) a new version
+   of the prompt file; (d) a new model identifier in
+   `_targets.R`. Then say which situations call for a new
+   query, and why its result is a new measurement rather
+   than a re-execution.
 
 ## Solutions
 
@@ -1782,6 +1889,38 @@ describes, is what turns the green run from a statement
 about re-execution into evidence for L3. This chapter's
 worked example stops short of that step: it has no
 baseline test.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 9
+
+In (a) there is no store, so every target is outdated.
+`tar_make()` rebuilds them all from the committed files,
+and `smoking` is reproduced exactly, because
+`join_responses()` reads the committed responses and the
+endpoint is never contacted. This is the case the design
+exists for.
+
+In (b) the hash of `notes_file` changes, so `notes` and
+`smoking` are outdated. The corrected note has new text,
+and therefore a new key with no row in the response file,
+so `join_responses()` stops and names that one note. In
+(c) the hash of `prompt_file` changes, so `smoking` is
+outdated; because the prompt's hash enters every key,
+every note is now missing and the stop names them all. In
+(d) the command of `smoking` changes, which outdates it,
+and again every key is missing.
+
+Situation (a) needs no query. Situation (b) needs one
+query, for the corrected note, and (c) and (d) need a
+query for every note. You run those queries with the
+separate script, review the new rows, and commit them
+beside the old ones. Their result is a new measurement
+because the model, as reached on a later date, need not
+return what it returned before, even under an unchanged
+identifier, and in (c) and (d) the instrument itself has
+changed. Where old and new codes exist for the same note,
+report their agreement, as you would for a second rater.
 :::
 
 ## Cheat sheet {#sec-cheat-pipelines}

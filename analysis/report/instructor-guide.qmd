@@ -322,6 +322,16 @@ extract.
 that `clean_cohort()` removes one duplicate); writing
 assertions that pass trivially (e.g., `expect_true(TRUE)`).
 
+**Exercise 9 (paired review).** Graded on the review record,
+not on a number: at least one comment for each of the six
+checklist questions that applies, replies from the author, an
+`all.equal()` comparison of the two outputs after sorting by
+`mrn`, and one discrepancy attributed to review and one to the
+comparison (or a reasoned 'none'). Findings to expect include
+age rows dropped rather than set to missing, missing-outcome
+rows dropped in cleaning, and an unstated rule for which
+duplicate to keep.
+
 ## Chapter 12: Continuous Integration {#sec-ig-ch09}
 
 ```r

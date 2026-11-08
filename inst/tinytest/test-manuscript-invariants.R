@@ -1,5 +1,5 @@
 # Structural invariants of the book sources. These are gates, not unit
-# tests of R functions: the package exports no functions, and the thing
+# tests of R functions (those live in the other test files): the thing
 # that can silently decay here is the manuscript.
 
 find_book_dir <- function(start = getwd()) {
@@ -154,5 +154,32 @@ for (f in names(sources)) {
     length(hits), 0L,
     info = paste('no list-item line begins with @label. in', f,
                  if (length(hits)) paste('at line', hits[1]) else '')
+  )
+}
+
+# Quarto cannot resolve an @sec- cross-reference to a section on an
+# unnumbered page (the conventions page, the setup appendix), so the
+# reference renders as a warning and a literal '?'. Such targets must
+# be linked as [text](file.qmd#id) instead. Two phases hit this.
+unnumbered_ids <- character(0)
+for (f in names(sources)) {
+  lines <- sources[[f]]
+  top <- grep('^# ', lines, value = TRUE)
+  if (length(top) && grepl('.unnumbered', top[1], fixed = TRUE)) {
+    ids <- regmatches(lines, regexpr('\\{#sec-[A-Za-z0-9_-]+', lines))
+    unnumbered_ids <- c(unnumbered_ids, sub('^\\{#', '', ids))
+  }
+}
+for (f in names(sources)) {
+  refs <- unlist(regmatches(
+    sources[[f]],
+    gregexpr('(?<![\\w#])@sec-[A-Za-z0-9_-]*[A-Za-z0-9]',
+             sources[[f]], perl = TRUE)
+  ))
+  bad <- intersect(sub('^@', '', refs), unnumbered_ids)
+  expect_equal(
+    length(bad), 0L,
+    info = paste('no @sec- reference to an unnumbered page in', f,
+                 if (length(bad)) paste(':', bad[1]) else '')
   )
 }

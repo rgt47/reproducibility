@@ -809,6 +809,37 @@ carried `@export` but were missing from the stale NAMESPACE
 `summarise_cox`); this widens the package API to match its own
 documentation. `R CMD check` was not run.
 
+### Phase 22 (content gaps), branch `phase-22-content`, 2026-11-08
+
+Six agents added content from one brief
+(`docs/third-review/phase22/BRIEF.md`) under a cite-only-what-you-
+opened rule; their reports list every source with URL and date.
+
+| Item | Result | Evidence |
+|---|---|---|
+| A5, Finding 39 | Setup appendix: git preflight (six checks, each pointing to a *Happy Git* chapter) and a 'When git refuses' table (eight rows, six messages quoted from git 2.56.0 runs); Ch 4 output transcripts from a scratch repository; `git status --untracked-files=all` replaces a check that could not work | V: git runs; two forge messages described, not quoted |
+| Finding 39 correction | With no identity configured, git 2.56.0 here guessed one from the login and host and committed silently; it refused only with `user.useConfigOnly=true`. The preflight describes both outcomes | V |
+| Finding 40 | Ch 2 `sec-llm-delegate` (what to delegate, protected paths, irreversible actions, prompt injection) and `sec-llm-disclosure` (slot template, `LLM-USE.md`, prompts kept); agents paragraph in `_llm-rule.qmd`; one 'A better prompt' per chapter; model-behavior claims rephrased as checks; duplicated 'fully reproducible' triples replaced in Chs 3, 9, 10; Ch 9 disclosure points to Ch 2 | I; ICMJE, NIH, OWASP pages opened |
+| A1 | Ch 13 `sec-tre`: TREs, Five Safes, output checking, reproducibility inside a TRE (All of Us, SATRE 2.0.1, EHDS Regulation (EU) 2025/327) | I: sources opened |
+| A2 | Ch 5 `sec-readme-requirements`, with a README excerpt computed from the repository | V: chunk run |
+| A3 | Ch 13: SPIRIT 2025 items 5 and 6, CONSORT 2025 items 3 and 4 (from the statement's prose; its checklist is an image), `tbl-journal-code` for JASA, *Biostatistics*, AJE | I; DOIs checked against doi.org |
+| A4 | Ch 10 `sec-llm-in-pipeline`, display-only fragment, Exercise 9 | I |
+| A6 | Ch 9 `sec-freeze`, repository facts computed from `_quarto.yml` and `_freeze/` | V |
+| A7 | Ch 11 `sec-code-review`, six-question checklist, paired Exercise 9 (key added to the instructor guide) | I |
+| A8 | Ch 5 `sec-package-skeleton` (`usethis`, `devtools`, `pkgdown` not in `renv.lock`, so not executed) | I; commands tried in a scratch package |
+| A9 | Ch 7 honest-level callout: FDA review of R Submissions Pilot 4 and the R Consortium post, paraphrased | I: both opened |
+| Also | `analysis/scripts/generate_baseline.R` added (the test named a script that did not exist; it reproduces the committed baseline exactly); Ch 12 evidence retention (90 days, GitHub Docs); six glossary entries; 27 bib entries; a lint for `@sec-` references to unnumbered pages, after Chapter 4 and the setup appendix hit it | V: `all.equal` on the baseline; suite 414/414 |
+| Render | Clean; 664 pages | V |
+
+**Length.** The book grew by 30 pages in this phase, against an
+estimate of 9 to 10 for A1 to A9 (Section 7). The causes: the
+agents' sections ran over their estimates (A5 about 3 pages with the
+table, A7 about 2.5 with its exercise, A1 and A3 about 4), the
+per-chapter LLM additions (about 13 better prompts and the agents
+sentences, plus the include's paragraph repeated in twelve
+chapters), and two new exercises with solutions. From 600 pages at
+the start of the review the book is now 11 percent longer.
+
 ## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human

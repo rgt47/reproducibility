@@ -745,6 +745,105 @@ the CI failure locally and settles the matter.
 :::
 :::
 
+## Freeze and cache: renders that skip the code {#sec-freeze}
+
+Two features let a render skip work, and both weaken the
+seal without saying so on the page. Quarto's `freeze`
+option acts on whole documents during a project render.
+With `freeze: true` a document is never re-executed by a
+project render. With `freeze: auto` it is re-executed only
+when its source file changes. Otherwise Quarto reuses the
+results stored in the project's `_freeze/` directory, and
+its documentation advises committing that directory, so
+that others can render the project without the
+environment that computed it [@quartoexecution]. Freeze
+applies only to a render of the whole project; rendering a
+single document always executes its code. The `knitr`
+chunk cache acts on single chunks. It saves the objects a
+chunk creates, its printed results, and the random seed,
+and reloads them on the next render. A change to the
+chunk's code or options invalidates it
+[@xieknitrcache; @quartoexecution].
+
+Neither feature looks at the rest of the stack. Under
+`freeze: auto` the comparison is with the document's own
+source. A corrected data file, an updated package, a new R
+release, or an edited function under `R/` therefore leaves
+the frozen results in place. The chunk cache behaves the
+same way unless the analyst ties it to those inputs, for
+example by setting the `cache.extra` option to the R
+version string or to a data file's modification time
+[@xieknitrcache]. A cached chunk also skips its side
+effects, which is how caching springs the hidden-state
+landmine above. In each case the page carries a fresh
+build date over numbers computed earlier, perhaps on
+another machine.
+
+```{r}
+#| label: freeze-facts
+#| include: false
+quarto_yml <- readLines('_quarto.yml')
+freeze_line <- grep('^\\s*freeze:', quarto_yml, value = TRUE)
+freeze_setting <- if (length(freeze_line)) {
+  trimws(sub('^\\s*freeze:', '', freeze_line[1]))
+} else {
+  'not set'
+}
+freeze_code <- if (length(freeze_line)) {
+  paste0('`freeze: ', freeze_setting, '`')
+} else {
+  'no `freeze` option'
+}
+frozen_files <- tryCatch(
+  suppressWarnings(system2(
+    'git', c('-C', '../..', 'ls-files', 'analysis/report/_freeze'),
+    stdout = TRUE, stderr = FALSE
+  )),
+  error = function(e) character(0)
+)
+if (!is.null(attr(frozen_files, 'status'))) frozen_files <- character(0)
+frozen_docs <- setdiff(
+  unique(sub('^analysis/report/_freeze/([^/]+)/.*$', '\\1',
+             frozen_files)),
+  'site_libs'
+)
+ci_file <- '../../.github/workflows/render-book.yml'
+ci_project_render <- file.exists(ci_file) &&
+  any(grepl('quarto render analysis/report( |$)', readLines(ci_file)))
+freeze_txt <- if (length(frozen_docs)) {
+  paste0('When this page last executed, the repository committed ',
+         'frozen results for ', length(frozen_docs), ' documents (',
+         length(frozen_files), ' files under `_freeze/`).')
+} else {
+  paste0('When this page last executed, the git history was not ',
+         'available, so the committed contents of `_freeze/` could ',
+         'not be counted.')
+}
+ci_txt <- if (ci_project_render) {
+  paste0('Its continuous-integration workflow runs a project ',
+         'render, so freeze applies there too.')
+} else {
+  paste0('No continuous-integration workflow running a project ',
+         'render was found when this page last executed.')
+}
+```
+
+This book is a case in point. Its `_quarto.yml` sets
+`r freeze_code`. `r freeze_txt` `r ci_txt` A
+chapter whose source has not changed since its last local
+execution is published with the results computed on the
+machine that executed it and committed `_freeze/`, not
+with results computed in the CI environment. The counts in
+this paragraph are subject to the same rule: they are as
+of this page's last execution. For a book whose chunks
+illustrate rather than report, that trade may be
+acceptable. For a deposited analysis it is not. The render
+that produces a submitted or deposited document should run
+in the pinned environment with freeze off, or after
+deleting `_freeze/` and the cache directories. Freeze and
+cache are conveniences for drafting, not evidence that the
+numbers are current.
+
 ## HTML or PDF, and the toolchain each needs
 
 A literate source document is format-agnostic; the same
@@ -1226,13 +1325,12 @@ it renders.
 formats), `hba1c` and `bmi` (numeric), and `incident_dm`
 (integer, 0 or 1, with missing values).'
 
-*Watch for.* A model will often reach for convenience over
-seal. It may emit `pacman::p_load(...)`, or an
-`install.packages()` call, or a `library(pacman)` line,
-because these are common in the training data. It may also
-read the data from an absolute path it invents, such as
-`/Users/you/data/cohort.csv`, or from a path outside the
-project.
+*Watch for.* Check for convenience chosen over the seal: a
+`pacman::p_load(...)` call, an `install.packages()` call,
+or a `library(pacman)` line. Check also that the data are
+read from the path given, not from an invented absolute
+path such as `/Users/you/data/cohort.csv` or from a path
+outside the project.
 
 *Verification.* Insist on explicit `library()` calls, one
 per package, with no installation on the render path, and a
@@ -1259,56 +1357,45 @@ image, not installed as the document renders.
 Verify that the PDF then renders in the container with
 nothing installed on the fly.
 
-**Prompt.** 'Check that this analysis is reproducible.'
+*A better prompt.* 'My Quarto document renders to HTML,
+but the PDF render fails; the log is attached, with paths
+replaced by placeholders. The build runs in a container
+from the attached Dockerfile, and nothing may be installed
+during the render. Identify the missing LaTeX component
+from the log, propose the Dockerfile change that provides
+it, and name the command and the log line that will
+confirm the fix.'
 
-*Watch for.* A model will frequently equate a successful
-render with reproducibility, and report the analysis as
-reproducible on the strength of the document having built.
-This conflates the seal with the level, the confusion this
-chapter exists to prevent.
+**Prompt.** 'Find the hidden state in this document.'
 
-*Verification.* Ask, and answer, the level question
-explicitly. A render that succeeds demonstrates the seal.
-Whether the analysis is pinned (L1), environment-fixed
-(L2), or verified (L3) is a separate question. It is
-settled by the lockfile, the container, and a baseline
-test run after a clean rebuild (@sec-levels), not by the
-fact of a render. State the level actually reached and no
-more.
+*Watch for.* Check whether the answer rests on reading the
+source alone. Hidden state belongs to the session in which
+the chunks run. A reading can miss an object created in the
+console, an option set in `.Rprofile`, or a chunk that
+works only because a cached predecessor was skipped, and it
+can flag chunks that are in fact self-contained.
 
-The same disclosure obligation applies to a literate
-document. If a language model drafted or edited a chunk, a
-caption, or a paragraph of prose here, that use belongs in
-the manuscript's methods section or acknowledgments, not
-left unstated. Current editorial guidance, including from
-the International Committee of Medical Journal Editors,
-treats AI assistance as disclosable, not authorable. A
-model cannot be listed as an author, because it cannot
-take responsibility for the work, but silence about its
-use is not an option either. Record which model, or model
-family and version, helped produce the document, and
-roughly when, exactly as the compendium already records an
-R and package version in its lockfile. A render's seal
-attests that the code ran and the prose agrees with it. It
-says nothing about whether a sentence of prose, or a chunk
-of code, was drafted by a person or a model. That
-provenance has to be recorded separately, in
-prose the seal does not cover.
+*Verification.* Test each item by execution. Delete
+`_freeze/` and any cache directory, so that the skipped
+chunks of @sec-freeze run too, and render the document in
+a fresh session inside the container. Then run each
+flagged chunk alone in a new R session. A chunk that fails
+alone depends on state that something earlier supplied; a
+chunk that passes does not, whatever the model reported.
 
-But why is such a record needed at all? The reason is that
-a model is not a versioned, reproducible dependency the way
-a package is. The same model name can behave differently
-across releases. A provider can retire or silently update
-a model identifier the document depended on. Even one
-unchanged version is not guaranteed to produce identical
-text or code from one call to the next. 'The setup chunk
-and the first draft of the discussion were written with
-assistance from [model name and version], used through
-[interface] in [month and year], and revised by the
-authors' is a usable record for a future reader auditing
-the document. 'AI-assisted' alone is not,
-any more than 'used some R packages' would be an
-acceptable substitute for a lockfile entry.
+A literate document carries the same disclosure obligation
+as the rest of the paper. A render's seal attests that the
+code ran and the prose agrees with it, not who or what
+drafted either. Record any model use in drafting a chunk,
+a caption, or a paragraph with the template and the
+`LLM-USE.md` record of @sec-llm-disclosure. A
+model is also not a versioned dependency the way a package
+is: a provider can retire or update an identifier, and one
+unchanged version need not return the same text twice. The
+reproducibility conclusion follows. Text a model drafted
+is reproducible only as the committed file, never by
+asking again, and a model whose output feeds the analysis
+is a dependency in its own right (@sec-llm-in-pipeline).
 
 ## Exercises
 

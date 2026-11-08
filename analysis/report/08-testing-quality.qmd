@@ -735,8 +735,9 @@ a test file that recomputes the quantities and compares
 them with a stated tolerance.
 
 ```r
-# Run once from the project root to record the baseline,
-# then commit inst/baseline/cohort_baseline.rds.
+# analysis/scripts/generate_baseline.R, abridged. Run once
+# from the project root to record the baseline, then commit
+# inst/baseline/cohort_baseline.rds.
 # The book's own baseline was recorded this way, and the
 # file is now committed at that path; regenerate it only
 # if the generator, the seed, or the model change.
@@ -1552,6 +1553,59 @@ time.
 :::
 :::
 
+## Reviewing analysis code {#sec-code-review}
+
+Double programming is costly, because it implements every
+output it covers twice. Most analyses, regulated or not,
+are checked instead by review: a second analyst reads a
+proposed change, usually as a pull request
+(@sec-version-control), and approves it before it merges.
+The two practices find different errors. A reviewer reads
+one implementation against the plan, and is well placed
+to see a wrong exclusion, a covariate the plan does not
+name, or a seed set in the wrong place. A reviewer is
+poorly placed to see an arithmetic slip in code that
+reads correctly, which is the error a second, independent
+implementation exposes. The choice between them is
+therefore a judgment about risk, made per output and
+recorded. One defensible arrangement is to double-program
+the outputs a decision rests on, such as the primary
+estimate, and to review the rest.
+
+A reviewer needs a short list rather than a general
+impression. For a pull request that changes an analysis,
+we suggest six questions.
+
+1. Does every output the change affects, whether a table,
+   a figure, or a number in the prose, trace to committed
+   code, with no value typed by hand?
+2. Are the inputs read only from the raw data, never from
+   a hand-edited intermediate file or an object left in a
+   session?
+3. Are the exclusions and derived variables the ones the
+   analysis plan states, with the same thresholds and the
+   same handling of missing values?
+4. Is each seed set at the call that uses it, in the
+   analysis code, rather than in `.Rprofile` or nowhere?
+5. Did the tests change alongside the code, and does the
+   pull request say why? An expected value edited to match
+   new output needs the oracle that justifies the edit.
+6. Does the log of the render or the test run show
+   warnings nobody expected? A clean log is one in which
+   every warning has been read and then removed or
+   explained.
+
+The list draws on the book's gates, but it is not a gate.
+It asks for the judgments that continuous integration
+cannot make (@sec-verification): whether a threshold
+matches the plan, and whether a changed test was changed
+for a good reason. The approval on the pull request then
+records who checked the change and when, the same kind
+of record the validated state described above rests on.
+Questions 3 and 5 take the longest, because answering
+them means opening the plan and the test diff rather
+than reading the code alone.
+
 ## Testing across the archetypes
 
 The four kinds of test are the same in every compendium,
@@ -1725,7 +1779,7 @@ failing every row.
 
 A language model is a capable assistant for writing
 tests, and a dangerous one for a specific reason: it
-will readily produce tests that pass, which is not
+can readily produce tests that pass, which is not
 the same as tests that are correct. The analyst's
 verification duty is heaviest exactly where the
 model is most fluent.
@@ -1741,15 +1795,14 @@ suitable synthetic example to describe instead.
 Write `tinytest` unit tests for it, including edge
 cases.'
 
-*Watch for.* A model tends to derive the expected
-values by running the function it was given, rather
+*Watch for.* Check whether each expected value was
+derived by running the function it was given, rather
 than by independent computation. If the function is
-buggy, the model may generate an oracle that
-matches the bug, producing tests that pass against
-wrong behavior and thereby certifying the error.
-It may also test only the paths the code obviously
-takes and miss the empty vector or the missing
-value.
+buggy, an oracle derived that way matches the bug,
+producing tests that pass against wrong behavior and
+thereby certifying the error. Check also for tests of
+only the paths the code obviously takes, which miss
+the empty vector or the missing value.
 
 *Verification.* Check every expected value by hand
 or from an independent formula, not by running the
@@ -1765,14 +1818,15 @@ data, for my cohort: `age_at_enroll` (integer, years),
 1). Write `tinytest` data-validation tests for a data
 frame with these columns.'
 
-*Watch for.* The model will propose generic checks,
-non-missing identifiers, numeric outcomes, that are
+*Watch for.* Check for generic checks, such as
+non-missing identifiers and numeric outcomes, that are
 reasonable but do not encode *your* domain.
 The dictionary gives types and codes. It does not give
 the protocol's eligibility ages, the plausible range
 of BMI in your population, or how much outcome
-missingness the analysis can tolerate, so the model
-will invent those bounds.
+missingness the analysis can tolerate, so any such
+bound in the answer was supplied by the model rather
+than by your protocol.
 
 *Verification.* Supply the domain constraints
 yourself, or check that the generated ranges match
@@ -1794,6 +1848,24 @@ only then change the one that is wrong. Never
 silence a failing test by editing its expected value
 to whatever the code currently returns; that
 converts a test into a tautology.
+
+*A better prompt.* 'The attached `tinytest` file
+fails on the line shown, with this message. The
+expected value was computed by hand from the analysis
+plan. Do not edit the test file. List the possible
+causes in the function, and for each give an input I
+can run, with its hand-computed answer, that would
+confirm or rule it out.'
+
+A coding agent with write access need not stop at a
+recommendation: asked to make the suite pass, it can
+make the edit itself, and the change arrives as an
+ordinary commit. Treat `inst/tinytest/` and
+`inst/baseline/` as protected paths, and read every
+line of any diff that touches them before it merges,
+as question 5 of @sec-code-review asks. What an agent
+may change and what stays with the analyst is set out
+in @sec-llm-delegate.
 
 ## The cohort, continued {#sec-cohort-continued-testing}
 
@@ -2009,6 +2081,24 @@ audit.
    baseline file that running it produces, and explain
    what goes wrong for a collaborator who pulls the
    repository if the order is reversed.
+
+9. **Paired review.** Work with a partner, each on your
+   own copy of the cohort compendium. Treat the following
+   as the cohort's analysis plan for cleaning: keep one
+   row per `mrn`; parse both date formats in
+   `enroll_date`; code `sex` as `F` or `M`; set ages above
+   105, the upper enrollment limit, to missing rather than
+   dropping the row; and keep rows with a missing outcome.
+   Without consulting `clean_cohort()`, each of you writes
+   a cleaning function to this plan on a branch and opens
+   a pull request. Then review your partner's pull request
+   against the six questions in @sec-code-review, leaving
+   each finding as a review comment, and answer the
+   comments on your own. Finally, run both functions on
+   `cohort_raw.csv` and compare the two cleaned data
+   frames. Report one discrepancy that review found and
+   one that only the comparison found, or say that there
+   was none.
 
 ## Solutions
 
@@ -2304,6 +2394,51 @@ orphaned. It is then a recorded result with no committed
 code that anyone can point to as having produced it,
 which is exactly the provenance gap habit 1 exists to
 close.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 9
+
+Your functions and findings will differ; the answer
+takes the form of the review comments, the replies, and
+the comparison. Four places in this plan repay a
+reviewer's attention, because each is where your two
+functions can diverge while both run without error.
+
+**Ages.** The plan sets an implausible age to missing.
+A function that drops the row instead changes the row
+count, and the change appears only if you count rows
+before and after. This is question 3.
+
+**Missing outcomes.** The plan keeps rows whose outcome
+is missing, because dropping them is an analytic
+decision that the model step makes. A cleaning function
+that drops them has moved that decision into the wrong
+place.
+
+**Duplicates.** 'One row per `mrn`' does not say which
+copy to keep. Check whether the duplicated rows agree on
+every column. If they do not, the plan is ambiguous, and
+the fix belongs in the plan, recorded and dated, not in
+whichever choice each of you happened to code.
+
+**Coding and parsing.** Look at every distinct value of
+`sex` and every format in `enroll_date` in the raw file
+before deciding that the plan's rules cover them. A
+value the rules do not name should become missing by a
+stated rule, not by accident.
+
+The comparison is double programming in miniature. Use
+`all.equal()` on the two cleaned data frames, after
+sorting both by `mrn`, and read every difference it
+reports. Review is suited to the departures from the
+plan that are visible in the code, such as a dropped
+row; the comparison is suited to the slips that read
+correctly, such as a date format parsed in the wrong
+order. If the two functions agree, that is evidence
+for both, but not proof: you may have read the same
+sentence of the plan the same wrong way, as the section
+on double programming warns.
 :::
 
 ## Cheat sheet {#sec-cheat-testing}

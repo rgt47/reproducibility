@@ -807,6 +807,19 @@ layers a lockfile cannot reach. These are the operating
 system and system libraries, and the R runtime. It
 leaves L3, verification against a recorded baseline,
 entirely to @sec-verification.
+
+A pinned recipe must also run where the reviewer works.
+In the R Consortium's Pilot 4, a Shiny application
+submitted to the FDA with a Dockerfile, the agency's
+statistical reviewers had to install WSL and Docker
+Desktop on Windows laptops, and found that the R version
+still decided whether the packages restored
+[@fdapilot4review2026]. Their review, dated May 2026,
+concluded that containers so far may not give the
+robustness a regulatory submission needs
+[@fdapilot4review2026; @rconsortiumpilot4_2026]; the
+[setup appendix](setup-appendix.qmd) covers such locked-down
+machines.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1454,9 +1467,9 @@ compendium: `r gap_txt`.
 ## Collaborating with an LLM
 
 A language model is a capable assistant for container
-work and a confident source of subtly wrong Dockerfiles,
-because the most common Dockerfile on the public internet
-is not a reproducible one. The analyst who delegates must
+work, and a Dockerfile it writes can look complete while
+lacking the pins this chapter requires. The analyst who
+delegates must
 verify, and the following three exchanges show what to
 watch for.
 
@@ -1469,13 +1482,13 @@ surely as a copy in the working tree would.
 
 **Prompt.** 'Write me a Dockerfile for my R analysis.'
 
-*Watch for.* The default answer will very likely open
-with `FROM rocker/tidyverse:latest` or a bare version
-tag, install packages from the live repository, and set
-none of the determinism variables. Every one of these
-is a reproducibility defect: the mutable tag, the
-undated installer, the absent locale and time zone. The
-result runs today and is not L2.
+*Watch for.* Check whether the answer opens with
+`FROM rocker/tidyverse:latest` or a bare version tag,
+installs packages from the live repository, or sets none
+of the determinism variables. Every one of these is a
+reproducibility defect: the mutable tag, the undated
+installer, the absent locale and time zone. Such a recipe
+runs today and is not L2.
 
 *Verification.* Confirm that the `FROM` line carries an
 `@sha256:` digest, not merely a tag. Confirm also that
@@ -1492,13 +1505,25 @@ image digests, which differ across rebuilds even for a
 correctly pinned recipe because per-layer timestamps
 vary. If the content
 differs, the recipe is not pinned, whatever the model
-asserted.
+asserted. If an agent ran the two builds, read the two
+version lists yourself; its report that they match is not
+the comparison (@sec-llm-delegate).
+
+*A better prompt.* 'Write a Dockerfile for an R
+`<version>` analysis restored from the attached
+`renv.lock`. Pin the base image by digest; point the
+installer at a dated Package Manager snapshot for
+`<codename>`; set `LANG`, `LC_ALL`, and `TZ`; install
+nothing at run time. List the commands I should run to
+confirm that two builds install identical versions.' The
+slots are filled from the lockfile and the base image's
+Ubuntu release, as in 'The cohort, continued' above.
 
 **Prompt.** 'My container gives different numbers than my
 laptop. Why?'
 
-*Watch for.* The model is likely to reach first for the
-code, suggesting a bug in the analysis, and to overlook
+*Watch for.* Check whether the answer reaches first for
+the code, suggesting a bug in the analysis, and overlooks
 the environment. The environment is the more probable
 cause, because the container was supposed to fix it and
 may have fixed it incompletely. Typical gaps are a
@@ -1518,9 +1543,9 @@ explanation.
 **Prompt.** 'Which Rocker base should I use for my
 project?'
 
-*Watch for.* The model tends to recommend a large,
-capable base by default, often the verse or a
-data-science image, regardless of need. Over-provisioning
+*Watch for.* Check whether the answer recommends a
+large, capable base, such as the verse or a data-science
+image, regardless of need. Over-provisioning
 inflates the image and obscures the real dependencies;
 under-provisioning, recommending a minimal base for a
 project that must render a PDF, produces a build that

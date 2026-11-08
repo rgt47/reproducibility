@@ -1075,14 +1075,14 @@ configuration files, with the data directories omitted.
 What reproducibility level has it reached on the L0 to L3
 ladder, and what would it take to reach the next rung?'
 
-*Watch for.* The model will read the presence of a
-`renv.lock` as L1 and a `Dockerfile` as L2, which is the
-right heuristic. However, it cannot tell from a listing
-whether the lockfile is current, whether the image is
-pinned by a mutable tag or an immutable digest, or whether
-a verification run has ever passed. It may report L3 on the
-strength of a continuous-integration file that has never
-been run green.
+*Watch for.* Reading a `renv.lock` as L1 and a
+`Dockerfile` as L2 is the right heuristic as far as it
+goes. However, no one can tell from a listing whether the
+lockfile is current, whether the image is pinned by a
+mutable tag or an immutable digest, or whether a
+verification run has ever passed. Check whether the answer
+reports L3 on the strength of a continuous-integration
+file that has never been run green.
 
 *Verification.* Confirm each rung against the artifact
 itself, not its filename. For L1, check that the lockfile is
@@ -1094,30 +1094,45 @@ confirm it compares outputs with recorded values under a
 stated tolerance. The presence of a file is capture
 asserted; a green baseline run is validation observed.
 
-**Prompt.** 'Draft the reproducibility statement for my
-methods section.'
+**Prompt.** 'Below are the four rungs of a reproducibility
+ladder with their definitions, followed by a description of
+my project. Place the project on the ladder. For each rung,
+name the artifact in the description that meets its
+definition, or say what is missing. The rungs are
+cumulative. Say what you could not determine from the
+description.'
 
-*Watch for.* The model gravitates to the phrase 'fully
-reproducible', which this chapter has argued is almost never
-an honest claim. It will also tend to conflate 'reproducible'
-and 'replicable' in the National Academies sense, or to use
-the ACM sense without saying so.
+Supply the rows of @tbl-ladder and the paragraph on
+cumulative rungs as the definitions, since a model cannot
+apply a scale it has not been given. Describe the project in
+prose: what is under version control, whether a lockfile
+exists, what the `Dockerfile`'s `FROM` line says, and what
+the tests compare.
 
-*Verification.* Rewrite the draft to name the specific rung,
-the artifacts that mark it, and the layers left exposed, and
-to state which convention of 'reproduced' is meant. Reject
-any sentence you could not defend to a reviewer who ran the
-code.
+*Watch for.* Check whether the answer applies the cumulative
+rule, or credits L2 to a `Dockerfile` in a project with no
+lockfile. Check whether it treats a base image named by tag
+as pinned in the same way as one named by digest. Check also
+whether it awards L3 to a test suite that compares nothing
+with a recorded baseline, which this chapter calls L2
+confirmed, not L3.
+
+*Verification.* Place the project yourself, from the
+artifacts, before reading the answer, and compare the two
+placements rung by rung. Then give the model a case whose
+answer you know, such as a project with a `Dockerfile` and
+no lockfile, and confirm that it does not award L2. A model
+that misplaces the known case should not be trusted on the
+unknown one.
 
 **Prompt.** 'My simulation gives slightly different numbers
 each time even inside the container. Why, and is it a bug?'
 
-*Watch for.* The model may propose plausible but wrong
-culprits (a package version or an operating-system
-difference) that the container has already pinned. It may
-also not distinguish an unseeded RNG (a real defect) from
-low-order-digit variation due to BLAS threading (an inherent
-limit at L2).
+*Watch for.* Check whether the answer blames a layer that
+the container has already pinned, such as a package version
+or the operating system. Check also that it distinguishes an
+unseeded RNG (a real defect) from low-order-digit variation
+due to BLAS threading (an inherent limit at L2).
 
 *Verification.* Trace the discrepancy to a layer of the
 determinant stack. If the numbers differ in all digits, look
@@ -1126,6 +1141,15 @@ they differ only in the low-order digits, suspect the
 numerical-library layer, which no rung of the capture ladder
 pins, and decide whether that residual matters for the
 inference at hand.
+
+*A better prompt.* 'My simulation, run twice in the same
+container, gives the two outputs pasted below. Also pasted
+are the `sessionInfo()` output, which names the BLAS and
+LAPACK libraries, the `RNGkind()` output, the line of my code
+that sets the seed, and the thread count. Say which layer of
+the determinant stack each difference most plausibly comes
+from, and for each give one command I can run to confirm or
+exclude it.'
 
 ## Exercises
 

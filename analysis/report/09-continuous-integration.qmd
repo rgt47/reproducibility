@@ -399,7 +399,7 @@ tests, and `DESCRIPTION`, and nothing else. Within that
 scope there is a second trap. An undeclared package used
 in `R/` is reported as a WARNING, not an ERROR, so the
 gate fails on it only if it is told to fail on warnings.
-A workflow that passes `error_on = "error"` to
+A workflow that passes `error_on = 'error'` to
 `rcmdcheck`, as many hand-written workflows do, lets the
 undeclared dependency through with a green build.
 
@@ -582,7 +582,7 @@ We ran each breakage against a toy compendium (R 4.6.1,
 `rcmdcheck` 1.4.0, `zzrenvcheck` from its source
 repository in October 2026), and each command exited with a
 nonzero status. The first breakage also shows why the
-setting matters: with `error_on = "error"` the same check
+setting matters: with `error_on = 'error'` the same check
 returned normally, the WARNING printed and ignored.
 Placing `library(sandwich)` in `analysis/` instead of
 `R/` shows the scope of the first gate. In that case
@@ -684,7 +684,7 @@ tries a rebuild by hand.
 :::
 :::
 
-## Secrets, tokens, and pinned actions
+## Secrets, tokens, and pinned actions {#sec-ci-secrets}
 
 Before going further with verification, we pause on a
 matter of hygiene. A CI runner holds credentials the
@@ -1114,7 +1114,13 @@ Dockerfile, or the code is stale, not an L3 claim. The
 gates alone say nothing about whether the raw data
 changed; the checksum manifest of the next section does.
 In regulated work, an L3 stamp is also not a validation
-record (@sec-testing).
+record (@sec-testing). Nor is a hosted run a lasting
+record: GitHub deletes workflow logs and artifacts after
+90 days by default, a period an organization can
+change within limits
+[@githubretention]. A log or artifact that supports a
+claim must therefore be downloaded and kept with the
+records it supports, for as long as they are kept.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1810,10 +1816,10 @@ step and runs the check in another without ensuring the
 restored library reaches the check subprocess. As we saw,
 adjusting the library path in one step does not carry to
 the next, and `R CMD check` runs in a child process that
-sees only the library path it is handed. A model will
-frequently produce the naive two-step form that passes
-only when every dependency happens to be in the base
-image. Watch also for `error_on = "error"`, a dependency
+sees only the library path it is handed. Check for the
+naive two-step form, which passes only when every
+dependency happens to be in the base image. Watch also
+for `error_on = 'error'`, a dependency
 step that reports without failing, and
 `continue-on-error: true`. Each of these leaves a gate
 that cannot go red. Remember, too, that `R CMD check`
@@ -1825,16 +1831,31 @@ introducing a deliberate gap: import a specialized
 package absent from the base image, do not restore it,
 and check that the build goes red. A CI check that has
 never been seen to fail has not been shown to work.
+Seeing means reading the run log yourself: a coding
+agent's report that 'CI is green' is a claim about the
+run, not an observation of it.
+
+An agent asked to make a failing build pass can reach
+green by the patterns this triple lists, adding
+`continue-on-error: true` or loosening `error_on`, and
+the change arrives as an ordinary commit. Treat
+`.github/workflows/` as a protected path and read every
+line of any diff that touches it before it merges. CI is
+also where embedded instructions matter most. An agent
+that reads a log, an issue, or a downloaded file can be
+steered by text planted in it, and in CI it may run with
+the repository's secrets. Grant its jobs the least
+privilege of @sec-ci-secrets, and keep pushes and
+merges with the analyst (@sec-llm-delegate).
 
 **Prompt.** 'Add a verification step that checks my analysis
 reproduces, by hashing the output and comparing it to a
 saved value.'
 
 *Watch for.* A step that hashes the rendered PDF or HTML.
-The model will often reach for the most visible output, the
-report, which is the wrong thing to hash because its
-bytes carry timestamps and font identifiers and change on
-every render.
+The report is the most visible output and the wrong
+thing to hash, because its bytes carry timestamps and
+font identifiers and change on every render.
 
 *Verification.* Insist that the target is a computational
 output. Estimates should be compared with a committed
@@ -1861,11 +1882,20 @@ its short output is itself reproducible. Verify that the
 number of iterations in the reduced run is large enough to
 exercise the code paths that matter, not merely one.
 
-In each case the model is competent at the syntax and
-unreliable about the semantics. The semantics, that is,
-what the check actually proves and whether it can fail
-for the right reason, are what the analyst must verify
-and cannot delegate.
+*A better prompt.* 'My compendium's simulation runs
+`<B>` replicates in about six hours; `R/` holds the
+functions and `inst/tinytest/` the tests. Write a GitHub
+Actions workflow that, on each push, runs the tests and
+a fixed-seed run of `<b>` replicates within 20 minutes,
+pins each action by commit SHA, and never sets
+`continue-on-error`. Say where the full run should
+happen instead, and what deliberate change I should
+make to confirm that each step can fail.'
+
+In each case a syntactically valid workflow is the easy
+part to check. The semantics, what the check actually
+proves and whether it can fail for the right reason, are
+what the analyst must verify and cannot delegate.
 
 ## Exercises
 

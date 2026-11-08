@@ -885,6 +885,96 @@ data steward.
 :::
 :::
 
+### Working inside a trusted research environment {#sec-tre}
+
+The four routes above assume that the analyst holds a copy
+of the data and must decide what to release. For data
+whose provider never releases a copy, that assumption
+fails. A trusted
+research environment, also called a secure data
+environment, a secure processing environment, or a data
+enclave, reverses the direction of travel. The data stay on
+the provider's infrastructure, and the analyst brings code
+to the data rather than data to the code. The NIH *All of
+Us* Researcher Workbench is a US example. Its documentation
+states that cohort building and analysis take place solely
+on the Workbench, which supplies RStudio and Jupyter among
+its tools [@allofusworkbench]. In the European Union, the
+European Health Data Space Regulation entered into force on
+26 March 2025. Secondary use under it requires a permit from
+a health data access body. Processing may then take place
+only in a secure processing environment, from which users
+can download only non-personal data (Article 73). The rules on
+secondary use apply to most data categories from March 2029
+[@ehds2025; @ehdsoverview]. In the United Kingdom, the
+SATRE specification, an open community standard whose
+release 2.0.1 is dated July 2026, sets out what such an
+environment should provide [@satre2026].
+
+**The Five Safes.** A common way to describe the controls of
+such an environment is the Five Safes framework, which
+originated at the UK Office for National Statistics
+[@ukdsfivesafes]. Safe projects are approved by the data
+owner as serving the public good. Safe people are trained
+and authorized researchers. A safe setting is an environment
+that itself prevents unauthorized use. Safe data have been
+treated to protect confidentiality. Safe outputs are those
+screened and approved as non-disclosive before release.
+
+**Output checking.** The last of the five is the one that
+shapes the analyst's daily work. Nothing leaves the
+environment, whether a table, a figure, a log, or a fitted
+model, until it has passed statistical disclosure control.
+SATRE makes two things mandatory for a provider: a
+documented process for disclosure control of outputs, and a
+process that assigns responsibility for output checking. It
+also recommends that each project's intended outputs be
+established at the outset [@satre2026]. The rules a checker
+applies are concrete. Under the *All of Us* dissemination
+policy, no participant count from 1 to 20 may be published,
+nor any figure, percentages included, from which such a
+count could be derived [@allofusdissemination]. This is the
+small-cell hazard named under the first route above, now
+enforced by someone other than the analyst.
+
+A reproducible pipeline is what makes this review feasible.
+A checker can judge an output only when its provenance is
+plain: which script produced it, from which cohort, and
+with what suppression. A pipeline that writes every
+exportable table from a script, applies the threshold in
+code, and records what it suppressed turns each request
+into a small, checkable package. A revision the checker
+asks for is then a re-run, not a hand edit of a table
+whose origin nobody can reconstruct.
+
+**What reproducibility can mean inside.** The environment
+belongs to the provider. The analyst cannot pin its
+operating system, may not be permitted to run Docker, and
+may reach only the package sources the provider chooses to
+offer. SATRE lists access to public package repositories,
+and tight control of which packages are available, as
+options for the provider rather than obligations
+[@satre2026]. The ladder still applies, with a change of
+owner at the environment layer. The lockfile records the
+package versions, restored against whatever mirror the
+environment offers. The operating system and R runtime are
+the provider's, so the compendium records the provider's
+image or environment identifier, read from inside the
+environment, in place of a Dockerfile of its own. A claim
+of L2 is honest only to the extent that this identifier
+names a fixed environment. What then enters the open
+deposit is the code, the lockfile or that identifier, a
+synthetic extract of the same structure, and the release
+record of what passed output checking and when. SATRE
+lists a machine-readable record of the disclosure checks
+applied to each output as an option [@satre2026]. L3 is
+the rung that cannot travel. The comparison with the
+published numbers can be run only inside the environment,
+by an approved user, so the level claim must say who ran
+it and where. The data-availability statement names the
+environment and its application route, as the
+controlled-access route above names an accession.
+
 ### Funder and journal obligations
 
 Everything the four routes above implement is a response
@@ -954,6 +1044,46 @@ proprietary dependency, institution-licensed software, or
 data referenced only by an accession number). 'Available
 on GitHub,' without a version and a license, answers none
 of the four.
+
+For randomized trials, the two guidelines this audience
+completes most often took the same step in 2025. SPIRIT
+2025, for trial protocols, and CONSORT 2025, for trial
+reports, each gained a new 'Open science' section
+[@chanspirit2025; @hopewellconsort2025]. In SPIRIT 2025,
+item 5 asks where the
+protocol and the statistical analysis plan can be accessed.
+Item 6 asks where and how the de-identified participant
+data, with their data dictionary, the statistical code, and
+any other materials will be made accessible. CONSORT 2025
+asks the same of the finished report. Its item 3 now asks
+where the statistical analysis plan, as well as the
+protocol, can be accessed. Its new item 4 asks where
+and how the de-identified participant data, the statistical
+code, and other materials can be accessed. (The CONSORT
+wording here follows the statement's own description of
+these items; its checklist table was not available to us as
+text.) Two consequences follow. The protocol promises, under
+SPIRIT item 6, what the report must deliver under CONSORT
+item 4, so the code-sharing route is fixed before
+enrollment, much as the NIH Plan fixes the deposit route.
+And the statistical analysis plan must itself be
+accessible, so the compendium should hold or cite it beside
+the code that implements it.
+
+Journal policies vary more than the guidelines do.
+@tbl-journal-code summarizes three that biostatistics and
+epidemiology authors commonly meet, each read from the
+journal's own pages on 8 November 2026. Policies change, so
+the target journal's current instructions, not this table,
+govern a submission.
+
+| Journal | Code and data | Review of the materials |
+|---|---|---|
+| *Journal of the American Statistical Association* | Code, data, and a workflow that reproduces the work are required at invited revision: for Applications and Case Studies since 2016, for Theory and Methods since 2021. An Author Contributions Checklist form is required at submission [@jasarepro]. | Usually carried out by an associate editor for reproducibility [@jasarepro]. |
+| *Biostatistics* | Sharing of data and code is strongly encouraged where ethically feasible. Papers are marked D when the data are freely available, C when the code is, and R when both are [@biostatguide]. | None described on the author-guidelines page. |
+| *American Journal of Epidemiology* | A data-availability statement is required. Sharing of data and code is strongly encouraged where ethically feasible [@ajeguide]. | None described; editors may request a statistical review [@ajeguide]. |
+
+: Code-availability policies of three journals, as stated on each journal's author pages on 8 November 2026. {#tbl-journal-code}
 
 ## Stewardship over time
 
@@ -1457,12 +1587,12 @@ verify.
 push it to GHCR, record its digest, and export it as a
 SIF for archival deposit.'
 
-*Watch for.* A model will readily produce plausible
-commands. However, it may push and record the *mutable
-tag* rather than resolving and recording the *digest*.
-That silently discards the reproducibility the exercise
-exists to secure. It may also invent registry paths or
-flags that do not exist for the analyst's setup.
+*Watch for.* Check whether the commands push and record
+the *mutable tag* rather than resolving and recording the
+*digest*. Recording the tag silently discards the
+reproducibility the exercise exists to secure. Check also
+every registry path and flag against the registry's own
+documentation and the analyst's setup.
 
 *Verification.* Run each command and confirm the recorded
 reference is a `@sha256:...` digest, not a `:tag`. Pull
@@ -1470,18 +1600,24 @@ the image fresh on a second machine using the recorded
 digest and confirm it resolves. Do not deposit until the
 digest round-trips.
 
+With a coding agent, these commands are executed rather
+than read. A push to a public registry and an export
+bound for deposit are actions the analyst takes after
+reading the commands, not ones an agent runs on its own
+authority (@sec-llm-delegate).
+
 **Prompt.** 'Draft the data-availability and
 reproducibility statement for our manuscript, citing the
 deposited compendium.'
 
 *Watch for.* The model does not know what level the
-compendium actually reached, and will tend to reach for
-confident language ('fully reproducible', 'all results
-can be regenerated') regardless. It cannot know whether
-the analyst verified the outputs or merely pinned them.
-Nor does it know the terms of the data-use agreement, and it will
-often write 'all data are available in the deposited
-compendium' for a deposit that holds none.
+compendium actually reached, whether the analyst verified
+the outputs or merely pinned them, or what the data-use
+agreement permits. Check for confident language ('fully
+reproducible', 'all results can be regenerated') that the
+compendium has not earned. Check also for a sentence such
+as 'all data are available in the deposited compendium'
+attached to a deposit that holds none.
 
 *Verification.* Rewrite the level claim by hand against
 the honest-level standard. Say verified only if
@@ -1493,20 +1629,41 @@ sentence about the data against what the deposit holds
 and against the agreement, and name the access route for
 anything withheld.
 
+*A better prompt.* 'Draft a data-availability statement and
+a code-availability statement for our manuscript. Inputs:
+the attached deposit file listing, the DOI
+`<minted DOI>`, the level reached (L1: a lockfile, no
+baseline re-run), and the agreement's redistribution
+clause, pasted below. Claim no level above L1 and no data
+the listing does not show. Give two short paragraphs, then
+list each sentence with the file or clause that supports
+it, so that I can check them one by one.'
+
+An agent given access to the deposit service could go on
+to publish the record and mint the DOI. A published deposit
+cannot be recalled (@sec-restricted-deposit), so publishing
+it, like the level claim, stays with the analyst
+(@sec-llm-delegate).
+
 **Prompt.** 'Our 2024 analysis has an renv.lock but
 several pinned versions no longer install. How do we
 reproduce it?'
 
-*Watch for.* The model may confidently propose editing
-the lockfile to newer versions, which changes the
-analysis rather than reproducing it. It may also
-recommend `rang` but misstate what input it needs.
+*Watch for.* Check whether the answer edits the lockfile
+to newer versions, which changes the analysis rather than
+reproducing it. If the answer recommends `rang`, check it
+against the caveat in 'Stewardship over time': the package
+was archived on CRAN on 2026-08-22, and it is built for the
+case in which no lockfile survives. Here one does, so the
+versions to install are already known.
 
-*Verification.* Confirm that the proposed route
-reconstructs the *original* versions from the recorded
-run date. Test the reconstructed environment against a
-known output from the original analysis before trusting
-it.
+*Verification.* Confirm that the proposed route installs
+the *recorded* versions, from the CRAN archive or from a
+dated repository snapshot, with the recorded run date used
+only to choose the snapshot. Diff the installed versions
+against the lockfile. Test the reconstructed environment
+against a known output from the original analysis before
+trusting it.
 
 ## Exercises
 
