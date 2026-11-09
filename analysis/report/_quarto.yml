@@ -141,6 +141,7 @@ filters:
   - path: filters/pdf-answers.lua
     at: pre-ast
   - filters/pdf-code-breaks.lua
+  - _filters/contents-html-only.lua
 
 bibliography: references.bib
 csl: https://www.zotero.org/styles/apa
