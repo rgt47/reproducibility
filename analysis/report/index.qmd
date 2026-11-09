@@ -63,6 +63,10 @@ epidemiology, or a related quantitative health science.
 Such a reader produces analyses that others will need to
 trust, audit, and rebuild.
 
+::: {.content-visible when-format="html"}
+The [Contents](contents.qmd) page lists every chapter on one page.
+:::
+
 ## License
 
 This book is licensed under
