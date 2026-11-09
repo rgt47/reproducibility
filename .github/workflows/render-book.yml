@@ -140,7 +140,7 @@ jobs:
       # --- Deploy: only on a push to main ---
       - name: Deploy to Netlify
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: nwtgck/actions-netlify@v3
+        uses: nwtgck/actions-netlify@v4
         with:
           publish-dir: ./analysis/report/_book
           production-branch: main
