@@ -2,18 +2,18 @@
 
 *Reproducible Research for the Health Sciences* by the rgtlab
 curriculum team is licensed under a
-[Creative Commons Attribution-NonCommercial-ShareAlike
+[Creative Commons Attribution
 4.0 International
-License](https://creativecommons.org/licenses/by-nc-sa/4.0/).
-You may share and adapt this work, including excerpting
-chapters for a course, provided you give attribution, do not
-use it commercially, and license your adaptation under the
-same terms.
+License](https://creativecommons.org/licenses/by/4.0/).
+You may share and adapt this work for any purpose, including
+excerpting chapters for a course, provided you give
+attribution.
 
-The code samples in this book are licensed under
-[Creative Commons CC0 1.0 Universal (CC0
-1.0)](https://creativecommons.org/publicdomain/zero/1.0/),
-i.e. the public domain.
+The code samples printed in this book are licensed under the
+[MIT License](https://opensource.org/license/mit). The
+repository code (package functions and build scripts) is
+licensed under
+[GPL-3](https://www.gnu.org/licenses/gpl-3.0.html).
 
 To cite this book, please use:
 

@@ -4,7 +4,7 @@ type: software
 title: "reproducibility"
 version: 0.1.0
 date-released: "2026-07-30"
-license: CC-BY-NC-SA-4.0
+license: CC-BY-4.0
 authors:
   - name: "rgtlab curriculum team"
     orcid: ""
@@ -14,8 +14,9 @@ abstract: >
   Research compendium for the book Reproducible Research for the
   Health Sciences. It contains the analysis code, the script that
   generates the synthetic cohort, and the package lockfile. The
-  repository carries two licenses, CC BY-NC-SA 4.0 for the prose,
-  figures, and tables and CC0 1.0 for all code; see LICENSE.
+  repository carries three licenses: CC BY 4.0 for the prose,
+  figures, and tables; MIT for the code printed in the book;
+  and GPL-3 for the repository code. See LICENSE.
 keywords:
   - reproducible-research
   - research-compendium
