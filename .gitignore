@@ -21,6 +21,8 @@ _book/
 # Hand-written HTML partials are sources, not build output.
 !analysis/report/partials/*.html
 *.pdf
+# Frozen PDF figures are build inputs for CI, not outputs.
+!analysis/report/_freeze/**/figure-pdf/*.pdf
 .netlify
 
 # R
