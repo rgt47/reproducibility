@@ -9,3 +9,4 @@
 ^Dockerfile$
 ^\.dockerignore$
 ^LICENSE$
+^INSTRUCTOR-GUIDE\.md$

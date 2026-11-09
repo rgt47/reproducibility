@@ -21,8 +21,8 @@ plan was written.
 1. Parameters. 2. Evidence labels and method. 3. Stage 1 inputs.
 4. Executive summary. 5. Findings 29 to 45. 6. Correctness register.
 7. Topic additions. 8. House rules and render checks.
-9. Phases 19 to 25. 10. What not to do. 11. Decisions D13 to D24.
-12. Limitations. The agents' reports are in `docs/third-review/`;
+9. Phases 19 to 25. 10. What not to do. 11. Decisions D13 to D25.
+12. Implementation record. 13. Limitations. The agents' reports are in `docs/third-review/`;
 every finding below cites them by file name.
 
 ## 1. Parameters
@@ -696,7 +696,284 @@ AskUserQuestion once Section 7 is complete.
 | D23 PDF answers | End of each chapter, PDF only | Phase 24 |
 | D24 PDF tagging | Trial the `book` class with `pdf-standard: ua-2`, measure, adopt only if acceptable | Phase 24, on its own branch |
 
-## 12. Limitations
+D25 (reopened Phase 0, author, 2026-11-07): `CITATION.cff` keeps
+`CC-BY-NC-SA-4.0`; its abstract states the dual licensing, and
+Chapter 13 no longer claims a Zenodo deposit would record the code
+license correctly from that file.
+
+D25 superseded (author, 2026-11-09, commit `5afefa7`): prose, figures,
+and exercises under CC BY 4.0; code printed in the book under MIT;
+repository code under GPL-3, as `DESCRIPTION` and `CITATION.cff` now
+declare. The license invariant in `test-manuscript-invariants.R` and
+the Chapter 5 `use_*_license()` example were aligned to it after the
+first PR CI run failed on the old expectation.
+
+## 12. Implementation record
+
+### Phase 19 (E1, Tier 1), branch `phase-19-tier1`, 2026-11-07
+
+Five agents edited disjoint chapter files from a shared brief; the
+lead made the shared-file changes and verified. Each line states
+how the item was checked.
+
+| Item | Result | Evidence |
+|---|---|---|
+| T1-1 one-file ignore | `.gitignore` now ignores `analysis/data/raw_data/*` except `README.md`; Ch 13 checks an invented second filename with `git check-ignore`; exercise, solution, and key rewritten | V: `git check-ignore --no-index -v` on three names; README not ignored |
+| T1-2 LLM rule | `_llm-rule.qmd` (institution, IRB, and agreement must all permit; NIH NOT-OD-25-081 stated accurately) included in all 12 chapters with an LLM section; chapter-specific sentences kept | V: 12 includes by grep; old wording absent |
+| T1-3 GxP rewrite | 'Regulated records' warning callout in the PHI response, step 3; cheat-sheet row | I |
+| T1-4 digest | index versus manifest digest; pin the index and always pass `--platform linux/amd64`; Apple Silicon section moved after the pinning section; recipe computed from the lockfile (`rocker/r-ver:4.6.1`) | I; V: old wording absent by grep; agent ran the inline expressions |
+| T1-5 Apptainer | `--cleanenv --no-home --bind "$PWD"` with `Rscript --vanilla`; Slurm script passes `SLURM_*` back with `--env`; check answer and cheat sheet corrected | I (answer read in full); Apptainer not run |
+| T1-6 reset | `--hard` no longer called safe; reflog recovers commits, not uncommitted edits | I |
+| T1-7 Cox oracle | `inst/tinytest/test-fit-cox.R` added (5 assertions, complete-case oracle plus a metamorphic check); chapter text matches it | V: suite 357/357 |
+| T1-8 PHI rule | negation restored | I |
+| T1-9 CFR | 'discern'; IQ/OQ/PQ attributed to qualification practice; FDA 2003 scope guidance added to `references.bib` (`fdapart11scope2003`, URL returns 200); Validation Hub sentence corrected | V: URL; I: text. Guidance title from memory, Phase 25 |
+| T1-10 own state | repository statements computed inline in Chs 3, 4, 5, 6, 7, 8, 10, 13 and the colophon; instructor keys for Chs 3 to 8, 12, 13 updated; test fixture replaced (D16) | V: fixture reproduces the baseline at 1e-8; agents ran every inline expression |
+| T1-11 CITATION.cff | see D25 | I |
+
+Also done in this phase, because the clean-render checks of Section
+8 required it: the three accidental example lists rewrapped and a
+lint added to `test-manuscript-invariants.R` (28 assertions); the 12
+cheat-sheet links pointed at their anchors; and the 14 R warnings in
+Chapter 5 traced to a Unicode circle in `fig-gates` that the PDF
+device cannot encode, replaced by point shapes that also separate
+the universal and selective statuses by shape (Finding 45, partly).
+
+Not done, carried forward: the Finding 33 items other than those
+above are confirmed still present by the readers and go to Phase 20
+(pacman, Chapter 9 hashing, `.Rprofile` seed, 'not statistical',
+`LC_NUMERIC`, `testthat`) and Phases 21 and 22 (glossary notes,
+trusted research environments); git-dependent chunks in Chapters 4
+and 13 fall back to an 'unavailable' wording when git is absent at
+render time, which CI should be checked for; the nested callout in
+the Chapter 4 PHI list was checked in the rendered HTML and PDF
+(below).
+
+### Phase 20 (E2, Tier 2 and voice), branch `phase-20-tier2`, 2026-11-08
+
+Six agents edited disjoint files from one brief
+(`docs/third-review/phase20/BRIEF.md`), which fixed one canonical
+statement of each ladder rule (Finding 41) before any edit. Their
+item-by-item reports are in `docs/third-review/phase20/`; each row
+there carries its own evidence label. The lead applied the
+shared-file changes and verified as below.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Tier 2 register, Chs 1 to 13 and back matter | Each row of Section 6 fixed, already fixed, or deferred with a reason (agent reports) | Agents: `run_chapter.R` on every changed chapter, `errors 0 warnings 0` (Ch 9 keeps one pre-existing error that is an artifact of running `knitr::inline_expr()` outside knitr; it renders) |
+| Ladder (Finding 41) | BLAS 'no rung' and the sampler default-versus-override rule aligned in Chs 2, 3, 5, 6, 7, 12; a four-row default-versus-override table in Ch 3; Docker-only matrix row in Ch 12 now L0 | I; table checked in the PDF (column widths fixed) |
+| Finding 33 remainder | pacman (Ch 9, rewritten after running `renv::dependencies()`, which does see `p_load()` arguments); Ch 9 verification no longer hashing; `.Rprofile` seed moved to the analysis code; 'not statistical'; `LC_NUMERIC` (run); `testthat` to `tinytest` (Ch 6) | V for pacman and `LC_NUMERIC`; I otherwise |
+| Voice (Finding 36) | Objectives, exercises, and solutions in 'you' (D17); garbled splits and the logic defects listed in Finding 36 repaired; 'That is,' now 0 to 3 per chapter (23 in all); 'Unfortunately,' 0 in every chapter | V: grep counts |
+| Compute, not type | New inline values in Chs 6, 10, 11, 12, 13 (lockfile pins changed, pipeline timing shares, row counts, the 197-eye count, layer count, GitLab image against the lockfile R) | V: agents' runs; I: rendered text sampled |
+| D21 | Ch 12 shows `actions/checkout@3d3c42e…` (v7.0.1); `@v4` tag examples now `@v7`; `.github/workflows/render-book.yml` pinned to the same SHA with `fetch-depth: 0` (the git-history chunks of Chs 4 and 13); `.github/dependabot.yml` added | V: SHA from `gh api`; workflow not run on CI |
+| `zzrenvcheck` pin | Chs 6 and 12 install `@6f53235…` (0.10.0); no tag for 0.10.0 exists | V: `gh api` |
+| Shared files | `references.bib` (`nihdmswriting`, URL 200; `nhsrap2024` note); glossary two-layer entry; `test-cohort.R` uses `is.numeric(coef(fit))` and labels the same-session block as determinism; instructor keys for Chs 7, 10, 12 | V: suite 357/357 |
+| Render | Clean HTML and PDF: no log warnings, no unresolved references or citations, no example lists, no `href="@`, no literal entities; 628 pages (614 before) | V |
+| Lost anchors or citations | None: every section, figure, table, glossary, and cheat-sheet id and every citation key in `HEAD` survives | V: `ids_cites.py` |
+
+Deferred, as the brief scoped: Monte Carlo SE, `B = 1000`, parallel
+seeding, and the Ch 11 Ex 5 tolerance solution (Phase 21); reading
+times and the Ch 10 roadmap and Outline pair (Phase 23); the
+capture-versus-validation figure wording, which lives in
+`R/stack_diagram.R` (Phase 24, with Finding 41's glossary
+alignment). Claims resting on expert knowledge only (rix, Binder,
+Apptainer SIF metadata, `tar_outdated()`, `R CMD check` exit status
+on a WARNING, `setup-renv` and the autoloader, the Peng wording, the
+NHS RAP five criteria, 21 CFR 11.50(a) elements) are listed in the
+agent reports for Phase 25.
+
+Items for the author: (1) the credits typo was read as 'the book's
+house style'; 'series' may have been meant; (2) Conventions now
+defines 'captures' as 'pins for the first time, or pins more
+tightly than an earlier chapter did', matching the roxygen of
+`R/stack_diagram.R`; (3) a `v0.10.0` tag in `zzrenvcheck` would
+allow a readable pin, and zzcollab's `templates/Makefile` installs
+it unpinned (tool issues, not changed here); (4) Ch 3 keeps 'about
+four of ten' as the framework review's own count on a finer split,
+against the book's nine layers.
+
+### Phase 21 (statistics and regulated content), branch `phase-21-stats`, 2026-11-08
+
+One agent did the statistics (report in
+`docs/third-review/phase21/stats-report.md`); the lead wrote the
+glossary, preface, and Chapter 12 changes and the shared files.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Sampler change vs MCSE (Finding 35, M2) | Ch 11 computes the bound's MCSE over 40 seeds (0.0154 at 2000 replicates); the 0.0036 sampler shift is about 0.2 MCSE; diagnosis list gains 'is the difference within Monte Carlo error?'; Ch 3 sentence aligned | V: chunk output, matches persona-ms [V] |
+| Two-tier baseline | `compare_to_baseline()` exported (exact at 1e-8, then within k MCSE; `mcse = NULL` for deterministic quantities); the 3.4 percent false-alarm rate for k = 3 is computed in the text; Ex 5 names the numerical and Monte Carlo tolerances; Cox baseline unchanged | V: `test-compare-baseline.R` (20 assertions) |
+| Replicates (M3) | `bootstrap_ci(n =)` renamed `B =`, default 1000; `mc-stability` uses 20 seeds per B with inline MCSEs; the half-unit rule stated; printed bounds given only to supported precision | V: inline values; I: grep shows no `n =` callers |
+| Parallel streams (M1, m7) | Paragraph corrected (naive `mclapply` irreproducible; `mc.set.seed = FALSE` shares streams; per-worker streams depend on worker count); `replicate_streams()` gives per-task streams, shown invariant for 1 and 2 workers | V: agent ran each case; `test-replicate-streams.R` (7); `future.apply` and `doRNG` EK |
+| Ch 13 replicate passage | Leading replicates regenerate only when each replicate's draws are fixed by its index; MCSE goes in the deposit | I |
+| Glossary (Finding 34, M4) | Regulated-sense notes on Validation and Verification (FDA General Principles of Software Validation, `fdagpsv2002`), new Audit trail entry (11.10(e)) | I; FDA wording EK, Phase 25 |
+| Preface (D20) | Scope paragraph: not a computer-system-validation manual | I |
+| Ch 12 L3 stamp | Not a validation record: no signer, meaning, or QA review | I |
+| Shared files | `morris2019` (DOI metadata checked against doi.org), `fdagpsv2002` (URL 200); `parallel` in `Imports`; NAMESPACE regenerated by roxygen2 | V |
+| Tests and render | 384/384; clean render; 634 pages; Ch 11 render adds about 20 s | V |
+
+For the author: roxygen also exported four functions that already
+carried `@export` but were missing from the stale NAMESPACE
+(`bootstrap_cox_ci`, `fit_cox`, `run_canonical_analysis`,
+`summarise_cox`); this widens the package API to match its own
+documentation. `R CMD check` was not run.
+
+### Phase 22 (content gaps), branch `phase-22-content`, 2026-11-08
+
+Six agents added content from one brief
+(`docs/third-review/phase22/BRIEF.md`) under a cite-only-what-you-
+opened rule; their reports list every source with URL and date.
+
+| Item | Result | Evidence |
+|---|---|---|
+| A5, Finding 39 | Setup appendix: git preflight (six checks, each pointing to a *Happy Git* chapter) and a 'When git refuses' table (eight rows, six messages quoted from git 2.56.0 runs); Ch 4 output transcripts from a scratch repository; `git status --untracked-files=all` replaces a check that could not work | V: git runs; two forge messages described, not quoted |
+| Finding 39 correction | With no identity configured, git 2.56.0 here guessed one from the login and host and committed silently; it refused only with `user.useConfigOnly=true`. The preflight describes both outcomes | V |
+| Finding 40 | Ch 2 `sec-llm-delegate` (what to delegate, protected paths, irreversible actions, prompt injection) and `sec-llm-disclosure` (slot template, `LLM-USE.md`, prompts kept); agents paragraph in `_llm-rule.qmd`; one 'A better prompt' per chapter; model-behavior claims rephrased as checks; duplicated 'fully reproducible' triples replaced in Chs 3, 9, 10; Ch 9 disclosure points to Ch 2 | I; ICMJE, NIH, OWASP pages opened |
+| A1 | Ch 13 `sec-tre`: TREs, Five Safes, output checking, reproducibility inside a TRE (All of Us, SATRE 2.0.1, EHDS Regulation (EU) 2025/327) | I: sources opened |
+| A2 | Ch 5 `sec-readme-requirements`, with a README excerpt computed from the repository | V: chunk run |
+| A3 | Ch 13: SPIRIT 2025 items 5 and 6, CONSORT 2025 items 3 and 4 (from the statement's prose; its checklist is an image), `tbl-journal-code` for JASA, *Biostatistics*, AJE | I; DOIs checked against doi.org |
+| A4 | Ch 10 `sec-llm-in-pipeline`, display-only fragment, Exercise 9 | I |
+| A6 | Ch 9 `sec-freeze`, repository facts computed from `_quarto.yml` and `_freeze/` | V |
+| A7 | Ch 11 `sec-code-review`, six-question checklist, paired Exercise 9 (key added to the instructor guide) | I |
+| A8 | Ch 5 `sec-package-skeleton` (`usethis`, `devtools`, `pkgdown` not in `renv.lock`, so not executed) | I; commands tried in a scratch package |
+| A9 | Ch 7 honest-level callout: FDA review of R Submissions Pilot 4 and the R Consortium post, paraphrased | I: both opened |
+| Also | `analysis/scripts/generate_baseline.R` added (the test named a script that did not exist; it reproduces the committed baseline exactly); Ch 12 evidence retention (90 days, GitHub Docs); six glossary entries; 27 bib entries; a lint for `@sec-` references to unnumbered pages, after Chapter 4 and the setup appendix hit it | V: `all.equal` on the baseline; suite 414/414 |
+| Render | Clean; 664 pages | V |
+
+**Length.** The book grew by 30 pages in this phase, against an
+estimate of 9 to 10 for A1 to A9 (Section 7). The causes: the
+agents' sections ran over their estimates (A5 about 3 pages with the
+table, A7 about 2.5 with its exercise, A1 and A3 about 4), the
+per-chapter LLM additions (about 13 better prompts and the agents
+sentences, plus the include's paragraph repeated in twelve
+chapters), and two new exercises with solutions. From 600 pages at
+the start of the review the book is now 11 percent longer.
+
+### Phase 23 (reading times and defective duplication), branch `phase-23-length`, 2026-11-08
+
+The author approved one exception to D18's no-cuts rule: the agents
+paragraph in the shared restricted-data include becomes one sentence.
+
+| Item | Result | Evidence |
+|---|---|---|
+| Reading times | One stated rule (body prose words plus ten per code line, at 200 words a minute, rounded to five) applied to all twelve cards; six cards moved by more than five minutes (Ch 5 50 to 60, Ch 7 40 to 55, Ch 8 35 to 45, Ch 9 60 to 50, Ch 11 45 to 65, Ch 12 50 to 70); the rule is stated on the Conventions page | V: `test-reading-times.R` recomputes each card and fails beyond five minutes (6 of 12 failed on the old cards) |
+| Roadmap and Outline pairs | Outlines reordered to match the text in Chs 4, 5, 7, 9, 12; Phase 22 sections added to the Outlines of Chs 9 (freeze), 10 (LLM in the pipeline), 11 (code review), and the HPC worked example to Ch 8; the Ch 10 roadmap paragraph, which ended before the new section, removed (the Outline covers it) | I: headings extracted per chapter and compared |
+| Not changed | Roadmaps that agree with their Outlines (Ch 4) are duplication without a defect and stay under D18 | |
+| D19 include | Agents paragraph cut to one sentence pointing to `sec-llm-delegate` | I |
+| Render | Clean; 664 pages (unchanged: the shortened paragraph moved no page break) | V; suite 426/426 |
+
+### Phase 24 (apparatus and accessibility), branch `phase-24-apparatus`, 2026-11-08
+
+Five agents worked from one brief (`docs/third-review/phase24/`); the
+lead did the shared files, the filter, the figure function, and the
+HTML repairs. The PDF tagging trial (D24) is recorded separately below.
+
+| Item | Result | Evidence |
+|---|---|---|
+| D14 instructor guide | Removed from the book; moved to `analysis/instructor-guide/` as its own Quarto project (HTML and PDF); every typed key replaced by an executed chunk or inline value; week table moved in from `INSTRUCTOR-GUIDE.md` (now a pointer), titles checked by a chunk; a cumulative-quiz schedule added. The twelve chapter links and the preface now say the guide is distributed separately; the stale `_book/instructor-guide.html` deleted | V: guide renders clean, 14 pages; `grep sec-ig-` in the book empty. Keys corrected by computation: Ch 6 base packages now include `parallel`; Ch 10 'stays at L0' corrected |
+| D23 PDF answers | `filters/pdf-answers.lua` (pre-ast, LaTeX only) numbers the checks per chapter, moves each answer to 'Answers to the checks' before the cheat sheet, with page references both ways; HTML untouched; Conventions says so | V: 142 answers in the sources, 142 entries in the PDF, no inline answer except the Conventions example, no unresolved page reference; HTML unchanged in a scratch book |
+| Finding 44 | One 'from earlier chapters' check after every card (Chs 2 to 13), mostly diagnosis vignettes; faded examples for the Ch 7 Dockerfile (label values masked so they do not give the answer away), the Ch 10 `_targets.R`, and the Ch 12 workflow | I: agents grepped each claim against the earlier chapter (file:line in reports) |
+| Finding 45 figures | Stack figure: every bar labeled with its rung and, where highlighted, 'captured' or 'validated here', so color and fading are no longer the only cues; legend no longer clipped; alt text lists each layer's rung; roxygen 'hatched border' corrected. `fig-gates`: shapes now in the legend; contrast computed (fills below 3:1, carried by shape; markers 5.3 and 7.1:1); alt text corrected. `fig-simpson`: alt text rewritten from computed cluster means (the 'descending heights' clause was false) | V: figures drawn and inspected; contrast and means computed |
+| Finding 45 HTML | axe (WCAG 2.0/2.1 A and AA) over every page: 713 violation nodes before (link-in-text-block 481, aria-allowed-attr 227, scrollable-region-focusable 3, color-contrast 2), 0 after. Repairs: underlined code links, title-code color, and a script making each collapsible callout a keyboard-operable button named by its title (Quarto's 'Toggle callout' label removed) and giving overflowing code a tab stop | V: axe via puppeteer-core and Chrome; Enter toggles `aria-expanded` |
+| Finding 37 | Cheat-sheet index generated at render time from the manifest and each chapter's table (cross-references, current titles); the Phase 22 agents' optional rows added to six chapter tables. Colophon: 'Locked' column from `renv.lock`, Quarto version computed, the mismatch (R 4.6.0 against locked 4.6.1) stated by an inline sentence, and the false 'see the homepage timestamp' line replaced by the execution date | V: chunks run; rendered |
+| Finding 41 | 'Capture sets the level' corrected to 'L0 to L2; L3 by validation' in the glossary and in Ch 3's vocabulary box and cheat sheet, matching Ch 3's own text and Ch 13 | I |
+| Also | Ch 3 prerequisites now name Ch 2 (its new check draws on it); `.Rbuildignore` lists `INSTRUCTOR-GUIDE.md`; `.gitignore` no longer ignores `partials/*.html`; week 6 lab no longer says 'built in CI' | |
+| Render | Clean; 666 pages; suite 438/438 | V |
+
+**D24 tagging trial (not adopted; trial branch deleted).** With
+`documentclass: book` and `pdf-standard: ua-2`, LuaLaTeX failed in
+`tagpdf` ('there is no open structure on the stack') inside a
+highlighted code line: the book's fvextra `Highlighting` redefinition,
+which wraps long code lines, is not compatible with tagging. Without
+that redefinition the build succeeds: `Tagged: yes`, PDF 2.0, 664
+pages. The cost is code that no longer wraps: 86 words print past the
+page edge (13 in the committed build) and about 608 past the outer
+margin (272), a rough `pdftotext -bbox` measure that ignores the
+facing-page margins. Quarto also warned that the cover image lacks alt
+text, and could not validate conformance because `verapdf` is not
+installed, so 'tagged' here means a structure tree exists, not PDF/UA
+conformance. Side effect: during the first attempt Quarto ran
+`tlmgr`, updated the existing TeX Live packages, and installed
+`latex-lab` and `nameref` in the system TeX installation.
+Recommendation: keep `scrbook` untagged for now, state in the colophon
+that the HTML edition is the accessible one (D24 option b), and retry
+when tagging supports fvextra's line breaking. The 13 words past the
+page edge in the committed build are a separate defect to fix (long
+unbreakable tokens in code or tables).
+
+D24 (author, 2026-11-08): the recommendation is accepted. The PDF stays
+`scrbook`, untagged; the colophon says the HTML edition is the
+accessible one and why.
+
+### Phase 25 (verification pass), branch `phase-25-verification`, 2026-11-08
+
+Four agents verified every claim labeled EK or U in the review and
+phase reports, plus unlabeled factual claims they found by grep, each
+against a primary source opened on 2026-11-08 or by running the code
+(`docs/third-review/phase25/`). Agents proposed exact replacements; the
+lead re-checked the consequential ones and applied them.
+
+| Subject | Claims | Verified | Corrected | Hedged | Not verified |
+|---|---|---|---|---|---|
+| Regulation, policy, guidelines (Agent 1) | 48 | 33 | 7 | 8 | 0 |
+| Environment and archiving tools (Agent 2) | 68 | 44 | 8 | 12 | 4 |
+| Literate programming, pipelines, testing, CI (Agent 3) | 59 | 48 | 6 | 5 | 0 |
+| Quotations and literature (Agent 4) | 42 | 26 | 6 | 7 | 3 |
+
+Corrections with the most consequence:
+
+- **Literature.** The National Academies report does not define
+  robustness (the Turing Way does). Saju and colleagues' quarter counts
+  R scripts, after the authors rebuilt the environments; only 40 of
+  249 projects ran in full (the lead opened the paper). Sandve's ten
+  rules recommend no independent re-execution. Stodden 2018 reports
+  artifacts for 44 percent and reproduction for 26 percent, not a
+  predictor analysis. Peng wrote 'has the potential to serve as'. The
+  OSC 39 percent is the teams' subjective rating (36 percent reached
+  significance). The Marwick epigraph reads 'organising', as published.
+- **Regulation and policy.** NIH's notice names public generative AI
+  tools (glossed as third-party), and a trained model may be shared
+  only with approved users; the 2026 DMS changes (NOT-OD-26-100, the
+  updated Plan format; NOT-OD-26-120, no Plan for K awards; the lead
+  opened both) are added; 'withheld funds' and 'review for
+  completeness' corrected; CONSORT 2025 items 3 and 4 now verified from
+  the checklist text; the GPSV validation definition reworded to the
+  source; HIPAA Safe Harbor described correctly; EMA computerized
+  systems guideline cited; `cfr21part11` now covers all of Part 11.
+- **Tools.** `renv::dependencies()` does report base packages;
+  versioned `rocker/r-ver` images fix their snapshot at the last day
+  the R version was current; rix writes a `sha256` for date snapshots
+  since 0.18.3; a Binder Dockerfile must copy the repository into
+  `$HOME`; `prcomp()` uses an SVD; rrtools; an image rebuild gives the
+  same pinned environment, not identical bytes; the `zzc verify`
+  stamp is not dropped by every later change, and the baseline counts
+  if named in the test log; `targets` reaches cluster schedulers; no
+  CI workflow runs lintr; a PDF identifier is not random, and
+  `SOURCE_DATE_EPOCH` alone made two small builds identical.
+
+Also in this phase: `filters/pdf-code-breaks.lua` adds break points to
+long inline code in the PDF (13 words past the page edge before, 0
+after, with one wide R print narrowed); `buckheit1995` retyped as a
+book chapter and a false note removed from `stodden2018`; three new
+bib entries; the devcontainer states `--platform=linux/amd64`; the
+`tools/us-spelling` gate exempts `.bookepigraph` divs, since an
+epigraph is a verbatim quotation (tested: British spelling outside an
+epigraph is still flagged).
+
+Not verified (sources blocked or tools unavailable): Claerbout and
+Karrenbach 1992 (403), Peng's figure labels, Leek and Peng's body text,
+Goodman 2016 beyond the abstract, Guix and conda-forge coverage,
+rootless Docker prerequisites, Snakemake and Nextflow papers. No
+Docker, Apptainer, Nix, Binder, Slurm, CI service, or `zzc verify
+--full` was run. The eCFR blocked automated access; Part 11 was read
+from the GPO annual edition (1 April 2025).
+
+Tool issues found for the author (zzcollab, not this book):
+`verify.sh` accepts a baseline named in the test log even when its
+guard exits early; `make test` and `make docker-test` pass an empty
+suite; the coherence tier reads an `ARG R_VERSION` line generated
+Dockerfiles no longer write; `ensure-zzrenvcheck` installs
+`zzrenvcheck` unpinned.
+
+## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human
   second readers are needed for the regulatory, restricted-data, and

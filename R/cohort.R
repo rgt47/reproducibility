@@ -87,18 +87,23 @@ summarise_fit <- function(fit) {
 #' generator state on exit, so calling this function does not
 #' disturb any random stream the caller was already running.
 #'
+#' The bounds are Monte Carlo estimates: at a different seed they
+#' move by about one Monte Carlo standard error, which shrinks as
+#' `1 / sqrt(B)`. Report only the digits that error supports.
+#'
 #' @param x A cleaned cohort.
-#' @param n Number of bootstrap replicates.
+#' @param B Number of bootstrap replicates. It is called `B`, not
+#'   `n`, because `n` conventionally means the sample size.
 #' @param seed Seed set before resampling. Recording it is not
 #'   optional: the RNG kind must also be fixed for the result to
 #'   reproduce across R versions.
 #' @return A named numeric vector with the `lower` and `upper` bounds
 #'   of a percentile interval on the odds-ratio scale.
 #' @export
-bootstrap_ci <- function(x, n = 1000, seed = 20260908) {
+bootstrap_ci <- function(x, B = 1000, seed = 20260908) {
   dat <- x[!is.na(x$incident_dm), , drop = FALSE]
   reps <- withr::with_seed(seed, {
-    vapply(seq_len(n), function(i) {
+    vapply(seq_len(B), function(i) {
       idx <- sample(nrow(dat), replace = TRUE)
       unname(stats::coef(fit_model(dat[idx, , drop = FALSE]))['hba1c'])
     }, numeric(1))
@@ -181,18 +186,18 @@ summarise_cox <- function(fit) {
 #' exit.
 #'
 #' @param x A cleaned cohort.
-#' @param n Number of bootstrap replicates.
+#' @param B Number of bootstrap replicates.
 #' @param seed Seed for the resampler. Must be recorded alongside the
 #'   result; changing it changes the interval.
 #' @return A named numeric vector with `lower` and `upper` bounds of
 #'   a percentile interval on the hazard-ratio scale.
 #' @export
-bootstrap_cox_ci <- function(x, n = 1000, seed = 20260908) {
+bootstrap_cox_ci <- function(x, B = 1000, seed = 20260908) {
   dat <- x[!is.na(x$incident_dm) &
              !is.na(x$age_at_enroll) &
              !is.na(x$sex), , drop = FALSE]
   reps <- withr::with_seed(seed, {
-    vapply(seq_len(n), function(i) {
+    vapply(seq_len(B), function(i) {
       idx <- sample(nrow(dat), replace = TRUE)
       fit_i <- survival::coxph(
         survival::Surv(followup_days, incident_dm) ~
@@ -222,4 +227,107 @@ run_canonical_analysis <- function(
   fit <- fit_cox(cohort)
   res <- summarise_cox(fit)
   c(list(n_rows = nrow(cohort)), res)
+}
+
+#' Compare a regenerated result with a recorded baseline, in two tiers
+#'
+#' The first tier asks whether the value regenerated seed-exactly: its
+#' relative difference from the recorded value is at most `tol`, the
+#' numerical tolerance that absorbs reordered floating-point
+#' arithmetic. The second tier applies only to a Monte Carlo
+#' quantity, such as a bootstrap bound, and only when the first tier
+#' fails. It asks whether the absolute difference is at most `k`
+#' Monte Carlo standard errors, so that the result still reproduces
+#' as a statistical result although the draws differ (for example
+#' after a change of random-number sampler). A deterministic
+#' quantity, such as a fitted coefficient, has no Monte Carlo error;
+#' pass `mcse = NULL` and only the first tier applies.
+#'
+#' @param new Numeric vector of regenerated values.
+#' @param recorded Numeric vector of recorded baseline values, the
+#'   same length as `new`.
+#' @param mcse `NULL` for a deterministic quantity, or a non-negative
+#'   Monte Carlo standard error for each value (length 1 or the
+#'   length of `new`), estimated from repeated runs at different
+#'   seeds and recorded with the baseline.
+#' @param tol Relative tolerance of the seed-exact tier. Where the
+#'   recorded value is smaller than `tol` in magnitude, the
+#'   difference is compared absolutely, as `all.equal()` does.
+#' @param k Number of Monte Carlo standard errors the second tier
+#'   allows.
+#' @return A character vector, one element per value: `'exact'`,
+#'   `'within Monte Carlo error'`, or `'changed'`. Both boundaries
+#'   are inclusive.
+#' @examples
+#' compare_to_baseline(29.1436, 29.1400)
+#' compare_to_baseline(29.1436, 29.1400, mcse = 0.015)
+#' @export
+compare_to_baseline <- function(new, recorded, mcse = NULL,
+                                tol = 1e-8, k = 3) {
+  stopifnot(
+    is.numeric(new), is.numeric(recorded),
+    length(new) == length(recorded),
+    !anyNA(new), !anyNA(recorded),
+    is.numeric(tol), length(tol) == 1, tol > 0,
+    is.numeric(k), length(k) == 1, k > 0
+  )
+  diff <- abs(new - recorded)
+  scale <- ifelse(abs(recorded) > tol, abs(recorded), 1)
+  exact <- diff / scale <= tol
+  within_mc <- if (is.null(mcse)) {
+    rep(FALSE, length(new))
+  } else {
+    stopifnot(is.numeric(mcse), !anyNA(mcse), all(mcse >= 0),
+              length(mcse) %in% c(1L, length(new)))
+    diff <= k * mcse
+  }
+  ifelse(exact, 'exact',
+         ifelse(within_mc, 'within Monte Carlo error', 'changed'))
+}
+
+#' Run replicates on per-task random-number streams
+#'
+#' Gives replicate `i` its own L'Ecuyer-CMRG stream, the `i`-th of a
+#' sequence derived from `seed` with [parallel::nextRNGStream()]. A
+#' replicate's draws therefore depend only on `seed` and `i`, not on
+#' which worker runs it or how many workers there are, so the
+#' results are identical for any `cores`. Streams assigned per
+#' worker, as [parallel::clusterSetRNGStream()] does, are
+#' independent but give results that change with the number of
+#' workers. The caller's generator state is restored on exit.
+#'
+#' @param B Number of replicates.
+#' @param FUN A function of the replicate index `i` that draws
+#'   random numbers and returns the replicate's value.
+#' @param seed Integer seed from which the streams are derived.
+#' @param cores Number of worker processes for
+#'   [parallel::mclapply()]. Forking is unavailable on Windows,
+#'   where the replicates run sequentially whatever `cores` is.
+#' @return A list of length `B`, the value of `FUN(i)` for each `i`.
+#' @examples
+#' draw <- function(i) stats::runif(1)
+#' identical(replicate_streams(4, draw, seed = 1, cores = 1),
+#'           replicate_streams(4, draw, seed = 1, cores = 2))
+#' @export
+replicate_streams <- function(B, FUN, seed, cores = 1L) {
+  stopifnot(length(B) == 1, B >= 1, is.function(FUN),
+            length(cores) == 1, cores >= 1)
+  first <- withr::with_seed(
+    seed,
+    get('.Random.seed', envir = globalenv()),
+    .rng_kind = "L'Ecuyer-CMRG"
+  )
+  streams <- Reduce(function(s, i) parallel::nextRNGStream(s),
+                    seq_len(B - 1), first, accumulate = TRUE)
+  run_one <- function(i) {
+    withr::with_preserve_seed({
+      assign('.Random.seed', streams[[i]], envir = globalenv())
+      FUN(i)
+    })
+  }
+  if (cores > 1 && .Platform$OS.type != 'windows') {
+    parallel::mclapply(seq_len(B), run_one, mc.cores = cores)
+  } else {
+    lapply(seq_len(B), run_one)
+  }
 }

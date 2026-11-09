@@ -29,6 +29,17 @@ analysis, manuscript, package, simulation study, or blog), which
 varies the layout and the gates but not the underlying
 machinery. (@sec-compendium)
 
+[]{#gloss-audit-trail}**Audit trail.** In this book, the commit history read as a
+dated, attributed record of what changed in an analysis and,
+through the messages, why. (@sec-version-control)
+*Regulated sense:* 21 CFR 11.10(e) requires secure,
+computer-generated, time-stamped audit trails of the actions
+that create, modify, or delete electronic records, and record
+changes may not obscure previously recorded information
+[@cfr21part11]. A git history can be rewritten, so it does not
+meet that requirement unless the hosting system and its
+procedures prevent rewriting. (@sec-version-control)
+
 
 ## B {.unnumbered .unlisted}
 
@@ -58,8 +69,9 @@ default branch is conventionally called `main`.
 ## C {.unnumbered .unlisted}
 
 []{#gloss-capture}**Capture.** Fixing an input so that it cannot drift: writing a
-lockfile, building a container image. Capture sets the
-reproducibility level. (@sec-levels)
+lockfile, building a container image. Capture sets levels L0 to
+L2; L3 is reached by validation, which pins nothing new.
+(@sec-levels)
 
 []{#gloss-checksum}**Checksum.** A short fingerprint, computed from a file's or an
 object's bytes by a hash function such as SHA-256, with the
@@ -100,12 +112,16 @@ filesystem. (@sec-containers)
 
 []{#gloss-container-image}**Container image.** A packaged environment, built from a
 recipe, that carries the operating system, the system libraries,
-and the language runtime, and runs identically wherever a
-container runtime runs. (@sec-levels)
+and the language runtime. It fixes the files a run starts from,
+not the machine: thread counts and the CPU still vary, and an
+image built for one processor architecture runs on another only
+under emulation, where numerical results can differ.
+(@sec-levels)
 
 []{#gloss-controlled-access}**Controlled access.** A deposit arrangement in which a
-repository holds restricted data behind an approval process,
-rather than releasing it on request. Its purpose is to honor a
+repository holds restricted data and releases them only to
+approved users under an agreement, rather than to anyone who
+downloads. Its purpose is to honor a
 data-use agreement and the terms a participant consented to
 while the record stays discoverable and citable.
 (@sec-archiving)
@@ -216,10 +232,20 @@ should be Findable, Accessible, Interoperable, and Reusable,
 formulated for data and later adapted for research software.
 (@sec-archiving)
 
+[]{#gloss-five-safes}**Five Safes.** A framework for controlled data access: safe
+projects, safe people, safe settings, safe data, and safe
+outputs. (@sec-tre)
+
 []{#gloss-forge}**Forge.** A platform that hosts a version-controlled repository
 and runs its continuous integration. GitHub and GitLab are the
 two principal forges; GitLab is frequently self-hosted by
 universities. (@sec-verification, @sec-archiving)
+
+[]{#gloss-freeze}**Freeze (Quarto).** A project option under which a render
+reuses a document's stored results from `_freeze/` instead of
+executing its code. With `freeze: auto`, a document re-executes
+only when its source changes, not when its data, packages, or R
+change. (@sec-freeze)
 
 
 ## G {.unnumbered .unlisted}
@@ -255,8 +281,9 @@ commits, `show` prints one commit's message and its diff
 together. (@sec-version-control)
 
 []{#gloss-git-switch-and-git-merge}**`git switch` and `git merge`.** Move between branches and
-rejoin them. A merge commit is the only commit with two parents,
-which is what records that two lines of work came back together.
+rejoin them. A merge commit is a commit with more than one
+parent (usually two), which is what records that lines of work
+came back together.
 (@sec-version-control)
 
 []{#gloss-git-tag}**`git tag`.** Marks a particular commit permanently, such as
@@ -393,6 +420,10 @@ against; the known correct answer. (@sec-testing)
 
 ## P {.unnumbered .unlisted}
 
+[]{#gloss-output-checking}**Output checking.** Review of every result leaving a trusted
+research environment against statistical disclosure control
+rules, such as minimum cell counts. (@sec-tre)
+
 []{#gloss-package-churn}**Package churn (code rot).** The gradual breakage of
 once-working code as the packages beneath it are updated over
 time. (@sec-crisis)
@@ -472,6 +503,17 @@ selects the `FROM` image. (@sec-containers)
 supports a project's evolution from one archetype to another
 with no reorganization. (@sec-compendium)
 
+[]{#gloss-prompt-injection}**Prompt injection.** Instructions embedded in content a model
+or agent reads (a README, an issue, a CI log, a data file) that
+it then follows as if the user had given them.
+(@sec-llm-delegate)
+
+[]{#gloss-protected-path}**Protected path.** A file or directory, such as
+`inst/tinytest/`, `inst/baseline/`, `renv.lock`, or
+`.github/workflows/`, whose every change the analyst reviews line
+by line before merging, whoever or whatever made it.
+(@sec-llm-delegate)
+
 []{#gloss-pull-request}**Pull request (merge request).** A proposal, made on the
 remote, to merge one branch or fork into another, reviewed
 before it is accepted. (@sec-version-control)
@@ -504,10 +546,14 @@ it is an integrity gate on the compendium's package skin
 which `.Rbuildignore` excludes from the build.
 (@sec-compendium, @sec-verification)
 
-[]{#gloss-rang-groundhog-and-capsule}**`rang`, `groundhog`, and `capsule`.** Lighter alternatives to
-a lockfile that reconstruct a package set from a date. Useful
-when no lockfile survives, and an approximation rather than a
-record. (@sec-dependencies)
+[]{#gloss-rang-groundhog-and-capsule}**`rang`, `groundhog`, and `capsule`.** Alternatives and
+complements to a lockfile workflow. `rang` reconstructs a package
+set from a date and needs no prior lockfile; `groundhog` loads
+packages as of a date written into the script in advance;
+`capsule` layers a lazier discipline over `renv`, materializing
+the pinned library only when the work is reproduced or checked.
+Only `rang` helps when no lockfile survives, and its result is an
+approximation rather than a record. (@sec-dependencies)
 
 []{#gloss-raw-versus-derived-data}**Raw versus derived data.** Immutable original inputs versus
 the processed datasets regenerated from them by code.
@@ -746,10 +792,19 @@ top-level expectation calls [@vanderloo2020]. (@sec-testing)
 has no dependencies and its test files are plain scripts of bare
 expectations, which is why this book uses it. (@sec-testing)
 
+[]{#gloss-trusted-research-environment}**Trusted research environment.** A secure computing
+environment, operated by a data provider, in which approved
+researchers analyze data that never leave it; outputs are
+released only after output checking. Also called a secure data
+environment or a data enclave. (@sec-tre)
+
 []{#gloss-two-layer-team-model}**Two-layer team model.** A division of a project into a
 slow-moving environment layer, fixed once by a team lead, and a
 fast-moving package layer, extended by every contributor.
-(@sec-archiving)
+The environment layer is the team image (the operating system,
+the R version, the system libraries, and the packages every
+project in the lab uses), pinned by digest; the package layer is
+the project lockfile. (@sec-archiving)
 
 
 ## U {.unnumbered .unlisted}
@@ -774,12 +829,24 @@ skipped. (@sec-pipelines)
 []{#gloss-validation}**Validation.** Confirming that the captured inputs actually
 suffice, by rebuilding and re-running. Validation does not pin
 anything new; it checks. (@sec-levels)
+*Regulated sense:* in FDA software guidance, validation is
+confirmation, by examination and objective evidence, that
+software specifications conform to user needs and intended uses
+[@fdagpsv2002]. That is a broader
+and more formal claim than a rebuild and re-run, and passing this
+book's checks is not a validation record in that sense.
+(@sec-testing)
 
 []{#gloss-verification}**Verification.** Rebuilding the compendium's environment from
 its recipe, re-running the analysis in it, and comparing the
 regenerated outputs with a committed baseline, within a stated
 tolerance, by means of a baseline test. Passing it is what the
 ladder calls level L3. (@sec-verification)
+*Regulated sense:* in FDA software guidance, verification is
+objective evidence that the outputs of a development phase meet
+the requirements specified for that phase [@fdagpsv2002]. A
+baseline test can contribute such evidence only if the baseline
+is traced to a stated requirement. (@sec-testing)
 
 
 ## W {.unnumbered .unlisted}

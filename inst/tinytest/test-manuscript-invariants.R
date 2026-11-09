@@ -1,5 +1,5 @@
 # Structural invariants of the book sources. These are gates, not unit
-# tests of R functions: the package exports no functions, and the thing
+# tests of R functions (those live in the other test files): the thing
 # that can silently decay here is the manuscript.
 
 find_book_dir <- function(start = getwd()) {
@@ -88,25 +88,28 @@ for (f in names(sources)) {
   )
 }
 
-# The license is declared consistently. GPL was wrong for both the prose
-# and a CC0 code base, and the disagreement is the defect this guards.
+# The licenses are declared consistently (author, 2026-11-09): the
+# prose under CC BY 4.0, code printed in the book under MIT, and the
+# repository code under GPL-3. Disagreement between these files is the
+# defect this guards; earlier versions declared CC0 and NonCommercial
+# licenses, so any leftover 'by-nc' URL is stale.
 root <- dirname(dirname(book_dir))
 desc <- read.dcf(file.path(root, 'DESCRIPTION'))
 expect_equal(
-  unname(desc[1, 'License']), 'CC0',
-  info = 'DESCRIPTION licenses the code as CC0'
+  unname(desc[1, 'License']), 'GPL-3',
+  info = 'DESCRIPTION licenses the repository code as GPL-3'
 )
 
 cff <- readLines(file.path(root, 'CITATION.cff'), warn = FALSE)
 expect_true(
-  any(grepl('^license:\\s*CC-BY-NC-SA-4[.]0\\s*$', cff)),
-  info = 'CITATION.cff declares CC BY-NC-SA 4.0'
+  any(grepl('^license:\\s*CC-BY-4[.]0\\s*$', cff)),
+  info = 'CITATION.cff declares CC BY 4.0'
 )
 
 for (f in c('index.qmd', 'copyright.qmd')) {
   expect_false(
-    any(grepl('by-nc-nd', sources[[f]], fixed = TRUE)),
-    info = paste('no stale NoDerivatives license URL in', f)
+    any(grepl('by-nc', sources[[f]], fixed = TRUE)),
+    info = paste('no stale NonCommercial license URL in', f)
   )
 }
 
@@ -141,4 +144,45 @@ for (f in names(sources)) {
                    'at line', i)
     )
   }
+}
+
+# An indented continuation line that begins with a cross-reference
+# label followed by a period or parenthesis is parsed by Pandoc as an
+# example-list marker inside a list item, and the reference vanishes
+# from the rendered page. Rewrapping prose produced three such lines.
+example_marker <- '^\\s+@[A-Za-z][A-Za-z0-9_:-]*[.)](\\s|$)'
+for (f in names(sources)) {
+  hits <- grep(example_marker, sources[[f]])
+  expect_equal(
+    length(hits), 0L,
+    info = paste('no list-item line begins with @label. in', f,
+                 if (length(hits)) paste('at line', hits[1]) else '')
+  )
+}
+
+# Quarto cannot resolve an @sec- cross-reference to a section on an
+# unnumbered page (the conventions page, the setup appendix), so the
+# reference renders as a warning and a literal '?'. Such targets must
+# be linked as [text](file.qmd#id) instead. Two phases hit this.
+unnumbered_ids <- character(0)
+for (f in names(sources)) {
+  lines <- sources[[f]]
+  top <- grep('^# ', lines, value = TRUE)
+  if (length(top) && grepl('.unnumbered', top[1], fixed = TRUE)) {
+    ids <- regmatches(lines, regexpr('\\{#sec-[A-Za-z0-9_-]+', lines))
+    unnumbered_ids <- c(unnumbered_ids, sub('^\\{#', '', ids))
+  }
+}
+for (f in names(sources)) {
+  refs <- unlist(regmatches(
+    sources[[f]],
+    gregexpr('(?<![\\w#])@sec-[A-Za-z0-9_-]*[A-Za-z0-9]',
+             sources[[f]], perl = TRUE)
+  ))
+  bad <- intersect(sub('^@', '', refs), unnumbered_ids)
+  expect_equal(
+    length(bad), 0L,
+    info = paste('no @sec- reference to an unnumbered page in', f,
+                 if (length(bad)) paste(':', bad[1]) else '')
+  )
 }

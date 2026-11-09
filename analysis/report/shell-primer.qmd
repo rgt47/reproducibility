@@ -3,10 +3,8 @@
 Every chapter in this book runs commands at a shell prompt:
 `docker build`, `git commit`, `Rscript`, `quarto render`. The
 book assumes a reader can already type these and read what
-comes back. However, a 2026 syllabi comparison found that only
-7 of 30 comparable reproducibility courses actually teach the
-shell; the rest assume it. This appendix supplies the missing
-prerequisite. It covers enough of the Unix shell to follow every
+comes back. This appendix supplies that prerequisite for a
+reader who has not yet acquired it. It covers enough of the Unix shell to follow every
 command shown elsewhere in the book, in the order those commands
 are needed, with nothing beyond that scope. The treatment below
 follows the scope and sequencing of a widely used open lesson
@@ -138,9 +136,9 @@ cat out.txt
 This single character, `>` versus `>>`, is the difference
 between replacing a log file and growing one. It is worth
 checking deliberately, because the failure mode of using `>`
-by mistake is silent. That is, the file exists, it has
-content, and nothing in the command's own output signals that
-the previous content was discarded.
+by mistake is silent: the file exists, it has content, and
+nothing in the command's own output signals that the previous
+content was discarded.
 
 A pipe, `|`, sends one command's standard output directly into
 the next command's standard input, without an intermediate
@@ -227,8 +225,11 @@ if the file itself is readable text:
 ls -l greet.sh
 #> -rw-r--r--  1 jane  staff  37 Oct 12 07:48 greet.sh
 ./greet.sh
-#> permission denied: ./greet.sh
+#> bash: ./greet.sh: Permission denied
 ```
+
+(zsh words the same failure as
+`zsh: permission denied: ./greet.sh`.)
 
 `chmod +x greet.sh` adds execute permission for the owner, the
 group, and others, after which the same command runs:
@@ -267,9 +268,19 @@ in macOS Catalina (2019). A reader following this book on a
 current Mac is therefore, by default, typing these commands into
 zsh, not bash. The everyday commands in this appendix, `pwd`,
 `ls`, `cd`, `cp`, `mv`, `rm`, redirection, pipes, `export`,
-`chmod`, behave identically in both. Differences surface only in
-more advanced scripting (array syntax and certain glob options
-differ), which this book does not otherwise rely on. A reader who
+`chmod`, behave the same in both, with one exception that a
+reader of this book will meet: a wildcard that matches nothing.
+In bash, an unmatched `*.csv` is passed to the command as the
+literal text `*.csv`, and the command itself then reports that no
+such file exists. In zsh, the same unmatched pattern is an error
+of the shell, `zsh: no matches found: *.csv`, and the command
+never runs at all. The same rule applies to a pattern meant for
+the command rather than the shell, such as
+`grep -r --include=*.qmd`, which zsh rejects unless the pattern
+is quoted (`--include='*.qmd'`). Quoting a wildcard that the
+command, not the shell, should expand is correct in both shells.
+Other differences surface only in more advanced scripting (array
+syntax, for example), which this book does not rely on. A reader who
 hits a syntax error on a book command that looks exactly as
 written should suspect a shell difference before suspecting a
 typo. The running shell can be checked with `echo $0`

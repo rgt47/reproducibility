@@ -4,9 +4,10 @@ Version: 0.0.0.9000
 Authors@R:
     person(family = "rgtlab curriculum team", email = "rgthomas@ucsd.edu", role = c("aut", "cre"))
 Description: Data analysis workspace for the reproducibility project.
-License: CC0
+License: GPL-3
 Imports:
     tibble,
+    parallel,
     stats,
     utils,
     ggplot2,

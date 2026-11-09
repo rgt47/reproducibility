@@ -39,7 +39,7 @@ if (!nzchar(baseline_path)) {
   baseline_path <- file.path('inst', 'baseline', 'cohort_baseline.rds')
 }
 if (!file.exists(baseline_path)) {
-  exit_file('baseline file absent; run scripts/generate-baseline.R')
+  exit_file('baseline file absent; run analysis/scripts/generate_baseline.R')
 }
 
 baseline <- readRDS(baseline_path)

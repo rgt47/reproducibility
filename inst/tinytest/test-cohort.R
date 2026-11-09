@@ -16,8 +16,10 @@ if (!exists('load_cohort')) {
 
 # Three tiers, in order of preference. The first two find the real
 # extract in the source tree, which is what the book's own teaching
-# describes; the third is a package-shipped fixture mirror
-# (inst/testdata/, byte-identical to the source-tree copy) that lets
+# describes; the third is a package-shipped fixture (inst/testdata/)
+# with the same rows and duplicate structure but no identifier
+# columns: patient_name and dob are dropped and each record number is
+# replaced by a pseudonymous study id. It lets
 # these tests actually run under R CMD check and test_package(),
 # where analysis/ does not exist because .Rbuildignore excludes it.
 # Without this tier, every cohort test silently reports zero
@@ -63,8 +65,8 @@ expect_equal(tc$age_at_enroll[1], 50L,
 
 fit <- fit_model(cohort)
 tidy <- summarise_fit(fit)
-expect_inherits(fit, 'lm',
-                info = 'a glm inherits from lm')
+expect_true(is.numeric(coef(fit)),
+            info = 'coef() returns numeric coefficients')
 expect_true(all(c('term', 'estimate', 'odds_ratio') %in% names(tidy)),
             info = 'the tidy summary carries the expected columns')
 expect_equal(nrow(tidy), 3L,
@@ -130,12 +132,12 @@ if (!identical(gen_path, raw_path) && file.exists(gen_path)) {
                info = 'cleaned sex equals the pre-corruption sex')
 }
 
-# --- reproducibility: the same seed gives the same answer ----------
+# --- determinism (same session): the same seed, the same answer ----
 
-expect_equal(bootstrap_ci(cohort, n = 50), bootstrap_ci(cohort, n = 50),
+expect_equal(bootstrap_ci(cohort, B = 50), bootstrap_ci(cohort, B = 50),
              info = 'a seeded bootstrap is deterministic')
-expect_true(unname(bootstrap_ci(cohort, n = 50)['lower']) <
-            unname(bootstrap_ci(cohort, n = 50)['upper']),
+expect_true(unname(bootstrap_ci(cohort, B = 50)['lower']) <
+            unname(bootstrap_ci(cohort, B = 50)['upper']),
             info = 'the interval is ordered')
 expect_equal(run_primary_analysis(raw_path)$estimate,
              run_primary_analysis(raw_path)$estimate,

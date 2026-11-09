@@ -64,7 +64,6 @@ book:
     - shell-primer.qmd
     - setup-appendix.qmd
     - cheat-sheet-index.qmd
-    - instructor-guide.qmd
     - glossary.qmd
     - credits.qmd
     - colophon.qmd
@@ -75,6 +74,7 @@ format:
       - cosmo
       - repro.scss
     code-link: true
+    include-after-body: partials/a11y.html
     code-copy: hover
     code-overflow: wrap
     code-tools:
@@ -114,6 +114,13 @@ format:
         \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,breaknonspaceingroup,commandchars=\\\{\}}
     template-partials:
       - partials/before-body.tex
+
+# PDF only: each check's answer is moved to the end of its chapter,
+# because a collapsed callout hides nothing on paper (Decision D23).
+filters:
+  - path: filters/pdf-answers.lua
+    at: pre-ast
+  - filters/pdf-code-breaks.lua
 
 bibliography: references.bib
 csl: https://www.zotero.org/styles/apa

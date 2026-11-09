@@ -15,10 +15,10 @@ on Reproducibility* (2016)
 ```
 :::
 
-By the end of this chapter the reader will be able to
-look at a re-execution failure like the auditor's below
-and say, concretely, whether the fault is statistical or
-computational. The reader will also be able to name the
+By the end of this chapter you will be able to look at a
+re-execution failure like the auditor's below and say,
+concretely, whether the fault is statistical or
+computational. You will also be able to name the
 specific silent default most likely responsible, and to
 place the original analysis on the ladder this book
 develops in full in @sec-levels.
@@ -34,7 +34,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 40 minutes.
+**Reading time.** About 35 minutes.
 
 **Prerequisites.** Chapter 1 (@sec-intro), for the book's
 first, informal pass at the determinant stack and the
@@ -89,39 +89,41 @@ answer:**
   in `load_cohort()`.
 :::
 
-## Where this sits on the stack
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
 
-This chapter diagnoses rather than pins. Moreover,
-@sec-levels has not yet drawn the distinction between
-capturing a layer and validating one, so the figure below
-is careful not to claim either. We name instead, in prose,
-the layers of the determinant stack most responsible for
-the re-execution failures the evidence below documents.
-These are the R runtime itself and the session
-configuration riding on top of it. The RNG-kind
-comparison below and the `stringsAsFactors` comparison in
-'The cohort, continued' each show an unpinned layer
-behaving exactly as badly as the chapter claims. No
-lockfile, no container, and no
-[baseline test](glossary.qmd#gloss-baseline-test) appears
-until later chapters, so @fig-stack-crisis highlights
-nothing. Its point is the blank stack itself, which
-@sec-levels gives a name to and every later chapter's
-figure will mark.
+A colleague re-runs a cohort script deposited in 2019,
+written under R 3.6, on a laptop with a current release of
+R. The script finishes without error, but `read.csv()` now
+returns `sex` as a character column where the original run
+had a factor. The colleague reports that the finding 'did
+not replicate'. Using @sec-intro, is 'replicate' the right
+word? Which layer of the determinant stack is at fault, and
+which tool would have pinned it?
 
-```{r}
-#| label: fig-stack-crisis
-#| fig-cap: 'The determinant stack of @sec-levels, with no layer captured or validated. This chapter diagnoses, in prose, why re-execution fails on two of these layers, the R runtime and the session configuration, but pins nothing and checks nothing pinned; the chapters that follow are the ones that mark this figure.'
-#| fig-alt: !expr determinant_stack_alt()
-#| fig-width: 7
-#| fig-height: 4.4
-plot_determinant_stack(
-  title = 'A diagnosis, not yet a capture or a validation')
-```
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+'Replicate' is the wrong word for the failed re-run of the
+2019 cohort script. In the National Academies' terms that
+@sec-intro adopts, re-running the same code on the same data
+tests reproducibility; replicability asks whether a finding
+holds in a new study with its own data. The character column
+is the R 4.0.0 change of the `stringsAsFactors` default from
+`TRUE` to `FALSE`. The fault therefore lies in the language
+runtime, R itself, and not in the statistics. A lockfile from
+`renv` would not have closed it, because `renv` pins package
+versions and this change is in R. A container built from a
+Rocker image would have, since it pins the operating system
+and the runtime, the rung the book calls L2, pinned
+environment. Continuous integration on a clean machine would
+then confirm that the pinned layers suffice.
+:::
+:::
 
 ## Orientation
 
-To illustrate, consider a situation that every
+Consider a situation that every
 quantitative health scientist eventually meets. A
 biostatistician on a clinical-trial team runs the primary
 analysis and obtains the treatment effect and its
@@ -169,7 +171,8 @@ about the computation had been fixed. The ladder is
 developed in full in @sec-levels; here we use it only
 to name what was missing.
 
-The chapter proceeds as follows. After setting out the
+The chapter proceeds as follows. After locating the
+chapter on the determinant stack and setting out the
 judgments that belong to the analyst, we review the
 evidence that re-execution fails, separating replication
 studies from re-execution studies. We then fix three
@@ -204,6 +207,36 @@ found and still fail to regenerate its own number, as this
 one did.
 :::
 :::
+
+## Where this sits on the stack
+
+This chapter diagnoses rather than pins, and since
+@sec-levels has not yet drawn the distinction between
+capturing a layer and validating one, the figure below
+claims neither. The prose names the layers of the
+determinant stack most responsible for
+the re-execution failures the evidence below documents.
+These are the R runtime itself and the session
+configuration riding on top of it. The RNG-kind
+comparison below and the `stringsAsFactors` comparison in
+'The cohort, continued' each show an unpinned layer
+behaving exactly as badly as the chapter claims. No
+lockfile, no container, and no
+[baseline test](glossary.qmd#gloss-baseline-test) appears
+until later chapters, so @fig-stack-crisis highlights
+nothing. Its point is the blank stack itself, which
+@sec-levels gives a name to and every later chapter's
+figure will mark.
+
+```{r}
+#| label: fig-stack-crisis
+#| fig-cap: 'The determinant stack of @sec-levels, with no layer captured or validated. This chapter diagnoses, in prose, why re-execution fails on two of these layers, the R runtime and the session configuration, but pins nothing and checks nothing pinned; the chapters that follow are the ones that mark this figure.'
+#| fig-alt: !expr determinant_stack_alt()
+#| fig-width: 7
+#| fig-height: 4.4
+plot_determinant_stack(
+  title = 'A diagnosis, not yet a capture or a validation')
+```
 
 ## The analyst's contribution
 
@@ -271,8 +304,7 @@ use.
   updated over time.
 - **Research compendium.** The self-describing bundle
   of code, data, and text that travels as the unit of
-  a reproducible analysis, developed in
-  @sec-compendium.
+  a reproducible analysis, developed in @sec-compendium.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -305,9 +337,11 @@ narrower and, for our purposes, more damning studies that
 isolate the computational failures.
 
 In psychology, the Open Science Collaboration
-re-ran one hundred published studies and could
-replicate the original finding in only thirty-nine of
-them [@opensciencecollaboration2015]. In preclinical
+re-ran one hundred published studies. Its teams judged
+the original finding replicated in only thirty-nine of
+them, and only thirty-six percent of the replications
+reached statistical significance
+[@opensciencecollaboration2015]. In preclinical
 oncology, Begley and Ellis, working from within
 industry, reported that only six of fifty-three
 landmark findings could be reproduced, a success rate
@@ -341,9 +375,10 @@ Roughly one in four executed without
 error, before any question of whether the output
 matched the published result [@trisovic2022]. Saju and
 colleagues examined R code supplements archived on
-the Open Science Framework. They found that only about a
-quarter of the projects ran to completion, and that
-the great majority, close to ninety-nine percent,
+the Open Science Framework. Only about a quarter of the
+R scripts ran without error, even in environments the
+authors rebuilt, and only one project in six ran in
+full. Close to ninety-nine percent of the projects
 carried no formal description of their dependencies at
 all [@saju2025].
 
@@ -392,7 +427,7 @@ vocabulary of this field is genuinely contested, and a
 reader who does not fix it will be confused by the
 literature. Goodman and colleagues surveyed the usage and
 found that the same words carry opposite meanings in
-different research communities. That is, one field's
+different research communities: one field's
 'reproducibility' is another field's 'replication'
 [@goodman2016]. We adopt the distinctions of the National
 Academies, whose 2019 consensus report offers the
@@ -407,8 +442,9 @@ re-execution, and it is the subject of this book.
 *Replicability* is obtaining consistent results across
 studies aimed at the same question, each collecting
 its own data. It is a statement about the durability
-of a scientific finding. To these two the report and
-the wider literature add a third, *robustness*,
+of a scientific finding. To these two the wider
+literature, notably the Turing Way [@turingway2022],
+adds a third, *robustness*,
 obtaining consistent conclusions from the same data
 when the analytical choices are varied within the
 range a competent analyst would defend. The three are
@@ -431,7 +467,7 @@ here for completeness and do not treat it.
 
 ```{r}
 #| label: fig-three-words
-#| fig-cap: 'Reproducibility, replicability, and robustness distinguished by what is held fixed. The columns vary the data and the rows vary the analysis, so each cell names the claim supported when a consistent result survives that particular change. Only the shaded cell, in which both the data and the analysis are held fixed, is the subject of this book. The grid presentation follows the Turing Way [@turingway2022]; the definitions are those of the National Academies [@nas2019] adopted above.'
+#| fig-cap: 'Reproducibility, replicability, and robustness distinguished by what is held fixed. The columns vary the data and the rows vary the analysis, so each cell names the claim supported when a consistent result survives that particular change. Only the shaded cell, in which both the data and the analysis are held fixed, is the subject of this book. The grid and the robustness cell follow the Turing Way [@turingway2022]; the definitions of reproducibility and replicability are those of the National Academies [@nas2019] adopted above.'
 #| fig-alt: 'A two-by-two grid. The columns are same data and new data; the rows are same analysis and varied analysis. The cell where the data and the analysis are both the same is shaded and labeled reproducibility, re-execution, which is described as the subject of this book. Same data with a varied analysis is labeled robustness. New data with the same analysis is labeled replicability. New data with a varied analysis is labeled generalizability and marked as not treated in this book.'
 #| fig-width: 6.4
 #| fig-height: 3.6
@@ -478,24 +514,24 @@ The idea that computational work should be
 reproducible in the narrow, re-execution sense is
 older than the current crisis. It is usually traced
 to Claerbout and his colleagues in geophysics. In the
-early 1990s they built their published papers so
-that every figure could be regenerated from the
-archived code and data by a single command
-[@claerbout1992]. Their standard was demanding. The
+early 1990s they built their books and reports so
+that every figure could be rebuilt from the archived
+code and data [@claerbout1992; @buckheit1995]. Their
+standard was demanding. The
 phrasing that has become the field's motto is Buckheit
 and Donoho's paraphrase of it [@buckheit1995;
-@claerbout1992]. On that view, the published article is
-merely the advertisement of the scholarship. The
-scholarship itself is the full computational apparatus
-that produced the figures.
+@claerbout1992]: the published article is merely the
+advertisement of the scholarship, and the scholarship
+itself is the full computational apparatus that produced
+the figures.
 
 Reproducibility so understood is a spectrum. Peng
 arranged computational work along a scale, from the
 merely published, through code available, code and data
 available, and linked and executable, to fully
-replicable. He argued that reproducibility is a minimum
-standard for judging a scientific claim when full
-independent replication is impractical [@peng2011;
+replicable. He argued that reproducibility can serve as a
+minimum standard for judging a scientific claim when full
+independent replication is not possible [@peng2011;
 @peng2006]. We take from Peng the idea that
 reproducibility comes in degrees, and that honesty about
 which degree one has reached is itself a scientific
@@ -573,11 +609,11 @@ steadier erosion of package churn, the phenomenon by
 which working code rots as the packages beneath it are
 updated. A modern analysis may depend on dozens or
 hundreds of packages, each with its own release history
-and its own breaking changes. It is this churn that
-Trisovic and colleagues measured when they found that
-most deposited R scripts did not run when tested years
-after the original deposit [@trisovic2022]. The scripts
-had not changed; their dependencies had.
+and its own breaking changes. Much of this churn, along
+with missing files and hard-coded paths, is what Trisovic
+and colleagues measured when they found that most
+deposited R scripts did not run when re-executed, often
+years after the original deposit [@trisovic2022].
 
 These are instances of a general phenomenon that we
 shall develop fully in @sec-levels. A computational
@@ -619,9 +655,10 @@ report exists at all, and which validation gates
 apply. However, all share the same determinant stack,
 and so all are exposed to the same silent shifts. An R package
 with no report to render can still be broken by a
-changed `sample.kind`. A simulation study, whose whole
-output is a set of random draws, is more exposed to
-the RNG change than any manuscript. And a teaching
+changed `sample.kind`. A simulation study that resamples,
+permutes, or randomizes through `sample()` is more exposed
+to the RNG change than any manuscript, since its whole
+output is a function of those draws. And a teaching
 blog that renders forty posts inherits the churn of
 every package any post loads.
 
@@ -641,19 +678,22 @@ and why does the lockfile not protect against it?
 
 The most likely culprit is the numerical-library
 layer, specifically the BLAS and LAPACK
-implementation that performs the eigendecomposition
-underlying `prcomp()`. Different implementations
+implementation that performs the singular value
+decomposition underlying `prcomp()`. Different implementations
 (reference BLAS, OpenBLAS, Intel MKL, Apple's
 Accelerate) return results that are numerically
 equivalent but not bit-identical, and a sign flip or
 reordering of components can make the difference
 visible in a plot. A lockfile pins the R packages but
-says nothing about the system libraries the packages
-link against. Those live below the package layer, at
-L2 rather than L1, and are fixed only by controlling
-the environment itself, the subject of @sec-containers.
-Setting a seed does not help because the difference is
-not stochastic.
+says nothing about the numerical libraries the packages
+link against, which live below the package layer. A
+container image (@sec-containers) determines which BLAS
+is installed, but no rung of the ladder requires that
+library to be fixed, and the thread count and the
+processor still vary between machines. No rung therefore
+guarantees this layer, as @sec-levels explains. Setting
+a seed does not help because the difference is not
+stochastic.
 :::
 :::
 
@@ -780,11 +820,16 @@ depend on the seed together with the RNG kind. This is
 the determinant stack in miniature:
 the code fixed one layer, the seed, and left another,
 the sampler, to whatever the running version of R
-supplied. Pinning the R version, which we reach at L2
-with a container, is what closes this particular gap.
-Recording the RNG kind in the session
-configuration, meanwhile, is what makes the gap
-visible in the interim.
+supplied. Two things set the sampler, and they are fixed
+at different points. The R release sets the *default*
+kind, so the default belongs to the R runtime, and
+pinning the R version, which we reach at L2 with a
+container, fixes it. Code or a project `.Rprofile` can
+*override* that default, however, and an override is
+session configuration, fixed only by an explicit
+`RNGkind()` call in the analysis code. Recording the RNG
+kind alongside the seed makes either gap visible in the
+interim.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -804,16 +849,17 @@ sampler rather than two declared ones.
 ## Check your understanding: the seed was never enough
 
 @tbl-rng-kind holds the seed and the code fixed, and
-varies only the RNG kind. Which single word in the
-chapter's own vocabulary names what the seed, by itself,
-fails to pin?
+varies only the RNG kind. Which term in the chapter's
+own vocabulary names what the seed, by itself, fails to
+pin?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-The RNG kind, set by `RNGkind()`, which is part of the
-session configuration rather than of the seed. The seed
-fixes the starting point; the kind fixes what the
+The RNG kind, set by `RNGkind()`. Its default comes with
+the R release, and an override set in code is part of the
+session configuration; neither is part of the seed. The
+seed fixes the starting point; the kind fixes what the
 generator does with it. Recording a seed without the
 kind is recording half of a determinant.
 :::
@@ -829,7 +875,11 @@ hazard, the `stringsAsFactors` default of R 4.0.0. The
 file `R/cohort.R` closes it the way this chapter has
 argued an analyst should, by setting the argument
 explicitly rather than trusting whatever the installed R
-happens to default to.
+happens to default to. The extract itself is not in the
+repository, only the script that generates it, so a
+reader with a fresh clone first runs
+`Rscript analysis/scripts/simulate_cohort.R` from the top
+directory to write `analysis/data/raw_data/cohort_raw.csv`.
 
 ```{r}
 raw <- load_cohort('../data/raw_data/cohort_raw.csv')
@@ -885,27 +935,23 @@ We turn finally to the use of a large language model as
 an assistant. A model is a capable assistant for the
 material of this chapter, provided the analyst treats its
 output as a draft to be verified rather than an authority
-to be trusted. One rule governs every prompt in this
-book. Never paste or upload protected health information,
-identifiable data, or data under a data use agreement,
-nor outputs derived from them, into a model unless the
-endpoint is approved by the reader's institution for that
-data. Describe the structure instead, with column names,
-types, and a small synthetic example. Coding agents that
-read the working tree see
-whatever files are there, so they belong only in projects
-whose data they are allowed to see. Three uses recur, and
-each carries a specific verification burden.
+to be trusted.
+
+{{< include _llm-rule.qmd >}}
+
+Three uses recur, and each carries a specific
+verification burden.
 
 **Prompt.** 'Explain the difference between
 reproducibility, replicability, and robustness, and
 give a health-sciences example of each.'
 
-*Watch for.* Models frequently conflate the first two
-terms, or adopt the reversed convention that some
-fields use, because both usages are well represented
-in their training data. The example offered may be
-plausible-sounding but mislabeled.
+*Watch for.* Check whether the answer conflates the
+first two terms, or adopts the reversed convention that
+some fields use; both usages are common in the
+literature. Check also that each example carries the
+label it deserves, since a plausible example can still
+be mislabeled.
 
 *Verification.* Check the definitions against the
 National Academies framing [@nas2019] adopted in this
@@ -913,6 +959,16 @@ chapter, and confirm that the example labeled
 'reproducibility' concerns re-executing the same code
 on the same data, not re-collecting data. Do not
 accept the term assignment without this check.
+
+*A better prompt.* 'Using the three definitions pasted
+below, which follow the National Academies report, give
+one health-sciences
+example each of a failure of reproducibility, of
+replicability, and of robustness. For each, state what
+was held fixed (code, data, analysis) and what changed.
+Do not use any other convention. After each example,
+quote the sentence of the definition it satisfies, so
+that I can check the label.'
 
 **Prompt.** 'My results changed after I upgraded R.
 What could have caused this and how do I diagnose it?'
@@ -936,16 +992,18 @@ the demonstration above; for `stringsAsFactors`, by
 inspecting a column's class) before acting on it. If an
 agent did the investigating, run `git diff` on
 `renv.lock` and the code afterward, so that a repair it
-made silently is seen before it is committed.
+made silently is seen before it is committed. The
+lockfile is a protected path, and the decision to change
+it stays with you (@sec-llm-delegate).
 
 **Prompt.** 'Write a paragraph for my methods section
 stating that my analysis is fully reproducible.'
 
-*Watch for.* The model will readily assert a level of
-reproducibility that the project has not reached,
-because it is completing a pattern, not auditing the
-compendium. A confident claim of full reproducibility
-is exactly the overstatement the honest-level caution
+*Watch for.* Check whether the draft asserts a level of
+reproducibility that the project has not reached. The
+model has not audited the compendium; it has only the
+request. A confident claim of full reproducibility is
+exactly the overstatement the honest-level caution
 warns against.
 
 *Verification.* Establish which rung of the ladder the
@@ -953,33 +1011,103 @@ analysis has genuinely reached, and edit the paragraph
 to claim that rung and no higher. The claim is your
 responsibility, not the model's.
 
-A final discipline belongs beside these three. If a large
-language model contributed to the code, prose, or analysis
-behind a paper, disclose that use. Current editorial
-guidance, including from the International Committee of
-Medical Journal Editors, treats AI assistance as something
-to be stated in the manuscript, not something that confers
-authorship. A model cannot take responsibility for the
-work, so it cannot be listed as an author, but its
-contribution should not go unmentioned either. Record
-which model, or model family and version, was used, and
-roughly when, with the same discipline this chapter
-already asks for an R package. That is, 'R 4.4.1, glmnet
-4.1-8' and 'a general-purpose language model, accessed
-October 2026' belong in the same methods paragraph.
-Unfortunately, unlike a package version, a model's output
-is not a fixed, reproducible artifact. Model behavior
-drifts across versions, and providers retire and replace
-model identifiers over time. Even repeated calls to one
-unchanged version are not guaranteed to return identical
-output. The text a model produced in January may
-therefore not be the text it would produce from the same
-prompt in June, or even twice in the same afternoon. A
-citation that says only 'written with AI assistance'
-gives a future reader no way to audit what was used. By
-contrast, 'model family X, approximately version Y,
-queried in month Z' at least narrows the search the way a
-sessionInfo() snapshot narrows an R version mismatch.
+### What to delegate to a coding agent {#sec-llm-delegate}
+
+A coding agent does not only read; it runs commands,
+edits files, commits, and pushes if its credentials
+allow. Settle the division of labor before it starts.
+
+The agent may scaffold, edit code on a branch, run the
+tests, and open a pull request (@sec-version-control);
+the analyst reviews and merges. Three cautions govern
+that review. First, a self-report is not an observation.
+'The tests pass' is a claim, so read the run log
+yourself. Second, an agent asked to make a failure go
+away can change the check instead of the code: an
+expected value, a baseline, a tolerance, or a CI step
+allowed to fail. Treat as protected the paths that hold
+checks and inputs, in this book's layout
+`inst/tinytest/`, `inst/baseline/`, `renv.lock`,
+`.github/workflows/`, and `analysis/data/raw_data/`, and
+read every diff that touches them line by line. Third,
+irreversible actions stay with the analyst: pushing to a
+registry, minting a DOI, depositing, rewriting history,
+force-pushing, and merging. Withhold the credentials
+that would let the agent take them.
+
+An agent can also be steered by what it reads. A
+downloaded README, an issue comment, a CI log, or a data
+file can carry instructions that the agent follows as if
+they were yours. OWASP lists this risk, prompt
+injection, first among the risks of LLM applications and
+states that no fool-proof prevention is known
+[@owasp2025llm01]. Its entry on excessive agency
+recommends least privilege and human approval of
+high-impact actions [@owasp2025llm06], which is the
+division above.
+
+The data boundary has to be the filesystem. An agent
+sees whatever its working tree holds, and an ignore
+setting is a request the agent is expected to honor, not
+a control the operating system enforces. Run the agent
+where the real data are not mounted, against synthetic
+rows generated from the data dictionary.
+
+### Disclosing and recording model use {#sec-llm-disclosure}
+
+If a large language model contributed to the code, prose,
+or analysis behind a paper, disclose that use. The
+International Committee of Medical Journal Editors bars
+AI tools from authorship, because a tool cannot be
+responsible for the accuracy, integrity, and originality
+of the work, and places that responsibility on the human
+authors [@icmje2026ai]. It also asks authors to describe
+their use of AI at submission, in the cover letter and in
+the appropriate section of the manuscript. Journals
+differ about which section that is. Place the statement
+where the target journal's instructions say, and name the
+use in the cover letter as well.
+
+A usable statement has the parts of a package citation:
+
+> `<tool name>`, `<version or model identifier>`,
+> `<provider>`, used `<dates>` to `<purpose>` on
+> `<files or sections>`; output reviewed and verified by
+> `<author>`.
+
+A statement that says only 'written with AI assistance'
+gives a future reader no way to audit what was used. Give
+the identifier exactly as the interface or the API
+reported it, as 'R 4.4.1, glmnet 4.1-8' gives a package,
+not an approximate version. Unlike a package version,
+however, a model's output is not a fixed, reproducible
+artifact. Model behavior drifts across versions, and
+providers retire and replace model identifiers over time.
+Even repeated calls to one unchanged version are not
+guaranteed to return identical output. The text a model
+produced in January may therefore not be the text it
+would produce from the same prompt in June, or even twice
+in the same afternoon. The identifier narrows the search,
+the way a `sessionInfo()` snapshot narrows an R version
+mismatch, but it cannot regenerate the text. Keep the
+prompts, and the transcripts where the interface allows,
+as files in the compendium.
+
+The compendium is where this provenance belongs, as it is
+for every other input. Commit a file `LLM-USE.md`, or a
+section of the README, with one row per use: the date,
+the tool and its identifier, the purpose, the affected
+files, the path to the prompt file, and the verification
+performed. A commit that an agent made should say so,
+in the commit message or in a trailer line used
+consistently, such as `Assisted-by: <tool name>`, so that
+the history shows which changes a person wrote.
+
+Funders set their own rules. NIH will not treat an
+application substantially developed by AI as the
+applicant's original idea [@nihnot25132], and it
+prohibits its peer reviewers from using generative AI to
+analyze applications or write critiques [@nihnot23149].
 
 ## Exercises
 
@@ -1039,9 +1167,10 @@ sessionInfo() snapshot narrows an R version mismatch.
 
 8. This exercise returns to the informal, first-pass
    account of silently shifting R defaults given in
-   Chapter 1 (@sec-intro), which mentions the
-   `stringsAsFactors` flip without naming which layer of
-   the determinant stack it belongs to. Using this
+   Chapter 1 (@sec-intro). That chapter names the
+   determinant stack informally and mentions the
+   `stringsAsFactors` flip, but does not say which layer
+   of the stack the flip occupies. Using this
    chapter's own vocabulary, state which layer that
    change occupies, and explain in one sentence why
    naming the layer, rather than merely noting that a
@@ -1050,8 +1179,8 @@ sessionInfo() snapshot narrows an R version mismatch.
 ## Solutions
 
 Attempt an exercise before expanding its solution. Several
-exercises in this chapter ask the reader to work with an
-article or a study of their own choosing, so they have no
+exercises in this chapter ask you to work with an article
+or a study of your own choosing, so they have no
 single correct answer. For those the box says what a good
 answer establishes, and names the failure modes worth
 looking for.
@@ -1069,12 +1198,12 @@ installs but at a newer version, a hard-coded path, a file
 that was never deposited, a script that assumes a working
 directory: these are computational failures. They are
 the ones this book addresses. A number that regenerates
-exactly but that the reader believes was the wrong number
-to compute is a statistical disagreement, and no amount
-of environment capture touches it. Most readers find that
-their failures are overwhelmingly of the first kind, which
-is the point of the exercise and matches what Trisovic and
-colleagues measured at scale [@trisovic2022].
+exactly but that you believe was the wrong number to
+compute is a statistical disagreement, and no amount of
+environment capture touches it. You will most likely find
+that your failures are overwhelmingly of the first kind,
+which is the point of the exercise and matches what
+Trisovic and colleagues measured at scale [@trisovic2022].
 
 On the placement, the honest default for a deposited
 analysis is L0. Code and data that can be located and
@@ -1083,10 +1212,10 @@ supply. A deposit that also carries a lockfile is L1,
 and one carrying a container recipe is L2. A deposit
 carrying evidence that the outputs were regenerated from
 a clean rebuild and matched recorded values within a
-stated tolerance is L3. We note that the rung is set by
-what the authors deposited, not by whether the code
-happened to run on the reader's machine. An analysis can
-be L0 and still run, because the reader was lucky. It can
+stated tolerance is L3. The rung is set by what the
+authors deposited, not by whether the code happened to
+run on your machine. An analysis can be L0 and still
+run, because you were lucky. It can
 also be L1 and still fail, because the lockfile pinned
 packages and something below them moved.
 :::
@@ -1116,11 +1245,11 @@ reproducibility
 failure impugns the record but leaves open whether the
 finding is true. A robustness failure shows the finding
 depends on a choice, which weakens it without refuting
-it. A replication failure is evidence that the effect is
-not there. A reader who argues instead that
-reproducibility is most damaging, on the grounds that it
-undermines the ability to evaluate the other two at all,
-has made a reasonable case and should say so explicitly.
+it. A replication failure is direct evidence against the
+effect. If you argue instead that reproducibility is most
+damaging, on the grounds that it undermines the ability to
+evaluate the other two at all, you have made a reasonable
+case and should say so explicitly.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1151,11 +1280,13 @@ narrow margin, a rerun under the other sampler can move
 it across that boundary.
 
 A seed is therefore not a sufficient record of a
-stochastic analysis. The seed pins the
-starting point, but the RNG kind determines what the
-generator does with it, and the RNG kind is a session
-configuration that neither a lockfile nor a container
-necessarily fixes. An analysis that depends on a
+stochastic analysis. The seed pins the starting point,
+but the RNG kind determines what the generator does with
+it. A lockfile does not fix the kind at all. A container
+that pins the R release fixes the *default* kind, but an
+override set in code or in a project `.Rprofile` is
+session configuration, which only an explicit `RNGkind()`
+call in the analysis fixes. An analysis that depends on a
 bootstrap should record `RNGkind()` alongside the seed,
 or set it explicitly.
 :::
@@ -1185,7 +1316,7 @@ shows. For a blog, the pinned package versions, since
 posts are written once and read for years while the
 packages beneath them move.
 
-A reader who answers 'the data' for every archetype has
+If you answered 'the data' for every archetype, you have
 not made an error so much as missed the exercise, which
 is to notice that the binding constraint moves.
 :::
@@ -1261,9 +1392,9 @@ original analysis actually did.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch01),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 two autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -1274,15 +1405,17 @@ chapter's own 'The cohort, continued' section.
 
 Chapter 1 mentions, in passing, 'a default that shifted
 between releases of R' and later names the specific
-instance, the `stringsAsFactors` flip, without placing it
-on any stack of layers. At that point in the book no such
-stack has been defined yet. This chapter's own stack
-figure (@fig-stack-crisis) and its 'Why the failures are
-computational, not statistical' section supply the name.
-That is, `stringsAsFactors` is a default of the **R
-runtime**. It is secured only at L2, the same rung that
-secures the operating system and the system libraries,
-and not by a lockfile at L1.
+instance, the `stringsAsFactors` flip. It also names the
+stack informally, the language runtime among its layers,
+but it does not say which layer the flip occupies. This
+chapter's own stack figure (@fig-stack-crisis) and its
+'Why the failures are computational, not statistical'
+section supply the name: `stringsAsFactors` is a default
+of the **R runtime**. The runtime *default* is secured
+only at L2, the same rung that secures the operating
+system and the system libraries, and not by a lockfile at
+L1. The exposure itself can be closed earlier, in code,
+as `load_cohort()` does in 'The cohort, continued'.
 
 Naming the layer converts a story into a diagnosis with
 a remedy attached.
@@ -1310,13 +1443,14 @@ contradicting it.
 | Determinant stack | What a result depends on beneath the code and data; developed fully in @sec-levels |
 | Floor, not ceiling | A reproducible result can still be wrong; never claim correctness from re-execution alone |
 | Honest level | State the rung actually reached, never one asserted above it |
+| Record model use (@sec-llm-disclosure) | One `LLM-USE.md` row per use: date, tool and identifier, purpose, files, prompt path, verification |
 
 ## Further reading
 
 - The National Academies consensus report
   [@nas2019] is the authoritative source for the
-  reproducibility, replicability, and robustness
-  distinctions, and repays reading in full for the
+  distinction between reproducibility and replicability,
+  and repays reading in full for the
   care with which it separates them.
 
 - Goodman and colleagues [@goodman2016] document the

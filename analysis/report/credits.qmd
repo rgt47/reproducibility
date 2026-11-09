@@ -17,5 +17,5 @@ Rocker project; and the many rules-and-practices papers
 cited in the chapters.
 
 Cover artwork palette anchored on a verification teal
-`#14746f`. Typography follows the sequence house style:
+`#14746f`. Typography follows the book's house style:
 body text in a serif face, code in a monospace face.

@@ -25,18 +25,18 @@ pkgload::load_all('../..', quiet = TRUE)
 A function that silently sums instead of averaging will
 pass every rung of the reproducibility ladder and still
 be wrong on every machine that runs it. By the end of
-this chapter the reader will be able to say, of any
+this chapter you will be able to say, of any
 computational result, whether it has merely been
-reproduced or actually checked. To tell the difference
-in an analysis of one's own, we develop the four kinds
-of test, plus a baseline test of the kind
+reproduced or actually checked. To make that distinction
+in your own analyses, the chapter develops the four
+kinds of test, among them the baseline test that
 @tbl-baseline-rng demonstrates on the book's own running
 cohort.
 
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 45 minutes.
+**Reading time.** About 65 minutes.
 
 **Prerequisites.** @sec-levels, for the L0-L3 ladder and
 the capture-versus-validation vocabulary this chapter
@@ -67,16 +67,56 @@ vectors, and basic control flow.
   belong to the validation register?
 
 **Outline.** We begin with the analyst's irreplaceable
-judgments and then state the paradox precisely. We next
-introduce `tinytest`'s bare-expectation style and work
-the four kinds of test on the cohort and the retinopathy
-trial. We then distinguish behavior from implementation,
-and treat linting, styling, and the pre-commit gate. The
-later sections show how the emphasis shifts across
-archetypes, give a worked example of the paradox itself,
-and discuss collaborating with an LLM. Lastly, the
-chapter closes with exercises, a cheat sheet, and
-further reading.
+judgments, state the paradox precisely, and treat a
+pre-specified analysis plan as an oracle. We next
+introduce `tinytest`'s bare-expectation style, work the
+four kinds of test on the cohort and the retinopathy
+trial, and separate Monte Carlo error from a change of
+sampler. We then distinguish behavior from
+implementation, treat linting, styling, and the
+pre-commit gate, and set out what 'validation' means in
+regulated work, before turning to how one analyst reviews
+another's code. The later sections show how the
+emphasis shifts across archetypes, give a worked
+example of the paradox itself, discuss collaborating
+with an LLM, and apply all four kinds of test to the
+running cohort. The chapter closes with exercises, a
+cheat sheet, and further reading.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+Three failures reach you in one week. (a) A collaborator
+runs a project that has no `renv.lock`, installs newer
+versions of its packages than the author used, and a
+summary table changes. (b) A colleague's `renv::restore()`
+of a complete lockfile stops because a spatial package
+cannot find GDAL. (c) A figure still shows last month's
+counts after the raw extract was corrected, although the
+report rendered without error. For each, name the
+determinant layer that failed and the earlier chapter's
+remedy.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Of the three failures in this warm-up, (a) is the
+package-version layer. With no lockfile the project has
+not reached L1, and the remedy is the L1 step of
+@sec-dependencies: a lockfile written by
+`renv::snapshot()` and read by `renv::restore()`. (b) is
+the operating-system and system-library layer. A
+lockfile pins the R packages and nothing beneath them,
+and GDAL is not an R package. The remedy is the container
+of @sec-containers, which reaches L2 only with a
+digest-pinned base, a dated snapshot, and the lockfile
+restored inside it. (c) is a stale derived file, not an
+environment layer at all: the correction never reached
+the figure. The remedy is a pipeline in which the raw
+extract is a `format = 'file'` target, so that `targets`
+rebuilds everything downstream of it (@sec-pipelines).
+:::
 :::
 
 ## Where this sits on the stack
@@ -165,13 +205,6 @@ That confirmation is itself a test, of a
 particular kind we shall meet below as the
 baseline test, so the topmost level is defined
 by a test.
-
-The plan of the chapter is as follows. We shall
-begin with the human judgments that no testing tool
-can make, and then develop the four kinds of test in
-turn. We next take up code quality as a second
-validation feature. Lastly, we close with the way the
-emphasis shifts across archetypes.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the paradox
@@ -531,8 +564,9 @@ of the sort a health study might produce.
 
 A unit test checks that one function behaves as
 intended on inputs whose correct outputs are known
-independently. The `calculate_mean` function of the
-orientation is the canonical case. Its contract is
+independently. The mean function of the orientation,
+here called `calculate_mean`, is the canonical case.
+Its contract is
 that it returns the arithmetic mean, and the oracle
 is arithmetic done by hand:
 
@@ -564,7 +598,7 @@ integration test runs the pipeline end to end and
 checks the result:
 
 ```r
-# inst/tinytest/test-cohort.R
+# abridged from inst/tinytest/test-cohort.R
 raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 cohort <- clean_cohort(raw)
 fit <- fit_model(cohort)
@@ -585,10 +619,10 @@ the moment the function was upgraded to `fit_cox()`
 returning a `coxph`, which does not. Testing the
 interface ('does `coef()` return numeric values?')
 survives that migration; testing the class does not.
-The book's own `fit_cox()` is exactly this migration:
-the test suite above required only a new test file
-for `fit_cox()`, not a repair of the existing
-integration test for `fit_model()`.
+The book's own compendium does not perform this
+migration: `fit_cox()` was added beside `fit_model()`
+rather than replacing it, and its tests sit in a file
+of their own, `inst/tinytest/test-fit-cox.R`.
 
 The integration test does not re-check what the unit
 tests already cover. Instead it checks the seams: that
@@ -618,7 +652,9 @@ It is included here for a reason beyond
 illustration: every cell in it can be counted
 by hand from the data, which is precisely the
 property an oracle needs. A test asserting that the
-untreated arm contains 197 eyes is checkable by
+untreated arm contains
+`r sum(survival::diabetic$trt == 0)` eyes, written as
+that literal number, is checkable by
 someone who does not trust the function that
 produced it. A test asserting that it contains
 `nrow(subset(d, trt == 0))` eyes is not a test at
@@ -658,7 +694,7 @@ or on a corrected export, for reasons having nothing
 to do with a defect.
 
 ```r
-# inst/tinytest/test-cohort.R
+# abridged from inst/tinytest/test-cohort.R
 raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 cohort <- clean_cohort(raw)
 
@@ -699,8 +735,8 @@ two results agree:
 ```r
 # a same-session check: it cannot detect what it
 # appears to guard against
-expect_equal(bootstrap_ci(cohort, n = 2000, seed = 2024),
-             bootstrap_ci(cohort, n = 2000, seed = 2024))
+expect_equal(bootstrap_ci(cohort, B = 2000, seed = 2024),
+             bootstrap_ci(cohort, B = 2000, seed = 2024))
 ```
 
 Note first where the seed lives. `bootstrap_ci()` takes
@@ -735,8 +771,9 @@ a test file that recomputes the quantities and compares
 them with a stated tolerance.
 
 ```r
-# Run once from the project root to record the baseline,
-# then commit inst/baseline/cohort_baseline.rds.
+# analysis/scripts/generate_baseline.R, abridged. Run once
+# from the project root to record the baseline, then commit
+# inst/baseline/cohort_baseline.rds.
 # The book's own baseline was recorded this way, and the
 # file is now committed at that path; regenerate it only
 # if the generator, the seed, or the model change.
@@ -749,7 +786,8 @@ saveRDS(result, 'inst/baseline/cohort_baseline.rds')
 ```
 
 ```r
-# inst/tinytest/test-baseline-cohort.R
+# inst/tinytest/test-baseline-cohort.R, abridged: the
+# real file also searches fallback paths for both files
 raw_path <- '../../analysis/data/raw_data/cohort_raw.csv'
 if (!file.exists(raw_path)) {
   exit_file('raw extract absent; run simulate_cohort.R')
@@ -761,11 +799,16 @@ result <- run_canonical_analysis(raw_path)
 
 expect_equal(result$n_rows, baseline$n_rows,
   info = 'cleaned row count matches baseline')
+expect_equal(result$n_events, baseline$n_events,
+  info = 'event count matches baseline')
 expect_equal(result$hr, baseline$hr, tolerance = 1e-8,
   info = 'Cox HR matches committed baseline')
 expect_equal(result$lower, baseline$lower,
   tolerance = 1e-8,
   info = 'lower CI bound matches committed baseline')
+expect_equal(result$upper, baseline$upper,
+  tolerance = 1e-8,
+  info = 'upper CI bound matches committed baseline')
 ```
 
 Three details carry the weight. The path is relative
@@ -801,7 +844,7 @@ was.
 
 ```{r}
 #| label: tbl-baseline-rng
-#| tbl-cap: 'A baseline test across sessions. The bound recorded under the pre-3.6.0 sampler is reproduced exactly by a rerun with the same seed and sampler, and is not reproduced by a rerun with the same seed under the current default sampler, so the comparison at tolerance 1e-8 passes once and fails once. A same-session check would have passed in both cases.'
+#| tbl-cap: 'A baseline test across sessions. The bound recorded under the pre-3.6.0 sampler is reproduced exactly by a rerun with the same seed and sampler, and is not reproduced seed-exactly by a rerun with the same seed under the current default sampler, so the comparison at tolerance 1e-8 passes once and fails once. A same-session check would have passed in both cases.'
 
 library(knitr)
 
@@ -859,6 +902,71 @@ two calls in one session, both under whichever sampler
 the session uses, would have agreed with each other and
 reported nothing.
 
+Failing the seed-exact comparison is not the same as
+failing to reproduce the result, because the bound is
+itself a Monte Carlo estimate. The chunk below estimates
+its Monte Carlo standard error (MCSE) as the standard
+deviation of the bound over 40 seeds, at the table's 2000
+replicates, and then applies a two-tier check to the two
+reruns.
+
+```{r}
+#| label: baseline-mcse
+mc_bounds <- vapply(1:40, function(s) boot_upper(bmi, s, 'Rejection'),
+                    numeric(1))
+mcse <- sd(mc_bounds)
+two_tier <- compare_to_baseline(c(rerun_same, rerun_new),
+                                c(baseline, baseline), mcse = mcse)
+two_tier
+
+# Decimals an MCSE supports: the MCSE must be below half a
+# unit of the last reported digit.
+digits_supported <- function(mcse) max(0, floor(-log10(2 * mcse)))
+d_bmi <- digits_supported(mcse)
+# An MCSE from 40 seeds is itself uncertain by about 11
+# percent, so two significant figures are all it supports.
+sig2 <- function(x) {
+  formatC(signif(x, 2), digits = 2, format = 'fg', flag = '#')
+}
+stopifnot(round(baseline, d_bmi) == round(rerun_new, d_bmi))
+```
+
+The MCSE of the bound is `r sig2(mcse)`, so the sampler
+change is about
+`r sprintf('%.1f', abs(rerun_new - baseline) / mcse)` of
+one MCSE. The seed-exact comparison fails, yet the change
+is a fraction of one MCSE, and the statistical result
+reproduces.
+
+This is the two-tier baseline check. The first tier
+compares at the numerical tolerance `1e-8`; a pass means
+the draws themselves regenerated. On a failure, the second
+tier accepts a difference of at most three MCSE, with the
+MCSE recorded beside the baseline value.
+`compare_to_baseline()` in the book's package implements
+both tiers, and it returns '`r two_tier[1]`' for the
+same-sampler rerun and '`r two_tier[2]`' for the current
+sampler. Both the recorded value and the rerun carry
+Monte Carlo error, so their difference has a standard
+deviation of about $\sqrt{2}$ MCSE. Under normality, three
+MCSE then flags a pure change of draws about
+`r sprintf('%.1f', 200 * pnorm(-3 / sqrt(2)))` percent of
+the time, which is the price of a second tier that still
+catches a real change.
+
+The second tier applies only to a quantity that has
+Monte Carlo error, such as a bootstrap bound or a
+simulation summary. The Cox hazard ratio and its
+confidence limits in `test-baseline-cohort.R` are
+deterministic functions of the data, so only the first
+tier applies to them, and `compare_to_baseline()` with
+`mcse = NULL` reduces to it. The precision of the table
+follows the same distinction. Its four decimals are there
+for the seed-exact tier. As a statistical result, an MCSE
+of `r sig2(mcse)` supports reporting the bound
+as `r sprintf(paste0('%.', d_bmi, 'f'), baseline)` under
+either sampler, by the rule the next section gives.
+
 ::: {.callout-tip icon=false}
 ## Verification
 
@@ -889,11 +997,13 @@ can show that the code runs and that its functions are
 correct on known inputs. However, it cannot show that
 a recorded result regenerates, so it does not reach L3
 however thorough it is. In the zzcollab composition,
-`zzc verify --full` applies exactly this rule. It stamps
-L3 only when the image rebuilds, the test suite passes,
-and at least one `inst/tinytest/test-baseline*.R` file
-exists and ran. Otherwise it reports the project as
-rebuilt and tested, at L2, with no baseline comparison.
+`zzc verify --full` applies this rule. It stamps L3 only
+when the image rebuilds, the test suite passes, and at
+least one `inst/tinytest/test-baseline*.R` file exists
+and is named in the test log. Otherwise it reports the
+project as rebuilt and tested, at L2, with no baseline
+comparison. A baseline whose guard exits early is still
+named in the log, so the guard must not fire in the image.
 
 ## Monte Carlo error and parallel streams
 
@@ -906,100 +1016,174 @@ Monte Carlo quantity, built from a finite number of
 resamples. It carries its own sampling variability on
 top of the statistical sampling variability of the
 original cohort. Two bootstrap runs at different seeds,
-same data, same `n`, will not return exactly the same
-bound. The size of that disagreement is the Monte Carlo
-standard error (MCSE), distinct from the standard error
-the bootstrap is estimating.
+same data, same number of replicates `B`, will not return
+exactly the same bound. The standard deviation of the
+bound across seeds is its Monte Carlo standard error
+(MCSE), distinct from the standard error the bootstrap is
+estimating.
 
 But how much does such a bound move in practice? The
 practical diagnostic needs no extra theory: rerun the
-same call at several seeds for a given `n`, and look at
-how much the result moves; then raise `n` and watch the
-spread narrow. The chunk below does this with
-`bootstrap_ci()` on the HbA1c odds ratio, at `n = 300` and
-`n = 1500`, three seeds each.
+same call at many seeds for a given `B`, and take the
+standard deviation of the result; then raise `B` and watch
+it shrink. The chunk below does this with `bootstrap_ci()`
+on the HbA1c odds ratio, at `B = 250` and at the
+package default `B = 1000`, with 20 seeds each.
 
 ```{r}
 #| label: mc-stability
 cohort <- clean_cohort(
   load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
 )
-width <- function(n, seed) {
-  ci <- bootstrap_ci(cohort, n = n, seed = seed)
-  unname(ci['upper'] - ci['lower'])
+bounds_at <- function(B) {
+  t(vapply(1:20, function(s) bootstrap_ci(cohort, B = B, seed = s),
+           numeric(2)))
 }
-w300 <- vapply(1:3, width, numeric(1), n = 300)
-w1500 <- vapply(1:3, width, numeric(1), n = 1500)
+b250 <- bounds_at(250)
+b1000 <- bounds_at(1000)
+mcse250 <- apply(b250, 2, sd)
+mcse1000 <- apply(b1000, 2, sd)
+ratio <- mcse250 / mcse1000
+# With 20 seeds the log of a ratio of two SDs has a standard
+# error near sqrt(2 / 38); the prose calls the ratios
+# consistent with 2 only while they are within two of them.
+stopifnot(all(abs(log(ratio / 2)) < 2 * sqrt(2 / 38)))
+d_upper <- digits_supported(mcse1000['upper'])
+d_lower <- digits_supported(mcse1000['lower'])
+stopifnot(d_upper < 2)
+ci_default <- bootstrap_ci(cohort)
+# Replicates for the MCSE to fall below half a unit of one
+# more decimal, scaling the observed MCSE by 1/sqrt(B).
+B_for <- function(mcse, d, B = 1000) {
+  ceiling(B * (mcse / (0.5 * 10^-d))^2)
+}
+B_upper_next <- B_for(mcse1000['upper'], d_upper + 1)
 ```
 
-At `n = 300` the interval's width across the three seeds
-ranges over `r sprintf('%.2f', min(w300))` to
-`r sprintf('%.2f', max(w300))`, a standard deviation of
-`r sprintf('%.3f', sd(w300))`. At `n = 1500`, five times
-as many resamples, the same spread falls to
-`r sprintf('%.3f', sd(w1500))`. That reduction is broadly
-consistent with the Monte Carlo error's usual
-$1/\sqrt{n}$ scaling, though three seeds is too few to
-pin the exponent down. A result is 'Monte Carlo stable'
-at a given comparison tolerance when this seed-to-seed
-spread is small relative to that tolerance. We note that
-the baseline test's `1e-8` in @tbl-baseline-rng is a
-numerical tolerance for one fixed sequence of draws, and
-it says nothing about this. Raising `n` until the spread
-shown here is small relative to whatever difference the
-analysis cares about detecting is therefore a separate
-check. It is made once, by hand, when choosing `n`, not
-by the test suite on every run.
+At `B = 250` the MCSE of the upper bound is
+`r sig2(mcse250['upper'])` and that of the lower bound is
+`r sig2(mcse250['lower'])`. At `B = 1000` they are
+`r sig2(mcse1000['upper'])` and
+`r sig2(mcse1000['lower'])`, on bounds near
+`r sprintf('%.1f', mean(b1000[, 'upper']))` and
+`r sprintf('%.1f', mean(b1000[, 'lower']))`. An MCSE that
+scales as $1/\sqrt{B}$ halves when `B` is quadrupled, and
+the observed ratios are
+`r sprintf('%.1f', ratio['upper'])` for the upper bound and
+`r sprintf('%.1f', ratio['lower'])` for the lower. With 20
+seeds, each estimated standard deviation is itself
+uncertain by about
+`r round(100 / sqrt(2 * 19))` percent, so these ratios are
+consistent with that scaling but do not pin it closely.
 
-Resampling at the `n` a real analysis needs is often
-parallelized across cores, and this is where Monte Carlo
-error becomes a correctness risk rather than only a
-precision question. Each worker process must draw from
-its own independent random stream. Naive
-parallelization, such as `parallel::mclapply()` with no
-RNG setup, can leave workers sharing or overlapping
-generator state. Resamples drawn as 'independent' on
-different cores are then correlated, which understates
-the Monte Carlo error. The fix is the L'Ecuyer-CMRG
-generator, built for exactly this, which R's
-`RNGkind('L\'Ecuyer-CMRG')` exposes directly.
-`parallel::clusterSetRNGStream()` applies it across the
-workers of a cluster, assigning each one a
-non-overlapping substream; the `doRNG` package applies
-the same discipline to a `foreach` loop. A parallel
-bootstrap run without this can report a width that
-understates the true Monte Carlo error. It also adds a
-second way for the result to depend on how many cores
-happened to run it, on top of the seed discipline this
-chapter already requires.
+The standard guidance for simulation studies is to report
+the MCSE of every Monte Carlo estimate and to choose the
+number of repetitions from the precision required
+[@morris2019]. Applied to reported digits, it gives a
+rule for the number of replicates. Choose `B` so that the
+MCSE of each reported quantity is below about half a unit
+of its last reported digit, or report only the digits the
+MCSE supports. At the default `B = 1000` the rule allows the
+lower bound `r d_lower` decimal place and the upper bound
+`r d_upper`, so the default call's interval should be
+reported as
+`r sprintf(paste0('%.', d_lower, 'f'), ci_default['lower'])`
+to
+`r sprintf(paste0('%.', d_upper, 'f'), ci_default['upper'])`.
+Reporting the upper bound to one more decimal would need
+about `r format(signif(B_upper_next, 2), big.mark = ',')`
+replicates. A two-decimal interval from `bootstrap_ci()`
+at its default therefore prints digits that are Monte
+Carlo noise. The baseline test's `1e-8` in
+@tbl-baseline-rng is a
+numerical tolerance for one fixed sequence of draws, and
+it says nothing about this. The MCSE is estimated once,
+when choosing `B`, and recorded with the baseline as the
+scale of the second tier; the test suite does not
+re-estimate it on every run.
+
+Resampling at the `B` a real analysis needs is often
+parallelized across cores, and the random streams then
+need as much care as the seed. Naive parallelization fails
+first by irreproducibility. Under the default
+Mersenne-Twister generator and the default
+`mc.set.seed = TRUE`, `parallel::mclapply()` discards the
+inherited generator state in each child process, which
+then seeds itself from the clock and its process id. A
+`set.seed()` before the call therefore does not fix the
+result, and two runs differ. With `mc.set.seed = FALSE`
+the children inherit the parent's state, and the workers
+draw identical streams, so supposedly independent
+replicates are duplicated. The L'Ecuyer-CMRG generator,
+which `RNGkind('L\'Ecuyer-CMRG')` selects, was built to
+provide many independent streams. Under it, `mclapply()`
+gives each child its own stream, and
+`parallel::clusterSetRNGStream()` gives one to each worker
+of a cluster. Per-worker streams are independent, but the
+result still depends on the number of workers. The
+replicates are divided among the workers in chunks, so a
+given replicate draws from a different stream when the
+worker count changes.
+
+Invariance to the worker count needs per-task streams: one
+stream for each replicate, fixed before any worker starts.
+`parallel::nextRNGStream()` can precompute them, the
+`future.apply` package does so with `future.seed = TRUE`,
+and the `doRNG` package does so for a `foreach` loop. The
+book's package provides `replicate_streams()`, which
+precomputes the streams with `nextRNGStream()` and runs
+the replicates with `mclapply()`. The chunk below runs the
+same 2000 bootstrap means of BMI on one worker and on two.
+Forking is unavailable on Windows, where both runs are
+sequential and the comparison is trivially true.
+
+```{r}
+#| label: per-task-streams
+boot_mean <- function(i) mean(sample(bmi, replace = TRUE))
+one_worker <- replicate_streams(2000, boot_mean, seed = 2024,
+                                cores = 1)
+two_workers <- replicate_streams(2000, boot_mean, seed = 2024,
+                                 cores = 2)
+identical(one_worker, two_workers)
+```
+
+The two runs are identical
+(`r identical(one_worker, two_workers)`), replicate by
+replicate, because replicate `i` draws from stream `i`
+wherever it runs. The same seed discipline that makes a
+serial bootstrap reproducible extends to a parallel one
+only in this per-task form.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: two kinds of instability
 
 A bootstrap bound changes when rerun with a different
-seed at the same `n`. It also changes when rerun with the
+seed at the same `B`. It also changes when rerun with the
 same seed after an R version upgrade changes the default
 sampler (@tbl-baseline-rng). Are these the same problem,
-and does increasing `n` fix both?
+and does increasing `B` fix both?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-No. The seed-to-seed change at fixed `n` is Monte Carlo
-error, the resampling's own finite-sample noise; raising
-`n` shrinks it toward zero. The sampler change after an
-upgrade is a change in which resamples a *given* seed
-produces, not in how many resamples were drawn. Raising
-`n` does not fix it, because the two samplers will keep
-disagreeing at any `n`. Only pinning the sampler, as the
-baseline test does, addresses that second problem.
+In size, largely yes; for the seed-exact check, no. The
+seed-to-seed change at fixed `B` is Monte Carlo error, and
+raising `B` shrinks it as $1/\sqrt{B}$. A new sampler
+gives a given seed different resamples, which in effect
+draws the bound at a new seed, so raising `B`
+shrinks that change at the same rate. The two samplers
+still disagree in the last digits at any `B`, so the
+seed-exact tier keeps failing. Pinning the sampler
+restores seed-exact agreement; the second tier, within
+three MCSE, confirms that the statistical result
+reproduced without it.
 :::
 :::
 
 Each of the four kinds catches defects the others do
 not see, and @fig-test-coverage sets four
-representative defects against them. We read the
-bottom row first. Re-execution
+representative defects against them. Start with the
+bottom row. Re-execution
 alone, with no test of any kind, catches none of the
 four, because every one of these defects is
 deterministic and will reproduce perfectly. That row is
@@ -1068,10 +1252,15 @@ manuscript reported.
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-(a) An integration test on the pipeline,
-which would see the changed row count, or a
-data-validation test asserting the expected sample
-size. (b) A data-validation test on the age range.
+(a) A data-validation test asserting the expected
+sample size, or an integration test that asserts the
+cleaned row count. The integration test shown earlier
+checks only the shape of the model summary, so it
+would need that line added. The book's baseline test
+would also catch it, because it compares the cleaned
+row count with the recorded one, though it was not
+written for that purpose. (b) A data-validation test
+on the age range.
 (c) A unit test against a hand-computed standard
 deviation. (d) A baseline test comparing the seeded
 result with a value recorded before the upgrade and
@@ -1212,9 +1401,11 @@ moment; a pre-commit hook runs before a commit is
 recorded, and can refuse the commit if a check
 fails. Configuring the linter and styler as a
 pre-commit hook means that unstyled or unlinted code
-cannot enter the history in the first place. That is
-a far stronger guarantee than a convention that
-relies on the analyst's memory. The configuration
+cannot be committed from a clone where the hook is
+installed, unless the analyst bypasses it with
+`git commit --no-verify`. That is a stronger guarantee
+than a convention that relies on memory, but a clone does
+not carry the hook with it. The configuration
 lives in a `.pre-commit-config.yaml` file at the
 project root:
 
@@ -1234,12 +1425,13 @@ With this in place, an attempt to commit code that
 `styler` would reformat, or that `lintr` flags, or
 that contains a stray `browser()` left over from
 debugging, is stopped before the commit completes.
-The analyst is then prompted to fix it. Continuous
-integration, in @sec-verification, runs the same
-checks again on the server, so that a collaborator
-who has not installed the hook is caught
-nonetheless. The hook is the fast local gate; CI is
-the authoritative remote one.
+The analyst is then prompted to fix it. The hook is
+the fast local gate. A collaborator who has not
+installed it is caught only if continuous integration
+(@sec-verification) runs the same checks on the
+server. The workflows in that chapter do not, so a
+project that relies on the hook should add a step
+running `lintr::lint_dir()` there.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: capture or validation?
@@ -1266,7 +1458,10 @@ it fixes the environment; removing it drops the
 analysis from L2 to L1. The rule of thumb is that
 removing a capture feature lowers the level, while
 removing a validation feature leaves the level
-unchanged and only stops the checking.
+unchanged and only stops the checking. There is one
+exception: the baseline test is the evidence L3
+requires, so removing it drops an analysis from L3 to
+L2.
 :::
 :::
 
@@ -1277,26 +1472,48 @@ statistical and software-engineering sense: checking that
 code is correct, that data meet a constraint, that a
 result regenerates. In pharmaceutical, medical-device, and
 other FDA- or EMA-regulated work, 'validation' names a
-narrower and more procedural idea. @sec-levels's warning
+broader and more procedural idea. @sec-levels's warning
 box introduces the distinction; this section develops the
 three practices that fill it out for testing
 specifically.
 
 **Computer system validation.** Under 21 CFR 11.10(a),
-a regulated electronic record system must be validated
+a closed system that creates, modifies, maintains, or
+transmits regulated electronic records must be validated
 'to ensure accuracy, reliability, consistent intended
-performance, and the ability to discriminate invalid or
-altered records' [@cfr21part11]. The same standard is
-reflected in parallel form in European Medicines Agency
-expectations for computerized systems in the same
-regulatory setting. This is validation of the system
+performance, and the ability to discern invalid or
+altered records' [@cfr21part11]. The European Medicines
+Agency sets parallel expectations for computerized
+systems in clinical trials, and names statistical
+software among them [@ema2023computerised]. This is
+validation of the system
 across its lifecycle, documented once and maintained by a
-change-control process, not a one-time test run. A
-`tinytest` suite that passes is evidence toward this
-standard. It is not, by itself, the standard, which also
-demands documented
-installation qualification, operational qualification,
-and a record of who approved each change and when.
+change-control process, not a one-time test run. The
+regulation does not say how that validation is shown.
+Installation, operational, and performance qualification
+(IQ, OQ, and PQ) come from qualification practice, in
+which a system qualification typically executes all
+three [@nicholls2020], not from the text of 11.10. The
+requirement's reach is also narrower than its wording
+suggests. FDA's 2003 guidance on the scope and
+application of Part 11 states that the agency will
+exercise enforcement discretion over the Part 11
+validation requirement, while the predicate rules, the
+underlying requirements of the Act and of FDA's other
+regulations, still apply, their own validation
+requirements included [@fdapart11scope2003]. The R
+Validation Hub concludes
+that Part 11 is not relevant or mandatory for
+statistical analysis software itself, though elements of
+it apply when R is used as part of a validated system
+[@nicholls2020]. What an inspector asks in practice is
+whether the statistical computing environment is in a
+documented, validated state under the sponsor's standard
+operating procedures and the predicate rules. A
+`tinytest` suite that passes is evidence toward that
+state. It is not, by itself, that state, which also
+rests on qualification records and a record of who
+approved each change and when.
 
 **Double programming.** Independent of any code-based
 test, a regulated submission is commonly checked by
@@ -1331,10 +1548,15 @@ package. The second is, for each intended-for-use
 package, to assess its purpose, maintenance practice,
 community usage, and existing test coverage. The third
 is to have a qualified reviewer record a documented risk
-judgment. Higher risk earns additional targeted testing;
-lower risk, such as base R or a long-established
-tidyverse package, earns 'trusted' status with no
-further work. The `riskmetric`
+judgment. Higher risk earns additional targeted testing.
+Base R and the recommended packages are treated as
+minimal risk. For other widely used packages, such as
+the tidyverse, the white paper says only that there is a
+reasonable case to treat their maintainers as a trusted
+resource, and leaves that decision to each organization.
+Whatever the risk score, tests are still required for
+the statistical modeling functions of an
+intended-for-use package. The `riskmetric`
 package operationalizes several of these metrics so the
 assessment does not start from nothing. This is a
 judgment about trustworthiness layered on top of the
@@ -1346,10 +1568,11 @@ for it.
 
 A compendium has a committed `renv.lock`, a passing
 `tinytest` suite, and a documented sign-off that
-`dplyr` 1.1.4 has been risk-assessed as trusted. A
-regulator asks whether the system is validated under
-21 CFR 11.10(a). What is missing from the three items
-given?
+`dplyr` 1.1.4 has been risk-assessed as trusted. An
+inspector asks whether the statistical computing
+environment is in a documented, validated state under
+the sponsor's standard operating procedures. What is
+missing from the three items given?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -1359,16 +1582,72 @@ system validation by itself, and the three together are
 not automatically enough either. The lockfile is
 capture; the test suite is software validation in this
 chapter's sense; the risk assessment is a package-level
-trust judgment. 21 CFR 11.10(a) asks for documented
-evidence that the system as a whole reliably does what
-it purports to do across its lifecycle, maintained
-through a change-control process. That requires
-installation and operational qualification records and
-sign-off on each subsequent change. It is not met by a
-snapshot alone of the code, the tests, and one
-package's status at a single point in time.
+trust judgment. A validated state is defined by the
+sponsor's procedures and required by the predicate
+rules, not by these artifacts. It concerns the
+environment as a whole across its lifecycle, maintained
+through a change-control process. Under qualification
+practice that means installation, operational, and
+performance qualification records, and sign-off on each
+subsequent change; 11.10(a) itself names none of these.
+It is not met by a snapshot alone of the code, the
+tests, and one package's status at a single point in
+time.
 :::
 :::
+
+## Reviewing analysis code {#sec-code-review}
+
+Double programming is costly, because it implements every
+output it covers twice. Most analyses, regulated or not,
+are checked instead by review: a second analyst reads a
+proposed change, usually as a pull request
+(@sec-version-control), and approves it before it merges.
+The two practices find different errors. A reviewer reads
+one implementation against the plan, and is well placed
+to see a wrong exclusion, a covariate the plan does not
+name, or a seed set in the wrong place. A reviewer is
+poorly placed to see an arithmetic slip in code that
+reads correctly, which is the error a second, independent
+implementation exposes. The choice between them is
+therefore a judgment about risk, made per output and
+recorded. One defensible arrangement is to double-program
+the outputs a decision rests on, such as the primary
+estimate, and to review the rest.
+
+A reviewer needs a short list rather than a general
+impression. For a pull request that changes an analysis,
+we suggest six questions.
+
+1. Does every output the change affects, whether a table,
+   a figure, or a number in the prose, trace to committed
+   code, with no value typed by hand?
+2. Are the inputs read only from the raw data, never from
+   a hand-edited intermediate file or an object left in a
+   session?
+3. Are the exclusions and derived variables the ones the
+   analysis plan states, with the same thresholds and the
+   same handling of missing values?
+4. Is each seed set at the call that uses it, in the
+   analysis code, rather than in `.Rprofile` or nowhere?
+5. Did the tests change alongside the code, and does the
+   pull request say why? An expected value edited to match
+   new output needs the oracle that justifies the edit.
+6. Does the log of the render or the test run show
+   warnings nobody expected? A clean log is one in which
+   every warning has been read and then removed or
+   explained.
+
+The list draws on the book's gates, but it is not a gate.
+It asks for the judgments that continuous integration
+cannot make (@sec-verification): whether a threshold
+matches the plan, and whether a changed test was changed
+for a good reason. The approval on the pull request then
+records who checked the change and when, the same kind
+of record the validated state described above rests on.
+Questions 3 and 5 take the longest, because answering
+them means opening the plan and the test diff rather
+than reading the code alone.
 
 ## Testing across the archetypes
 
@@ -1543,40 +1822,30 @@ failing every row.
 
 A language model is a capable assistant for writing
 tests, and a dangerous one for a specific reason: it
-will readily produce tests that pass, which is not
+can readily produce tests that pass, which is not
 the same as tests that are correct. The analyst's
 verification duty is heaviest exactly where the
 model is most fluent.
 
-::: {.callout-important}
-## Restricted data
+{{< include _llm-rule.qmd >}}
 
-Tests sit close to the data, so one rule comes first
-(habit 3). Never paste or upload protected health
-information, identifiable records, or data covered by a
-data-use agreement into a model unless your institution
-has approved that endpoint for that data. The same holds
-for outputs derived from them, such as a failing test's
-printout of offending rows. Describe the structure instead: the data
-dictionary, column names and types, and a synthetic
-example such as the book's simulated cohort. A coding
-agent reads the files in its project, so run one only
-where it is permitted to see the data.
-:::
+Tests sit close to the data, so the derived outputs the
+rule covers include a failing test's printout of
+offending rows. The book's simulated cohort is a
+suitable synthetic example to describe instead.
 
 **Prompt.** 'Here is my `calculate_mean` function.
 Write `tinytest` unit tests for it, including edge
 cases.'
 
-*Watch for.* A model tends to derive the expected
-values by running the function it was given, rather
+*Watch for.* Check whether each expected value was
+derived by running the function it was given, rather
 than by independent computation. If the function is
-buggy, the model may generate an oracle that
-matches the bug, producing tests that pass against
-wrong behavior and thereby certifying the error.
-It may also test only the paths the code obviously
-takes and miss the empty vector or the missing
-value.
+buggy, an oracle derived that way matches the bug,
+producing tests that pass against wrong behavior and
+thereby certifying the error. Check also for tests of
+only the paths the code obviously takes, which miss
+the empty vector or the missing value.
 
 *Verification.* Check every expected value by hand
 or from an independent formula, not by running the
@@ -1592,14 +1861,15 @@ data, for my cohort: `age_at_enroll` (integer, years),
 1). Write `tinytest` data-validation tests for a data
 frame with these columns.'
 
-*Watch for.* The model will propose generic checks,
-non-missing identifiers, numeric outcomes, that are
-reasonable but do not encode *the analyst's* domain.
+*Watch for.* Check for generic checks, such as
+non-missing identifiers and numeric outcomes, that are
+reasonable but do not encode *your* domain.
 The dictionary gives types and codes. It does not give
 the protocol's eligibility ages, the plausible range
-of BMI in the study population, or how much outcome
-missingness the analysis can tolerate, so the model
-will invent those bounds.
+of BMI in your population, or how much outcome
+missingness the analysis can tolerate, so any such
+bound in the answer was supplied by the model rather
+than by your protocol.
 
 *Verification.* Supply the domain constraints
 yourself, or check that the generated ranges match
@@ -1622,6 +1892,24 @@ silence a failing test by editing its expected value
 to whatever the code currently returns; that
 converts a test into a tautology.
 
+*A better prompt.* 'The attached `tinytest` file
+fails on the line shown, with this message. The
+expected value was computed by hand from the analysis
+plan. Do not edit the test file. List the possible
+causes in the function, and for each give an input I
+can run, with its hand-computed answer, that would
+confirm or rule it out.'
+
+A coding agent with write access need not stop at a
+recommendation: asked to make the suite pass, it can
+make the edit itself, and the change arrives as an
+ordinary commit. Treat `inst/tinytest/` and
+`inst/baseline/` as protected paths, and read every
+line of any diff that touches them before it merges,
+as question 5 of @sec-code-review asks. What an agent
+may change and what stays with the analyst is set out
+in @sec-llm-delegate.
+
 ## The cohort, continued {#sec-cohort-continued-testing}
 
 The chapter has introduced four kinds of test. This
@@ -1636,9 +1924,7 @@ proportional-hazards model fit to the cleaned extract,
 with BMI expressed per 5 kg/m^2 so that the hazard
 ratio has a clinically natural scale. The analysis
 runs clean only after `clean_cohort()` has repaired
-the four planted defects. Uncleaned, it would still
-run, but it would fit a different model on 338 rows
-with the duplicate and the miscoded sex included.
+the four planted defects.
 
 ```{r}
 #| label: cohort-canonical-fit
@@ -1656,31 +1942,55 @@ The hazard ratio for BMI per 5 kg/m^2 is
 `r round(res$hr, 2)` (95% CI
 `r round(res$lower, 2)`--`r round(res$upper, 2)`),
 based on `r res$n_events` events from
-`r nrow(cohort)` cleaned rows.
+`r nrow(cohort)` cleaned rows. Uncleaned, the analysis
+would still run, but it would fit a different model to
+the `r nrow(raw)`-row raw extract, with the duplicate
+and the miscoded sex included.
 
 **Unit tests of `fit_cox()`.** A unit test checks
 the contract of one function in isolation. For
-`fit_cox()` the contract is: return a `coxph` object
-whose coefficient for `I(bmi/5)` is finite, and
-whose event count equals the number of non-missing
-outcomes in the input.
+`fit_cox()` the contract is about which rows the model
+uses. `coxph()` drops every row with a missing value on
+any variable it reads, so the model uses the complete
+cases on `followup_days`, `incident_dm`, `bmi`,
+`age_at_enroll`, and `sex`, and its event count is the
+number of events among those cases, not the number of
+non-missing outcomes. The oracle is computed from the data
+directly rather than from the fit, so a change to the
+exclusion rule fails the test. The assertions below are in
+`inst/tinytest/test-fit-cox.R`.
 
 ```r
-expect_true(inherits(fit, 'coxph'),
-  info = 'fit_cox returns a coxph object')
-expect_true(is.finite(coef(fit)['I(bmi/5)']),
-  info = 'BMI coefficient is finite')
+model_vars <- c('followup_days', 'incident_dm', 'bmi',
+                'age_at_enroll', 'sex')
+complete <- stats::complete.cases(cohort[, model_vars])
+
+expect_equal(fit$n, sum(complete),
+  info = 'the model uses the complete cases on its variables')
 expect_equal(fit$nevent,
-             sum(!is.na(cohort$incident_dm)),
-  info = 'event count equals non-missing outcomes')
+             sum(cohort$incident_dm[complete] == 1),
+  info = 'the event count is the events among complete cases')
+expect_true(fit$nevent < sum(!is.na(cohort$incident_dm)),
+  info = 'events are fewer than non-missing outcomes')
 ```
+
+On the cleaned cohort the model uses `r fit$n` of the
+`r nrow(cohort)` rows, and its `r fit$nevent` events are
+the rows among them with `incident_dm` equal to 1. A
+count of non-missing outcomes, here
+`r sum(!is.na(cohort$incident_dm))`, would count the
+zeros as events too. The same file also removes the age of one event
+row and checks that exactly one event and one row leave
+the model.
 
 **Integration test of the pipeline.** An integration
 test checks that the pipeline stages compose
-correctly end to end. That is, `load_cohort` feeds
+correctly end to end: `load_cohort` feeds
 `clean_cohort` feeds `fit_cox` feeds `summarise_cox`,
 and the final result is a list with the expected
-names and no `NA` values.
+names and no `NA` values. This listing and the two
+after it are illustrative and abridged, and the book's
+suite does not run them as written.
 
 ```r
 result <- run_canonical_analysis(cohort_path)
@@ -1735,13 +2045,19 @@ expect_equal(result$lower, baseline$lower,
 ```
 
 A failure here means either the extract changed
-(check `md5sum cohort_raw.csv`), the `survival`
+(check `shasum -a 256 cohort_raw.csv`), the `survival`
 package version changed (check `renv.lock`), the R
 version changed (check `sessionInfo()`), or the
 model specification changed (check the diff of
-`R/cohort.R`). Each cause has a different fix; the
-baseline test names the symptom and the diagnosis
-follows from the audit.
+`R/cohort.R`). A baseline that also records a Monte
+Carlo quantity, such as a bootstrap bound, has a fifth
+cause: the random-number generator changed (check
+`RNGkind()` against the recorded kind). The question
+there is whether the difference is within Monte Carlo
+error, which the second tier of `compare_to_baseline()`
+answers. Each cause has a different fix; the baseline
+test names the symptom and the diagnosis follows from the
+audit.
 
 ## Exercises
 
@@ -1809,11 +2125,29 @@ follows from the audit.
    what goes wrong for a collaborator who pulls the
    repository if the order is reversed.
 
+9. **Paired review.** Work with a partner, each on your
+   own copy of the cohort compendium. Treat the following
+   as the cohort's analysis plan for cleaning: keep one
+   row per `mrn`; parse both date formats in
+   `enroll_date`; code `sex` as `F` or `M`; set ages above
+   105, the upper enrollment limit, to missing rather than
+   dropping the row; and keep rows with a missing outcome.
+   Without consulting `clean_cohort()`, each of you writes
+   a cleaning function to this plan on a branch and opens
+   a pull request. Then review your partner's pull request
+   against the six questions in @sec-code-review, leaving
+   each finding as a review comment, and answer the
+   comments on your own. Finally, run both functions on
+   `cohort_raw.csv` and compare the two cleaned data
+   frames. Report one discrepancy that review found and
+   one that only the comparison found, or say that there
+   was none.
+
 ## Solutions
 
-Attempt an exercise before expanding its solution. These
-exercises are performed on the reader's own functions and
-data, so the code will vary; the boxes record the form the
+Attempt an exercise before expanding its solution. You
+perform these exercises on your own functions and data,
+so the code will vary; the boxes record the form the
 answer should take and the reasoning behind it.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1849,9 +2183,9 @@ The wrong-type case comes from the same contract,
 asserting that the function refuses input it cannot
 handle rather than returning something misleading.
 
-A reader who finds they cannot state where an expected
-value came from has usually written a change-detector
-rather than a test.
+If you cannot state where an expected value came from,
+you have usually written a change-detector rather than
+a test.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1892,27 +2226,32 @@ what no amount of environment capture can.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-The four constraints, in the form the chapter uses:
+The four constraints, written for the running cohort in
+the form the chapter uses; your own dataset will have
+its own names and bounds:
 
 ```r
 # inst/tinytest/test-data-cohort.R
-cohort <- readRDS('../../analysis/data/derived_data/cohort.rds')
+raw <- load_cohort('../../analysis/data/raw_data/cohort_raw.csv')
+cohort <- clean_cohort(raw)
 
 expect_true(
-  all(c('id', 'age', 'sex', 'outcome') %in% names(cohort)),
+  all(c('mrn', 'age_at_enroll', 'sex', 'incident_dm') %in%
+        names(cohort)),
   info = 'the expected columns are present'
 )
 expect_true(
-  all(cohort$age >= 18 & cohort$age <= 105, na.rm = TRUE),
-  info = 'age lies within the enrolled range'
+  all(cohort$age_at_enroll >= 18 &
+        cohort$age_at_enroll <= 105, na.rm = TRUE),
+  info = 'age lies within the enrollment criteria'
 )
 expect_true(
-  all(cohort$sex %in% c('F', 'M', 'Other')),
-  info = 'sex takes only coded levels'
+  all(cohort$sex %in% c('F', 'M')),
+  info = 'sex takes only its two coded levels'
 )
 expect_true(
-  mean(is.na(cohort$outcome)) < 0.05,
-  info = 'outcome missingness stays under five percent'
+  mean(is.na(cohort$incident_dm)) < 0.15,
+  info = 'outcome missingness stays under fifteen percent'
 )
 ```
 
@@ -2001,13 +2340,19 @@ thought. An exact comparison is the strongest check,
 and it will produce failures that mean nothing.
 Floating-point summation reorders under a different BLAS
 or a different thread count, as @sec-containers discusses,
-and the last digits move without the analysis changing. A
-tolerance of `1e-8` accepts that noise and still catches
-any change large enough to alter a reported figure. A
-tolerance set too loosely stops detecting real changes,
-and there is no universally correct value; it should be
-chosen against the precision at which results are
-reported.
+and the last digits move without the analysis changing.
+Two different tolerances are in play, and you should
+name each. The *numerical* tolerance, `1e-8` relative
+here, accepts that floating-point noise and still catches
+any change in the fitted model large enough to alter a
+reported figure. The *reporting* tolerance is the
+precision at which results are published; for a Monte
+Carlo quantity it is set by the MCSE, as the second tier
+of the chapter's baseline check is. Because these
+coefficients draw no random numbers, only the numerical
+tolerance applies to them. A numerical tolerance set
+loosely, near the reporting precision, stops detecting
+real changes.
 
 **What this test is and is not.** It is the kind of
 baseline test L3 requires, and it is a *change detector*.
@@ -2058,9 +2403,9 @@ can skip.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch08),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 three autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -2094,6 +2439,51 @@ which is exactly the provenance gap habit 1 exists to
 close.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Exercise 9
+
+Your functions and findings will differ; the answer
+takes the form of the review comments, the replies, and
+the comparison. Four places in this plan repay a
+reviewer's attention, because each is where your two
+functions can diverge while both run without error.
+
+**Ages.** The plan sets an implausible age to missing.
+A function that drops the row instead changes the row
+count, and the change appears only if you count rows
+before and after. This is question 3.
+
+**Missing outcomes.** The plan keeps rows whose outcome
+is missing, because dropping them is an analytic
+decision that the model step makes. A cleaning function
+that drops them has moved that decision into the wrong
+place.
+
+**Duplicates.** 'One row per `mrn`' does not say which
+copy to keep. Check whether the duplicated rows agree on
+every column. If they do not, the plan is ambiguous, and
+the fix belongs in the plan, recorded and dated, not in
+whichever choice each of you happened to code.
+
+**Coding and parsing.** Look at every distinct value of
+`sex` and every format in `enroll_date` in the raw file
+before deciding that the plan's rules cover them. A
+value the rules do not name should become missing by a
+stated rule, not by accident.
+
+The comparison is double programming in miniature. Use
+`all.equal()` on the two cleaned data frames, after
+sorting both by `mrn`, and read every difference it
+reports. Review is suited to the departures from the
+plan that are visible in the code, such as a dropped
+row; the comparison is suited to the slips that read
+correctly, such as a date format parsed in the wrong
+order. If the two functions agree, that is evidence
+for both, but not proof: you may have read the same
+sentence of the plan the same wrong way, as the section
+on double programming warns.
+:::
+
 ## Cheat sheet {#sec-cheat-testing}
 
 | Command or rule | What it does |
@@ -2109,6 +2499,7 @@ close.
 | Rule of thumb | An oracle must be computed independently of the code under test, never by calling it. |
 | Habit 4 | Make every gate able to fail, and watch it fail once. |
 | Habit 5 | Compare against a recorded baseline, with a stated tolerance. |
+| Code review, six questions (@sec-code-review) | Output traces to code; raw inputs; the plan's exclusions; seed at the call; tests changed with a reason; clean log |
 
 ## Further reading
 
@@ -2134,19 +2525,18 @@ good-enough-practices paper [@wilson2017], the latter
 pitched deliberately at researchers without a
 software background. Sandve and colleagues' ten
 simple rules [@sandve2013] cover the same ground in a
-compact, rule-by-rule form, and situate readable code
+compact, rule-by-rule form, and situate version control
 and recorded results within a general reproducibility
 discipline.
 
-For the connection between testing and the highest
-rung of the ladder, the reader is referred forward to
-@sec-verification. There the reproducibility test of
-this chapter reappears at the scale of the whole
-compendium as output verification. The reader is also
-referred to @sec-levels for the capture-and-validation
-distinction that places testing in the validation
-register. Peng's early
-account of reproducibility as a spectrum [@peng2011]
-remains the clearest short statement of why confirming
-a result, and not merely producing it, is a minimum
-scientific standard.
+The connection between testing and the highest rung
+of the ladder is taken up in @sec-verification, where
+the reproducibility test of this chapter reappears at
+the scale of the whole compendium as output
+verification. @sec-levels gives the
+capture-and-validation distinction that places testing
+in the validation register. Peng's early account of
+reproducibility as a spectrum [@peng2011] remains the
+clearest short statement of why reproducibility can serve
+as a minimum scientific standard when full independent
+replication is not possible.

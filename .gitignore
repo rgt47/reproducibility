@@ -18,6 +18,8 @@ _book/
 *.fdb_latexmk
 *.synctex.gz
 *.html
+# Hand-written HTML partials are sources, not build output.
+!analysis/report/partials/*.html
 *.pdf
 .netlify
 
@@ -33,8 +35,12 @@ inst/doc
 renv/library/
 renv/staging/
 
-# Generated data (Decision D7: generator committed, CSV gitignored)
-analysis/data/raw_data/cohort_raw.csv
+# Raw data (Decision D7: generator committed, CSV gitignored). The
+# whole directory is ignored, not one filename, so that a second
+# extract under any name cannot be committed by accident. Only a
+# README describing the directory may be tracked.
+analysis/data/raw_data/*
+!analysis/data/raw_data/README.md
 
 # zzcollab
 .make/

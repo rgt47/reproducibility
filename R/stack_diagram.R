@@ -56,9 +56,13 @@ determinant_layers <- function() {
 #'   `determinant_layers()$layer`) this chapter captures. Drawn with
 #'   a solid fill in the color of the rung it secures.
 #' @param validates Character vector of layer names this chapter
-#'   validates without capturing. Drawn with a hatched border in the
-#'   same rung color, over the ambient fill. A layer may appear in
-#'   both.
+#'   validates without capturing. Drawn at full color with a heavy
+#'   black outline. A layer may appear in both.
+#'
+#' Color is never the only cue (WCAG 1.4.1): each bar also carries a
+#' text label, printed in black on the white margin to its right,
+#' that names the rung securing the layer and, for a highlighted
+#' layer, whether this chapter captures or validates it.
 #' @param title Plot title. Defaults to a generic caption; pass one
 #'   that names the chapter if the figure needs to say more.
 #' @return A ggplot object.
@@ -98,6 +102,17 @@ plot_determinant_stack <- function(captures = character(0),
                     'L2 pinned environment' = '#08519c',
                     'L2 partially pinned' = '#fd8d3c',
                     'Unpinned by any rung' = '#737373')
+  rung_codes <- c('L0 locatable' = 'L0',
+                  'L1 pinned packages' = 'L1',
+                  'L2 pinned environment' = 'L2',
+                  'L2 partially pinned' = 'L2, partly',
+                  'Unpinned by any rung' = 'no rung')
+  role_text <- c('Captured here' = ': captured here',
+                 'Validated here' = ': validated here',
+                 'Captured and validated' = ': captured and validated',
+                 'Elsewhere in the book' = '')
+  layers$label <- paste0(rung_codes[as.character(layers$secures)],
+                         role_text[as.character(layers$role)])
 
   ggplot2::ggplot(layers, ggplot2::aes(
       x = stats::reorder(.data$layer, .data$height),
@@ -105,15 +120,22 @@ plot_determinant_stack <- function(captures = character(0),
     ggplot2::geom_col(width = 0.9,
       ggplot2::aes(linewidth = .data$linewidth),
       colour = 'black') +
+    ggplot2::geom_text(ggplot2::aes(y = 1.04, label = .data$label),
+                       hjust = 0, size = 3.2, colour = 'black',
+                       alpha = 1, inherit.aes = TRUE) +
+    ggplot2::scale_y_continuous(limits = c(0, 2.1), expand = c(0, 0)) +
     ggplot2::coord_flip() +
-    ggplot2::scale_fill_manual(values = rung_colors, name = 'Rung') +
+    ggplot2::scale_fill_manual(values = rung_colors, name = 'Rung',
+      guide = ggplot2::guide_legend(nrow = 2, title.position = 'top')) +
     ggplot2::scale_alpha_identity() +
     ggplot2::scale_linewidth_identity() +
     ggplot2::labs(x = NULL, y = NULL, title = title) +
     ggplot2::theme_minimal(base_size = 11) +
     ggplot2::theme(axis.text.x = ggplot2::element_blank(),
                   panel.grid = ggplot2::element_blank(),
-                  legend.position = 'bottom')
+                  legend.position = 'bottom',
+                  legend.justification = 'left',
+                  plot.title.position = 'plot')
 }
 
 #' Generate alt text for [plot_determinant_stack()]
@@ -155,25 +177,37 @@ determinant_stack_alt <- function(captures = character(0),
             n_remaining, if (n_remaining == 1) ' is' else 's are')
   }
 
+  rungs <- sprintf(
+    'From the base, the rungs are: %s.',
+    paste(paste0(layers$layer, ', ',
+                 sub('^Unpinned', 'unpinned', layers$secures)),
+          collapse = '; ')
+  )
+
   if (!length(parts)) {
-    return(sprintf(
+    return(paste(
       paste0('A horizontal bar chart of the nine-layer determinant ',
              'stack, hardware at the bottom and intrinsic ',
-             'non-determinism at the top, each bar colored by the ',
-             'rung that secures it across the book. This chapter ',
-             'highlights no layer of its own; every layer is shown ',
-             'faded, as secured or validated elsewhere in the ',
-             'book.')))
+             'non-determinism at the top, each bar colored by, and ',
+             'labeled with, the rung that secures it across the ',
+             'book. This chapter highlights no layer of its own; ',
+             'every layer is shown faded, as secured or validated ',
+             'elsewhere in the book.'),
+      rungs))
   }
 
-  sprintf(
-    paste0('A horizontal bar chart of the nine-layer determinant ',
-           'stack, hardware at the bottom and intrinsic ',
-           'non-determinism at the top, each bar colored by the ',
-           'rung that secures it across the book. This chapter %s; ',
-           'those layers are drawn at full color and, where ',
-           'validated, with a bordered outline. %s'),
-    paste(parts, collapse = '; '),
-    remainder
+  paste(
+    sprintf(
+      paste0('A horizontal bar chart of the nine-layer determinant ',
+             'stack, hardware at the bottom and intrinsic ',
+             'non-determinism at the top, each bar colored by, and ',
+             'labeled with, the rung that secures it across the ',
+             'book. This chapter %s; those layers are drawn at full ',
+             'color, labeled as captured or validated here, and, ',
+             'where validated, with a heavy outline. %s'),
+      paste(parts, collapse = '; '),
+      remainder
+    ),
+    rungs
   )
 }

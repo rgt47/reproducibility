@@ -9,9 +9,14 @@
   //
   // When the Dockerfile lands, replace "image" with:
   //   "build": { "dockerfile": "../Dockerfile" }
-  // and pin the base by digest, as chapter 5 argues.
+  // and pin the base by digest, as chapter 7 argues.
+  //
+  // rocker/verse is published for linux/amd64 only, so the platform is
+  // stated: on Apple Silicon this runs under emulation rather than
+  // failing or depending on the engine's default.
   "name": "reproducibility",
   "image": "rocker/verse:4.4.0",
+  "runArgs": ["--platform=linux/amd64"],
   "workspaceFolder": "/home/rstudio/project",
   "workspaceMount": "source=${localWorkspaceFolder},target=/home/rstudio/project,type=bind",
   "mounts": [

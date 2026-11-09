@@ -17,12 +17,12 @@ Reproducibility and Increased Transparency in Science*
 ```
 :::
 
-This chapter has three practical aims. By its end we will
+This chapter has three practical aims. By its end you will
 be able to write a commit history that answers 'what
-changed and why' for any analysis we run. We will be able
-to build a `.gitignore` that keeps protected health
+changed and why' for any analysis you run. You will be
+able to build a `.gitignore` that keeps protected health
 information out of a repository before the first commit
-rather than after a breach. Finally, we will be able to
+rather than after a breach. Finally, you will be able to
 state exactly which single rung of the reproducibility
 ladder a GitHub URL has actually earned, and which it has
 not.
@@ -31,10 +31,11 @@ We begin by placing version control on the determinant
 stack and naming the failure it cures. We then set out
 the analyst's three judgments, the git model, and the
 reading of a history, before turning to what must never
-be committed. Branches and remotes follow, and we close
-the exposition with what git does not do. A worked
-example, a note on collaborating with an LLM, and the
-exercises complete the chapter.
+be committed. Branches, the undoing of mistakes and
+merge conflicts, and remotes follow, and we close the
+exposition with what git does not do. A worked example,
+a note on collaborating with an LLM, and the exercises
+complete the chapter.
 
 ```{r}
 #| include: false
@@ -48,7 +49,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 60 minutes.
+**Reading time.** About 65 minutes.
 
 **Prerequisites.** @sec-crisis and @sec-levels, for the
 determinant stack and the L0 rung that this chapter's
@@ -57,7 +58,10 @@ Statistically, nothing is required. R knowledge assumed:
 none beyond reading a short script. The git and shell
 commands that make up most of this chapter are
 independent of R, and the two R chunks that appear are
-read for their output, not written by the reader.
+read for their output, not written by the reader. Git
+itself must be installed and configured; the preflight in
+the setup appendix ([Git preflight](setup-appendix.qmd#sec-git-preflight)) checks both in a
+few minutes.
 
 **By the end of this chapter you will be able to
 answer:**
@@ -83,9 +87,9 @@ answer:**
 
 **Outline.**
 
+- Where this sits on the stack.
 - Orientation: the drawer of `FINAL` files, and the
   object that replaces it.
-- Where this sits on the stack.
 - The analyst's contribution: three judgments no tool
   automates.
 - What version control records, and what it cures.
@@ -93,12 +97,47 @@ answer:**
 - Reading the history: the log and the diff.
 - What must never be committed: `.gitignore` and PHI.
 - Branches, lightly.
+- Undoing things, and merge conflicts.
 - The remote: GitHub, GitLab, and collaboration.
 - What git does not do.
 - Worked example: an untracked folder to a tagged
   repository.
 - Collaborating with an LLM.
 - Exercises, a cheat sheet, and further reading.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A collaborator's repository holds `analysis.R` and a
+`Dockerfile` whose build installs packages from the current
+CRAN release; it has no `renv.lock`. Its README claims L2. A
+year later the image is rebuilt. One call now fails because
+a package changed its interface. Inside the same rebuilt
+image, a regression coefficient computed on the cluster
+differs from the laptop's in the sixth decimal place. Using
+@sec-crisis and @sec-levels, which rung has the repository
+earned? For each discrepancy, which layer is responsible,
+and which tool or rung addresses it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The collaborator's repository, with a `Dockerfile` and no
+lockfile, has earned L0, locatable, and no more. The rungs
+are cumulative (@sec-levels): L1 requires a lockfile, and L2
+requires a container recipe as well, so a Dockerfile without
+a lockfile is L0 whatever its README says. The failing call
+is package churn in the package-versions layer, the code rot
+of @sec-crisis. A lockfile, `renv.lock`, closes it and marks
+L1; restoring that lockfile inside the image then reaches L2.
+The sixth-decimal difference is the signature of the
+numerical-library layer. No rung guarantees it: the image
+determines which BLAS is installed, but the thread count and
+the processor still vary between machines (@sec-crisis,
+@sec-levels). Fixing the thread count narrows the gap, and a
+stated tolerance in an L3 baseline test absorbs what remains.
+:::
 :::
 
 ## Where this sits on the stack
@@ -156,9 +195,9 @@ system keeps a single working copy of each file. It
 records, as a separate and complete history, every state
 that copy has passed through, together with a note on
 each change saying what it was and why it was made. The
-five `FINAL` files collapse back into one `analysis.R`,
-and the four snapshots become four entries in a history
-that can be read, searched, and, if need be, restored.
+drawer of copies collapses back into one `analysis.R`,
+and each copy becomes an entry in a history that can be
+read, searched, and, if need be, restored.
 The tool that has won this role, across the sciences and
 across software of every kind, is git. The service that
 most often hosts a git history on the network is GitHub,
@@ -194,11 +233,11 @@ files themselves can undo.
 :::
 
 It is also the foundation in a precise, technical
-sense. @sec-compendium made the compendium the unit of
-reproducible work, and @sec-levels placed the bare
-compendium at the bottom rung of the ladder, L0
-locatable. The artifact that marks L0 is exactly a
-version-controlled repository. That is, an analysis is
+sense. The next chapter, @sec-compendium, makes the
+compendium the unit of reproducible work, and
+@sec-levels placed the bare compendium at the bottom
+rung of the ladder, L0 locatable. The artifact that marks
+L0 is exactly a version-controlled repository. That is, an analysis is
 locatable when, and only when, it is under version
 control and can therefore be found, read, and referred
 to by a second person. Everything the later chapters add
@@ -237,10 +276,10 @@ much as the commands are.
    whose messages say why each change was made is a
    readable record of decisions.
 
-3. **Deciding when to branch and when to tag.** Does a
-   piece of work warrant a branch of its own? Does a
-   particular state of the analysis warrant a permanent
-   tag? These are design decisions about the shape of
+3. **Deciding when to branch and when to tag.** Whether
+   a piece of work warrants a branch of its own, and
+   whether a particular state of the analysis warrants a
+   permanent tag, are design decisions about the shape of
    the history. They are cheap to make and expensive
    to omit. The state of the code at the moment a
    manuscript was submitted is worth a tag, and no tool
@@ -298,7 +337,9 @@ collected here for reference.
   the history.
 - **Branch.** A movable name for a line of
   development. The default branch is conventionally
-  called `main`.
+  called `main`, although git itself still names it
+  `master` unless told otherwise, as with
+  `git init -b main`.
 - **Remote.** A copy of the repository hosted
   elsewhere, typically on GitHub or GitLab, used for
   backup, distribution, and collaboration. `origin` is
@@ -330,9 +371,9 @@ statement of the lines added and removed. Git computes
 the diff on demand from the snapshots it stores, since
 git keeps full snapshots, not diffs. Lastly, it loses the
 *reason for each change*, the single most valuable and
-most perishable piece of information about an analysis. Why was the
-outlier-exclusion threshold changed from three standard
-deviations to two? A dated file cannot say. A commit
+most perishable piece of information about an analysis.
+Why was the outlier-exclusion threshold changed from
+three standard deviations to two? A dated file cannot say. A commit
 whose message reads 'Tighten outlier threshold to 2 SD
 per reviewer 2's comment' says exactly why, and the
 record stays with the code.
@@ -394,8 +435,17 @@ the project directory.
 
 ```bash
 cd diabetes-cohort
-git init
+git init -b main
 ```
+
+The `-b main` names the first branch `main`; without it,
+git as of version 2.56 names it `master`, and the
+`git push -u origin main` commands later in this chapter
+would then fail. The git preflight of the setup appendix
+([Git preflight](setup-appendix.qmd#sec-git-preflight)) sets `main` as the default once per
+machine, together with the name and e-mail address every
+commit records. It is worth running before this chapter's
+first command.
 
 The second idea, and the central one, is the **commit**.
 A commit is a snapshot of the tracked files at one
@@ -420,9 +470,9 @@ commit's hash, in a tag, a manuscript, or a colleague's
 clone, can detect that the history leading to it was
 later changed.
 
-But how much evidence is tamper-evidence? Unfortunately,
-it is weaker than it sounds, and the reader headed for
-regulated work should know exactly how much weaker. The
+But how much evidence is tamper-evidence? It is weaker
+than it sounds, and anyone headed for regulated work
+should know exactly how much weaker. The
 author's name and e-mail address, and both dates a commit
 carries, are whatever the committer's own git client
 supplies. Setting `GIT_AUTHOR_DATE` and
@@ -448,9 +498,9 @@ a verified identity. Another is a forge configured to
 protect the main branch against force-pushes and to log
 pushes, reviews, and merges on its own servers with its
 own clock. Even then, a git history is not, by itself,
-the audit trail that U.S. regulations for electronic
-records require. That trail must be secure,
-computer-generated, and time-stamped, and must record
+the audit trail that FDA's regulations require of
+electronic records in the studies they cover. That trail
+must be secure, computer-generated, and time-stamped, and must record
 operator actions independently [@cfr21part11]. Within
 those limits, a well-kept history is an honest and very
 useful record of how an analysis was built. The rest of
@@ -548,6 +598,19 @@ git log --oneline
 git log --oneline -- analysis/scripts/
 ```
 
+In a scratch copy of the worked example below, three commits
+in, the compact view reads as follows. Each line is the
+abbreviated hash and the summary line of the message, most
+recent first.
+
+```bash
+# output abridged, from git 2.56.0
+git log --oneline
+#> c7d4711 Tighten outlier threshold to 2 SD per reviewer 2
+#> a9aa55f Add cleaning script for registry extract
+#> 936e050 Initialize compendium and .gitignore
+```
+
 The **diff** is the complementary view. Where the log
 lists the changes, the diff gives the content of one.
 `git diff` shows the changes in the working tree that
@@ -565,6 +628,25 @@ git show a1b2c3d
 
 # what changed between two points in the history?
 git diff a1b2c3d f4e5d6c
+```
+
+Here is the diff from the same scratch repository, taken just
+before the third commit, when one line of the cleaning script
+had been edited. A line beginning `-` is the committed version
+and a line beginning `+` is its replacement. The unmarked lines
+are context, and the `@@` header gives their position.
+
+```bash
+# output abridged, from git 2.56.0
+git diff
+#> diff --git a/analysis/scripts/01-clean.R b/analysis/scripts/01-clean.R
+#> --- a/analysis/scripts/01-clean.R
+#> +++ b/analysis/scripts/01-clean.R
+#> @@ -1,3 +1,3 @@
+#>  cohort <- read.csv('analysis/data/raw_data/extract.csv')
+#>  cohort <- subset(cohort, age >= 18)
+#> -sd_cut <- 3
+#> +sd_cut <- 2
 ```
 
 Together the log and the diff answer the two questions
@@ -594,9 +676,9 @@ commit_history <- tibble::tibble(
                    '2026-02-09', '2026-02-12',
                    '2026-02-18', '2026-02-24',
                    '2026-03-02')),
-  author = c('r.thomas', 'r.thomas', 'r.thomas',
-             'a.okafor', 'r.thomas', 'a.okafor',
-             'r.thomas'),
+  author = c('analyst.a', 'analyst.a', 'analyst.a',
+             'analyst.b', 'analyst.a', 'analyst.b',
+             'analyst.a'),
   message = c(
     'Initialize compendium and .gitignore',
     'Add cleaning script for registry extract',
@@ -694,13 +776,13 @@ kinds dominate.
 
 Protected health information, identifiable data, and
 anything held under a data-use agreement that forbids
-redistribution must never go into a git history. This
-holds even briefly on a branch that is never merged, and
-even locally if the repository will ever be pushed. A
-commit is permanent by design and, once pushed, copied to
-every clone. The gravest and least intuitive fact about
-git is that its ordinary commands only ever *add* to the
-history. Suppose a file containing protected health
+redistribution must never go into a git history. The
+rule admits no exception: not even briefly on a branch
+that is never merged, and not even in a local repository
+that will ever be pushed. A commit is permanent by
+design and, once pushed, copied to every clone. The
+gravest and least intuitive fact about git is that its
+ordinary commands only ever *add* to the history. Suppose a file containing protected health
 information is committed, and the mistake is noticed and
 the file deleted in a later commit. The file is gone from
 the working tree but *remains in full in the history*. It
@@ -753,6 +835,27 @@ last step.
 
    The force-push may require branch protection to be
    lifted for the purpose and restored afterwards.
+
+   ::: {.callout-warning}
+   ## Regulated records
+
+   In a repository that holds records under GxP or
+   another regulated quality system, a history rewrite
+   is a controlled change, not a cleanup. Before running
+   it, open a deviation or incident, obtain QA approval
+   under the organization's SOPs, document what is being
+   removed and why, and keep whatever record of the
+   pre-rewrite state the quality system requires. The
+   audit-trail provision of 21 CFR Part 11 states that
+   'Record changes shall not obscure previously recorded
+   information' [@cfr21part11, sec. 11.10(e)]. A rewrite
+   obscures that information by design, which is why the
+   deviation record must carry what the history no longer
+   does. Better still,
+   keep regulated records out of a rewritable forge in
+   the first place, so that the question never arises.
+   :::
+
 4. **Clean what the forge holds.** On GitHub the purged
    commits can remain reachable through cached views and
    pull-request references, which the owner cannot push
@@ -773,9 +876,12 @@ been cleaned; the rewrite reaches only the copies it is
 run on and pushed to.
 
 A `.gitignore` is a small file, and its content depends
-on the archetype of the compendium. This is the concrete
-point at which the archetypes of @sec-compendium touch
-this chapter. The reproducibility machinery is identical
+on the archetype of the compendium, a classification the
+next chapter, @sec-compendium, develops in full. For now
+two archetypes suffice: a data-analysis compendium, whose
+deliverable is a set of results from data, and an
+R-package compendium, whose deliverable is reusable
+code. The reproducibility machinery is identical
 across archetypes; the list of files to ignore is not. A
 **data-analysis compendium** ignores its *derived outputs
 and its raw data*. These are the regenerable tables and
@@ -854,32 +960,131 @@ is still tracked until explicitly untracked with `git rm
 an already-committed copy, which returns us to the
 warning above.
 
-The reader who browses this book's own repository will
-find a file at `analysis/data/raw_data/cohort_raw.csv`
-under version control, with columns named `mrn`,
-`patient_name`, and `dob`. It is committed on purpose. It
-is synthetic, generated by `analysis/scripts/simulate_cohort.R`
-from stated parameters, and describes no real person.
-Committing it lets every reader run the examples without
-a data request. A real project must not copy the
-practice; its raw extract belongs behind the
-`.gitignore` above, whatever its size and however
-harmless it looks.
-
-The following check confirms that the shipped extract
-actually carries identifying-looking fields.
+This book's own repository applies the rule to its
+running cohort. The extract
+`analysis/data/raw_data/cohort_raw.csv` is synthetic and
+describes no real person, yet it is not committed. What
+is committed is the script that writes it,
+`analysis/scripts/simulate_cohort.R`, which regenerates
+the extract from stated parameters; a reader with a
+fresh clone runs it once before the examples. The
+`.gitignore` excludes the whole `raw_data` directory
+rather than the one filename, so that a second extract
+saved there under any name is excluded too. The check
+below confirms that the generated extract carries
+identifying-looking fields, that the generator is
+present, and that the directory pattern is in force.
 
 ```{r}
 raw <- load_cohort('../data/raw_data/cohort_raw.csv')
+nrow(raw)
 intersect(c('mrn', 'patient_name', 'dob'), names(raw))
+
+gitignore <- readLines('../../.gitignore')
+repo_state <- c(
+  generator_present = file.exists('../scripts/simulate_cohort.R'),
+  raw_dir_ignored = 'analysis/data/raw_data/*' %in% gitignore
+)
+repo_state
 ```
 
-Every one of the three columns this section warns against
-is present, by name, in the file this book actually ships.
-The synthetic cohort invents an identifier, a name, and a
-date of birth so that the risk appears in a real file
-instead of only in prose. A `.gitignore` audit of this
-very file, run on real data, would need to flag all three.
+The generated extract carries
+`r length(intersect(c('mrn', 'patient_name', 'dob'), names(raw)))`
+of the three columns this section warns against, by name.
+The synthetic
+cohort invents an identifier, a name, and a date of birth
+so that the risk appears in a real file instead of only in
+prose. The generator is
+`r if (repo_state[['generator_present']]) 'present' else 'missing'`,
+and the pattern `analysis/data/raw_data/*` is
+`r if (repo_state[['raw_dir_ignored']]) 'in' else 'absent from'`
+the `.gitignore`, which is the arrangement a real project
+should copy: the code that produces or fetches the extract
+under version control, the extract itself never.
+
+A `.gitignore` guards paths, however, and nothing else.
+The tests in `inst/tinytest/` need a copy of the cohort,
+and an earlier version of this repository met that need
+by copying the extract to `inst/testdata/cohort_raw.csv`
+and committing it. No ignore pattern covered that path, so
+the identifier columns entered the history by a second
+route while the first stayed closed. The fixture now at
+that path is derived from the synthetic extract. It keeps
+the rows and the duplicate structure the tests need, drops
+the name and date-of-birth columns, and replaces each
+record number with a pseudonymous `ID-0001`-style id.
+
+```{r}
+fixture <- load_cohort('../../inst/testdata/cohort_raw.csv')
+intersect(c('mrn', 'patient_name', 'dob'), names(fixture))
+all(grepl('^ID-[0-9]{4}$', fixture$mrn))
+```
+
+Replacing the file only added a commit, and the earlier
+copy is still in the history. Two commands find it. The
+first lists every commit, on any branch, that touched the
+path; the second prints the header of the file as the
+oldest of those commits recorded it.
+
+```bash
+git log --all --oneline -- inst/testdata/cohort_raw.csv
+git show <oldest-hash>:inst/testdata/cohort_raw.csv | head -1
+```
+
+```{r}
+#| echo: false
+fixture_path <- 'inst/testdata/cohort_raw.csv'
+git_lines <- function(...) {
+  out <- tryCatch(
+    suppressWarnings(system2('git', c('-C', '../..', ...),
+                             stdout = TRUE, stderr = FALSE)),
+    error = function(e) character(0)
+  )
+  if (is.null(attr(out, 'status'))) out else character(0)
+}
+git_ok <- nzchar(Sys.which('git')) && file.exists('../../.git')
+fixture_log <- if (git_ok) {
+  git_lines('log', '--all', '--format=%h', '--', fixture_path)
+} else {
+  character(0)
+}
+oldest_copy <- utils::tail(fixture_log, 1)
+oldest_header <- if (length(oldest_copy) == 1) {
+  utils::head(git_lines('show',
+                        paste0(oldest_copy, ':', fixture_path)), 1)
+} else {
+  character(0)
+}
+old_copy_has_identifiers <- length(oldest_header) == 1 &&
+  all(c('patient_name', 'dob') %in%
+        strsplit(gsub('"', '', oldest_header), ',')[[1]])
+old_copy_same_bytes <- length(oldest_copy) == 1 && identical(
+  git_lines('rev-parse', paste0(oldest_copy, ':', fixture_path)),
+  git_lines('hash-object', 'analysis/data/raw_data/cohort_raw.csv')
+)
+# Printed narrow so the named values fit the printed page.
+print(c(commits_touching_path = length(fixture_log),
+        old_copy_has_identifiers = old_copy_has_identifiers,
+        old_copy_same_bytes = old_copy_same_bytes),
+      width = 50)
+```
+
+`r if (old_copy_has_identifiers) paste0('Run on this repository when the page was rendered, the log listed ', length(fixture_log), if (length(fixture_log) == 1) ' commit' else ' commits', ' touching the path. The oldest, ', oldest_copy, ', still holds a copy whose header names patient_name and dob', if (old_copy_same_bytes) ', and its bytes are identical to the generated extract.' else '.') else if (!git_ok) 'The git history was not available when this page was rendered, so the check above could not inspect the earlier copy; the two commands show it on any clone.' else 'When this page was rendered, no commit touching the path held a copy with the identifier columns, so the earlier copy has been removed from this repository; it survives in any clone made before the removal.'`
+Anyone holding a clone, made at any time since, can read
+it. The data are synthetic, so nothing real has
+leaked, but the pattern is the one by which real data
+leak: an extract protected at one path and copied,
+for a convenience such as a test, to another. Removing
+the copy from the history would take the rewrite
+described above, with every cost listed there; we keep it
+as this worked example. Deriving the new fixture from the
+extract is acceptable here only because the extract is
+synthetic. Rows of real data with the name columns dropped
+still carry dates, ages, and measurements that can
+re-identify, so a fixture for a real project is generated
+or built from the data dictionary, and a commit that adds
+a data file under any path warrants the question of where
+its rows came from.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the same file, two archetypes
@@ -945,7 +1150,8 @@ git merge sensitivity-analysis
 
 The mental model is the one given above: a branch is a
 movable name for a line of development, and `main` is
-merely the branch git creates by default. Nothing about
+merely the name given to the first branch, here by
+`git init -b main`. Nothing about
 branching changes the commit model; it only lets two
 lines of commits coexist and later rejoin. We keep the
 treatment light here. We shall return to the
@@ -1080,12 +1286,19 @@ points to, not an addition to history. The same caution
 applies. A reset is harmless on commits that exist only
 in the analyst's own clone. It is a serious act, needing
 the collaborators' agreement and a force-push, once those
-commits have been pushed or pulled elsewhere. A reset
-performed only locally is always safe to try again. The
-discarded commits are not immediately deleted and can
-usually be found with `git reflog` if the reset turns out
-to be wrong. The same reflog is what makes `--hard`
-survivable on an unshared branch.
+commits have been pushed or pulled elsewhere. A local
+reset that moves past *commits* can usually be undone.
+The discarded commits are not immediately deleted, and
+`git reflog` lists where `HEAD` pointed before the reset,
+so `git reset --hard <that-hash>` restores them. The
+reflog records only commits, however. Edits that were
+never committed are not in it, and `--hard` overwrites
+them in the working tree. Unstaged edits are then gone
+permanently; staged ones survive only as unnamed objects
+that `git fsck --lost-found` can sometimes recover, file
+by file and without their names. Before any
+`--hard`, therefore, read `git status`, and commit or
+`git stash` whatever uncommitted work should survive.
 
 `git revert <commit>` takes the opposite approach. Instead
 of moving `HEAD` backward, it makes a *new* commit whose
@@ -1231,25 +1444,45 @@ git pull
 
 Consider a team working across sites, a clinical trial
 with several participating centers, a multi-institution
-consortium. For such a team the dominant model on GitHub
-and GitLab is **fork-and-pull-request** (GitLab calls the
-latter a *merge request*, the same thing under another
-name). A contributor *forks* the canonical repository,
-making a personal copy on the remote, and works on a
-branch of that fork. The contributor then opens a **pull
-request** proposing that their branch be merged into the
-canonical repository. The pull request is a unit of
-review. The maintainers see exactly the diff being
-proposed, discuss it inline, request changes, and merge it
-only when satisfied. In a regulated multi-site analysis,
-the pull request is a documented, attributable,
-reviewable gate through which every change to the shared
-analysis passes. Its record, who proposed what, who
-reviewed it, what was said, and when it was merged, is
-held on the forge's servers rather than asserted by a
-client. It therefore complements the commit history with
-a record of the *review* of each change that is harder to
-backdate.
+consortium. Such a team works in one of two models on
+GitHub and GitLab. In the **shared-repository** model,
+every contributor has write access to one repository,
+works on a branch of it, and the `main` branch is
+protected so that nothing reaches it without review. This
+is the usual arrangement for a private trial repository,
+where forking is often disabled. In the
+**fork-and-pull-request** model, a contributor without
+write access *forks* the canonical repository, making a
+personal copy on the remote, and works on a branch of
+that fork. In either model the contributor opens a **pull
+request** (GitLab calls it a *merge request*, the same
+thing under another name) proposing that the branch be
+merged into `main`. The pull request is a unit of review.
+The maintainers see exactly the diff being proposed,
+discuss it inline, request changes, and merge it only
+when satisfied. In a multi-site analysis, the pull
+request is a documented, attributable, reviewable gate
+through which every change to the shared analysis passes.
+Its record, who proposed what, who reviewed it, what was
+said, and when it was merged, is held on the forge's
+servers rather than asserted by a client. It therefore
+complements the commit history with a record of the
+*review* of each change that is harder to backdate. That
+record is review evidence, not by itself a regulated
+signature. An approval on a forge does not, by default,
+carry the printed name, the date and time, and the
+meaning of the signature that 21 CFR 11.50(a) requires
+of a signed electronic record [@cfr21part11]. Whether it
+counts as a controlled approval depends on the
+organization's validated configuration of the forge and
+on its SOPs.
+
+The same gate serves when the contributor is a coding agent.
+The agent works on a branch of its own and opens a pull
+request; the analyst reads the diff, reviews it, and alone
+decides whether to merge. The agent's account of its change
+is a description to check against the diff, not a substitute
+for reading it (@sec-llm-delegate).
 
 The last piece of the remote's vocabulary is the pair
 **tags and releases**, and they matter to reproducibility
@@ -1355,11 +1588,12 @@ no lockfile exists.
 ## The honest level
 
 This chapter's own practice reaches L0, locatable, by
-placing the repository and its cohort extract under
-version control and pushing them to a remote. It leaves
-every layer beneath the analysis code, the packages, the
-environment, and the rest of the determinant stack,
-exposed and unpinned.
+placing the repository under version control and pushing
+it to a remote. The cohort extract is not part of that
+history; its generator is, and the extract is regenerated
+from it. The practice leaves every layer beneath the
+analysis code, the packages, the environment, and the
+rest of the determinant stack, exposed and unpinned.
 :::
 
 ## Worked example
@@ -1368,8 +1602,10 @@ To make the chapter concrete, we take the
 incident-diabetes cohort of the running example from an
 untracked folder to a tagged, remotely hosted repository.
 We stay at the level of the commands and the judgment
-behind them. The shell sessions below are illustrative and
-are not executed.
+behind them. The shell sessions below are not executed when
+the book renders. The outputs shown with `#>` were captured
+once, on 2026-11-08, from a scratch copy of the example with a
+synthetic identity, and are abridged.
 
 The analyst begins with a folder of scripts and a registry
 extract. The very first act, before a single commit, is to
@@ -1379,19 +1615,59 @@ history.
 
 ```bash
 cd diabetes-cohort
-git init
+git init -b main
 # write .gitignore FIRST, ignoring raw_data and credentials
-git status   # confirm the extract is NOT listed as trackable
+git status --untracked-files=all   # is the extract listed?
+```
+
+The flag matters. Plain `git status` collapses a directory
+that holds no tracked files into one line, here `analysis/`,
+so it cannot show whether the extract inside is ignored.
+Run on a scratch copy of this example, the full listing names
+the extract before the `.gitignore` is written and omits it
+after, and `git check-ignore -v` names the rule responsible.
+
+```bash
+# output abridged, from git 2.56.0
+# before .gitignore
+git status --untracked-files=all
+#> Untracked files:
+#>   DESCRIPTION
+#>   analysis/data/raw_data/extract.csv
+#>   analysis/scripts/01-clean.R
+
+# after .gitignore
+git status --untracked-files=all
+#> Untracked files:
+#>   .gitignore
+#>   DESCRIPTION
+#>   analysis/scripts/01-clean.R
+
+git check-ignore -v analysis/data/raw_data/extract.csv
+#> .gitignore:1:analysis/data/raw_data/  analysis/data/raw_data/extract.csv
 ```
 
 Only once `git status` confirms that the sensitive extract
 is ignored does the analyst make the first commit, the one
-that lifts the folder to L0, locatable.
+that lifts the folder to L0, locatable. Its output names the
+branch, marks the commit as the root of the history, and
+lists the files it records.
 
 ```bash
-git add .gitignore analysis/scripts/ DESCRIPTION
+git add .gitignore DESCRIPTION
 git commit -m "Initialize compendium and .gitignore"
+# output abridged, from git 2.56.0
+#> [main (root-commit) 936e050] Initialize compendium and .gitignore
+#>  2 files changed, 4 insertions(+)
+#>  create mode 100644 .gitignore
+#>  create mode 100644 DESCRIPTION
 ```
+
+A commit that stops instead with 'Please tell me who you are'
+means git has no identity on this machine. The
+[Git preflight](setup-appendix.qmd#sec-git-preflight) sets it, and
+[When git refuses](setup-appendix.qmd#sec-git-refuses) lists this and
+the other refusals a first push can meet.
 
 Work proceeds as a sequence of small, message-bearing
 commits: the cleaning script, the derived cohort table,
@@ -1415,7 +1691,20 @@ remote and pushing.
 ```bash
 git remote add origin https://github.com/lab/diabetes-cohort.git
 git push -u origin main
+# output abridged, from git 2.56.0 (local stand-in remote)
+#>  * [new branch]      main -> main
+#> branch 'main' set up to track 'origin/main'.
+git status
+#> On branch main
+#> Your branch is up to date with 'origin/main'.
 ```
+
+The last line of the push is the one to look for: the local
+`main` now tracks the remote's, so a later bare `git push` or
+`git pull` knows where to go. The scratch run pushed to a
+local bare repository rather than to a forge, so its output
+omits the forge's own progress lines. A push that is refused
+instead is diagnosed from [When git refuses](setup-appendix.qmd#sec-git-refuses).
 
 A collaborator at a second site forks the repository, adds
 a site-specific adjustment on a branch of their fork, and
@@ -1462,34 +1751,33 @@ from committing, branching, or tagging.
 ## Collaborating with an LLM
 
 A language model is a fluent assistant for git, which is
-a domain rich in memorized command recipes. Unfortunately,
-precisely that fluency is the hazard. The model will
-confidently produce a command that does what was asked and
-more, including irreversible operations, and it does not
-know which of the analyst's files are sensitive. A coding
+a domain rich in memorized command recipes. Precisely
+that fluency is the hazard. Check every command it proposes
+for operations beyond what was asked, irreversible ones
+above all; the model does not know which of the analyst's
+files are sensitive. A coding
 agent that works in the repository can read those files,
 run git itself, and push. It is therefore run only in
 projects whose data it is allowed to see, and never with
 credentials that let it push to a remote unreviewed.
-Patient data, identifiable or agreement-restricted files,
-and outputs derived from them are never pasted or
-uploaded into a model unless the endpoint is approved by
-the institution for that data. A prompt describes the
-repository's structure instead, its paths and file types,
-not the contents of the files. The three triples below
-mark the division of labor.
+
+{{< include _llm-rule.qmd >}}
+
+For git, the structure a prompt describes is the
+repository's: its paths and file types, not the contents
+of the files. The three triples below mark the division of
+labor.
 
 **Prompt.** 'I accidentally committed a file of patient
 data three commits ago. Give me the git commands to remove
 it.'
 
-*Watch for.* The model will supply a history-rewriting
-recipe (`git filter-repo`, or the older `filter-branch`, or
-a `reset`) and present it as a clean fix. It cannot know
-whether the offending commit was ever pushed to a remote.
-That is the fact that determines whether removal is even
-possible, and the model will not, on its own, raise the
-breach question.
+*Watch for.* A history-rewriting recipe (`git filter-repo`,
+or the older `filter-branch`, or a `reset`) presented as a
+clean fix. The model cannot know whether the offending
+commit was ever pushed to a remote. That is the fact that
+determines whether removal is even possible, so check
+whether the answer raises the breach question at all.
 
 *Verification.* Treat the exposure, not the git command, as
 the primary problem. Establish first whether the commit was
@@ -1497,9 +1785,16 @@ pushed. If it was, assume the data has been cloned and
 cached and follow your institution's incident procedure,
 because no git command can recall it. Only then apply a
 rewriting tool, on a fresh clone and in the order the
-five-step procedure earlier in this chapter gives. Check
-that the recipe covers the forge's caches, forks, and
-every collaborator's clone.
+five-step procedure earlier in this chapter gives, and in
+a repository of regulated records only as the approved,
+documented change its third step requires. Check that the
+recipe covers the forge's caches, forks, and every
+collaborator's clone. A coding agent asked the same question
+does not stop at a recipe: it can run the rewrite and the
+force-push itself. The breach assessment, the decision to
+rewrite, and the force-push stay with the analyst. At most
+the agent prepares the commands on a fresh clone, for the
+analyst to read and run (@sec-llm-delegate).
 
 **Prompt.** 'Write a `.gitignore` for my R health-data
 analysis project.'
@@ -1507,8 +1802,8 @@ analysis project.'
 *Watch for.* A generic R `.gitignore` (the standard
 `.Rhistory`, `.RData`, `.Rproj.user/` list) that omits the
 one category that matters most, the raw data and
-credentials specific to the analyst's *own* project. A
-chat model has not seen the analyst's directory. A coding
+credentials specific to *your own* project. A chat model
+has not seen your directory. A coding
 agent may have listed it, but a file's name does not say
 whether it holds PHI. An agent that opened the files to
 find out has already read the data, which is why it
@@ -1521,6 +1816,15 @@ restricted dataset. Confirm with `git status` that each is
 untracked before the first commit. The generic patterns
 are safe to accept; the project-specific sensitive paths are
 yours to supply.
+
+*A better prompt.* 'Below is the directory tree of my R
+analysis compendium, file names only, with no file opened.
+Write a `.gitignore` that excludes `analysis/data/raw_data/`,
+`.Renviron` and any other credential file, and regenerable
+outputs, but keeps the code, `renv.lock`, and the synthetic
+cohort tracked. Label each line generic or project-specific,
+and list the commands that would show me each sensitive path
+is ignored.'
 
 **Prompt.** 'Write good commit messages for these changes.'
 
@@ -1578,15 +1882,20 @@ description into an accountable record.
    that it claims exactly what version control secures and no
    more.
 
-7. On this book's own running cohort compendium, run
-   `raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')`
-   and report `nrow(raw)` and the three columns among
-   `names(raw)` that would, in a real (non-synthetic)
-   project, require this file to sit behind the
-   `.gitignore` pattern `analysis/data/raw_data/*` rather
-   than be committed. Name the one fact about this
-   particular file that makes this book's own copy of it
-   an exception to that rule.
+7. In a fresh clone of this book's repository, run
+   `Rscript analysis/scripts/simulate_cohort.R` from the
+   top directory, then
+   `raw <- load_cohort('analysis/data/raw_data/cohort_raw.csv')`.
+   Report `nrow(raw)` and the three columns among
+   `names(raw)` that would, in a real project, require the
+   extract to sit behind the `.gitignore` pattern
+   `analysis/data/raw_data/*`, and use
+   `git check-ignore -v analysis/data/raw_data/cohort_raw.csv`
+   to name the line that excludes it. Then run
+   `git log --all --oneline -- inst/testdata/cohort_raw.csv`
+   and state what the oldest commit it lists shows about
+   whether that pattern kept the identifier columns out of
+   the history.
 
 8. This exercise returns to the determinant stack and the
    L0-to-L3 ladder of Chapter 3 (@sec-levels). A colleague
@@ -1603,8 +1912,8 @@ description into an accountable record.
 ## Solutions
 
 Attempt an exercise before expanding its solution. The first
-two ask the reader to work in their own directories, so what
-they produce will vary; the boxes say what a good answer
+two ask you to work in your own directories, so what you
+produce will vary; the boxes say what a good answer
 establishes.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1632,10 +1941,10 @@ chapter insists that a commit is an atomic unit of one
 idea with a message attached. The message is the only part
 of the record that cannot be reconstructed later.
 
-A reader who finds that they *can* answer why, because
-they named the files carefully, has demonstrated the
-`FINAL` method working at its best. That reader should
-notice how much of the reasoning fits in a filename.
+If you find that you *can* answer why, because you named
+the files carefully, you have demonstrated the `FINAL`
+method working at its best. Notice, then, how much of
+the reasoning fits in a filename.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1688,33 +1997,40 @@ why rewriting shared history is treated as a serious act.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-The two files share most of their content and differ in a
-way that follows from what each archetype produces.
+Your own files will differ in detail. Taking the two
+samples in this chapter as the model answer, they barely
+overlap, and the difference follows from what each
+archetype produces.
 
-Common to both: `.Rproj.user/`, `.Rhistory`, `.RData`,
-`.DS_Store`, and `renv/library/`, which is a local install
-tree reconstructable from the lockfile and must never be
-committed.
+Common to both: the editor and operating-system cruft,
+`.Rhistory`, `.RData`, and `.DS_Store`.
 
-In the **data-analysis** file but not the package one:
-patterns for rendered outputs, `*.html` and `*.pdf`, since
-the report is a product the code regenerates; the derived
-data directory, or selected paths within it; and, most
-importantly, the raw-data extract if it carries protected
-information.
+In the **data-analysis** file but not the package one: the
+raw-data extract, `analysis/data/raw_data/*`, which carries
+the protected information; the regenerable outputs,
+`analysis/figures/*`, `analysis/tables/*`, and the rendered
+`*.pdf` and `*.html` reports, since the report is a product
+the code regenerates; and `.Renviron`, `*.pem`, and
+`.Rproj.user/`.
 
-In the **R-package** file but not the analysis one:
-`inst/doc/`, which holds built vignettes, and `src/*.o`
-and `src/*.so`, the compiled object files. These exist
-only if the package carries compiled code and are rebuilt
-on every install.
+In the **R-package** file but not the analysis one: the
+build artifacts, `*.tar.gz` and `*.Rcheck/`; the compiled
+object files `src/*.o` and `src/*.so`, which exist only if
+the package carries compiled code and are rebuilt on every
+install; and `docs/`, the generated pkgdown site.
 
-The explanation to give for each difference has the same
-shape. An archetype ignores what it *generates* and
-commits what it *is*. A data-analysis compendium generates a
-report and so ignores it. A package generates compiled
-objects and built vignettes and so ignores those. Neither
-ignores its own source.
+The last three analysis-only lines are differences of the
+abridged samples, not of the archetypes. Credentials and
+editor state can appear in any project, so a package
+repository should ignore `.Renviron`, `*.pem`, and
+`.Rproj.user/` as well. A good answer says so.
+
+The explanation to give for each remaining difference has
+the same shape. An archetype ignores what it *generates*
+and commits what it *is*. A data-analysis compendium
+generates a report and so ignores it. A package generates
+a tarball, check output, compiled objects, and a website,
+and so ignores those. Neither ignores its own source.
 
 The one line that is not a matter of archetype is the data
 carrying protected health information. It is ignored in
@@ -1777,20 +2093,25 @@ cd <study>
 git remote add upstream https://github.com/<coord>/<study>.git
 
 # 2. Branch from an up-to-date main.
-git fetch upstream && git checkout -b fix/outlier-threshold upstream/main
+git fetch upstream
+git switch -c fix/outlier-threshold upstream/main
 
 # 3. Commit the change.
 git add R/clean_cohort.R
-git commit -m 'Raise outlier threshold to 4 SD per DSMB request'
+git commit -m 'Raise outlier threshold to 4 SD per SAP amendment 2'
 
 # 4. Push to the fork and open a pull request.
 git push origin fix/outlier-threshold
 ```
 
 What each step records that a direct push would not. The
-**fork** establishes that the contributor did not hold
-write access to the canonical analysis, so the change could
-not enter without someone else's action. The **branch**
+**fork** lets a contributor without write access to the
+canonical analysis propose a change, which then cannot
+enter without someone else's action. (A fork does not show
+that the contributor lacked write access; anyone may fork.
+On a private trial repository with forking disabled, a
+branch of the shared repository with a protected `main`
+plays the same role.) The **branch**
 separates the proposal from the accepted state, so the
 history of `main` contains only what was agreed. The
 **commit** is the same in either workflow and records what
@@ -1798,14 +2119,23 @@ and why. The **pull request** is the artifact that carries
 everything a direct push destroys. It holds the proposed
 diff before it was accepted, the discussion, any requested
 changes and the revisions answering them, the identity of
-the approver, and the timestamp of the approval. The **merge** records
-that the approval preceded the entry into `main`.
+the approver, and the timestamp of the approval. The
+**merge** records that the approval preceded the entry
+into `main`.
 
 The compressed version of the answer: the commit history
 answers 'what changed and why'; the pull request answers
 'who checked it, and did they agree'. A direct push to
 `main` answers only the first, and in a multi-site trial
-the second question has auditors too.
+the second question has auditors too. In a regulated
+trial, the approval is review evidence rather than, by
+itself, a signed record carrying the printed name, the
+date and time, and the meaning that 21 CFR 11.50(a)
+requires; whether it serves as one depends on the sponsor's
+validated configuration and SOPs. The analysis change
+behind the commit is itself approved through the
+sponsor's own process, here an amendment to the
+statistical analysis plan, not through the pull request.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1822,12 +2152,13 @@ locked, and the code sits at the top of that stack.
 package versions, since nothing in a git repository
 records which version of `dplyr` produced the numbers. The
 second is the environment beneath them, the R runtime,
-the operating system, and the system libraries. A reader
-may equally name the numerical libraries or the session
+the operating system, and the system libraries. You may
+equally name the numerical libraries or the session
 configuration and be right, since the repository touches
-neither. The common wrong answer is to name the data, which version
-control *can* pin for a small committed dataset, though
-usually does not for a large or protected one.
+neither. The common wrong answer is to name the data,
+which version control *can* pin for a small committed
+dataset, though usually does not for a large or protected
+one.
 
 **A rewritten sentence.** 'The analysis code is version
 controlled and deposited at [location], so the exact code
@@ -1846,27 +2177,42 @@ L3 by implication.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-vc),
-which is available to course instructors. Self-study
-readers who want to check their answer can compare the
-autogradable values against those reported in the chapter's
-own 'Verification' section.
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
+readers who want to check their answer can compare it
+with the executed output of the cohort checks in the
+`.gitignore` section of this chapter: the row count and
+identifier columns of the generated extract, the
+directory pattern, and the history of
+`inst/testdata/cohort_raw.csv`. The point of the last
+step is that `git check-ignore` succeeds on the extract
+while the oldest copy of the fixture, on the render of
+this page,
+`r if (old_copy_has_identifiers) 'still carries' else 'could not be shown to carry'`
+the identifier columns: the pattern held at its own path,
+and the copy entered the history by another.
 :::
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 8
 
-**The rung is unchanged by the deletion.** The repository
-that is hosted on GitHub today is still locatable, so L0
-holds and a reviewer can find and read it. This is so even
-though its visible history begins with yesterday's single
-commit. Nothing about `git init` run fresh touches the
-lockfile or the container. Those files, if they still sit
-in the working tree, are tracked again by the new history
-and restore the analysis to L1 and L2 exactly as before.
-Package pinning and environment pinning are properties of
-*files*, not of the commit chain that records them.
+**The rung is L2, unchanged by the deletion.** The
+repository that is hosted on GitHub today is still
+locatable, so L0 holds and a reviewer can find and read
+it. This is so even though its visible history begins
+with yesterday's single commit. Nothing about `git init`
+run fresh touches the lockfile or the container. Those
+files, if they still sit in the working tree, are tracked
+again by the new history and hold the analysis at L1 and
+L2 exactly as before. Package pinning and environment
+pinning are properties of *files*, not of the commit chain
+that records them. If the analysis had reached L3, its
+baseline test is a file too and survives, but the CI
+runs that showed it passing were attached to commits that
+no longer exist. L3 is reached only by verification, so it
+must be shown again by a fresh run of that test after a
+clean rebuild.
 
 **What is lost, and what is not.** The lockfile and the
 container restore the analysis's position on the capture
@@ -1889,18 +2235,20 @@ container rebuild was never designed to protect.
 
 | Command or rule | What it does |
 |---|---|
-| `git init` | Starts tracking the current directory as a repository. |
+| `git init -b main` | Starts tracking the current directory as a repository, with the first branch named `main`. |
 | `git add <file>` | Stages a change for the next commit. |
 | `git commit -m '...'` | Records the staged changes with a message. |
-| `git status` | Shows staged, unstaged, and untracked files; read it before every commit (habit 1). |
+| `git status` | Shows staged, unstaged, and untracked files; read it before every commit (habit 3). |
 | `git log --oneline` | Lists commits, most recent first, by hash and message. |
 | `git show <hash>` | Displays one commit's full diff. |
 | `git switch -c <name>` | Creates and switches to a new branch. |
 | `git remote add origin <url>`; `git push -u origin main` | Connects to, and first pushes to, a remote. |
 | `git tag -a v1.0 -m '...'` | Marks one commit permanently, e.g. at submission (@sec-archiving anchors to this). |
 | `!pattern` in `.gitignore` | Re-includes a path otherwise ignored, e.g. a data dictionary beside an ignored extract. |
+| `git check-ignore -v <path>` | Names the `.gitignore` rule that ignores a path, or prints nothing if none does. |
 | `git rm --cached <file>` | Untracks a file already committed; does not erase it from the history. |
-| `git filter-repo --sensitive-data-removal` | Rewrites every commit to remove a file; only on a fresh clone, only before re-pushing. |
+| Git refuses | Look up the message in [When git refuses](setup-appendix.qmd#sec-git-refuses); run the [Git preflight](setup-appendix.qmd#sec-git-preflight) once per machine. |
+| `git filter-repo --sensitive-data-removal` | Rewrites every commit to remove a file; only on a fresh clone, only before re-pushing. Where records are regulated, only as an approved, documented controlled change. |
 | Rule of thumb | PHI, credentials, and restricted data are never committed; deleting them later does not remove them from the history. |
 | Rule of thumb | Version control reaches L0 only; it pins the analysis code, not the packages or the environment. |
 | Habit 1 | Commit before you compute. |
@@ -1916,8 +2264,11 @@ container rebuild was never designed to protect.
   written for data scientists rather than software
   engineers. It motivates GitHub as the collaboration
   substrate with the working analyst's concerns foremost.
-  Her longer online work *Happy Git and GitHub for the
-  useR* is the companion practical manual.
+  The longer online book by Bryan and colleagues, *Happy
+  Git and GitHub for the useR* [@bryanhappygit], is the
+  companion practical manual. The setup appendix points to
+  its chapters on installing git, identity, and
+  credentials.
 - @wilson2017 and @sandve2013 place version control among
   the good practices of reproducible computational
   research. The former treats it as one of a set of habits
@@ -1928,6 +2279,6 @@ container rebuild was never designed to protect.
 - The layers that version control does not pin are the
   subject of @sec-dependencies and @sec-containers. The
   continuous integration and collaboration built upon a git
-  history are developed in @sec-verification and
-  @sec-archiving. This chapter is best read as the
+  history are developed in @sec-verification and in
+  @sec-archiving; this chapter is best read as the
   foundation those four presuppose.

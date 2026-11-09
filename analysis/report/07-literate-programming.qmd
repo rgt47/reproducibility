@@ -36,7 +36,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 60 minutes.
+**Reading time.** About 50 minutes.
 
 **Prerequisites.** @sec-dependencies and @sec-containers,
 for the lockfile and the container. With these in hand,
@@ -62,7 +62,8 @@ prior exposure to `knitr` or Quarto chunk syntax is assumed.
   each requires, and explain why a LaTeX distribution
   belongs in the image rather than on the host?
 - Explain why two renders of an unchanged document do not
-  hash identically, and say what should be hashed instead?
+  hash identically, and say what verification compares
+  instead?
 - Place a sealed render on the L0-L3 ladder, and state
   precisely what the seal does and does not establish
   about an analysis's reproducibility?
@@ -73,13 +74,48 @@ Knuth to Buckheit and Donoho. We next follow the R
 lineage from Sweave to Quarto. With that history in
 hand, we develop the sealed render, apply the same seal
 to inline numbers, and catalog the landmines that break
-the seal. We then consider HTML or PDF and the toolchain
-each needs, and explain why a render will not hash the
-same twice. The later sections treat literate
-programming across the archetypes, the write-as-you-go
-doctrine, the cohort continued, a worked example, and
-collaborating with an LLM. Lastly, the chapter closes
+the seal. Quarto's freeze and knitr's cache, which let a
+render skip the code, come next. We then consider HTML or
+PDF and the toolchain each needs, and explain why a render
+will not hash the same twice. The later sections treat
+literate programming across the archetypes, the
+write-as-you-go doctrine, a worked example, the cohort
+continued, and collaborating with an LLM. Lastly, the chapter closes
 with exercises, a cheat sheet, and further reading.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+Your bootstrap confidence interval is computed inside a
+digest-pinned image with a restored lockfile. A colleague
+runs the same image as a SIF under Apptainer on her
+cluster, with `--cleanenv`, the same seed, and the same
+data, and her interval differs. Her home directory holds
+an `.Rprofile` that calls
+`RNGkind(sample.kind = 'Rounding')`, and the project has
+none. Drawing on @sec-levels, @sec-containers, and
+@sec-backends, which determinant layer failed, why did the
+image not prevent it, and what closes it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The colleague's different bootstrap interval comes from
+the session-configuration layer, not the R runtime. The R
+release sets the default random-number kind, so the image
+fixes that default at L2 (@sec-levels, @sec-containers).
+Her `~/.Rprofile` overrides the default, and an override is
+session configuration, fixed only by an explicit
+`RNGkind()` call in the analysis code. The image did not
+prevent it because Apptainer mounts the host `$HOME` by
+default, and `--cleanenv` drops only environment
+variables, so R inside the container still reads her
+startup file (@sec-backends). Two changes close it: an
+explicit `RNGkind()` call in the analysis, and a run with
+`--no-home` and `Rscript --vanilla`, so that no startup
+file is read.
+:::
 :::
 
 ## Where this sits on the stack
@@ -90,8 +126,7 @@ chapters, in that it pins nothing new.
 rather than captured, because version control already
 secures the code at L0. What a sealed render adds is the
 check that the document's prose and figures are actually
-produced by that code. That is, they are not pasted in
-and left to drift.
+produced by that code, not pasted in and left to drift.
 
 ```{r}
 #| label: fig-stack-literate
@@ -442,15 +477,14 @@ penguins, three species measured on two bill dimensions.
 It fits a within-species and a pooled relationship, and
 draws the result. The point of the exercise is not the
 statistics, which are a textbook instance of Simpson's
-paradox, but the mechanism. That is, this figure is
-produced when the book is built, from the code the
-reader sees, and it cannot therefore disagree with the
-sentences around it.
+paradox, but the mechanism: this figure is produced when
+the book is built, from the code the reader sees, and it
+cannot therefore disagree with the sentences around it.
 
 ```{r}
 #| label: fig-simpson
 #| fig-cap: 'The reversal of an association upon pooling. Within each synthetic species bill depth rises with bill length (solid lines); across the pooled sample the fitted line falls (dashed). Because the figure is computed when the book is built, the described reversal cannot drift from the code that produces it.'
-#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species, each drawn in its own color. Within every species the points trend upward and carry a solid fitted line of positive slope. A single dashed line fitted to all the points pooled together is nearly flat with a slight downward tilt, the opposite sign from all three within-species lines, because the species clusters sit at descending heights as bill length increases.'
+#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species: Species A in red, Species B in green, and Species C in blue. Within every species the points trend upward and carry a solid fitted line, in the species color, of positive slope. Species A sits at the shortest bill lengths and Species B at the longest, both at about the same depth. Species C overlaps Species B in bill length, centered slightly shorter, and sits well below both. A single black dashed line fitted to all the points pooled together is nearly flat with a slight downward tilt, the opposite sign from all three within-species lines. It tilts down because the shallow Species C cluster lies among the long bills, while the short-billed Species A cluster is deep.'
 #| echo: true
 #| message: false
 #| warning: false
@@ -589,9 +623,11 @@ which is the drift this chapter exists to prevent.
 ## Check your understanding: which numbers are sealed
 
 In the retinopathy example above, `n_eyes`, `n_events`, and
-`pct` are each written as inline expressions. Why would it
-be wrong to also write the trial's total enrollment target
-of 400 eyes as an inline expression computed from the data?
+`pct` are each written as inline expressions. Suppose the
+study's protocol had stated an enrollment target of 400
+eyes; the figure is hypothetical, not taken from the
+trial. Why would it be wrong to write that target as an
+inline expression computed from the data?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -638,19 +674,27 @@ The second, a specific and common case of the first, is
 **loading with `pacman::p_load`**. The `pacman` package
 offers `p_load()`, which installs a package if it is
 missing and then loads it, in one call. It is convenient
-in interactive exploration and poisonous in a sealed
-render, for two compounding reasons. It installs at
-render time, with all the fragility just described; and
-it defeats static dependency discovery. Tools such as
-`renv` find a project's dependencies by scanning the
-source for `library()`, `require()`, and `pkg::fun()`
-calls. They do not parse the argument list of
-`p_load(a, b, c)`, so packages loaded that way go
-unrecorded in the lockfile and silently absent from the
-next machine. The remedy is to replace
+in interactive exploration and a liability in a sealed
+render. On any machine where a named package is absent,
+it installs whatever version the repository serves that
+day, with all the fragility just described, and the
+render then succeeds against a package set no one chose.
+It also makes `pacman` itself a silent dependency of the
+render. On a machine without `pacman`, the call stops at
+once with 'there is no package called 'pacman''. A
+common belief is that dependency scanners cannot see the
+packages `p_load()` names, but `renv` can. In a test
+with `renv` 1.2.3, `renv::dependencies()` reported the
+packages passed to `p_load()` as well as `pacman`
+itself, and the solution to Exercise 8 repeats the scan
+at every build. A
+scanner built on a narrower search may not, so whether a
+given scanner sees them is a question to test, not to
+assume. The remedy is to replace
 `pacman::p_load(a, b, c)` with explicit `library(a)`,
-`library(b)`, `library(c)` calls, which both name the
-dependencies for `renv` and load without installing.
+`library(b)`, `library(c)` calls. These name the
+dependencies in the form every scanner recognizes, and
+they load without installing.
 
 The third is **absolute host paths**. A chunk that reads
 `/Users/jsmith/data/cohort.csv`, or sources a LaTeX
@@ -736,6 +780,105 @@ the CI failure locally and settles the matter.
 :::
 :::
 
+## Freeze and cache: renders that skip the code {#sec-freeze}
+
+Two features let a render skip work, and both weaken the
+seal without saying so on the page. Quarto's `freeze`
+option acts on whole documents during a project render.
+With `freeze: true` a document is never re-executed by a
+project render. With `freeze: auto` it is re-executed only
+when its source file changes. Otherwise Quarto reuses the
+results stored in the project's `_freeze/` directory, and
+its documentation advises committing that directory, so
+that others can render the project without the
+environment that computed it [@quartoexecution]. Freeze
+applies only to a render of the whole project; rendering a
+single document always executes its code. The `knitr`
+chunk cache acts on single chunks. It saves the objects a
+chunk creates, its printed results, and the random seed,
+and reloads them on the next render. A change to the
+chunk's code or options invalidates it
+[@xieknitrcache; @quartoexecution].
+
+Neither feature looks at the rest of the stack. Under
+`freeze: auto` the comparison is with the document's own
+source. A corrected data file, an updated package, a new R
+release, or an edited function under `R/` therefore leaves
+the frozen results in place. The chunk cache behaves the
+same way unless the analyst ties it to those inputs, for
+example by setting the `cache.extra` option to the R
+version string or to a data file's modification time
+[@xieknitrcache]. A cached chunk also skips its side
+effects, which is how caching springs the hidden-state
+landmine above. In each case the page carries a fresh
+build date over numbers computed earlier, perhaps on
+another machine.
+
+```{r}
+#| label: freeze-facts
+#| include: false
+quarto_yml <- readLines('_quarto.yml')
+freeze_line <- grep('^\\s*freeze:', quarto_yml, value = TRUE)
+freeze_setting <- if (length(freeze_line)) {
+  trimws(sub('^\\s*freeze:', '', freeze_line[1]))
+} else {
+  'not set'
+}
+freeze_code <- if (length(freeze_line)) {
+  paste0('`freeze: ', freeze_setting, '`')
+} else {
+  'no `freeze` option'
+}
+frozen_files <- tryCatch(
+  suppressWarnings(system2(
+    'git', c('-C', '../..', 'ls-files', 'analysis/report/_freeze'),
+    stdout = TRUE, stderr = FALSE
+  )),
+  error = function(e) character(0)
+)
+if (!is.null(attr(frozen_files, 'status'))) frozen_files <- character(0)
+frozen_docs <- setdiff(
+  unique(sub('^analysis/report/_freeze/([^/]+)/.*$', '\\1',
+             frozen_files)),
+  'site_libs'
+)
+ci_file <- '../../.github/workflows/render-book.yml'
+ci_project_render <- file.exists(ci_file) &&
+  any(grepl('quarto render analysis/report( |$)', readLines(ci_file)))
+freeze_txt <- if (length(frozen_docs)) {
+  paste0('When this page last executed, the repository committed ',
+         'frozen results for ', length(frozen_docs), ' documents (',
+         length(frozen_files), ' files under `_freeze/`).')
+} else {
+  paste0('When this page last executed, the git history was not ',
+         'available, so the committed contents of `_freeze/` could ',
+         'not be counted.')
+}
+ci_txt <- if (ci_project_render) {
+  paste0('Its continuous-integration workflow runs a project ',
+         'render, so freeze applies there too.')
+} else {
+  paste0('No continuous-integration workflow running a project ',
+         'render was found when this page last executed.')
+}
+```
+
+This book is a case in point. Its `_quarto.yml` sets
+`r freeze_code`. `r freeze_txt` `r ci_txt` A
+chapter whose source has not changed since its last local
+execution is published with the results computed on the
+machine that executed it and committed `_freeze/`, not
+with results computed in the CI environment. The counts in
+this paragraph are subject to the same rule: they are as
+of this page's last execution. For a book whose chunks
+illustrate rather than report, that trade may be
+acceptable. For a deposited analysis it is not. The render
+that produces a submitted or deposited document should run
+in the pinned environment with freeze off, or after
+deleting `_freeze/` and the cache directories. Freeze and
+cache are conveniences for drafting, not evidence that the
+numbers are current.
+
 ## HTML or PDF, and the toolchain each needs
 
 A literate source document is format-agnostic; the same
@@ -762,8 +905,8 @@ same `knitr` and `pandoc` steps and then hands the result
 to a LaTeX distribution. The distribution lays out the
 pages, resolves the cross-references, sets the
 mathematics, and embeds the fonts. A LaTeX distribution
-is large, on the order of a gigabyte for a full
-installation. Its absence is the single most common
+is large: a full TeX Live installation occupies several
+gigabytes. Its absence is the single most common
 cause of a PDF render failing on a machine where the
 HTML render succeeds. This is precisely the
 environmental problem the earlier chapters solved, and
@@ -772,8 +915,8 @@ it is why the framework's publishing profile exists.
 The publishing profile builds on the `rocker/verse` base
 image, which carries a base LaTeX distribution sufficient
 for a straightforward render: plain prose, ordinary
-tables, standard mathematics. Unfortunately, it does not
-carry a full LaTeX distribution. A document that reaches
+tables, standard mathematics. It does not carry a full
+LaTeX distribution. A document that reaches
 for a package the base omits (dense tables,
 `moderncv`-style layouts, and similar) still needs that
 package installed with `tlmgr` before it will render.
@@ -836,10 +979,10 @@ file, embeds metadata that has nothing to do with the
 analysis and everything to do with the moment of the
 render. A PDF carries a creation timestamp and a
 modification timestamp in its metadata. It also carries
-an internal document identifier, often randomly
-generated. Moreover, when it subsets the fonts it uses,
-it assigns those subsets internal names that can vary
-between builds. Two renders of byte-for-byte identical
+an internal document identifier, which engines derive from
+the time, the file name, and in some cases the build path.
+Some engines also give the font subsets they embed names
+that can vary between builds. Two renders of byte-for-byte identical
 source, in the same environment, minutes apart, therefore
 produce two PDF files that differ in their bytes. They
 differ even though every number and figure in them is
@@ -849,32 +992,41 @@ Part of this non-determinism can be normalized away. Many
 document tools, including LaTeX and `pandoc`, honor a
 conventional environment variable, `SOURCE_DATE_EPOCH`,
 which fixes the timestamp the build embeds to a specified
-value instead of the wall-clock time. Setting it
-removes the timestamp difference, and a determined
-practitioner can normalize further, stripping identifiers
-and canonicalizing font-subset names, until two renders
-do hash alike. This is worthwhile work in some settings,
+value instead of the wall-clock time. In a test with TeX
+Live 2026, setting it alone made two pdfLaTeX, XeLaTeX, or
+LuaLaTeX builds of a short document in one directory
+identical. Builds in different directories could still
+differ in their identifier, and a full report adds figures,
+paths, and tool versions, each another source of difference.
+Normalizing them all is worthwhile work in some settings,
 notably in the reproducible-builds movement for operating
 systems. For a research compendium it is usually
 misplaced effort, because it fights a symptom.
 
-The resolution the framework adopts is to hash the right
-thing. Verification, developed in @sec-verification, does
-not hash the rendered document. It hashes the
-computational outputs: the derived datasets, the model
-objects, the figure data, the numbers themselves. These
-are deterministic under a fixed environment and a fixed
-seed in a way the typeset PDF is not. The rendered report
-is a human-facing artifact, a faithful presentation of
-those outputs. It is checked by regenerating it and
-confirming that the outputs it presents match the
-recorded baseline, not by demanding that its bytes be
+The resolution the framework adopts is to compare the
+right thing. Verification, developed in @sec-verification,
+does not hash the rendered document. It recomputes the
+computational outputs, the derived datasets, the model
+estimates, the figure data, the numbers themselves, and
+compares them with a recorded baseline within a stated
+tolerance (habit 5). The tolerance matters because even
+these numbers can move in their last digits under a
+different numerical library without the analysis
+changing. A hash detects any change at all, so it is the
+right instrument only for a file whose bytes should not
+change, such as a raw data extract; @sec-verification
+develops both. The rendered report is a human-facing
+artifact, a faithful presentation of those outputs. It
+is checked by regenerating it and confirming that the
+outputs it presents match the recorded baseline within
+that tolerance, not by demanding that its bytes be
 identical. For provenance the framework goes further in
 the opposite direction. Its render hook deliberately
-stamps each rendered PDF with the render time and the git
-version of the source, in a footer. It does so precisely
-so that a reader can tell two renders apart and trace
-each to its source commit. The rendered document is thus
+stamps each rendered PDF with the render time and the
+source path, in a footer, and stages a dated copy whose
+name and manifest row record the git version of the
+source. A reader can therefore tell two renders apart and
+trace each to its source commit. The rendered document is thus
 a dated,
 signed presentation of a result; the object of record is
 the computation.
@@ -885,9 +1037,11 @@ the computation.
 This chapter's own executed chunks, `fig-simpson`, the
 inline-sealed retinopathy sentence, and the cohort passage
 below, are sealed. Every number in them regenerates from
-the code beside it. However, that seal alone leaves them at
-no higher than L0, since nothing in this chapter pins the
-packages or the environment that produced them.
+the code beside it. The seal adds no rung, however. These
+chunks sit on whatever rung the compendium's lockfile and
+environment reach, which @sec-dependencies and
+@sec-containers compute from the repository; nothing in
+this chapter raises it.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -906,9 +1060,11 @@ document identifier, font-subset names, not because the
 figures or numbers changed. The right question is whether
 the computational outputs, the numbers and figures the
 document presents, regenerate within a stated tolerance.
-That question is answered by hashing the outputs
-themselves, not the typeset file. A rendered document's bytes are not the object
-of record; the computation is.
+That question is answered by a baseline test that
+recomputes the outputs and compares them with recorded
+values within that tolerance, not by hashing the typeset
+file. A rendered document's bytes are not the object of
+record; the computation is.
 :::
 :::
 
@@ -1014,8 +1170,9 @@ document were still computed rather than typed?
 ## Answer
 
 Nothing would be lost about any individual number's seal, if
-the author were careful. What would be lost is the absence
-of a phase in which copying could occur. A month of
+the author were careful. What is lost is a guarantee:
+starting on day one leaves no period in which numbers are
+copied, so the copying habit never forms. A month of
 scripts-first work creates thirty days during which a
 results-in-progress tempts an author to paste a number into
 a slide or an email. The habit of pasting is exactly what
@@ -1191,21 +1348,13 @@ exactly the fluency that plants landmines. Three exchanges
 illustrate the pattern of use and the verification the
 analyst must supply.
 
-::: {.callout-important}
-## Restricted data
+{{< include _llm-rule.qmd >}}
 
-A literate document mixes code with data and results, so it
-is easy to paste too much (habit 3). Never paste or upload
-protected health information into a model unless the
-endpoint is approved by the reader's institution for that
-data. The same rule holds for identifiable or
-agreement-restricted data, and for outputs derived from
-them (a rendered table of small cells included). Describe
-the structure instead, with column names, types, and a
-synthetic example. A coding agent asked
-to render the document reads the data it renders, so it
-belongs only in projects whose data it is allowed to see.
-:::
+A literate document mixes code with data and results, so
+it is easy to paste too much. The derived outputs the rule
+covers include a rendered table of small cells, and a
+coding agent asked to render the document reads the data
+it renders.
 
 **Prompt.** 'Write a `knitr` chunk that loads `dplyr` and
 `survival` and reads the CSV at
@@ -1214,13 +1363,12 @@ belongs only in projects whose data it is allowed to see.
 formats), `hba1c` and `bmi` (numeric), and `incident_dm`
 (integer, 0 or 1, with missing values).'
 
-*Watch for.* A model will often reach for convenience over
-seal. It may emit `pacman::p_load(...)`, or an
-`install.packages()` call, or a `library(pacman)` line,
-because these are common in the training data. It may also
-read the data from an absolute path it invents, such as
-`/Users/you/data/cohort.csv`, or from a path outside the
-project.
+*Watch for.* Check for convenience chosen over the seal: a
+`pacman::p_load(...)` call, an `install.packages()` call,
+or a `library(pacman)` line. Check also that the data are
+read from the path given, not from an invented absolute
+path such as `/Users/you/data/cohort.csv` or from a path
+outside the project.
 
 *Verification.* Insist on explicit `library()` calls, one
 per package, with no installation on the render path, and a
@@ -1247,54 +1395,45 @@ image, not installed as the document renders.
 Verify that the PDF then renders in the container with
 nothing installed on the fly.
 
-**Prompt.** 'Check that this analysis is reproducible.'
+*A better prompt.* 'My Quarto document renders to HTML,
+but the PDF render fails; the log is attached, with paths
+replaced by placeholders. The build runs in a container
+from the attached Dockerfile, and nothing may be installed
+during the render. Identify the missing LaTeX component
+from the log, propose the Dockerfile change that provides
+it, and name the command and the log line that will
+confirm the fix.'
 
-*Watch for.* A model will frequently equate a successful
-render with reproducibility, and report the analysis as
-reproducible on the strength of the document having built.
-This conflates the seal with the level, the confusion this
-chapter exists to prevent.
+**Prompt.** 'Find the hidden state in this document.'
 
-*Verification.* Ask, and answer, the level question
-explicitly. A render that succeeds demonstrates the seal.
-Whether the analysis is pinned (L1), environment-fixed
-(L2), or verified (L3) is a separate question. It is
-settled by the lockfile, the container, and a baseline
-test run after a clean rebuild (@sec-levels), not by the
-fact of a render. State the level actually reached and no
-more.
+*Watch for.* Check whether the answer rests on reading the
+source alone. Hidden state belongs to the session in which
+the chunks run. A reading can miss an object created in the
+console, an option set in `.Rprofile`, or a chunk that
+works only because a cached predecessor was skipped, and it
+can flag chunks that are in fact self-contained.
 
-The same disclosure obligation applies to a literate
-document. If a language model drafted or edited a chunk, a
-caption, or a paragraph of prose here, that use belongs in
-the manuscript's methods section or acknowledgments, not
-left unstated. Current editorial guidance, including from
-the International Committee of Medical Journal Editors,
-treats AI assistance as disclosable, not authorable. A
-model cannot be listed as an author, because it cannot
-take responsibility for the work, but silence about its
-use is not an option either. Record which model, or model
-family and version, helped produce the document, and
-roughly when, exactly as the compendium already records an
-R and package version in its lockfile. A render's seal
-attests that the code ran and the prose agrees with it. It
-says nothing about whether a sentence of prose, or a chunk
-of code, was drafted by a person or a model. That
-provenance therefore has to be recorded separately, in
-prose the seal does not cover.
+*Verification.* Test each item by execution. Delete
+`_freeze/` and any cache directory, so that the skipped
+chunks of @sec-freeze run too, and render the document in
+a fresh session inside the container. Then run each
+flagged chunk alone in a new R session. A chunk that fails
+alone depends on state that something earlier supplied; a
+chunk that passes does not, whatever the model reported.
 
-But why is such a record needed at all? The reason is that
-a model is not a versioned, reproducible dependency the way
-a package is. The same model name can behave differently
-across releases. A provider can retire or silently update
-a model identifier the document depended on. Even one
-unchanged version is not guaranteed to produce identical
-text or code from one call to the next. 'Drafted with
-language-model assistance, a general-purpose model,
-approximately mid-2026' is a usable record for a future
-reader auditing the document. 'AI-assisted' alone is not,
-any more than 'used some R packages' would be an
-acceptable substitute for a lockfile entry.
+A literate document carries the same disclosure obligation
+as the rest of the paper. A render's seal attests that the
+code ran and the prose agrees with it, not who or what
+drafted either. Record any model use in drafting a chunk,
+a caption, or a paragraph with the template and the
+`LLM-USE.md` record of @sec-llm-disclosure. A
+model is also not a versioned dependency the way a package
+is: a provider can retire or update an identifier, and one
+unchanged version need not return the same text twice. The
+reproducibility conclusion follows. Text a model drafted
+is reproducible only as the committed file, never by
+asking again, and a model whose output feeds the analysis
+is a dependency in its own right (@sec-llm-in-pipeline).
 
 ## Exercises
 
@@ -1338,7 +1477,7 @@ acceptable substitute for a lockfile entry.
    inspect the metadata to identify what differs, and
    explain why hashing the rendered document would be the
    wrong basis for verification. Then describe what should
-   be hashed instead.
+   be compared instead, and how.
 
 6. For each of the five archetypes named in this chapter,
    the manuscript, the blog, the data analysis, the R
@@ -1365,10 +1504,12 @@ acceptable substitute for a lockfile entry.
    Run `renv::dependencies()` on this chapter's own `.qmd`
    file, as @sec-dependencies's own cohort exercise runs it
    on `R/cohort.R`, and report which of those three packages
-   the scan finds referenced. Then explain why a chunk that
-   instead called `pacman::p_load(dplyr, tibble, ggplot2)`
-   would pass this chapter's own render yet be invisible to
-   that scan, tying the two chapters' landmines together.
+   the scan finds referenced. Then write a scratch `.R` file
+   whose only line is `pacman::p_load(dplyr, tibble,
+   ggplot2)`, scan it the same way, and report what the scan
+   finds. Explain what the result implies for the `pacman`
+   landmine, and for any claim about a scanner's coverage
+   that has not been tested.
 
 ## Solutions
 
@@ -1383,7 +1524,7 @@ should happen and why.
 The substitution replaces a literal with an expression, so
 that a sentence reading 'The mean age was 61.4 years'
 becomes, in the source,
-`r knitr::inline_expr('round(mean(cohort$age), 1)')`
+`r knitr::inline_expr('round(mean(cohort$age_at_enroll, na.rm = TRUE), 1)')`
 written inline where the number used to be.
 
 On the first render the printed value is unchanged,
@@ -1452,10 +1593,12 @@ document renders against a different package set than the
 one it was written for. The landmine here is not a broken
 render but an unpinned one.
 
-**`pacman::p_load()`.** The same, with an additional
-failure mode: it installs `pacman` itself if absent, so
-the document reaches out to the network on a machine where
-nothing was declared.
+**`pacman::p_load()`.** Renders on your machine. On the
+fresh clone the outcome depends on whether `pacman` is
+installed there. If it is not, the render stops at once
+with 'there is no package called 'pacman''. If it is,
+`p_load()` silently installs whatever versions are current,
+exactly as `install.packages()` does.
 
 **An absolute host path.** Renders on your machine and
 fails immediately on the fresh clone, with a
@@ -1476,11 +1619,12 @@ absolute path. This is exactly why the chapter pairs them
 and asks for a distinguishing check: inspect version
 control to see whether the file is tracked.
 
-Two of the five fail loudly, and the three that render
-anyway are the dangerous ones. Rendering from a fresh clone catches
-the loud two reliably and the quiet three only sometimes,
-which is the argument for continuous integration in
-@sec-verification.
+Two of the five fail loudly, two render anyway, and
+`pacman::p_load()` does either, depending on the machine.
+The ones that render anyway are the dangerous ones.
+Rendering from a fresh clone catches the loud two reliably
+and the quiet ones only sometimes, which is the argument
+for continuous integration in @sec-verification.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1537,21 +1681,29 @@ trains whoever sees it to ignore the failure. A
 verification gate is useful in proportion to how reliably
 its failures mean something.
 
-**What should be hashed instead.** The deterministic
+**What should be compared instead, and how.** The
 computational outputs that feed the report: the derived
-datasets, the fitted model objects, the results tables.
-Each of these changes its checksum exactly when a number
-changes, and not otherwise, so a failure is informative.
-The render gate then sits alongside as a separate check
-confirming that the document still builds from those
-outputs.
+datasets, the fitted model's estimates, the results
+tables. A baseline test (@sec-testing) recomputes them
+after a clean rebuild and compares them with recorded
+values within a stated tolerance (habit 5), so a failure
+means that a number moved by more than floating-point
+noise. A hash is the wrong instrument here, because an
+estimate's last binary digit can move under a different
+numerical library without the analysis changing, and a
+hash would report that as a failure. Keep hashes for
+files whose bytes should not change, such as a raw data
+extract. The render gate then sits alongside as a
+separate check confirming that the document still builds
+from those outputs.
 
 Byte-identical PDFs are attainable, by setting
-`SOURCE_DATE_EPOCH` and freezing font subsetting, but this
-is a fragile route to a result the output hashes give
-directly. The chapter's position is that we should hash
-what is deterministic rather than work to make the
-non-deterministic thing deterministic.
+`SOURCE_DATE_EPOCH` and holding the build path and every
+tool version fixed, but this
+is a fragile route to a result the baseline comparison
+gives directly. The chapter's position is to compare the
+computation, within a tolerance, rather than work to make
+the non-deterministic document deterministic.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1600,9 +1752,9 @@ respectively) does the binding instead.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch07),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 two autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -1611,54 +1763,89 @@ chapter's own 'The cohort, continued' section.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 8
 
-```r
-renv::dependencies('analysis/report/07-literate-programming.qmd')
+The chunk below runs both scans when the book is built,
+from this chapter's own directory.
+
+```{r}
+#| label: ex8-scan
+#| echo: true
+scan_pkgs <- function(path) {
+  found <- renv::dependencies(path, progress = FALSE)
+  sort(unique(found$Package))
+}
+chapter_pkgs <- scan_pkgs('07-literate-programming.qmd')
+pacman_file <- tempfile(fileext = '.R')
+writeLines('pacman::p_load(dplyr, tibble, ggplot2)', pacman_file)
+pacman_pkgs <- scan_pkgs(pacman_file)
+simpson_pkgs <- c('dplyr', 'tibble', 'ggplot2')
 ```
 
-The scan finds `dplyr`, `tibble`, and `ggplot2` all
-referenced, among other packages this chapter's prose and
-worked example load or name (`knitr`, `rmarkdown`,
-`pkgload`, and, from the `tbl-diabetic-arms`-style examples
-elsewhere in the book, `survival`). All three of the
-`fig-simpson` chunk's explicit `library()` calls are
-therefore visible to the scan and would be pinned by
-`renv::snapshot()` and checked by `make check-renv`.
+```{r}
+#| label: ex8-scan-prose
+#| include: false
+code_list <- function(x) {
+  x <- sprintf('`%s`', x)
+  n <- length(x)
+  if (n == 0) {
+    'nothing'
+  } else if (n == 1) {
+    x
+  } else if (n == 2) {
+    paste(x, collapse = ' and ')
+  } else {
+    paste0(paste(x[-n], collapse = ', '), ', and ', x[n])
+  }
+}
+chapter_txt <- code_list(chapter_pkgs)
+found_simpson_txt <- code_list(intersect(simpson_pkgs, chapter_pkgs))
+pacman_txt <- code_list(pacman_pkgs)
+pacman_args_seen <- all(simpson_pkgs %in% pacman_pkgs)
+pacman_verdict <- if (pacman_args_seen) {
+  paste(
+    'The scan sees the packages passed to',
+    '`p_load()`, and the claim that they go unrecorded',
+    'is false for this version of `renv`.')
+} else {
+  paste(
+    'The scan misses at least one package',
+    'passed to `p_load()`, which would go unrecorded in',
+    'the lockfile.')
+}
+```
 
-**Why `pacman::p_load()` would be invisible to it.**
-`renv::dependencies()` finds packages by recognizing the
-syntactic forms `library(pkg)`, `require(pkg)`, and
-`pkg::fun()`, the same forms @sec-dependencies's
-dependency-triad check looks for. A call to
-`pacman::p_load(dplyr, tibble, ggplot2)` recognizes `pacman`
-itself, because that is a namespaced call. However, the
-three packages named as bare arguments inside it are not
-calls of any of those three recognized forms, so the scan
-does not see them. The chunk would still run, and would
-still render, on a machine where those packages happened
-to be installed. That is exactly this chapter's warning
-about `pacman::p_load()`: it reaches outside the committed
-lockfile at render time. Moreover, @sec-dependencies's own
-gate, built on the same kind of syntactic scan as
-`renv::dependencies()`, cannot catch what it cannot see
-either. The two chapters' landmines are the same landmine,
-met twice: once as a render-time install, once as an
-invisible, unpinned dependency.
+On this build the scan of the chapter returns
+`r chapter_txt`. Of the `fig-simpson` chunk's three
+packages it finds `r found_simpson_txt`. The scan of the
+one-line `pacman` file returns `r pacman_txt`.
+`r pacman_verdict`
+
+**What the result implies.** The `pacman` landmine does
+not rest on invisibility to `renv`. It rests on the
+render-time install: `p_load()` fetches whatever version is
+current on any machine that lacks a package, and stops
+the render on any machine that lacks `pacman`. The wider
+lesson concerns coverage claims. A belief about what a
+scanner sees, including the gate of @sec-dependencies, is
+an empirical claim about one tool at one version. Run the
+scan on a small file whose answer you know before relying
+on the tool, in the spirit of habit 4.
 :::
 
 ## Cheat sheet {#sec-cheat-literate}
 
 | Command or rule | What it does |
 |---|---|
-| `library(pkg)`, one per package | Names a dependency explicitly so `renv` can find it; never `pacman::p_load()`. |
-| An inline R expression in prose | Seals a number in prose to the code that computes it (habit 2). |
+| `library(pkg)`, one per package | Names a dependency in the form every scanner recognizes and loads without installing; prefer it to `pacman::p_load()`, which installs at render time. |
+| An inline R expression in prose | Seals a number in prose to the code that computes it. |
 | `knitr::opts_chunk$set(...)` | Sets chunk defaults, `echo`, `message`, `warning`, `fig.path`, once near the top. |
 | `SOURCE_DATE_EPOCH` | Fixes the embedded build timestamp, so two renders agree on that one field. |
 | `make docker-render` | Renders inside the pinned container and stamps the provenance footer (habit 6). |
 | Five landmines | Installing at render time; `pacman::p_load()`; an absolute host path; hidden cross-chunk state; reading an uncommitted file. |
 | Rule of thumb | A sealed render binds prose to code; it pins no package, no environment, and proves nothing correct. |
-| Rule of thumb | Hash the computational outputs, not the rendered PDF or HTML; the render's bytes are not the object of record. |
+| Rule of thumb | Compare the computational outputs with a recorded baseline within a stated tolerance (habit 5), not the rendered PDF or HTML; the render's bytes are not the object of record. |
 | Habit 6 | Rebuild from clean, on a machine that is not yours, to test whether the seal actually holds. |
 | Habit 7 | Write the honest level down; 'it renders' is a claim about the seal, not about L1, L2, or L3. |
+| `freeze: auto` | Re-executes a document only when its source changes; data, package, and R changes do not trigger it (@sec-freeze) |
 
 ## Further reading
 
@@ -1669,9 +1856,9 @@ even though its concrete apparatus is now of historical
 interest. The reproducibility argument this chapter takes
 as its keystone is @buckheit1995. Their paraphrase of
 Claerbout, that the article is advertising and the code and
-instructions are the scholarship, is the single most cited
-sentence in this literature. It is also the one worth
-committing to memory. The earlier formulation in @claerbout1992 and the
+instructions are the scholarship, is the sentence this book
+takes as its keystone, and the one worth committing to
+memory. The earlier formulation in @claerbout1992 and the
 signal-processing lineage surveyed by @vandewalle2009 give
 the argument its original setting.
 

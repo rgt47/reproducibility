@@ -1,40 +1,49 @@
-# Setup Appendix: Docker on Your Own Machine {#sec-setup .unnumbered}
+# Setup Appendix: Docker and Git on Your Own Machine {#sec-setup .unnumbered}
 
 @sec-containers teaches what a container is and why pinning a
 base image by digest matters. This appendix is narrower and more
 mundane. Its subject is getting Docker itself to run at all, on
-the three machines most readers actually sit down at, before any
-of that chapter's content applies. We take up Docker on `arm64`
+the machines most readers actually sit down at, before any of
+that chapter's content applies. We take up Docker on `arm64`
 laptops, `--platform linux/amd64` emulation and its consequences,
-Windows and WSL2, and locked-down institutional laptops. A 2026
-expert review of this book judged that without such guidance,
-'weeks 2 to 4' of a course built on it are lost to installation
-trouble instead of spent on the material itself. We add no
+Windows and WSL2, and locked-down institutional laptops. We add no
 reproducibility theory here. The appendix is a checklist for the
-moment before the first `docker build` succeeds.
+moment before the first `docker build` succeeds. Its last two
+sections do the same for git, which @sec-version-control needs
+earlier in the course: a preflight to run once per machine
+before the first commit ([Git preflight](setup-appendix.qmd#sec-git-preflight)), and a table of the
+refusals a new user meets most often ([When git refuses](setup-appendix.qmd#sec-git-refuses)).
 
 ## Apple Silicon (M-series Mac)
 
-@sec-containers already explains the mechanism. `rocker/tidyverse`
-and `rocker/verse`, the two base images this book's own Dockerfiles
-build on, publish a `linux/amd64` entry only. An Apple Silicon Mac
-(an `arm64` host) therefore has nothing native to match, and the
-flag `--platform
-linux/amd64` is then the only way to get a build at all; it is
-not an optimization. The reader is referred to that section
-before this one. What follows is the practical sequence for a
-reader sitting at such a machine for the first time.
+@sec-containers already explains the mechanism. The Rocker images
+differ. `rocker/r-ver`, the base of the showcase Dockerfile, is
+published for both `linux/amd64` and `linux/arm64`, so on an Apple
+Silicon Mac (an `arm64` host) it builds natively without any flag.
+`rocker/tidyverse` and `rocker/verse` at 4.4.0, the bases of the
+tidyverse and publishing profiles, publish a `linux/amd64` entry
+only, so the Mac has nothing native to match, and the flag
+`--platform linux/amd64` is not an optimization but the only way
+to get a build at all. For either kind of base, the flag is what
+makes a Mac build the same image that a CI runner or an `x86`
+cluster builds, which is why this book passes it to every build.
+That section of @sec-containers is worth reading before this
+one. What follows is the practical sequence for a reader sitting
+at such a machine for the first time.
 
 1. **Confirm Docker Desktop is installed and running.** `docker
    version` should print both a `Client` and a `Server` block; a
    `Client`-only response, or a connection error, means the
    command is installed but Docker Desktop is not running.
 
-2. **Add `--platform linux/amd64` to every build and run** against
-   an image, like this book's own, that has no `arm64` entry:
-   `docker build --platform linux/amd64 -t myimage .`. Omitting the
-   flag against an `amd64`-only image does not silently succeed at
-   native speed; it fails to resolve a matching entry at all.
+2. **Add `--platform linux/amd64` to every build and run**:
+   `docker build --platform linux/amd64 -t myimage .`. Against an
+   `amd64`-only image such as `rocker/tidyverse:4.4.0`, omitting
+   the flag does not silently succeed at native speed; it fails to
+   resolve a matching entry at all. Against a multi-architecture
+   image such as `rocker/r-ver`, omitting it does silently succeed,
+   natively, and yields an `arm64` image that differs from the one
+   the rest of the lab and the cluster run.
 
 3. **Expect the build to be slower, not wrong.** Docker's own
    documentation on multi-platform builds warns that QEMU
@@ -92,10 +101,13 @@ line endings. Git on Windows commonly checks out text files with
 CRLF line endings by default (`core.autocrlf=true`), while this
 book's shell scripts, Dockerfiles, and R scripts assume LF, the
 Linux convention a container's shell expects. A script that
-looks identical in an editor can fail inside a container with an
-`exec format error` or a shebang that silently does not match.
-The reason is that a trailing `\r` is part of the first line's
-interpreter path as far as the kernel is concerned. Cloning inside WSL2's own
+looks identical in an editor can fail inside a container with
+`/bin/bash^M: bad interpreter: No such file or directory` when a
+shell runs it, or a bare `no such file or directory` when the
+container runtime executes it directly. The reason is that a
+trailing `\r` is part of the first line's interpreter path as far
+as the kernel is concerned, and no interpreter of that name
+exists. Cloning inside WSL2's own
 filesystem, where Git's Linux default is LF, avoids this
 entirely; cloning on the Windows side and later copying into WSL2
 does not.
@@ -103,9 +115,7 @@ does not.
 ## Locked-down institutional laptops
 
 A reader with no administrator rights cannot install Docker
-Desktop at all. The same expert review named this constraint as
-common and often treated as an afterthought in course
-materials. Unfortunately, nothing on the laptop itself will fix
+Desktop at all, and nothing on the laptop itself will fix
 this. The options instead route around it through other
 infrastructure, in roughly increasing order of how much it is
 worth asking for:
@@ -149,16 +159,131 @@ assuming the Dockerfile itself is wrong:
 |---|---|
 | `docker info` | Confirms Docker Desktop is actually running and reachable; also reports the server's architecture. |
 | `docker version` | Separates client-only output (Desktop not running) from a full client-and-server response. |
-| Is `--platform` set, and does the base image need it? | An `amd64`-only base on an `arm64` host needs the flag explicitly; a missing flag there is a pull failure, not a slow build. |
+| Is `--platform` set, and does the base image publish an `arm64` entry? | An `amd64`-only base on an `arm64` host needs the flag explicitly, and a missing flag there is a pull failure, not a slow build. A multi-architecture base such as `rocker/r-ver` builds without it, natively, but then yields an `arm64` image rather than the `amd64` one CI and the cluster run. |
 | Docker Desktop's allotted disk and memory (Settings > Resources) | A build that stalls rather than errors often has hit a memory or disk ceiling Docker Desktop itself enforces, independent of the host machine's total resources. |
-| Is the project under `/mnt/c` on WSL2, or on Windows' own filesystem? | Either one is the likely source of a build that is slow specifically on Windows and not elsewhere; moving the clone inside WSL2's Linux filesystem is the fix. |
+| On WSL2, is the project on the Windows filesystem (reached as `/mnt/c/...`) rather than in WSL2's own Linux filesystem (`/home/<user>/...`)? | A Windows-side clone is the likely source of a build that is slow specifically on Windows and not elsewhere; cloning again from inside the WSL2 terminal, into the Linux filesystem, is the fix. |
 
 On the machine this book was written on (Apple Silicon, Docker
 Desktop with the `desktop-linux` context), `docker version`
 reports a `darwin/arm64` client against a `linux/arm64` server
-(verified, run 2026-10-12). A reader instead passing
-`--platform linux/amd64`, as this book's own Dockerfile requires,
+(verified, run 2026-10-12). A reader passing
+`--platform linux/amd64`, as this book does for every build,
 would see the pulled or built image itself report `amd64` under
 `docker image inspect`. The daemon underneath, however, is still
 `arm64`. This combination is the signature of emulation working
 as intended rather than a misconfiguration.
+
+## Git preflight {#sec-git-preflight}
+
+@sec-version-control assumes four things about git: it is
+installed, it knows who the analyst is, it names a new
+repository's first branch `main`, and the forge accepts the
+analyst's credentials. On a fresh installation none of the
+four can be taken for granted. The checks below are run once
+per machine, before the first commit. Each names the chapter of
+*Happy Git and GitHub for the useR* [@bryanhappygit] that treats
+the step at length, with the RStudio detail this book omits.
+
+1. **Git is installed.** `git --version` prints one line, such
+   as `git version 2.56.0` on the machine this book was written
+   on. A 'command not found' error means git must be installed
+   first; see 'Install Git'
+   (<https://happygitwithr.com/install-git.html>).
+
+2. **Git knows who you are.** Every commit records a name and an
+   e-mail address, so set both once:
+
+   ```bash
+   git config --global user.name 'A. Analyst'
+   git config --global user.email 'analyst@example.org'
+   ```
+
+   Without them, git does one of two things. Where it cannot
+   guess an address, it refuses the commit with 'Author identity
+   unknown' and '\*\*\* Please tell me who you are.' Where it can,
+   it builds an address from the login name and the host name,
+   commits under it, and prints only a notice that the identity
+   was 'configured automatically'. The second outcome is the
+   worse one, because the commit succeeds under an address no
+   collaborator would recognize. Use the address registered with
+   the forge account. See 'Introduce yourself to Git'
+   (<https://happygitwithr.com/hello-git.html>).
+
+3. **New repositories start on `main`.** Unless told otherwise,
+   git 2.56.0 names the first branch `master`, with a hint that
+   the default will change in Git 3.0. The chapter's
+   `git init -b main` handles this per repository; one setting
+   handles it for all of them:
+
+   ```bash
+   git config --global init.defaultBranch main
+   ```
+
+   Afterward, `git config --global --list` should show three
+   lines, `user.name`, `user.email`, and `init.defaultbranch`
+   (git prints the key in lowercase).
+
+4. **The forge accepts your credentials.** For git operations
+   over HTTPS, GitHub does not accept the website password. It
+   needs a personal access token, which a credential helper
+   keeps in the operating system's store; see 'Personal access
+   token for HTTPS' (<https://happygitwithr.com/https-pat.html>).
+   Alternatively, `gh auth login` (the GitHub command-line
+   client) signs in through a browser and stores a token, and
+   `gh auth setup-git` makes git use it. The other route is an
+   SSH key registered with the forge; see 'Set up keys for SSH'
+   (<https://happygitwithr.com/ssh-keys.html>). A token never
+   goes in `.Renviron` or anywhere else inside the repository.
+
+5. **Line endings, on Windows only.** Cloning inside WSL2
+   avoids the CRLF hazard described above. A repository that
+   is also cloned on the Windows side should commit a
+   `.gitattributes` file with the line `*.sh text eol=lf`, and
+   the same for any other file a container executes; the
+   attribute fixes LF on checkout whatever each user's
+   `core.autocrlf` is. Failing that, set
+   `git config --global core.autocrlf input`, under which git
+   performs no conversion on checkout.
+
+6. **A first push.** Create the repository on the forge
+   *empty*, with no README, license, or `.gitignore`. Each of
+   those makes a first commit that the local repository does
+   not share. The push is then refused, and so is the pull
+   meant to repair it (the 'fetch first' and 'unrelated
+   histories' rows of @tbl-git-refuses). Then, in the local
+   repository:
+
+   ```bash
+   git remote add origin https://github.com/lab/diabetes-cohort.git
+   git push -u origin main
+   ```
+
+   Success ends with the line
+   `branch 'main' set up to track 'origin/main'.` See 'Connect
+   to GitHub'
+   (<https://happygitwithr.com/push-pull-github.html>) and
+   'Existing project, GitHub last'
+   (<https://happygitwithr.com/existing-github-last.html>).
+
+## When git refuses {#sec-git-refuses}
+
+The messages in @tbl-git-refuses are quoted as git 2.56.0 printed
+them, on macOS, in scratch repositories built for this appendix
+on 2026-11-08, shortened where an ellipsis appears. Two rows are
+the exception and say so: their messages come from the forge,
+not from git, and were not reproduced. The table follows the
+model of the Docker table above: find the symptom, then read
+across.
+
+| Symptom (what git prints) | Cause | Remedy |
+|---|---|---|
+| `Author identity unknown` ... `*** Please tell me who you are.` | No `user.name` or `user.email` is set, and git cannot guess one. | Set both ([Git preflight](setup-appendix.qmd#sec-git-preflight), step 2) and repeat the commit. If git guessed instead, fix the last commit with `git commit --amend --reset-author`, which git itself suggests. |
+| A refused HTTPS push reporting that password authentication was removed (the forge's message, quoted in the Happy Git chapter on tokens; not reproduced) | The account password was given where the forge requires a token. | Store a personal access token through a credential helper or `gh auth login`, or switch the remote to SSH (step 4). |
+| `! [rejected] main -> main (fetch first)` and `Updates were rejected because the remote contains work that you do not have locally.` | The remote branch holds commits the local one lacks, because a collaborator pushed first or the forge made a first commit, and git will not overwrite them. | `git pull`, then `git push`. If the pull stops with `fatal: Need to specify how to reconcile divergent branches.`, run `git pull --no-rebase` to merge (or set `pull.rebase false` once). Never force-push a shared branch. |
+| `fatal: refusing to merge unrelated histories` | The local and forge repositories were started separately, typically with a README made on the forge. | If the forge's commit holds only template files, `git pull --no-rebase --allow-unrelated-histories origin main` joins the two once. Next time, create the forge repository empty or start by cloning it. |
+| `You are in 'detached HEAD' state.`; `git status` reports `HEAD detached at` and a hash | A commit or tag was checked out rather than a branch. | Look around freely; `git switch main` returns. To keep commits made there, `git switch -c <new-branch-name>` first, as git's own advice says. |
+| `CONFLICT (content): Merge conflict in analysis.R` and `Automatic merge failed; fix conflicts and then commit the result.` | Both branches changed the same lines. | Edit the file down to one version and delete the markers, then `git add` and `git commit`; or `git merge --abort` (@sec-version-control). |
+| `error: src refspec main does not match any` | There is no local branch named `main`: either nothing has been committed yet, or the branch is `master`. | Make the first commit; check the name with `git branch --show-current`; rename with `git branch -m main`; push again. |
+| A push refused for a file that exceeds the forge's size limit, 100 MiB on GitHub [@githublargefiles] (the forge's message; not reproduced) | A data file or a large output was committed. | First ask whether it holds PHI; if so, the exposure procedure of @sec-version-control comes before any git command. If the file is only in the last unpushed commit, `git rm --cached <file>`, ignore it, and `git commit --amend` (or `git reset HEAD~1` if it was the commit's only file). If it is deeper in the history, rewrite with `git filter-repo`. |
+
+: Git refusals a new user meets, indexed by the message git or the forge prints. Messages from git 2.56.0, run 2026-11-08; the two forge rows were not reproduced. {#tbl-git-refuses}

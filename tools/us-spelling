@@ -146,6 +146,28 @@ def cap_match(orig, repl):
     return repl
 
 
+# An epigraph is a verbatim quotation, and British spelling is kept
+# inside verbatim quotations, so a .bookepigraph div is not checked or
+# fixed. The div holds no nested div, so the next bare ':::' closes it.
+EPIGRAPH_OPEN = re.compile(r'^:::+\s*\{\.bookepigraph\}\s*$')
+DIV_CLOSE = re.compile(r'^:::+\s*$')
+
+
+class _Epigraph:
+    def __init__(self):
+        self.inside = False
+
+    def skip(self, line):
+        if not self.inside and EPIGRAPH_OPEN.match(line):
+            self.inside = True
+            return True
+        if self.inside:
+            if DIV_CLOSE.match(line):
+                self.inside = False
+            return True
+        return False
+
+
 WORD = re.compile(r"[A-Za-z]+(?:['’-][A-Za-z]+)*")
 INLINE = re.compile(r'(`[^`]*`|\$\$.*?\$\$|\$[^$\n]*\$)', re.S)
 FENCE_LINE = re.compile(r'^\s*(```+|~~~+)')
@@ -224,7 +246,11 @@ def transform_prose(seg, changes, flags, force):
 
 def process_text(t, changes, flags, force):
     out, in_code = [], False
+    epigraph = _Epigraph()
     for line in t.splitlines(keepends=True):
+        if not in_code and epigraph.skip(line):
+            out.append(line)
+            continue
         if FENCE_LINE.match(line):
             in_code = not in_code
             out.append(line)
@@ -267,7 +293,10 @@ def check(paths):
     findings = 0
     for f in sorted(set(iter_files(paths))):
         in_code = False
+        epigraph = _Epigraph()
         for n, line in enumerate(open(f, errors='replace'), 1):
+            if not in_code and epigraph.skip(line):
+                continue
             if FENCE_LINE.match(line):
                 in_code = not in_code
                 continue
