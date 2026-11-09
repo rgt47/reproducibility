@@ -337,9 +337,11 @@ narrower and, for our purposes, more damning studies that
 isolate the computational failures.
 
 In psychology, the Open Science Collaboration
-re-ran one hundred published studies and could
-replicate the original finding in only thirty-nine of
-them [@opensciencecollaboration2015]. In preclinical
+re-ran one hundred published studies. Its teams judged
+the original finding replicated in only thirty-nine of
+them, and only thirty-six percent of the replications
+reached statistical significance
+[@opensciencecollaboration2015]. In preclinical
 oncology, Begley and Ellis, working from within
 industry, reported that only six of fifty-three
 landmark findings could be reproduced, a success rate
@@ -373,9 +375,10 @@ Roughly one in four executed without
 error, before any question of whether the output
 matched the published result [@trisovic2022]. Saju and
 colleagues examined R code supplements archived on
-the Open Science Framework. They found that only about a
-quarter of the projects ran to completion, and that
-the great majority, close to ninety-nine percent,
+the Open Science Framework. Only about a quarter of the
+R scripts ran without error, even in environments the
+authors rebuilt, and only one project in six ran in
+full. Close to ninety-nine percent of the projects
 carried no formal description of their dependencies at
 all [@saju2025].
 
@@ -439,8 +442,9 @@ re-execution, and it is the subject of this book.
 *Replicability* is obtaining consistent results across
 studies aimed at the same question, each collecting
 its own data. It is a statement about the durability
-of a scientific finding. To these two the report and
-the wider literature add a third, *robustness*,
+of a scientific finding. To these two the wider
+literature, notably the Turing Way [@turingway2022],
+adds a third, *robustness*,
 obtaining consistent conclusions from the same data
 when the analytical choices are varied within the
 range a competent analyst would defend. The three are
@@ -463,7 +467,7 @@ here for completeness and do not treat it.
 
 ```{r}
 #| label: fig-three-words
-#| fig-cap: 'Reproducibility, replicability, and robustness distinguished by what is held fixed. The columns vary the data and the rows vary the analysis, so each cell names the claim supported when a consistent result survives that particular change. Only the shaded cell, in which both the data and the analysis are held fixed, is the subject of this book. The grid presentation follows the Turing Way [@turingway2022]; the definitions are those of the National Academies [@nas2019] adopted above.'
+#| fig-cap: 'Reproducibility, replicability, and robustness distinguished by what is held fixed. The columns vary the data and the rows vary the analysis, so each cell names the claim supported when a consistent result survives that particular change. Only the shaded cell, in which both the data and the analysis are held fixed, is the subject of this book. The grid and the robustness cell follow the Turing Way [@turingway2022]; the definitions of reproducibility and replicability are those of the National Academies [@nas2019] adopted above.'
 #| fig-alt: 'A two-by-two grid. The columns are same data and new data; the rows are same analysis and varied analysis. The cell where the data and the analysis are both the same is shaded and labeled reproducibility, re-execution, which is described as the subject of this book. Same data with a varied analysis is labeled robustness. New data with the same analysis is labeled replicability. New data with a varied analysis is labeled generalizability and marked as not treated in this book.'
 #| fig-width: 6.4
 #| fig-height: 3.6
@@ -510,10 +514,10 @@ The idea that computational work should be
 reproducible in the narrow, re-execution sense is
 older than the current crisis. It is usually traced
 to Claerbout and his colleagues in geophysics. In the
-early 1990s they built their published papers so
-that every figure could be regenerated from the
-archived code and data by a single command
-[@claerbout1992]. Their standard was demanding. The
+early 1990s they built their books and reports so
+that every figure could be rebuilt from the archived
+code and data [@claerbout1992; @buckheit1995]. Their
+standard was demanding. The
 phrasing that has become the field's motto is Buckheit
 and Donoho's paraphrase of it [@buckheit1995;
 @claerbout1992]: the published article is merely the
@@ -525,9 +529,9 @@ Reproducibility so understood is a spectrum. Peng
 arranged computational work along a scale, from the
 merely published, through code available, code and data
 available, and linked and executable, to fully
-replicable. He argued that reproducibility is a minimum
-standard for judging a scientific claim when full
-independent replication is impractical [@peng2011;
+replicable. He argued that reproducibility can serve as a
+minimum standard for judging a scientific claim when full
+independent replication is not possible [@peng2011;
 @peng2006]. We take from Peng the idea that
 reproducibility comes in degrees, and that honesty about
 which degree one has reached is itself a scientific
@@ -608,8 +612,8 @@ hundreds of packages, each with its own release history
 and its own breaking changes. Much of this churn, along
 with missing files and hard-coded paths, is what Trisovic
 and colleagues measured when they found that most
-deposited R scripts did not run when tested years after
-the original deposit [@trisovic2022].
+deposited R scripts did not run when re-executed, often
+years after the original deposit [@trisovic2022].
 
 These are instances of a general phenomenon that we
 shall develop fully in @sec-levels. A computational
@@ -674,8 +678,8 @@ and why does the lockfile not protect against it?
 
 The most likely culprit is the numerical-library
 layer, specifically the BLAS and LAPACK
-implementation that performs the eigendecomposition
-underlying `prcomp()`. Different implementations
+implementation that performs the singular value
+decomposition underlying `prcomp()`. Different implementations
 (reference BLAS, OpenBLAS, Intel MKL, Apple's
 Accelerate) return results that are numerically
 equivalent but not bit-identical, and a sign flip or
@@ -1445,8 +1449,8 @@ contradicting it.
 
 - The National Academies consensus report
   [@nas2019] is the authoritative source for the
-  reproducibility, replicability, and robustness
-  distinctions, and repays reading in full for the
+  distinction between reproducibility and replicability,
+  and repays reading in full for the
   care with which it separates them.
 
 - Goodman and colleagues [@goodman2016] document the

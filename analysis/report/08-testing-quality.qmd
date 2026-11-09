@@ -997,11 +997,13 @@ can show that the code runs and that its functions are
 correct on known inputs. However, it cannot show that
 a recorded result regenerates, so it does not reach L3
 however thorough it is. In the zzcollab composition,
-`zzc verify --full` applies exactly this rule. It stamps
-L3 only when the image rebuilds, the test suite passes,
-and at least one `inst/tinytest/test-baseline*.R` file
-exists and ran. Otherwise it reports the project as
-rebuilt and tested, at L2, with no baseline comparison.
+`zzc verify --full` applies this rule. It stamps L3 only
+when the image rebuilds, the test suite passes, and at
+least one `inst/tinytest/test-baseline*.R` file exists
+and is named in the test log. Otherwise it reports the
+project as rebuilt and tested, at L2, with no baseline
+comparison. A baseline whose guard exits early is still
+named in the log, so the guard must not fire in the image.
 
 ## Monte Carlo error and parallel streams
 
@@ -1399,9 +1401,11 @@ moment; a pre-commit hook runs before a commit is
 recorded, and can refuse the commit if a check
 fails. Configuring the linter and styler as a
 pre-commit hook means that unstyled or unlinted code
-cannot enter the history in the first place. That is
-a far stronger guarantee than a convention that
-relies on the analyst's memory. The configuration
+cannot be committed from a clone where the hook is
+installed, unless the analyst bypasses it with
+`git commit --no-verify`. That is a stronger guarantee
+than a convention that relies on memory, but a clone does
+not carry the hook with it. The configuration
 lives in a `.pre-commit-config.yaml` file at the
 project root:
 
@@ -1421,12 +1425,13 @@ With this in place, an attempt to commit code that
 `styler` would reformat, or that `lintr` flags, or
 that contains a stray `browser()` left over from
 debugging, is stopped before the commit completes.
-The analyst is then prompted to fix it. Continuous
-integration, in @sec-verification, runs the same
-checks again on the server, so that a collaborator
-who has not installed the hook is caught
-nonetheless. The hook is the fast local gate; CI is
-the authoritative remote one.
+The analyst is then prompted to fix it. The hook is
+the fast local gate. A collaborator who has not
+installed it is caught only if continuous integration
+(@sec-verification) runs the same checks on the
+server. The workflows in that chapter do not, so a
+project that relies on the hook should add a step
+running `lintr::lint_dir()` there.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: capture or validation?
@@ -1477,10 +1482,11 @@ a closed system that creates, modifies, maintains, or
 transmits regulated electronic records must be validated
 'to ensure accuracy, reliability, consistent intended
 performance, and the ability to discern invalid or
-altered records' [@cfr21part11]. The same standard is
-reflected in parallel form in European Medicines Agency
-expectations for computerized systems in the same
-regulatory setting. This is validation of the system
+altered records' [@cfr21part11]. The European Medicines
+Agency sets parallel expectations for computerized
+systems in clinical trials, and names statistical
+software among them [@ema2023computerised]. This is
+validation of the system
 across its lifecycle, documented once and maintained by a
 change-control process, not a one-time test run. The
 regulation does not say how that validation is shown.
@@ -1493,8 +1499,9 @@ suggests. FDA's 2003 guidance on the scope and
 application of Part 11 states that the agency will
 exercise enforcement discretion over the Part 11
 validation requirement, while the predicate rules, the
-underlying good clinical and manufacturing practice
-regulations, still apply [@fdapart11scope2003]. The R
+underlying requirements of the Act and of FDA's other
+regulations, still apply, their own validation
+requirements included [@fdapart11scope2003]. The R
 Validation Hub concludes
 that Part 11 is not relevant or mandatory for
 statistical analysis software itself, though elements of
@@ -2518,7 +2525,7 @@ good-enough-practices paper [@wilson2017], the latter
 pitched deliberately at researchers without a
 software background. Sandve and colleagues' ten
 simple rules [@sandve2013] cover the same ground in a
-compact, rule-by-rule form, and situate readable code
+compact, rule-by-rule form, and situate version control
 and recorded results within a general reproducibility
 discipline.
 
@@ -2530,6 +2537,6 @@ verification. @sec-levels gives the
 capture-and-validation distinction that places testing
 in the validation register. Peng's early account of
 reproducibility as a spectrum [@peng2011] remains the
-clearest short statement of why reproducibility is a
-minimum scientific standard when full independent
+clearest short statement of why reproducibility can serve
+as a minimum scientific standard when full independent
 replication is not possible.

@@ -552,8 +552,8 @@ was made. If Docker Hub removes it, an analysis that
 depended on it is lost. The source of truth should be
 the committed Dockerfile together with the lockfile it
 restores from. That is a transparent, diffable, durable
-recipe that reconstructs an identical image from pinned
-inputs. The image is a convenience cache; the recipe is
+recipe that reconstructs the same pinned environment,
+though not byte-identical image layers, from pinned inputs. The image is a convenience cache; the recipe is
 the guarantee. Pushing after every install also wastes
 effort, since the image need only be rebuilt
 periodically from the union lockfile.
@@ -683,8 +683,9 @@ principle be discontinued by the institution that runs
 it. Software Heritage undertakes something narrower and
 more absolute for source code specifically. Its stated
 mission is a permanent, universal archive of publicly
-available source code, with no depositor-facing mechanism
-to remove something once archived. The project's SWHID
+available source code. A depositor cannot withdraw what
+is archived; removal happens only through a takedown
+procedure that the project's staff carry out. The project's SWHID
 identifier scheme was formalized as an ISO/IEC standard
 in 2025 [@swhiso2025]. Every archived object, whether a
 file, a directory, a commit, or a full repository
@@ -735,10 +736,12 @@ the file answers.
 
 Two broader efforts merit the analyst's attention.
 The Whole Tale platform, described by Brinckman and
-colleagues, bundles code, data, and computational
-environment into a single executable research object.
-A reader can run it in the browser without local
-installation [@brinckman2019], an ambition the
+colleagues, bundled code, data, and computational
+environment into a single executable research object
+that a reader could run in the browser without local
+installation [@brinckman2019]. Its public service did not
+respond when we checked in November 2026. It remains an
+ambition the
 compendium-plus-archived-image pattern approaches by
 other means. And the Turing Way, a community-authored
 handbook, collects the collaborative and stewardship
@@ -849,10 +852,11 @@ procedures and code of conduct [@dbgap]. The open deposit
 of code then cites the controlled-access accession, so
 that the two halves are linked by identifier. The NIH Data
 Management and Sharing Policy has been in force since 25
-January 2023. It expects controlled access for data with
-explicit limits on later use, and asks that those limits
-be passed to the repository that holds the data
-[@nihdms2020].
+January 2023. It requires access controls for data with
+explicit limits on later use [@nihdms2020]. NIH's privacy
+guidance adds that those limits should travel with the
+data and be communicated to the repository
+[@nihprivacy2026].
 
 **Consent and agreement terms, read before the analysis
 begins.** What may be deposited is settled by documents
@@ -903,10 +907,12 @@ above should be used instead?
 Deleting two columns is not de-identification in the
 regulatory sense. Dates, small geography, and rare
 combinations of remaining variables can still re-identify
-a person. A determination that the risk is very small
-must be made by a qualified expert or by removing all
-eighteen HIPAA identifiers, not by the analyst's own
-judgment. Absent that determination in writing from the
+a person. De-identification needs either a qualified
+expert's documented determination that the risk is very
+small, or removal of all eighteen HIPAA identifiers with
+no actual knowledge that the rest could identify anyone.
+The analyst's own judgment is neither. Absent that
+determination in writing from the
 data steward or IRB, the extract stays out of an open
 deposit. The appropriate route is a synthetic stand-in with
 the same structure, deposited openly and labeled as
@@ -1021,16 +1027,20 @@ Policy applies to proposals due on or after 25
 January 2023. It requires that an applicant submit a Data
 Management and Sharing Plan at the time of application,
 not drafted after data collection is underway
-[@nihdms2020]. The Plan goes in the 'Other Plan(s)'
+[@nihdms2020]. Applications submitted on or after 25 May
+2026 use an updated Plan format [@nihnot26100], and
+career development (K) awards no longer need a Plan
+[@nihnot26120]. The Plan goes in the 'Other Plan(s)'
 attachment of the research plan; only a brief summary
 and the associated costs go in the budget and its
-justification [@nihdmswriting]. NIH
-program staff review the Plan for completeness rather
-than scoring it. However, once an award is made, the
-approved Plan becomes a term and condition of that award.
-Noncompliance can bring added special terms, withheld
-funds, or termination, and can affect future funding
-decisions [@nihdms2020]. For the analyst, the choice
+justification [@nihdmswriting]. NIH program staff
+assess the Plan. Peer reviewers may comment on its
+budget, but those comments do not affect the overall
+score. Once an award is made, the approved Plan becomes
+a term and condition of that award. Noncompliance can
+bring added special terms and conditions or termination
+of the award, and can affect future funding decisions
+[@nihdms2020]. For the analyst, the choice
 among the four routes above was therefore made, in
 outline, when the grant was written; the deposit executes
 the Plan.
@@ -1090,11 +1100,10 @@ any other materials will be made accessible. CONSORT 2025
 asks the same of the finished report. Its item 3 now asks
 where the statistical analysis plan, as well as the
 protocol, can be accessed. Its new item 4 asks where
-and how the de-identified participant data, the statistical
-code, and other materials can be accessed. (The CONSORT
-wording here follows the statement's own description of
-these items; its checklist table was not available to us as
-text.) Two consequences follow. The protocol promises, under
+and how the individual de-identified participant data, with
+their data dictionary, the statistical code, and any other
+materials can be accessed. Two consequences follow. The
+protocol promises, under
 SPIRIT item 6, what the report must deliver under CONSORT
 item 4, so the code-sharing route is fixed before
 enrollment, much as the NIH Plan fixes the deposit route.
@@ -1185,10 +1194,10 @@ The appropriate response is to disclose its reach
 accurately, the same discipline the honest-level callout
 demands of any analysis. The evidence that disclosure
 cannot be taken for granted is empirical. Stodden and
-colleagues examined the effectiveness of journal
-reproducibility policies. They found that the mere
-existence of a policy is a weak predictor of an actually
-reproducible artifact [@stodden2018]. A gap between the
+colleagues tested a journal policy requiring code and
+data on request. They obtained artifacts for 44 percent
+of 204 articles and reproduced the findings of 26 percent
+[@stodden2018]. A gap between the
 reproducibility a project claims and the reproducibility
 it delivers is common.
 
@@ -1607,9 +1616,10 @@ this specific project.
 {{< include _llm-rule.qmd >}}
 
 For a deposit, the derived outputs that fall under the rule
-include row-level logs and small-count tables, and the
-NIH policy cited above applies to any third-party
-generative AI tool, not only to public ones. A prompt about
+include row-level logs and small-count tables. The NIH
+notice cited above names public generative AI tools, which
+it glosses as third-party tools, and makes no exception for
+a tool an institution has licensed. A prompt about
 a deposit names the file names and the directory layout
 rather than any file's contents. We give three exchanges,
 each with what to watch for and what the analyst must
@@ -1862,8 +1872,8 @@ A paragraph a collaborator could act on:
 > cache: convenient, worth having, and not the record.
 
 **A concrete failure from relying on the pushed image.**
-Docker Hub applies a retention policy to inactive
-repositories and the image is removed. Alternatively, the
+The registry removes the image under a retention policy
+for inactive repositories. Alternatively, the
 organization account lapses, or the tag is overwritten by
 a later push.
 An analysis whose only environment record was that image

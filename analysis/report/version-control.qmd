@@ -1062,9 +1062,11 @@ old_copy_same_bytes <- length(oldest_copy) == 1 && identical(
   git_lines('rev-parse', paste0(oldest_copy, ':', fixture_path)),
   git_lines('hash-object', 'analysis/data/raw_data/cohort_raw.csv')
 )
-c(commits_touching_path = length(fixture_log),
-  old_copy_has_identifiers = old_copy_has_identifiers,
-  old_copy_same_bytes = old_copy_same_bytes)
+# Printed narrow so the named values fit the printed page.
+print(c(commits_touching_path = length(fixture_log),
+        old_copy_has_identifiers = old_copy_has_identifiers,
+        old_copy_same_bytes = old_copy_same_bytes),
+      width = 50)
 ```
 
 `r if (old_copy_has_identifiers) paste0('Run on this repository when the page was rendered, the log listed ', length(fixture_log), if (length(fixture_log) == 1) ' commit' else ' commits', ' touching the path. The oldest, ', oldest_copy, ', still holds a copy whose header names patient_name and dob', if (old_copy_same_bytes) ', and its bytes are identical to the generated extract.' else '.') else if (!git_ok) 'The git history was not available when this page was rendered, so the check above could not inspect the earlier copy; the two commands show it on any clone.' else 'When this page was rendered, no commit touching the path held a copy with the identifier columns, so the earlier copy has been removed from this repository; it survives in any clone made before the removal.'`
@@ -2127,8 +2129,9 @@ answers 'what changed and why'; the pull request answers
 `main` answers only the first, and in a multi-site trial
 the second question has auditors too. In a regulated
 trial, the approval is review evidence rather than, by
-itself, an electronic signature under 21 CFR 11.50(a);
-whether it serves as one depends on the sponsor's
+itself, a signed record carrying the printed name, the
+date and time, and the meaning that 21 CFR 11.50(a)
+requires; whether it serves as one depends on the sponsor's
 validated configuration and SOPs. The analysis change
 behind the commit is itself approved through the
 sponsor's own process, here an amendment to the

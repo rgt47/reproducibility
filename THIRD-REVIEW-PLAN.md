@@ -892,6 +892,80 @@ when tagging supports fvextra's line breaking. The 13 words past the
 page edge in the committed build are a separate defect to fix (long
 unbreakable tokens in code or tables).
 
+D24 (author, 2026-11-08): the recommendation is accepted. The PDF stays
+`scrbook`, untagged; the colophon says the HTML edition is the
+accessible one and why.
+
+### Phase 25 (verification pass), branch `phase-25-verification`, 2026-11-08
+
+Four agents verified every claim labeled EK or U in the review and
+phase reports, plus unlabeled factual claims they found by grep, each
+against a primary source opened on 2026-11-08 or by running the code
+(`docs/third-review/phase25/`). Agents proposed exact replacements; the
+lead re-checked the consequential ones and applied them.
+
+| Subject | Claims | Verified | Corrected | Hedged | Not verified |
+|---|---|---|---|---|---|
+| Regulation, policy, guidelines (Agent 1) | 48 | 33 | 7 | 8 | 0 |
+| Environment and archiving tools (Agent 2) | 68 | 44 | 8 | 12 | 4 |
+| Literate programming, pipelines, testing, CI (Agent 3) | 59 | 48 | 6 | 5 | 0 |
+| Quotations and literature (Agent 4) | 42 | 26 | 6 | 7 | 3 |
+
+Corrections with the most consequence:
+
+- **Literature.** The National Academies report does not define
+  robustness (the Turing Way does). Saju and colleagues' quarter counts
+  R scripts, after the authors rebuilt the environments; only 40 of
+  249 projects ran in full (the lead opened the paper). Sandve's ten
+  rules recommend no independent re-execution. Stodden 2018 reports
+  artifacts for 44 percent and reproduction for 26 percent, not a
+  predictor analysis. Peng wrote 'has the potential to serve as'. The
+  OSC 39 percent is the teams' subjective rating (36 percent reached
+  significance). The Marwick epigraph reads 'organising', as published.
+- **Regulation and policy.** NIH's notice names public generative AI
+  tools (glossed as third-party), and a trained model may be shared
+  only with approved users; the 2026 DMS changes (NOT-OD-26-100, the
+  updated Plan format; NOT-OD-26-120, no Plan for K awards; the lead
+  opened both) are added; 'withheld funds' and 'review for
+  completeness' corrected; CONSORT 2025 items 3 and 4 now verified from
+  the checklist text; the GPSV validation definition reworded to the
+  source; HIPAA Safe Harbor described correctly; EMA computerized
+  systems guideline cited; `cfr21part11` now covers all of Part 11.
+- **Tools.** `renv::dependencies()` does report base packages;
+  versioned `rocker/r-ver` images fix their snapshot at the last day
+  the R version was current; rix writes a `sha256` for date snapshots
+  since 0.18.3; a Binder Dockerfile must copy the repository into
+  `$HOME`; `prcomp()` uses an SVD; rrtools; an image rebuild gives the
+  same pinned environment, not identical bytes; the `zzc verify`
+  stamp is not dropped by every later change, and the baseline counts
+  if named in the test log; `targets` reaches cluster schedulers; no
+  CI workflow runs lintr; a PDF identifier is not random, and
+  `SOURCE_DATE_EPOCH` alone made two small builds identical.
+
+Also in this phase: `filters/pdf-code-breaks.lua` adds break points to
+long inline code in the PDF (13 words past the page edge before, 0
+after, with one wide R print narrowed); `buckheit1995` retyped as a
+book chapter and a false note removed from `stodden2018`; three new
+bib entries; the devcontainer states `--platform=linux/amd64`; the
+`tools/us-spelling` gate exempts `.bookepigraph` divs, since an
+epigraph is a verbatim quotation (tested: British spelling outside an
+epigraph is still flagged).
+
+Not verified (sources blocked or tools unavailable): Claerbout and
+Karrenbach 1992 (403), Peng's figure labels, Leek and Peng's body text,
+Goodman 2016 beyond the abstract, Guix and conda-forge coverage,
+rootless Docker prerequisites, Snakemake and Nextflow papers. No
+Docker, Apptainer, Nix, Binder, Slurm, CI service, or `zzc verify
+--full` was run. The eCFR blocked automated access; Part 11 was read
+from the GPO annual edition (1 April 2025).
+
+Tool issues found for the author (zzcollab, not this book):
+`verify.sh` accepts a baseline named in the test log even when its
+guard exits early; `make test` and `make docker-test` pass an empty
+suite; the coherence tier reads an `ARG R_VERSION` line generated
+Dockerfiles no longer write; `ensure-zzrenvcheck` installs
+`zzrenvcheck` unpinned.
+
 ## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human

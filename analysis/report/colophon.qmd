@@ -118,4 +118,12 @@ that pins the operating system and the R runtime,
 A lockfile records versions; it does not make the session
 use them. `r if (length(mismatch) == 0) 'Every row the lockfile records agreed with the session that executed this page.' else paste0('In the session that executed this page, ', length(mismatch), if (length(mismatch) == 1) ' row' else ' rows', ' differed from the lockfile (', paste(sub('^Package: ', '', mismatch), collapse = ', '), '). Restoring the lockfile would reinstall the locked package versions but not R itself, which only a pinned environment, the L2 rung, fixes.')`
 
+The HTML edition is the accessible one. Its pages are checked
+with an automated accessibility tool, its figures carry alt text,
+and its folded answers open from the keyboard. The PDF is not yet
+a tagged PDF: we tried PDF/UA tagging and found that it is not
+yet compatible with the line breaking that keeps long code lines
+on the printed page, so a screen-reader user should prefer the
+HTML.
+
 This page last executed on `r executed_on`.

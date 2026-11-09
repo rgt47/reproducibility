@@ -14,11 +14,12 @@ answer is no.
 The third condition is the one most often missed.
 Institutional approval of a tool does not override the terms
 under which a data provider released the data. NIH, for
-example, treats sharing controlled-access data with
-third-party generative AI tools through prompts as a breach
-of the data use certification, and a model trained on such
-data as a derivative that may not be distributed without
-approval [@nihgenai2025].
+example, treats sharing controlled-access data through
+prompts with public generative AI tools, which it glosses as
+third-party tools, as a breach of the data use certification.
+It treats a model trained on such data as a data derivative,
+to be shared only with other approved users and not kept
+after the project closes [@nihgenai2025].
 
 Describe the structure instead: the column names and types,
 or a small synthetic example generated from the data

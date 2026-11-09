@@ -1169,8 +1169,9 @@ why would `targets` be the wrong reach here?
 Snakemake or Nextflow fits. Both are built for exactly
 this setting, many languages, many steps, and execution
 spread across a cluster or the cloud, with native support
-for job schedulers that Make and `targets` lack. `targets`
-would be the wrong reach because it is R-native. Its
+for job schedulers. Make has none, and `targets` reaches a
+scheduler only through backends such as `clustermq`.
+`targets` would be the wrong reach because it is R-native. Its
 dependency inference works by hashing R function bodies
 and R objects. That has nothing to track in a pipeline
 whose steps are Python scripts and shell commands calling

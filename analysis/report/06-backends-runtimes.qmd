@@ -509,12 +509,11 @@ set of package definitions from which the environment is
 built. Current versions of `rix` point at a dated branch
 of `rstats-on-nix/nixpkgs`, a fork of `nixpkgs` its
 maintainers keep for R, rather than at a commit of the
-main `NixOS/nixpkgs` repository. The generated
-`fetchTarball` usually carries no `sha256` of the
-archive. The pin is only as fixed as that dated
-branch is kept; replacing the date with a full commit
-hash, and adding the archive's `sha256`, makes it
-stricter. Entering the environment is then a single
+main `NixOS/nixpkgs` repository. Since version 0.18.3
+the generated `fetchTarball` also carries the archive's
+`sha256`, so a moved branch fails the build rather than
+changing the environment; older versions omit it. A full
+commit hash in place of the date is stricter still. Entering the environment is then a single
 command, and no image is built:
 
 ```bash
@@ -977,8 +976,8 @@ what the cluster passes into the run.
 ::: {.callout-warning}
 ## Pitfall
 
-By default, Apptainer binds the user's `$HOME` as a
-read-write mount and passes host environment variables
+By default, Apptainer binds the user's `$HOME` into the
+container and passes host environment variables
 through into the container [@apptainer_bind]. A stray
 `R_LIBS_USER` or locale variable set on the cluster login
 node can therefore still leak into execution, even though
@@ -1007,14 +1006,13 @@ $ apptainer exec --cleanenv --no-home --bind "$PWD" \
 
 Finally, when the paper is submitted, a reviewer wishes to
 re-run the principal figure without installing anything.
-The compendium carries a one-line `.binder/Dockerfile`
-that starts from the same digest. This works only because
-the group built `cohort-env` on a `rocker/binder` base,
-so the image already serves Jupyter and RStudio:
+The compendium carries a short `.binder/Dockerfile` that
+starts from the same digest and copies the repository into
+the session's home directory, as Binder requires. This
+works only because the group built `cohort-env` on a
+`rocker/binder` base, so the image already serves Jupyter
+and RStudio and has the required user:
 
-```dockerfile
-FROM ghcr.io/lab/cohort-env@sha256:9f2c...
-```
 
 Binder builds from that file on a hosted server and
 serves the environment in the browser, reached by a
@@ -1395,12 +1393,12 @@ The pinned `nixpkgs` snapshot appears near the top of the
 generated `default.nix`, in the `fetchTarball` expression
 that imports `nixpkgs`. In current versions of `rix` it is
 a dated branch of the `rstats-on-nix/nixpkgs` fork, a URL
-ending in a date such as `2024-10-01.tar.gz`, and it
-usually carries no `sha256` of the fetched archive. Older
-versions of `rix`, and hand-written declarations, may
-instead name a commit of `NixOS/nixpkgs`. Whichever you
-find, a full commit hash with a `sha256` is the stricter
-pin, and a date is only as fixed as its branch is kept.
+ending in a date (`2024-04-29.tar.gz` for R 4.4.0), and
+from version 0.18.3 on it carries the archive's `sha256`.
+Older versions of `rix` omit the `sha256`, and older
+versions or hand-written declarations may instead name a
+commit of `NixOS/nixpkgs`. A full commit hash with a
+`sha256` is the strictest pin.
 
 **What would change if the revision were altered.**
 Essentially everything below the R packages, and some of
@@ -1558,7 +1556,7 @@ need not, and do not, match.
 |---|---|
 | `podman run ...` | Daemonless, rootless substitute for `docker run`; same OCI image, same digest, same L2. |
 | `apptainer build x.sif docker://img@sha256:...` | Converts a digest-pinned OCI image into one archival SIF file. |
-| `apptainer exec --cleanenv --no-home --bind "$PWD" x.sif Rscript --vanilla ...` | Runs the SIF with host environment variables cleared, the host `$HOME` unmounted, only the project directory bound, and no R startup file read; `--cleanenv` alone clears variables only (see the Pitfall above). |
+| `apptainer exec --cleanenv --no-home --bind "$PWD" x.sif Rscript --vanilla ...` | Runs the SIF with host environment variables cleared, the host `$HOME` unmounted, the project directory bound (Apptainer's system binds such as `/tmp` remain), and no R startup file read; `--cleanenv` alone clears variables only (see the Pitfall above). |
 | `rix::rix(r_ver=, r_pkgs=, project_path=)` | Generates a `default.nix` pinning R, packages, and system libraries together. |
 | `nix-shell default.nix` | Enters the Nix-declared environment; no image is built. |
 | `.binder/Dockerfile` | Lets Binder serve the compendium's pinned image in a browser, per session, when its `FROM` line names the digest; `install.R` and `runtime.txt` make Binder resolve its own environment instead. |

@@ -5,7 +5,7 @@
 \begin{flushright}\small
 ```
 *The purpose of this article is to show how the R package
-can be a suitable template for organizing files into a
+can be a suitable template for organising files into a
 research compendium to enhance the reproducibility of
 research.*
 
@@ -352,7 +352,7 @@ data, derived data, scripts, figures, and the manuscript
 itself. They packaged the whole as the `rrtools` tool.
 The resulting compendium can be installed, tested, and
 checked with the very same commands used for any R
-package. Nust, Boettiger, and Marwick later wrote a
+package. Nüst, Boettiger, and Marwick later wrote a
 companion guide on how to *read* such a compendium. That
 such a guide exists is a useful sign that the object had
 matured enough to have a reading protocol at all
@@ -782,8 +782,9 @@ captures all five pillars perfectly but ships without a
 `README` still fails the first test a stranger applies to
 it, because the stranger has no entry point. The NHS RAP
 Community of Practice makes a README one of the criteria
-of its baseline level, alongside open-source code, version
-control, peer review of the code, and open publication.
+of its baseline level, alongside code in an open-source
+language, version control, peer review of the code, and
+open publication.
 A repository meets the README criterion only once it
 'includes a README.md file (or equivalent) that clearly
 details steps a user must follow to reproduce the code'

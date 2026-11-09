@@ -979,10 +979,10 @@ file, embeds metadata that has nothing to do with the
 analysis and everything to do with the moment of the
 render. A PDF carries a creation timestamp and a
 modification timestamp in its metadata. It also carries
-an internal document identifier, often randomly
-generated. Moreover, when it subsets the fonts it uses,
-it assigns those subsets internal names that can vary
-between builds. Two renders of byte-for-byte identical
+an internal document identifier, which engines derive from
+the time, the file name, and in some cases the build path.
+Some engines also give the font subsets they embed names
+that can vary between builds. Two renders of byte-for-byte identical
 source, in the same environment, minutes apart, therefore
 produce two PDF files that differ in their bytes. They
 differ even though every number and figure in them is
@@ -992,11 +992,13 @@ Part of this non-determinism can be normalized away. Many
 document tools, including LaTeX and `pandoc`, honor a
 conventional environment variable, `SOURCE_DATE_EPOCH`,
 which fixes the timestamp the build embeds to a specified
-value instead of the wall-clock time. Setting it
-removes the timestamp difference, and a determined
-practitioner can normalize further, stripping identifiers
-and canonicalizing font-subset names, until two renders
-do hash alike. This is worthwhile work in some settings,
+value instead of the wall-clock time. In a test with TeX
+Live 2026, setting it alone made two pdfLaTeX, XeLaTeX, or
+LuaLaTeX builds of a short document in one directory
+identical. Builds in different directories could still
+differ in their identifier, and a full report adds figures,
+paths, and tool versions, each another source of difference.
+Normalizing them all is worthwhile work in some settings,
 notably in the reproducible-builds movement for operating
 systems. For a research compendium it is usually
 misplaced effort, because it fights a symptom.
@@ -1020,10 +1022,11 @@ outputs it presents match the recorded baseline within
 that tolerance, not by demanding that its bytes be
 identical. For provenance the framework goes further in
 the opposite direction. Its render hook deliberately
-stamps each rendered PDF with the render time and the git
-version of the source, in a footer. It does so precisely
-so that a reader can tell two renders apart and trace
-each to its source commit. The rendered document is thus
+stamps each rendered PDF with the render time and the
+source path, in a footer, and stages a dated copy whose
+name and manifest row record the git version of the
+source. A reader can therefore tell two renders apart and
+trace each to its source commit. The rendered document is thus
 a dated,
 signed presentation of a result; the object of record is
 the computation.
@@ -1695,7 +1698,8 @@ separate check confirming that the document still builds
 from those outputs.
 
 Byte-identical PDFs are attainable, by setting
-`SOURCE_DATE_EPOCH` and freezing font subsetting, but this
+`SOURCE_DATE_EPOCH` and holding the build path and every
+tool version fixed, but this
 is a fragile route to a result the baseline comparison
 gives directly. The chapter's position is to compare the
 computation, within a tolerance, rather than work to make

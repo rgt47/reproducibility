@@ -306,7 +306,7 @@ decisions.
 
 We begin with some history. The idea of a project-local
 library governed by a lockfile is not new to R. The `packrat` package,
-introduced in 2013, was the first widely adopted
+begun in 2013 and on CRAN from 2014, was the first widely adopted
 attempt to give each project its own isolated set of
 packages recorded in a manifest. Its mechanics were
 sound but its ergonomics were not, and it acquired a
@@ -944,11 +944,12 @@ twofold. The first gain is fixity, because the catalog
 cannot drift, and the second is speed, because binaries
 install in seconds where source builds take minutes. On
 Linux the binary path is more specific. Pre-compiled
-binaries are served only from the distribution-codename
-form of the URL, such as
+binaries are served from a distribution-specific form of
+the URL, such as
 `https://packagemanager.posit.co/cran/__linux__/noble/2026-06-29`,
-whereas the plain dated path shown above delivers source
-to be built. In the framework this book uses, the
+and R may need to send its version in the HTTP user agent.
+The plain dated path shown above should be expected to
+deliver source to be built. In the framework this book uses, the
 project's generated configuration points R at a dated
 snapshot automatically. The two benefits thus accrue
 without the analyst assembling the URL by hand. The date
@@ -1201,7 +1202,7 @@ scan `renv::snapshot()` runs before writing a lockfile.
 
 ```{r}
 #| label: tbl-cohort-deps
-#| tbl-cap: 'Packages `renv::dependencies()` finds referenced in the two files that produce the running cohort, scanned directly rather than asserted. `simulate_cohort.R` contributes no rows because it calls only base R (`rnorm`, `sample`, `as.Date`), which the scan correctly does not count as a contributed-package dependency.'
+#| tbl-cap: 'Packages `renv::dependencies()` finds referenced in the two files that produce the running cohort, scanned directly rather than asserted. `simulate_cohort.R` contributes no rows because it calls base R functions (`rnorm`, `sample`, `as.Date`) without `library()` or a `::` prefix, so the scan finds no package name to report.'
 
 deps <- renv::dependencies(
   c('../../R/cohort.R',
@@ -1244,9 +1245,9 @@ also pinned is a question for the lockfile.
 scan finds, the lockfile leaves `r length(unpinned)`
 unrecorded. The package-versions layer is therefore
 `r if (has_lockfile && length(unpinned) == 0) 'pinned, and the cohort compendium has reached at least L1' else 'not yet pinned, and the cohort compendium remains at L0'`.
-For a compendium without a lockfile, `renv::init()`
-followed by `renv::snapshot()`, and a commit of the
-lockfile it writes, is the single step that lifts it from
+For a compendium without a lockfile, `renv::init()`,
+which scans the code and writes the first lockfile, and a
+commit of that lockfile, is the single step that lifts it from
 L0 to L1, exactly as the orientation above describes for
 the hypothetical registry study.
 
@@ -1264,11 +1265,12 @@ as `rnorm()` and `sample()`. Is this a bug in the scan?
 No. `rnorm()` lives in the `stats` package and `sample()`
 in the `base` package. Both, like `utils`, are base
 packages bundled with every R installation rather than
-contributed packages a lockfile needs to pin. The scan is working as intended. It
-reports contributed-package dependencies, the ones whose
-version can actually drift between machines. It correctly
-stays silent about a script that happens to need nothing
-beyond what R itself always provides.
+contributed packages a lockfile needs to pin. The scan is
+working as intended. It reports the packages a file names,
+through `library()`, `require()`, or `pkg::`, and this
+script names none. A base package named that way would
+appear, as `stats` and `utils` do for `R/cohort.R`, but
+the lockfile would still record no entry for it.
 :::
 :::
 
@@ -1694,7 +1696,7 @@ regenerate from the one file that actually matters.
 | `renv::init()` | Creates the project-local library and a first `renv.lock`. |
 | `renv::snapshot()` | Scans the code for referenced packages and writes their installed versions to `renv.lock`. |
 | `renv::restore()` | Reads `renv.lock` and reinstalls exactly the versions it records. |
-| `renv::dependencies(files)` | Scans one or more files for contributed-package references, without touching the lockfile. |
+| `renv::dependencies(files)` | Scans one or more files for the packages they name (`library()`, `::`, and similar), base packages included, without touching the lockfile. |
 | `make check-renv` / `zzrenvcheck::check_packages(auto_fix = TRUE)` | Checks and repairs the code-to-`DESCRIPTION`-to-lockfile triad. |
 | `zzrenvcheck::check_packages(auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE)` | The CI form: checks only, and fails the build on a violation. |
 | `options(repos = c(CRAN = '.../cran/YYYY-MM-DD'))` | Points installs at a dated, fixed snapshot of the repository. |

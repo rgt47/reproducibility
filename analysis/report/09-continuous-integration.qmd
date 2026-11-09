@@ -734,24 +734,26 @@ runner, or leave it, undeclared.
 The first rule is never to let a secret reach a log or a
 commit. GitHub's guidance on securing Actions workflows warns
 that sensitive values 'should never be stored as plaintext in
-workflow files' [@githubsecrets]. A workflow instead
+workflow files' [@githubhardening]. A workflow instead
 references a stored secret through the `secrets` context,
 `${{ secrets.NAME }}`. The runner substitutes the value at
 execution time, and GitHub attempts to redact it from the
 log. The redaction is best effort: 'automatic redaction is
 not guaranteed', and the documentation recommends auditing
-a workflow's output to confirm a secret is never
-explicitly printed [@githubsecrets]. The condensed
+how a workflow handles secrets to confirm one is never
+explicitly printed [@githubhardening]. The condensed
 workflow earlier in this chapter already follows the
 pattern. Its line
 `GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}` passes a credential
 into the job's environment without ever writing its value
 into the file.
 
-The second rule is least privilege. The default token GitHub
-Actions issues a job is scoped broadly unless told otherwise,
-and a workflow with no `permissions` block runs with more
-access than most jobs need. GitHub's hardening guidance calls
+The second rule is least privilege. The default permissions of
+the token GitHub Actions issues a job come from a repository,
+organization, or enterprise setting, which may be permissive.
+A workflow with no `permissions` block inherits that setting
+and can run with more access than most jobs need. GitHub's
+hardening guidance calls
 a default of read-only repository contents 'good security
 practice', with individual jobs granted more only where they
 need it [@githubhardening]. The chapter's own example
@@ -1095,19 +1097,24 @@ the command `zzc verify`, which runs in two tiers. A
 default *coherence* tier requires no rebuild. It checks
 that the captured artifacts agree with each other and
 that the R version named in the lockfile matches the one
-in the Dockerfile. It also checks that the backend is
+recorded when the Dockerfile was generated. It also checks
+that the backend is
 unambiguous, and that the raw data still matches its
 recorded checksums. A `--full` *reproduction* tier
 rebuilds the image and runs the test suite inside it. It
 stamps L3 into the project's state record only when three
 things hold: the image rebuilt, the tests passed, and at
-least one `inst/tinytest/test-baseline*.R`
-file exists and ran. Without a baseline test it reports
-the project as rebuilt and tested, at L2, with no baseline
-comparison, and does not stamp L3. Any later change to the
-environment drops the stamp. A compendium that has
-drifted therefore reverts to unverified automatically and
-carries no stale claim. In regulated work, the stamp is not
+least one `inst/tinytest/test-baseline*.R` file exists and
+is named in the test log. The log names a file even when its
+guard exits early with no tests, so `ci/run-tests.R`, which
+counts results, is the stricter check. Without a baseline
+test it reports the project as rebuilt and tested, at L2,
+with no baseline comparison, and does not stamp L3. The stamp
+is removed when zzcollab regenerates the Dockerfile or when a
+later `--full` run falls short of L3. A change made outside
+zzcollab, such as `renv::snapshot()` or an edited script,
+leaves it in place, so a stamp older than the last such change
+is stale. In regulated work, the stamp is not
 a validation record: it carries no signer, no stated meaning
 of a signature, and no quality review, which a controlled
 record of validation status requires.
@@ -1133,7 +1140,7 @@ next section). It is the wrong one for an estimate, whose
 last binary digit can move under a different BLAS without
 the analysis changing. There exist techniques to normalize
 a document's embedded timestamps, by setting a fixed
-`SOURCE_DATE_EPOCH`, and to freeze its fonts. With enough
+`SOURCE_DATE_EPOCH`, and to fix its build path. With enough
 care a byte-identical PDF is attainable. But the more
 general practice is to verify the computational outputs
 directly and leave the document to the render gate.
@@ -1470,9 +1477,10 @@ published paper [@acm2020]. Stodden and colleagues have
 documented the persistence of the reproducibility
 problem. They have also documented the effectiveness,
 and limits, of journal policies that attempt to compel
-deposition and checking [@stodden2018]. The ten-rules
-literature, for its part, places independent re-execution
-among its recommendations [@sandve2013].
+deposition and checking [@stodden2018]. The ten rules,
+for their part, ask for automated steps and public access
+to scripts, runs, and results, which is what makes
+independent re-execution possible [@sandve2013].
 
 These schemes validate and capture nothing: they add no
 lockfile and no container, only a second, independent
@@ -2582,7 +2590,8 @@ which is the empirical case for the standing checks this
 chapter describes.
 
 For the practices that surround the tooling, the ten simple
-rules of Sandve and colleagues [@sandve2013] place
-automated checking and independent re-execution among their
-recommendations. They also connect the mechanics of CI to
+rules of Sandve and colleagues [@sandve2013] ask for
+automated steps and public access to scripts, runs, and
+results, the preconditions of independent re-execution.
+They also connect the mechanics of CI to
 the habits that make it worthwhile.

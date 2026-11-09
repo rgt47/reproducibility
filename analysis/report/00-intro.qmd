@@ -94,8 +94,8 @@ levels ladder of @sec-levels.
 ## The evidence that it is not happening
 
 The case for taking this seriously is empirical, and it is
-grim. In psychology, the Open Science Collaboration could
-replicate only 39 of 100 studies it re-ran
+grim. In psychology, the Open Science Collaboration's
+teams judged only 39 of 100 replications successful
 [@opensciencecollaboration2015]. In preclinical oncology,
 @begley2012 reproduced only 6 of 53 landmark findings.
 These are replication failures, at the scientific end of
@@ -109,9 +109,11 @@ deposited in the Harvard Dataverse. They found that
 roughly one in four executed without error, and that was
 before asking whether the output matched. @saju2025,
 examining R code supplements on the Open Science
-Framework, found that only about a quarter ran to
-completion. They also found that the vast majority carried
-no description of their dependencies at all. These
+Framework, found that only about a quarter of the R
+scripts ran without error, even after an automated
+pipeline rebuilt their environments. They also found that
+nearly every project carried no description of its
+dependencies at all. These
 analyses could not be made to run a second time, so the
 question of whether they reached the right conclusion
 never arose. The scholarship, in Buckheit and Donoho's
@@ -131,7 +133,7 @@ would.
 ```{r}
 #| label: fig-failure-rates
 #| fig-cap: 'Reported success rates in four studies, separated by what each measured. The left panel reports replication studies, in which new data was collected to test a prior finding. The right panel reports re-execution studies, in which deposited code was run again without any attempt to evaluate the science. The re-execution figures are those stated in the text of the studies as cited in this chapter, and are approximate where the source reports a bound rather than a point estimate.'
-#| fig-alt: 'A two-panel bar chart of four studies. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent and Begley and Ellis at 11 percent. The right panel, labeled re-execution, shows Trisovic and colleagues at about 26 percent and Saju and colleagues at about 25 percent. All four bars sit well below half, and the two panels reach comparably low values by different routes.'
+#| fig-alt: 'A two-panel bar chart of four studies. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent and Begley and Ellis at 11 percent. The right panel, labeled re-execution, shows Trisovic and colleagues at about 26 percent and Saju and colleagues at about 26 percent of scripts. All four bars sit well below half, and the two panels reach comparably low values by different routes.'
 #| fig-width: 7
 #| fig-height: 3.2
 
@@ -143,7 +145,7 @@ studies <- tibble(
             'Begley and\nEllis (2012)',
             'Trisovic et al.\n(2022)',
             'Saju et al.\n(2025)'),
-  rate = c(39, 11, 26, 25),
+  rate = c(39, 11, 26, 26),
   kind = factor(
     c('Replication: new data collected',
       'Replication: new data collected',

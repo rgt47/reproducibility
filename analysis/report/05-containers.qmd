@@ -335,7 +335,7 @@ carries the real requirement.
 
 The boundary of what a lockfile fixes is the whole
 motivation for the container. A lockfile records, for
-every R package an analysis loaded, the exact version
+every R package the analysis code uses, the exact version
 and the repository it came from, and `renv::restore()`
 reinstalls that precise set [@ushey2020]. That is the L0-to-L1
 transition, and it is genuine progress. Beneath the
@@ -357,7 +357,7 @@ packages but not the R version: its `R` block records
 the version, and nothing in it can install that version.
 As we saw in the
 introduction, a change between R releases can alter a
-result silently: the random-number default that changed
+result silently: the `sample()` default that changed
 in R 3.6.0, the `stringsAsFactors` default that flipped
 in R 4.0.0. Restore the same lockfile under a different
 R, and the packages match while their behavior does
@@ -787,8 +787,9 @@ the binary build that matches the image's Ubuntu
 release, and the version of anything installed without
 a lockfile entry. Here that means `renv` itself, and any
 later `install.packages()` call made inside the running
-container. Rocker's own image already points R
-at a dated snapshot, one taken when the image was built,
+container. Rocker's own image already points R at a
+dated snapshot, fixed for each R version at the last
+day that version was current (`2024-06-13` for 4.4.0),
 which is why the `echo` line appends rather than
 replaces: the later setting wins.
 
@@ -846,9 +847,11 @@ entirely to @sec-verification.
 A pinned recipe must also run where the reviewer works.
 In the R Consortium's Pilot 4, a Shiny application
 submitted to the FDA with a Dockerfile, the agency's
-statistical reviewers had to install WSL and Docker
-Desktop on Windows laptops, and found that the R version
-still decided whether the packages restored
+statistical reviewers installed WSL and Docker Desktop on
+Windows. They noted that agency-issued laptops may not
+permit WSL or an unlicensed Docker Desktop, and found
+that the R version still decided whether the packages
+restored
 [@fdapilot4review2026]. Their review, dated May 2026,
 concluded that containers so far may not give the
 robustness a regulatory submission needs
@@ -1109,7 +1112,8 @@ runs of the same bootstrap or the same mixed model, one
 on four threads and one on eight, may therefore differ
 in the final digits. Which variable actually governs the
 summation order depends on the BLAS implementation the
-image carries: `OPENBLAS_NUM_THREADS` for OpenBLAS,
+image carries: `OPENBLAS_NUM_THREADS` for OpenBLAS (which
+falls back to `OMP_NUM_THREADS` when it is unset),
 `MKL_NUM_THREADS` for the Intel MKL, and `OMP_NUM_THREADS`
 for the OpenMP-parallel sections. The `rocker/r-ver`
 images link R against the multithreaded OpenBLAS, not
@@ -1117,8 +1121,9 @@ the single-threaded reference BLAS; in the image built
 above, `sessionInfo()` reports
 `openblas-pthread/libblas.so.3`. That is why the
 Dockerfile sets `OPENBLAS_NUM_THREADS=1` alongside
-`OMP_NUM_THREADS=1`. Setting the OpenMP and the BLAS
-thread counts to one together, rather than either alone,
+`OMP_NUM_THREADS=1`. OpenBLAS reads its own variable
+first, so a stray `OPENBLAS_NUM_THREADS` would override
+`OMP_NUM_THREADS=1`. Setting both to one together
 removes thread count as a source of variation in the
 order of summation. The image determines which BLAS is
 installed, but no rung of the ladder guarantees this
@@ -1145,8 +1150,10 @@ does pinning it in the image resolve the disagreement?
 ## Answer
 
 The likely culprit is `TZ`, the time zone. If the image
-does not fix it, each container may inherit the host's
-time zone, and an event recorded near midnight is
+does not fix it, the run can supply one: a `-e TZ=...`
+flag, a mounted `/etc/localtime`, or Apptainer, which
+binds the host's `/etc/localtime` by default. An event
+recorded near midnight is then
 assigned to different calendar days in Berlin and San
 Diego. The daily buckets then differ at the day
 boundaries, which is exactly the pattern described.
@@ -1466,8 +1473,8 @@ an undated URL can resolve differently from one build to
 the next, and a `noble` URL would install binaries built
 against other system libraries. Line (3) sets both thread counts, not
 `OMP_NUM_THREADS` alone, because the `rocker/r-ver` image
-links R against OpenBLAS, which `OPENBLAS_NUM_THREADS`
-governs. Line (4) restores the lockfile, because without
+links R against OpenBLAS, which reads
+`OPENBLAS_NUM_THREADS` ahead of `OMP_NUM_THREADS`. Line (4) restores the lockfile, because without
 it the image fixes the environment but not the package
 versions. The recipe would then not reach L1, and since
 the rungs are cumulative it would not be L2 either. The
@@ -1950,7 +1957,10 @@ Setting `OMP_NUM_THREADS=1` together with
 image carries, removes the variability by removing the
 parallelism: there is one summation order and it is the
 same every time on that image and CPU. Either variable
-alone can leave the other source of threads in place.
+alone can leave a source of threads in place:
+`OPENBLAS_NUM_THREADS` alone leaves other OpenMP code
+threaded, and `OMP_NUM_THREADS` alone yields to any
+`OPENBLAS_NUM_THREADS` set elsewhere.
 
 **What is traded away.** Speed, and potentially a great
 deal of it. A mixed model on a large dataset, or a
@@ -2095,9 +2105,9 @@ For the division of labor between the container and the
 package layer, return to @ushey2020 on `renv`, keeping in
 mind that its remit stops exactly where this chapter's
 begins. The compendium structure into which both fit is
-the subject of @marwick2018, whose `rrtools` first
-combined a lockfile and a Dockerfile in a packaged
-analysis. The alternatives to Docker as a runtime are
+the subject of @marwick2018, whose `rrtools` pairs a
+packaged analysis with a Dockerfile; its template has
+restored an `renv` lockfile since 2022. The alternatives to Docker as a runtime are
 taken up in @sec-backends. They range from the
 high-performance-computing runtime Apptainer (formerly
 Singularity) [@kurtzer2017] to the browser-based Binder

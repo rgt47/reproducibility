@@ -829,9 +829,10 @@ skipped. (@sec-pipelines)
 []{#gloss-validation}**Validation.** Confirming that the captured inputs actually
 suffice, by rebuilding and re-running. Validation does not pin
 anything new; it checks. (@sec-levels)
-*Regulated sense:* in FDA software guidance, validation means
-confirming that software conforms to user needs and its intended
-use, with documented evidence [@fdagpsv2002]. That is a broader
+*Regulated sense:* in FDA software guidance, validation is
+confirmation, by examination and objective evidence, that
+software specifications conform to user needs and intended uses
+[@fdagpsv2002]. That is a broader
 and more formal claim than a rebuild and re-run, and passing this
 book's checks is not a validation record in that sense.
 (@sec-testing)
