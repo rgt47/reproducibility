@@ -701,6 +701,13 @@ D25 (reopened Phase 0, author, 2026-11-07): `CITATION.cff` keeps
 Chapter 13 no longer claims a Zenodo deposit would record the code
 license correctly from that file.
 
+D25 superseded (author, 2026-11-09, commit `5afefa7`): prose, figures,
+and exercises under CC BY 4.0; code printed in the book under MIT;
+repository code under GPL-3, as `DESCRIPTION` and `CITATION.cff` now
+declare. The license invariant in `test-manuscript-invariants.R` and
+the Chapter 5 `use_*_license()` example were aligned to it after the
+first PR CI run failed on the old expectation.
+
 ## 12. Implementation record
 
 ### Phase 19 (E1, Tier 1), branch `phase-19-tier1`, 2026-11-07

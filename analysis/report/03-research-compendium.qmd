@@ -554,7 +554,7 @@ desc_suggests <- trimws(desc[1, 'Suggests'])
 # renv.lock (see the text).
 usethis::create_package('cohortstudy')
 usethis::use_r('cohort')
-usethis::use_cc0_license()
+usethis::use_gpl_license(version = 3)
 usethis::use_package('survival')
 tinytest::setup_tinytest('.')
 usethis::use_pkgdown()
@@ -583,8 +583,9 @@ creates or opens a file in `R/`, the place where a
 function comes under the check. The license call writes
 the `License` field and a license file. This compendium's
 `DESCRIPTION` records `r desc_license`. The call that
-writes `CC0` is `use_cc0_license()`, and the choice of
-license is argued in @sec-archiving. `use_package()` adds a package
+writes GPL-3 is `use_gpl_license(version = 3)`; others,
+such as `use_mit_license()` or `use_cc0_license()`, write
+other licenses, and the choice is argued in @sec-archiving. `use_package()` adds a package
 to `Imports`, which is how the undeclared-import WARNING
 of the previous section is cleared. Because the book tests
 with `tinytest` [@vanderloo2020], its `setup_tinytest()`
