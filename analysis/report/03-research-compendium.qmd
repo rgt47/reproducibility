@@ -91,6 +91,39 @@ answer:**
   against the Five Pillars.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A cohort analysis was tagged `v1.0-submission` in 2018
+and pushed to a remote. In 2024 you check out that tag
+and re-run it under the current R. The code matches the
+tag, and it sets a seed before drawing bootstrap
+resamples with `sample()`. Yet the bootstrap interval no
+longer matches the paper. There is no lockfile and no
+container. Drawing on @sec-crisis, @sec-levels, and
+@sec-version-control, which determinant layer most likely
+moved, which rung did the tag secure, and what would have
+held that layer fixed?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+For the 2018 bootstrap interval that no longer matches,
+the most likely layer is the R runtime. R 3.6.0, released
+in 2019, changed the default sampler behind `sample()`,
+so the same seed now draws different resamples, as
+@sec-crisis shows. The tag is not at fault. It fixes the
+analysis code and makes it locatable, which is L0 and no
+more (@sec-version-control). The default RNG kind comes
+with the R release, so it belongs to the runtime and is
+fixed at L2 (@sec-levels). Because the rungs are
+cumulative, L2 also needs a lockfile, which would rule
+out package churn, the other candidate. An explicit
+`RNGkind()` call in the analysis code would have fixed
+the sampler as well.
+:::
+:::
+
 ## Where this sits on the stack
 
 We begin by placing the chapter on the determinant stack
@@ -1197,7 +1230,7 @@ knitr::kable(
 ```{r}
 #| label: fig-gates
 #| fig-cap: 'Validation gates by archetype. The R-package check and the unit tests apply universally; the render and seeding gates apply selectively. Where a render gate is only optional, as for a data analysis or a simulation study without a report, the cell is left unmarked. The underlying reproducibility machinery, the Five Pillars, is identical across every row.'
-#| fig-alt: 'A grid of five archetype rows (data analysis, scholarly manuscript, R package, simulation study, and blog) against four gate columns (R CMD check, unit tests, render report, and seed determinism). Universal cells use a dark blue fill with a white filled circle, selective cells a dark green fill with a white filled triangle, and inactive cells are medium gray without a symbol. Every cell in the R CMD check and unit tests columns is active, indicating universal application. The render report column is active for scholarly manuscript and blog. The seed determinism column is active for simulation study only.'
+#| fig-alt: 'A grid of five archetype rows (data analysis, scholarly manuscript, R package, simulation study, and blog) against four gate columns (R CMD check, unit tests, render report, and seed determinism). Universal cells use a dark blue fill with a white filled circle, selective cells a dark green fill with a white filled triangle, and cells where the gate does not apply are a medium blue-gray without a symbol. Every cell in the R CMD check and unit tests columns is universal, ten circles in all. The render report column is selective for scholarly manuscript and blog, and the seed determinism column is selective for simulation study only, three triangles in all. A legend below the grid keys the three statuses, Universal, Selective, and Does not apply, by both fill and symbol.'
 
 library(ggplot2)
 
@@ -1233,29 +1266,39 @@ grid$status <- factor(
 )
 
 # Non-color cue: a point shape per status, so universal and
-# selective cells differ by shape as well as hue (WCAG 1.4.11).
+# selective cells differ by shape as well as hue (WCAG 1.4.1).
+# The two fills are only 1.34:1 apart, so the shape carries the
+# distinction; the white markers are 7.1:1 and 5.3:1 against them.
 # Point shapes rather than a text glyph, because the PDF device
-# cannot encode a Unicode circle.
+# cannot encode a Unicode circle. The shape scale shares the fill
+# scale's labels so the two merge into one legend, and a reader who
+# cannot separate the hues can still read the key by shape.
 marked <- grid[grid$status != 'not emphasised', ]
+status_labels <- c(
+  'universal'      = 'Universal',
+  'applies'        = 'Selective',
+  'not emphasised' = 'Does not apply'
+)
 
 ggplot(grid, aes(x = gate, y = archetype, fill = status)) +
   geom_tile(colour = 'white', linewidth = 1.2) +
   geom_point(data = marked, aes(shape = status), colour = 'white',
-             size = 3.5, show.legend = FALSE) +
-  scale_shape_manual(values = c('universal' = 16, 'applies' = 17)) +
+             size = 3.5) +
+  scale_shape_manual(
+    values = c('universal' = 16, 'applies' = 17,
+               'not emphasised' = NA),
+    labels = status_labels, drop = FALSE
+  ) +
   scale_fill_manual(
     values = c(
       'universal'      = '#1a5c8c',
       'applies'        = '#1e7a50',
       'not emphasised' = '#7a8a9c'
     ),
-    labels = c(
-      'universal'      = 'Universal',
-      'applies'        = 'Selective',
-      'not emphasised' = 'Does not apply'
-    )
+    labels = status_labels
   ) +
-  labs(x = NULL, y = NULL, fill = NULL) +
+  guides(fill = guide_legend(override.aes = list(size = 2.5))) +
+  labs(x = NULL, y = NULL, fill = NULL, shape = NULL) +
   theme_minimal(base_size = 11) +
   theme(
     panel.grid = element_blank(),
@@ -1944,9 +1987,9 @@ artifact rather than the only one.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch03),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 three autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -1989,6 +2032,10 @@ does not.
 | Progressive disclosure | One directory layout carries a project through every archetype with no reorganization |
 | Rule of thumb | Name the archetype from the deliverable (a document, a function, stored results, a post), never from the subject matter or the project's size |
 | Habit 7 | Write the honest level down: a tidy compendium is a precondition for reproducibility, not evidence of it |
+| `usethis::create_package()`, `use_r()`, `use_package()` | Write the package skin, a file in `R/`, and an `Imports` entry |
+| `tinytest::setup_tinytest('.')` | Adds `inst/tinytest/`, `tests/tinytest.R`, and `tinytest` in `Suggests` |
+| `devtools::load_all()`, `document()`, `check()` | The development loop: load, regenerate help and `NAMESPACE`, run `R CMD check` |
+| README computational requirements | Software and versions, where each seed is set, runtime, hardware, and an output-to-code map |
 
 ## Further reading
 

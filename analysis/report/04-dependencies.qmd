@@ -79,6 +79,41 @@ collaborating with an LLM; exercises, a cheat sheet, and
 further reading.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A colleague clones your cohort repository at its
+submission tag and runs `analysis/scripts/01-clean.R` on
+the unchanged raw extract. The cleaned table has fewer
+rows than the committed
+`analysis/data/derived_data/cohort_clean.csv`. The history
+shows that the outlier threshold in the script was
+tightened after that file was last committed. On the same
+machine, the script as it stood when the file was
+committed reproduces the file's row count. Drawing on
+@sec-levels, @sec-version-control, and @sec-compendium,
+name the failure and the rule it breaks.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The cleaned cohort table with fewer rows exposes a stale
+derived file, not a package or environment change. On one
+machine the old script reproduces the old count and the
+current script does not, so only the analysis code
+differs. The committed file breaks the promise of
+@sec-compendium that a file in `derived_data/` can always
+be regenerated from the raw inputs and the code. The
+history of @sec-version-control locates the change:
+`git log` on the script lists the commit, and `git show`
+displays its diff. The tag secures L0 on the ladder of
+@sec-levels. It fixes which code a reader finds, not that
+a stored output still matches that code. The remedy is
+to regenerate the file from the raw extract and the
+current script.
+:::
+:::
+
 ## Where this sits on the stack
 
 This chapter's whole business is the lockfile, so it is
@@ -1613,9 +1648,9 @@ tie and can therefore change a reported result through a
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch04),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 autogradable values against those reported in the chapter's
 own 'The cohort's own dependencies' section.

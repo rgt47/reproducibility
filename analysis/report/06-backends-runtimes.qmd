@@ -90,6 +90,40 @@ with an LLM, exercises, a cheat sheet, and further
 reading.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A colleague rebuilds your analysis image from its
+Dockerfile six months after you first built it, and a
+fitted coefficient changes in the third decimal. The recipe
+opens with `FROM rocker/r-ver:4.4.0`, a tag with no digest,
+and installs packages with a plain `install.packages()`
+against the live repository. The project has no
+`renv.lock`. Using @sec-levels, @sec-dependencies, and
+@sec-containers, name each layer that could have moved, the
+rung the project actually reached, and what would close
+each gap.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The rebuilt image with the changed coefficient leaves two
+captured layers free to move. Package versions could move,
+because `install.packages()` against the live repository
+resolves to whatever is current on the day of each build,
+and no lockfile records the versions (@sec-dependencies).
+The operating system, the system libraries, and even the R
+patch level could move too, because a tag is a mutable
+label that a maintainer can rebuild and republish
+(@sec-containers). The rungs are cumulative (@sec-levels),
+so a Dockerfile without a lockfile is not L1, hence not
+L2, and the project stays at L0. The remedy is a base
+pinned by digest, a dated snapshot, and a lockfile restored
+inside the image. Even then, no rung guarantees the BLAS,
+so a stated tolerance is still needed.
+:::
+:::
+
 ## Where this sits on the stack
 
 This chapter captures nothing beyond what @sec-containers
@@ -1488,9 +1522,9 @@ pinned thing in different places.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch06),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 file-existence results against those reported in the
 chapter's own 'The cohort, continued' section.

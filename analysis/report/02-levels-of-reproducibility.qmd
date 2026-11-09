@@ -37,7 +37,9 @@ pkgload::load_all('../..', quiet = TRUE)
 
 **Prerequisites.** Chapter 1 (the introduction), for the
 first, informal pass at the determinant stack this
-chapter makes precise; no other chapter is assumed.
+chapter makes precise, and Chapter 2 (@sec-crisis), for
+the two silent defaults of R itself; no other chapter is
+assumed.
 Statistically, nothing beyond reading a regression
 output, a hazard ratio or an odds ratio with its
 confidence interval, is required. No R fluency beyond
@@ -84,6 +86,39 @@ answer:**
 - Worked example: one analysis walked up all four rungs.
 - The cohort, continued: placing this book's own
   compendium on the ladder, today.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A colleague re-runs a 2018 heart-failure analysis, written
+under R 3.5, on a laptop with a current release of R. The
+script calls `set.seed(42)` before a bootstrap built on
+`sample()`, yet the bootstrap interval has moved. In the same
+run, `levels(d$arm)` on a column read by `read.csv()` returns
+`NULL`. Drawing on @sec-intro and @sec-crisis, is this a
+replication failure? For each discrepancy, name the R release
+and the determinant layer responsible, and say what would
+close it.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Neither change in the re-run 2018 analysis is a replication
+failure. The same code ran on the same data, so by the
+definitions of @sec-intro and @sec-crisis this is a failure
+of computational reproducibility, with a computational cause.
+The moved interval traces to R 3.6.0, which changed the
+default `sample.kind`: the seed was fixed, but the sampler
+that turns it into draws was not (@tbl-rng-kind). The `NULL`
+levels trace to R 4.0.0, which flipped the `stringsAsFactors`
+default to `FALSE`, so `arm` now arrives as a character
+vector. Both are defaults of the R runtime, and pinning the R
+release, which a container does at L2, fixes both. Each can
+also be closed in the analysis code: an explicit `RNGkind()`
+call, the only fix for an override, and an explicit
+`stringsAsFactors` argument, as `load_cohort()` writes it.
+:::
 :::
 
 ## Orientation
@@ -242,7 +277,8 @@ collected here for reference.
   value.
 - **Capture.** Fixing an input so that it cannot drift:
   writing a lockfile, building a container image.
-  Capture sets the reproducibility level.
+  Capture sets levels L0 to L2; L3 is reached by
+  validation.
 - **Validation.** Confirming that the captured inputs
   actually suffice, by rebuilding and re-running.
   Validation does not pin anything new; it checks.
@@ -1436,9 +1472,9 @@ than part of the environment.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch02),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 autogradable value against those reported in the chapter's
 own 'The cohort, continued' section.
@@ -1480,7 +1516,7 @@ lockfile alone does not.
 | L1 pinned packages | A lockfile (`renv.lock`) records every package's exact version |
 | L2 pinned environment | A container or Nix recipe also fixes the OS, R runtime, and system libraries |
 | L3 verified | A baseline test compares regenerated outputs with recorded values, within a stated tolerance, after a clean rebuild |
-| Capture vs. validation | Capture (a lockfile, a container) sets the level; validation (CI, a baseline test) only confirms it (habit 5) |
+| Capture vs. validation | Capture (a lockfile, a container) sets L0 to L2; validation (CI, a baseline test) adds nothing pinned, confirms the captured level, and is what reaches L3 (habit 5) |
 | Reproduced (this book) | Same code, same data, re-run; contrast replicated: a new study, new data |
 | `zzc verify --full` | Reports L3 only if the image rebuilds, tests pass, and a `test-baseline*.R` file ran |
 | Honest statement | Name the rung, the artifact, and what remains exposed; never claim 'fully reproducible' (motto) |

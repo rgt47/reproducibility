@@ -24,6 +24,25 @@ $body-bg: #ffffff;
   font-weight: 600;
 }
 
+/* Function names in code are linked to their help pages
+   (code-link: true). Underline those links so that they are
+   not distinguished from the surrounding code by color alone
+   (WCAG 1.4.1; axe link-in-text-block). */
+pre a,
+code a {
+  /* Quarto's own code-link rule is more specific and removes
+     the underline, so this one must override it. */
+  text-decoration: underline !important;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+/* Inline code in a callout title inherited a pale code color
+   on the title's tinted background (axe color-contrast). */
+.callout-title-container code {
+  color: $body-color;
+}
+
 .chapter-title {
   font-weight: 700;
 }

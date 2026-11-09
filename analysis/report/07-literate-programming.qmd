@@ -84,6 +84,40 @@ continued, and collaborating with an LLM. Lastly, the chapter closes
 with exercises, a cheat sheet, and further reading.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+Your bootstrap confidence interval is computed inside a
+digest-pinned image with a restored lockfile. A colleague
+runs the same image as a SIF under Apptainer on her
+cluster, with `--cleanenv`, the same seed, and the same
+data, and her interval differs. Her home directory holds
+an `.Rprofile` that calls
+`RNGkind(sample.kind = 'Rounding')`, and the project has
+none. Drawing on @sec-levels, @sec-containers, and
+@sec-backends, which determinant layer failed, why did the
+image not prevent it, and what closes it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The colleague's different bootstrap interval comes from
+the session-configuration layer, not the R runtime. The R
+release sets the default random-number kind, so the image
+fixes that default at L2 (@sec-levels, @sec-containers).
+Her `~/.Rprofile` overrides the default, and an override is
+session configuration, fixed only by an explicit
+`RNGkind()` call in the analysis code. The image did not
+prevent it because Apptainer mounts the host `$HOME` by
+default, and `--cleanenv` drops only environment
+variables, so R inside the container still reads her
+startup file (@sec-backends). Two changes close it: an
+explicit `RNGkind()` call in the analysis, and a run with
+`--no-home` and `Rscript --vanilla`, so that no startup
+file is read.
+:::
+:::
+
 ## Where this sits on the stack
 
 A sealed render is an unusual case among this book's
@@ -450,7 +484,7 @@ cannot therefore disagree with the sentences around it.
 ```{r}
 #| label: fig-simpson
 #| fig-cap: 'The reversal of an association upon pooling. Within each synthetic species bill depth rises with bill length (solid lines); across the pooled sample the fitted line falls (dashed). Because the figure is computed when the book is built, the described reversal cannot drift from the code that produces it.'
-#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species, each drawn in its own color. Within every species the points trend upward and carry a solid fitted line of positive slope. A single dashed line fitted to all the points pooled together is nearly flat with a slight downward tilt, the opposite sign from all three within-species lines, because the species clusters sit at descending heights as bill length increases.'
+#| fig-alt: 'A scatter plot of bill depth against bill length for three synthetic species: Species A in red, Species B in green, and Species C in blue. Within every species the points trend upward and carry a solid fitted line, in the species color, of positive slope. Species A sits at the shortest bill lengths and Species B at the longest, both at about the same depth. Species C overlaps Species B in bill length, centered slightly shorter, and sits well below both. A single black dashed line fitted to all the points pooled together is nearly flat with a slight downward tilt, the opposite sign from all three within-species lines. It tilts down because the shallow Species C cluster lies among the long bills, while the short-billed Species A cluster is deep.'
 #| echo: true
 #| message: false
 #| warning: false
@@ -1714,9 +1748,9 @@ respectively) does the binding instead.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch07),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 two autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -1807,6 +1841,7 @@ on the tool, in the spirit of habit 4.
 | Rule of thumb | Compare the computational outputs with a recorded baseline within a stated tolerance (habit 5), not the rendered PDF or HTML; the render's bytes are not the object of record. |
 | Habit 6 | Rebuild from clean, on a machine that is not yours, to test whether the seal actually holds. |
 | Habit 7 | Write the honest level down; 'it renders' is a claim about the seal, not about L1, L2, or L3. |
+| `freeze: auto` | Re-executes a document only when its source changes; data, package, and R changes do not trigger it (@sec-freeze) |
 
 ## Further reading
 

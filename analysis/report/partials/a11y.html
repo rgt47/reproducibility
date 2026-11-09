@@ -1,0 +1,28 @@
+<script>
+// Accessibility repairs to Quarto's generated HTML, checked with axe
+// (Finding 45). A collapsible callout header is a plain div carrying
+// aria-expanded, which is not allowed without a role, and an
+// aria-label of 'Toggle callout' that hides the callout's own title
+// from screen readers. Make each header a keyboard-operable button
+// named by its title. A code block wider than the page scrolls, so
+// give it a tab stop for keyboard scrolling.
+document.addEventListener('DOMContentLoaded', function () {
+  document.querySelectorAll('div.callout-header[data-bs-toggle="collapse"]')
+    .forEach(function (el) {
+      el.setAttribute('role', 'button');
+      el.setAttribute('tabindex', '0');
+      el.removeAttribute('aria-label');
+      el.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          el.click();
+        }
+      });
+    });
+  document.querySelectorAll('pre').forEach(function (pre) {
+    if (pre.scrollWidth > pre.clientWidth && !pre.hasAttribute('tabindex')) {
+      pre.setAttribute('tabindex', '0');
+    }
+  });
+});
+</script>

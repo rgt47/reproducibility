@@ -1,0 +1,39 @@
+# A default project, deliberately separate from the book project in
+# analysis/report/, so that the book render never picks up this guide
+# (Decision D14). Render from the repository root with
+#   quarto render analysis/instructor-guide
+project:
+  type: default
+  output-dir: _output
+  render:
+    - instructor-guide.qmd
+
+format:
+  html:
+    theme: cosmo
+    toc: true
+    toc-depth: 2
+    embed-resources: true
+    code-overflow: wrap
+  pdf:
+    toc: true
+    toc-depth: 2
+    geometry:
+      - margin=1in
+    include-in-header:
+      text: |
+        \usepackage{fontspec}
+        \setmonofont{DejaVu Sans Mono}[Scale=0.85]
+        \usepackage{fvextra}
+        \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,breakanywhere,breaknonspaceingroup,commandchars=\\\{\}}
+
+execute:
+  freeze: false
+  echo: true
+  warning: true
+  message: false
+
+knitr:
+  opts_chunk:
+    comment: '#>'
+    collapse: true

@@ -853,6 +853,24 @@ paragraph in the shared restricted-data include becomes one sentence.
 | D19 include | Agents paragraph cut to one sentence pointing to `sec-llm-delegate` | I |
 | Render | Clean; 664 pages (unchanged: the shortened paragraph moved no page break) | V; suite 426/426 |
 
+### Phase 24 (apparatus and accessibility), branch `phase-24-apparatus`, 2026-11-08
+
+Five agents worked from one brief (`docs/third-review/phase24/`); the
+lead did the shared files, the filter, the figure function, and the
+HTML repairs. The PDF tagging trial (D24) is recorded separately below.
+
+| Item | Result | Evidence |
+|---|---|---|
+| D14 instructor guide | Removed from the book; moved to `analysis/instructor-guide/` as its own Quarto project (HTML and PDF); every typed key replaced by an executed chunk or inline value; week table moved in from `INSTRUCTOR-GUIDE.md` (now a pointer), titles checked by a chunk; a cumulative-quiz schedule added. The twelve chapter links and the preface now say the guide is distributed separately; the stale `_book/instructor-guide.html` deleted | V: guide renders clean, 14 pages; `grep sec-ig-` in the book empty. Keys corrected by computation: Ch 6 base packages now include `parallel`; Ch 10 'stays at L0' corrected |
+| D23 PDF answers | `filters/pdf-answers.lua` (pre-ast, LaTeX only) numbers the checks per chapter, moves each answer to 'Answers to the checks' before the cheat sheet, with page references both ways; HTML untouched; Conventions says so | V: 142 answers in the sources, 142 entries in the PDF, no inline answer except the Conventions example, no unresolved page reference; HTML unchanged in a scratch book |
+| Finding 44 | One 'from earlier chapters' check after every card (Chs 2 to 13), mostly diagnosis vignettes; faded examples for the Ch 7 Dockerfile (label values masked so they do not give the answer away), the Ch 10 `_targets.R`, and the Ch 12 workflow | I: agents grepped each claim against the earlier chapter (file:line in reports) |
+| Finding 45 figures | Stack figure: every bar labeled with its rung and, where highlighted, 'captured' or 'validated here', so color and fading are no longer the only cues; legend no longer clipped; alt text lists each layer's rung; roxygen 'hatched border' corrected. `fig-gates`: shapes now in the legend; contrast computed (fills below 3:1, carried by shape; markers 5.3 and 7.1:1); alt text corrected. `fig-simpson`: alt text rewritten from computed cluster means (the 'descending heights' clause was false) | V: figures drawn and inspected; contrast and means computed |
+| Finding 45 HTML | axe (WCAG 2.0/2.1 A and AA) over every page: 713 violation nodes before (link-in-text-block 481, aria-allowed-attr 227, scrollable-region-focusable 3, color-contrast 2), 0 after. Repairs: underlined code links, title-code color, and a script making each collapsible callout a keyboard-operable button named by its title (Quarto's 'Toggle callout' label removed) and giving overflowing code a tab stop | V: axe via puppeteer-core and Chrome; Enter toggles `aria-expanded` |
+| Finding 37 | Cheat-sheet index generated at render time from the manifest and each chapter's table (cross-references, current titles); the Phase 22 agents' optional rows added to six chapter tables. Colophon: 'Locked' column from `renv.lock`, Quarto version computed, the mismatch (R 4.6.0 against locked 4.6.1) stated by an inline sentence, and the false 'see the homepage timestamp' line replaced by the execution date | V: chunks run; rendered |
+| Finding 41 | 'Capture sets the level' corrected to 'L0 to L2; L3 by validation' in the glossary and in Ch 3's vocabulary box and cheat sheet, matching Ch 3's own text and Ch 13 | I |
+| Also | Ch 3 prerequisites now name Ch 2 (its new check draws on it); `.Rbuildignore` lists `INSTRUCTOR-GUIDE.md`; `.gitignore` no longer ignores `partials/*.html`; week 6 lab no longer says 'built in CI' | |
+| Render | Clean; 666 pages; suite 438/438 | V |
+
 ## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human

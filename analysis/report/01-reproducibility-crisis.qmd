@@ -89,6 +89,38 @@ answer:**
   in `load_cohort()`.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A colleague re-runs a cohort script deposited in 2019,
+written under R 3.6, on a laptop with a current release of
+R. The script finishes without error, but `read.csv()` now
+returns `sex` as a character column where the original run
+had a factor. The colleague reports that the finding 'did
+not replicate'. Using @sec-intro, is 'replicate' the right
+word? Which layer of the determinant stack is at fault, and
+which tool would have pinned it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+'Replicate' is the wrong word for the failed re-run of the
+2019 cohort script. In the National Academies' terms that
+@sec-intro adopts, re-running the same code on the same data
+tests reproducibility; replicability asks whether a finding
+holds in a new study with its own data. The character column
+is the R 4.0.0 change of the `stringsAsFactors` default from
+`TRUE` to `FALSE`. The fault therefore lies in the language
+runtime, R itself, and not in the statistics. A lockfile from
+`renv` would not have closed it, because `renv` pins package
+versions and this change is in R. A container built from a
+Rocker image would have, since it pins the operating system
+and the runtime, the rung the book calls L2, pinned
+environment. Continuous integration on a clean machine would
+then confirm that the pinned layers suffice.
+:::
+:::
+
 ## Orientation
 
 Consider a situation that every
@@ -1356,9 +1388,9 @@ original analysis actually did.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch01),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 two autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -1407,6 +1439,7 @@ contradicting it.
 | Determinant stack | What a result depends on beneath the code and data; developed fully in @sec-levels |
 | Floor, not ceiling | A reproducible result can still be wrong; never claim correctness from re-execution alone |
 | Honest level | State the rung actually reached, never one asserted above it |
+| Record model use (@sec-llm-disclosure) | One `LLM-USE.md` row per use: date, tool and identifier, purpose, files, prompt path, verification |
 
 ## Further reading
 

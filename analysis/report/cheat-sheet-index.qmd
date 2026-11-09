@@ -2,80 +2,57 @@
 
 Each content chapter ends with a two-column reference table of the
 commands, rules, and terms introduced in that chapter. This appendix
-collects those tables in one place. Every entry links to the full
-table in its chapter, where the surrounding context explains any
-term that is not self-explanatory.
+lists what each table covers, part by part, with a reference to the
+full table, where the surrounding context explains any term that is
+not self-explanatory.
 
-## Part I: Foundations
+The entries below are read from the chapters' own tables when the
+book is built, so the index cannot fall out of step with them.
 
-**[Chapter 2: The Reproducibility Crisis](01-reproducibility-crisis.qmd#sec-cheat-crisis)**
-Terms and distinctions: reproducibility vs. replicability vs.
-robustness; computational vs. statistical failure;
-`RNGkind()`; the `stringsAsFactors` default change; the
-determinant stack. These are the vocabulary the rest of
-the book assumes.
+```{r}
+#| label: cheat-index
+#| echo: false
+#| results: asis
 
-**[Chapter 3: Levels of Reproducibility](02-levels-of-reproducibility.qmd#sec-cheat-levels)**
-The L0-L3 ladder; the capture-vs.-validation distinction;
-`zzc verify --full`; how each level is claimed and confirmed.
-The single most referenced table in the book.
+# Part and chapter order come from the book's manifest; each entry
+# lists the first column of that chapter's cheat-sheet table.
+manifest <- readLines('_quarto.yml', warn = FALSE)
+stop_at <- grep('^\\s*appendices:', manifest)[1]
+manifest <- manifest[seq_len(stop_at - 1)]
 
-**[Chapter 4: Version Control](version-control.qmd#sec-cheat-vc)**
-Core git commands: `init`, `add`, `commit`, `status`, `log`,
-`show`, `switch -c`, `remote add`, `push`, `tag`. The
-`.gitignore` pattern syntax. The rule of thumb for commit
-messages.
+part_re <- "^\\s*- part: '(.*)'\\s*$"
+file_re <- '^\\s+- ([A-Za-z0-9_-]+[.]qmd)\\s*$'
 
-**[Chapter 5: The Research Compendium](03-research-compendium.qmd#sec-cheat-compendium)**
-The minimal R-package skin (`DESCRIPTION`, `NAMESPACE`, `R/`);
-the Five Pillars; the raw-vs.-derived boundary test; the five
-archetypes; progressive disclosure.
+first_cell <- function(row) {
+  sub('^\\|\\s*(.*?)\\s*\\|.*$', '\\1', row, perl = TRUE)
+}
 
-## Part II: Capturing the Environment
+entry <- function(file) {
+  lines <- readLines(file, warn = FALSE)
+  start <- grep('^## Cheat sheet \\{#sec-cheat-', lines)
+  if (length(start) == 0) return(NULL)
+  chapter_id <- sub('.*\\{#(sec-[A-Za-z0-9-]+).*', '\\1', lines[1])
+  title <- trimws(sub('\\{.*$', '', sub('^# ', '', lines[1])))
+  cheat_id <- sub('.*\\{#(sec-cheat-[A-Za-z0-9-]+)\\}.*', '\\1',
+                  lines[start])
+  rest <- lines[(start + 1):length(lines)]
+  rows <- rest[seq_len(which(!grepl('^\\||^\\s*$', rest))[1] - 1)]
+  rows <- grep('^\\|', rows, value = TRUE)
+  rows <- rows[-(1:2)]
+  cells <- unique(first_cell(rows))
+  stopifnot(length(cells) > 0)
+  paste0(
+    '**@', chapter_id, ', ', title, '** (@', cheat_id, '). ',
+    paste(cells, collapse = '; '), '.\n\n'
+  )
+}
 
-**[Chapter 6: Managing Dependencies](04-dependencies.qmd#sec-cheat-deps)**
-`renv::init()`, `snapshot()`, `restore()`, `dependencies()`;
-`zzrenvcheck` CI and development forms; CRAN snapshot URLs;
-`options(renv.config.autoloader.enabled = FALSE)`.
-
-**[Chapter 7: Containers](05-containers.qmd#sec-cheat-containers)**
-`FROM image@sha256:`; `ARG PPM_SNAPSHOT`; `ENV` variables for
-locale, timezone, and thread count; the two-stage `COPY` for
-`renv`; `docker build`, `run`, `exec`, `inspect`; the
-`--platform` flag.
-
-**[Chapter 8: Backends and Runtimes](06-backends-runtimes.qmd#sec-cheat-backends)**
-Podman and Apptainer equivalents to Docker; `rix::rix()` and
-`nix-shell`; Binder and Dev Containers; the L2 guarantee each
-tool provides.
-
-## Part III: Validation
-
-**[Chapter 9: Literate Programming](07-literate-programming.qmd#sec-cheat-literate)**
-Inline R expressions; `knitr::opts_chunk$set()`; `SOURCE_DATE_EPOCH`;
-`make docker-render`; the five render landmines; the sealed-render
-rule of thumb.
-
-**[Chapter 10: Automating the Analysis](pipelines.qmd#sec-cheat-pipelines)**
-Make syntax (`target: prerequisites`, tab-indented recipes,
-`touch`); `targets` (`tar_target()`, `tar_make()`,
-`tar_outdated()`, `tar_visnetwork()`); `snakemake --cores`.
-
-**[Chapter 11: Testing and Code Quality](08-testing-quality.qmd#sec-cheat-testing)**
-`tinytest` expectations (`expect_equal`, `expect_true`, etc.);
-`test_package()`; `exit_file()`; `make lint` / `make style`;
-the `test-baseline*.R` naming convention; the stated-tolerance
-rule.
-
-**[Chapter 12: Continuous Integration](09-continuous-integration.qmd#sec-cheat-ci)**
-`error-on: '"warning"'`; `zzrenvcheck` with `error_on_fail = TRUE`;
-`renv::dependencies()`; the render gate; `docker build` on a
-clean machine; `zzc verify --full`; the L3 rebuild requirement.
-
-## Part IV: Collaboration and Stewardship
-
-**[Chapter 13: Archiving and Sharing](10-archiving-sharing.qmd#sec-cheat-archiving)**
-`docker inspect` for digest retrieval; `apptainer build` from a
-digest-pinned image; the two-layer (environment/packages) model;
-the union lockfile; `rang` and `groundhog`; Zenodo and OSF
-deposition; FAIR principles and DataCite metadata.
+for (ln in manifest) {
+  if (grepl(part_re, ln)) {
+    cat('## ', sub(part_re, '\\1', ln), '\n\n', sep = '')
+  } else if (grepl(file_re, ln)) {
+    out <- entry(sub(file_re, '\\1', ln))
+    if (!is.null(out)) cat(out)
+  }
+}
+```

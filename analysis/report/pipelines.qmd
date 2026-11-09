@@ -104,6 +104,36 @@ answer:**
   rung pins, and its responses kept as data.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A collaborator updates `survival` to a newer release and
+commits the new `renv.lock`. You pull the commit, run
+`renv::restore()`, and render the whole Quarto project, whose
+`_quarto.yml` sets `freeze: auto`. The hazard ratio on the
+page is unchanged, under a fresh build date. Drawing on
+@sec-dependencies and @sec-literate, which determinant
+layer changed, can the page tell you whether the new
+release moved the estimate, and what render would?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The layer that changed after the `survival` update is the
+package-versions layer. The new `renv.lock` records the
+newer release, and `renv::restore()` reinstalls exactly
+the versions the lockfile records (@sec-dependencies). The
+page cannot tell you whether the estimate moved. Under
+`freeze: auto`, a project render compares only with the
+document's own source, so an updated package leaves the
+frozen results in `_freeze/` in place under a fresh build
+date (@sec-freeze). Rendering that single document always
+executes its code. For a deposited analysis, render in the
+pinned environment with freeze off, or after deleting
+`_freeze/` and the cache directories (@sec-literate).
+:::
+:::
+
 ## Where this sits on the stack
 
 We begin by locating the chapter on the determinant
@@ -1252,6 +1282,67 @@ as an ordinary R object.
 :::
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: complete the `_targets.R`
+
+The worked example's `_targets.R`, first shown in the
+section on `targets`, is reprinted here with four decisive
+lines replaced by numbered placeholders. Write each missing
+line, using only the functions and target names the worked
+example defines.
+
+```{.r}
+library(targets)
+library(tarchetypes)
+tar_option_set(packages = c('dplyr', 'ggplot2'))
+
+# Analysis functions live in R/ and are sourced here.
+tar_source('R')
+
+list(
+  tar_target(
+    raw_file,
+    'data/raw_data.csv',
+    # (1) ____: hash the file's contents, not an R object
+  ),
+  # (2) ____: read the raw file through its target name
+  tar_target(cleaned, clean_data(raw_data)),
+  tar_target(model, fit_model(cleaned)),
+  # (3) ____: draw the figures from the model and the data
+  # (4) ____: render report.Rmd, tracking its source
+)
+```
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The four missing lines of the worked example's
+`_targets.R` are these.
+
+(1) `format = 'file'`. It belongs on `raw_file` because
+that target returns a path; on a target that returns a data
+frame, `targets` would try to hash the data frame as a file
+path and fail.
+
+(2) `tar_target(raw_data, read_raw(raw_file)),`. Naming
+`raw_file` in the expression is what declares the
+dependency. A plausible `read_raw('data/raw_data.csv')`
+reads the same file, but `targets` was never told about it
+and cannot see a change to it.
+
+(3) `tar_target(figures, make_figures(model, cleaned)),`.
+Naming both targets draws the edges from `model` and from
+`cleaned`; a figure function that fetched the data some
+other way would hide the second edge from the graph.
+
+(4) `tar_render(report, 'report.Rmd')`. The tempting
+`tar_target(report, render_report(model, figures),
+format = 'file')` tracks the model, the figures, and the
+rendered HTML but not the source, so editing the report's
+prose leaves `tar_outdated()` empty.
+:::
+:::
+
 ## The cohort, continued
 
 This chapter has so far reasoned about pipelines through a
@@ -1847,9 +1938,9 @@ recomputed', and both refuse to accept a stale result.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-pipelines),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 autogradable value and the `_targets.R` fragment against
 those reported in the chapter's own 'The cohort,
@@ -1930,6 +2021,7 @@ report their agreement, as you would for a second rater.
 | `tar_render()` / `tar_quarto()` | Tracks a report's own source as well as the targets it reads |
 | Capture vs. validation | A pipeline captures no determinant; it validates that an output is current |
 | Honest claim | 'The pipeline re-executes reliably' is not 'the analysis is reproducible'; name the rung separately |
+| LLM response cache | A committed file of model responses keyed by input hash, prompt version, and model identifier; the pipeline reads it and never queries (@sec-llm-in-pipeline) |
 
 ## Further reading
 

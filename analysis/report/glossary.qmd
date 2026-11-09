@@ -69,8 +69,9 @@ default branch is conventionally called `main`.
 ## C {.unnumbered .unlisted}
 
 []{#gloss-capture}**Capture.** Fixing an input so that it cannot drift: writing a
-lockfile, building a container image. Capture sets the
-reproducibility level. (@sec-levels)
+lockfile, building a container image. Capture sets levels L0 to
+L2; L3 is reached by validation, which pins nothing new.
+(@sec-levels)
 
 []{#gloss-checksum}**Checksum.** A short fingerprint, computed from a file's or an
 object's bytes by a hash function such as SHA-256, with the

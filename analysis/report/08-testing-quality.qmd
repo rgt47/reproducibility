@@ -84,6 +84,41 @@ running cohort. The chapter closes with exercises, a
 cheat sheet, and further reading.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+Three failures reach you in one week. (a) A collaborator
+runs a project that has no `renv.lock`, installs newer
+versions of its packages than the author used, and a
+summary table changes. (b) A colleague's `renv::restore()`
+of a complete lockfile stops because a spatial package
+cannot find GDAL. (c) A figure still shows last month's
+counts after the raw extract was corrected, although the
+report rendered without error. For each, name the
+determinant layer that failed and the earlier chapter's
+remedy.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Of the three failures in this warm-up, (a) is the
+package-version layer. With no lockfile the project has
+not reached L1, and the remedy is the L1 step of
+@sec-dependencies: a lockfile written by
+`renv::snapshot()` and read by `renv::restore()`. (b) is
+the operating-system and system-library layer. A
+lockfile pins the R packages and nothing beneath them,
+and GDAL is not an R package. The remedy is the container
+of @sec-containers, which reaches L2 only with a
+digest-pinned base, a dated snapshot, and the lockfile
+restored inside it. (c) is a stale derived file, not an
+environment layer at all: the correction never reached
+the figure. The remedy is a pipeline in which the raw
+extract is a `format = 'file'` target, so that `targets`
+rebuilds everything downstream of it (@sec-pipelines).
+:::
+:::
+
 ## Where this sits on the stack
 
 Testing is this book's clearest case of pure
@@ -2361,9 +2396,9 @@ can skip.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch08),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 three autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.
@@ -2457,6 +2492,7 @@ on double programming warns.
 | Rule of thumb | An oracle must be computed independently of the code under test, never by calling it. |
 | Habit 4 | Make every gate able to fail, and watch it fail once. |
 | Habit 5 | Compare against a recorded baseline, with a stated tolerance. |
+| Code review, six questions (@sec-code-review) | Output traces to code; raw inputs; the plan's exclusions; seed at the call; tests changed with a reason; clean log |
 
 ## Further reading
 

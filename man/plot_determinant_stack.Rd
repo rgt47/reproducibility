@@ -16,9 +16,13 @@ plot_determinant_stack(
 a solid fill in the color of the rung it secures.}
 
 \item{validates}{Character vector of layer names this chapter
-validates without capturing. Drawn with a hatched border in the
-same rung color, over the ambient fill. A layer may appear in
-both.}
+validates without capturing. Drawn at full color with a heavy
+black outline. A layer may appear in both.
+
+Color is never the only cue (WCAG 1.4.1): each bar also carries a
+text label, printed in black on the white margin to its right,
+that names the rung securing the layer and, for a highlighted
+layer, whether this chapter captures or validates it.}
 
 \item{title}{Plot title. Defaults to a generic caption; pass one
 that names the chapter if the figure needs to say more.}

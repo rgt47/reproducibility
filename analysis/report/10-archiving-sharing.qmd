@@ -98,6 +98,38 @@ answer:**
 - Collaborating with an LLM.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A laboratory is about to deposit a compendium whose
+README claims 'L3 verified'. The repository is under git.
+Its Dockerfile begins `FROM rocker/r-ver:4.4.1` and
+installs packages with `install.packages()` from the
+live repository, and there is no `renv.lock`. The CI
+workflow runs only `R CMD check`, and its badge is green.
+Which rung does the compendium actually reach, and which
+earlier remedy would raise it by each rung in turn?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The compendium in this warm-up, a Dockerfile with no
+lockfile, reaches only L0, locatable through git. The
+rungs are cumulative (@sec-levels), so without a lockfile
+it has not reached L1, and the Dockerfile cannot make it
+L2. Three steps raise it. A committed lockfile written by
+`renv::snapshot()` gives L1 (@sec-dependencies).
+Restoring that lockfile inside an image whose base is
+pinned by digest, with a dated package snapshot, gives
+L2 (@sec-containers); a tag such as `4.4.1` can be
+rebuilt to different bytes. L3 needs verification rather
+than more capture: a CI job that rebuilds the image and
+runs a baseline test within a stated tolerance
+(@sec-verification). A green `R CMD check` compares
+nothing with a recorded result.
+:::
+:::
+
 ## Where this sits on the stack
 
 This chapter fixes no new version of anything on the
@@ -2049,9 +2081,9 @@ for the study.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch10),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers can compare their booleans with the named vector
 the chunk in 'The cohort, continued' prints; it is
 computed at render time, so it, not any typed value, is
@@ -2158,6 +2190,8 @@ items is doing real work.
 | Restricted data (@sec-restricted-deposit) | Code and environment, always; data only de-identified, synthetic, or controlled-access, per the agreement (habit 3) |
 | DOI deposit | Lifts a compendium from fragile-locatable (a forge URL) to durably findable; changes no rung on the ladder |
 | Honest claim at deposit | State the rung actually reached; the deposit outlives the memory of what was done (habit 7) |
+| Trusted research environment (@sec-tre) | Bring code to the data; record the provider's environment identifier; L3 only inside |
+| CONSORT 2025 item 4, SPIRIT 2025 item 6 | Say where the statistical code (and de-identified data) can be accessed |
 
 ## Further reading
 

@@ -93,6 +93,41 @@ answer:**
   Dockerfile would still need.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+You restore the same `renv.lock` on two laptops that run
+the same R release, and three things go wrong. In
+case (a), on one laptop the restore stops because a
+package cannot find a system library to compile against.
+In case (b), a regression coefficient differs in its
+sixth decimal place. In case (c), a bootstrap interval differs
+although the seed and code are identical, and one
+laptop's project `.Rprofile` calls
+`RNGkind(sample.kind = 'Rounding')`. For each, name the
+determinant layer of @sec-levels and say what closes it,
+drawing on @sec-crisis and @sec-dependencies.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The three failures after restoring one lockfile on two
+laptops sit in three different layers. Case (a) is the
+operating-system and system-library layer. A lockfile
+does not pin the system libraries that packages link
+against (@sec-dependencies), so this layer is closed only
+at L2, by a pinned environment. Case (b) is the
+numerical-library layer, the BLAS and LAPACK. No rung
+guarantees it (@sec-levels); fixing the thread count
+narrows it, and a stated tolerance absorbs what remains.
+Case (c) is session configuration. The `.Rprofile`
+overrides the default sampler with `Rounding`, the
+sampler R used before 3.6.0 (@sec-crisis). An override
+is fixed only by an explicit `RNGkind()` call in the
+analysis code, not by the lockfile.
+:::
+:::
+
 ## Where this sits on the stack
 
 This chapter captures, for the first time in the book,
@@ -1365,6 +1400,82 @@ build reproducible.
 :::
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: complete the Dockerfile
+
+The worked example's generated Dockerfile is, in
+essence, the tested recipe of the section on making the
+image itself reproducible. It is reprinted below with
+four of its lines removed, and the two label values that
+would give lines 1 and 2 away masked. Write each missing
+line so
+that the recipe again reaches L2 when built with
+`--platform linux/amd64`.
+
+```docker
+# rocker/r-ver:4.4.0 is built on Ubuntu 22.04 (jammy), so the
+# binary snapshot below must name jammy. Digest as of 2026-10-11.
+# (1) ____: name the base image so that it cannot move
+
+# (2) ____: the repository the installer fetches from
+ARG RENV_VERSION=1.2.3
+
+LABEL org.opencontainers.image.base.name="docker.io/rocker/r-ver:4.4.0" \
+      org.opencontainers.image.base.digest="<the digest of line 1>" \
+      cran.snapshot="<the date of line 2>"
+
+ENV LANG=en_US.UTF-8 \
+    LC_ALL=en_US.UTF-8 \
+    TZ=UTC \
+    # (3) ____: fix the thread count of OpenMP and of the BLAS
+    RENV_CONFIG_REPOS_OVERRIDE=${PPM_SNAPSHOT}
+
+# Later lines win, so this replaces Rocker's own snapshot date.
+RUN echo "options(repos = c(CRAN = '${PPM_SNAPSHOT}'))" \
+      >> /usr/local/lib/R/etc/Rprofile.site
+
+WORKDIR /project
+COPY renv.lock renv.lock
+
+RUN Rscript -e "install.packages('renv')" \
+ && Rscript -e "stopifnot(packageVersion('renv') == '${RENV_VERSION}')"
+
+# (4) ____: install the locked package versions
+```
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The four missing lines of the worked example's
+Dockerfile are these.
+
+```docker
+FROM rocker/r-ver:4.4.0@sha256:73adabf378930f8744f56bac1fe5e99870532eb4ced1a15075991bac909d21f3
+ARG PPM_SNAPSHOT=https://packagemanager.posit.co/cran/__linux__/jammy/2026-06-27
+    OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+RUN Rscript -e "renv::restore(library = .libPaths()[1], prompt = FALSE)"
+```
+
+Line (1) takes the digest, not the tag alone, because a
+tag is a mutable pointer that a maintainer rebuild can
+move. The digest names an image index, so it fixes one
+filesystem only together with `--platform linux/amd64`.
+Line (2) takes a dated snapshot naming `jammy`, because
+an undated URL can resolve differently from one build to
+the next, and a `noble` URL would install binaries built
+against other system libraries. Line (3) sets both thread counts, not
+`OMP_NUM_THREADS` alone, because the `rocker/r-ver` image
+links R against OpenBLAS, which `OPENBLAS_NUM_THREADS`
+governs. Line (4) restores the lockfile, because without
+it the image fixes the environment but not the package
+versions. The recipe would then not reach L1, and since
+the rungs are cumulative it would not be L2 either. The
+`library` argument puts the packages where every session
+in the container finds them.
+:::
+:::
+
 ## The cohort, continued
 
 The running cohort compendium of this book is, itself, a
@@ -1907,9 +2018,9 @@ an analysis needs both.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch05),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare the
 three autogradable values against those reported in the
 chapter's own 'The cohort, continued' section.

@@ -86,6 +86,42 @@ Lastly, we discuss collaborating with an LLM, followed by
 exercises, a cheat sheet, and further reading.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+Two colleagues rerun a compendium in the same
+digest-pinned image, built from a complete lockfile.
+Colleague A mounts the project without its `.Rprofile`,
+where the author had put
+`RNGkind(sample.kind = 'Rounding')` and `set.seed(2024)`,
+and the bootstrap interval moves. Colleague B, on a
+different processor, obtains regression coefficients that
+agree with the author's except in their last few digits. For each
+discrepancy, name the determinant layer behind it, say
+whether any rung of the ladder closes it, and give the
+earlier remedy.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+Of the two discrepancies in this warm-up, colleague A's
+lies in session configuration. The R release fixes the
+default sampler at L2, but the `.Rprofile` overrode it,
+and an override is fixed only by an explicit `RNGkind()`
+call in the analysis code (@sec-levels). The seed belongs
+there too, set at the call that draws the resamples, not
+in `.Rprofile` (@sec-testing). Colleague B's lies in the
+numerical libraries, the BLAS and LAPACK beneath
+`crossprod()` and `solve()`. No rung guarantees that
+layer: an image determines which BLAS is installed, but
+the thread count and the processor still vary
+(@sec-levels). The remedy is a baseline test that
+compares at a stated tolerance, wide enough to absorb
+reordered floating-point sums and too narrow for a
+changed coefficient to pass (@sec-testing).
+:::
+:::
+
 ## Where this sits on the stack
 
 Continuous integration pins nothing, and @fig-stack-ci
@@ -1547,6 +1583,130 @@ is why a compendium needs a second gate that does read
 :::
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: complete the workflow file
+
+The worked example narrates a run rather than printing a
+workflow file, so this check uses the chapter's main
+GitHub Actions example, the condensed `compendium`
+workflow of the three gates. It is reprinted verbatim
+except for four placeholders, two of which stand for a
+short block rather than a single line. Write each one.
+For (2), write the line as @sec-ci-secrets says a
+compendium should pin it, not as the condensed file
+prints it.
+
+```yaml
+name: compendium
+
+# (1) ____: the trigger, every push to main and every
+#     pull request into main
+
+permissions:
+  contents: read
+
+jobs:
+  gates:
+    runs-on: ubuntu-24.04
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      # (2) ____: check out the commit, pinned by SHA
+
+      # Install the R version recorded in renv.lock.
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: renv
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      # Restore renv.lock into the project library. A
+      # stock renv .Rprofile activates that library in
+      # every later R step run from the repository root.
+      # (3) ____: restore the lockfile
+
+      # The gate tools are not analysis dependencies, so
+      # they are not in renv.lock. zzrenvcheck comes from
+      # a personal repository and is pinned to a commit.
+      - name: Install the gate tools
+        shell: Rscript {0}
+        run: |
+          renv::install(c('rcmdcheck', 'remotes', 'pkgload'))
+          remotes::install_github(
+            'rgt47/zzrenvcheck',
+            ref = '6f53235668cb4048c1ae793d64b10d6505bf69a2')
+
+      # Gate 1: R CMD check of the package skin. Any
+      # WARNING, such as an undeclared import, fails.
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          args: 'c("--no-manual")'
+          error-on: '"warning"'
+
+      # Gate 2: every package the code uses, analysis/
+      # included, is declared and pinned.
+      - name: Dependency-manifest gate
+        shell: Rscript {0}
+        run: |
+          # (4) ____: the call that fails this step when
+          #     a package used in analysis/ is not pinned
+
+      # Gate 3: the report re-renders from source.
+      - name: Render gate
+        shell: Rscript {0}
+        run: |
+          rmarkdown::render('analysis/report/report.Rmd',
+                            output_format = 'html_document',
+                            output_dir = tempdir())
+```
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The four completed parts of the condensed `compendium`
+workflow are these. Placeholder (1) is the trigger block:
+
+```yaml
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+```
+
+Without `pull_request` a change is tested only after it
+reaches `main`; without `push` a commit made directly to
+`main` is never tested. Placeholder (2) is the checkout:
+
+```yaml
+- uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+```
+
+The condensed file prints `actions/checkout@v7`, a
+teaching simplification. A tag can be moved to another
+commit, whereas a full commit SHA fixes the code that
+runs, as a digest fixes a base image. Placeholder (3) is
+`- uses: r-lib/actions/setup-renv@v2`. A step that ran
+`install.packages()` instead would install whatever
+versions are current, so the gates would test a library
+the lockfile does not describe. Placeholder (4) is the
+dependency-manifest call:
+
+```r
+zzrenvcheck::check_packages(strict = TRUE,
+                            error_on_fail = TRUE)
+```
+
+This is the gate that went red on `sandwich` in this
+chapter's worked example, because it reads `analysis/`.
+Passing `error_on_fail = TRUE` explicitly keeps the
+failure from depending on how R was started; with
+`FALSE` the step would print the missing package and
+still pass.
+:::
+:::
+
 ## Debugging a failed reproduction
 
 The worked example above is the easy case: CI catches the
@@ -2324,9 +2484,9 @@ analysis do what the paper says'.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-ch09),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers can check both autogradable values against the
 chunk below, which runs the exercise's own lines against
 this repository's lockfile at render time.

@@ -1,0 +1,8 @@
+/_output/
+/.quarto/
+/instructor-guide_files/
+/instructor-guide.html
+/instructor-guide.pdf
+/instructor-guide.tex
+
+**/*.quarto_ipynb

@@ -18,6 +18,8 @@ _book/
 *.fdb_latexmk
 *.synctex.gz
 *.html
+# Hand-written HTML partials are sources, not build output.
+!analysis/report/partials/*.html
 *.pdf
 .netlify
 

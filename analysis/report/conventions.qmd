@@ -63,7 +63,11 @@ question testing comprehension of the section just read,
 with the answer folded inside it so that attempting the
 question is not optional. Expand the box to read the
 question, attempt an answer, and only then expand the
-Answer nested inside it.
+Answer nested inside it. On paper a box cannot be folded,
+so the printed edition numbers the checks in each chapter
+and collects their answers at the end of the chapter,
+under 'Answers to the checks', with page references both
+ways. The example below keeps its answer in place.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: example

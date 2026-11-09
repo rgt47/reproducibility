@@ -106,6 +106,40 @@ answer:**
 - Exercises, a cheat sheet, and further reading.
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: from earlier chapters
+
+A collaborator's repository holds `analysis.R` and a
+`Dockerfile` whose build installs packages from the current
+CRAN release; it has no `renv.lock`. Its README claims L2. A
+year later the image is rebuilt. One call now fails because
+a package changed its interface. Inside the same rebuilt
+image, a regression coefficient computed on the cluster
+differs from the laptop's in the sixth decimal place. Using
+@sec-crisis and @sec-levels, which rung has the repository
+earned? For each discrepancy, which layer is responsible,
+and which tool or rung addresses it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The collaborator's repository, with a `Dockerfile` and no
+lockfile, has earned L0, locatable, and no more. The rungs
+are cumulative (@sec-levels): L1 requires a lockfile, and L2
+requires a container recipe as well, so a Dockerfile without
+a lockfile is L0 whatever its README says. The failing call
+is package churn in the package-versions layer, the code rot
+of @sec-crisis. A lockfile, `renv.lock`, closes it and marks
+L1; restoring that lockfile inside the image then reaches L2.
+The sixth-decimal difference is the signature of the
+numerical-library layer. No rung guarantees it: the image
+determines which BLAS is installed, but the thread count and
+the processor still vary between machines (@sec-crisis,
+@sec-levels). Fixing the thread count narrows the gap, and a
+stated tolerance in an L3 baseline test absorbs what remains.
+:::
+:::
+
 ## Where this sits on the stack
 
 Version control is this book's clearest case of pure
@@ -2140,9 +2174,9 @@ L3 by implication.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 7
 
-The solution for this exercise is in the
-[Instructor Guide](instructor-guide.qmd#sec-ig-vc),
-which is available to course instructors. Self-study
+The solution for this exercise is in the instructor
+guide, which is distributed separately to course
+instructors. Self-study
 readers who want to check their answer can compare it
 with the executed output of the cohort checks in the
 `.gitignore` section of this chapter: the row count and

@@ -19,13 +19,14 @@ version, a data file, or a function under `R/` does not
 by itself trigger re-execution. A printed result
 therefore agrees with the code beside it as of that
 page's last execution. The table below follows the same
-discipline: every cell is read from the R session that
-last executed this page.
+discipline: every cell in the 'Actual' column is read from
+the R session that last executed this page, and every cell
+in the 'Locked' column from the committed `renv.lock`.
 
 ```{r}
 #| label: tbl-colophon
 #| echo: false
-#| tbl-cap: 'The actual rendering environment for this build, read from the live session rather than recorded by hand.'
+#| tbl-cap: 'The rendering environment of the last execution of this page, read from the live session, beside the versions the committed lockfile records.'
 
 pkg_deps <- c('tibble', 'ggplot2', 'withr', 'knitr',
               'rmarkdown')
@@ -38,14 +39,31 @@ pkg_versions <- vapply(pkg_deps, function(p) {
   }
 }, character(1))
 
-lockfile_present <- file.exists(
-  file.path('..', '..', 'renv.lock')
-)
+lockfile_path <- file.path('..', '..', 'renv.lock')
+lockfile_present <- file.exists(lockfile_path)
 dockerfile_present <- file.exists(
   file.path('..', '..', 'Dockerfile')
 )
 
-quarto_version <- Sys.getenv('QUARTO_VERSION', unset = NA)
+lock <- if (lockfile_present) {
+  jsonlite::fromJSON(lockfile_path, simplifyVector = FALSE)
+} else {
+  NULL
+}
+locked_r <- if (is.null(lock)) 'no lockfile' else lock$R$Version
+locked_pkgs <- vapply(pkg_deps, function(p) {
+  v <- lock$Packages[[p]]$Version
+  if (is.null(v)) 'not locked' else v
+}, character(1))
+
+# The renderer does not export its version to the R session, so ask
+# the quarto binary on the path; a failure is reported, not hidden.
+quarto_version <- tryCatch(
+  system2('quarto', '--version', stdout = TRUE, stderr = FALSE)[1],
+  error = function(e) NA_character_,
+  warning = function(w) NA_character_
+)
+actual_r <- paste(R.version$major, R.version$minor, sep = '.')
 
 colophon_rows <- tibble::tibble(
   field = c(
@@ -55,19 +73,31 @@ colophon_rows <- tibble::tibble(
     paste('Package:', pkg_deps),
     'renv.lock present'
   ),
-  value = c(
-    R.version.string,
+  actual = c(
+    actual_r,
     R.version$platform,
-    ifelse(is.na(quarto_version), 'not reported by renderer',
-           quarto_version),
+    ifelse(is.na(quarto_version), 'not found', quarto_version),
     pkg_versions,
     ifelse(lockfile_present, 'yes', 'no')
+  ),
+  locked = c(
+    locked_r,
+    'not recorded',
+    'not recorded',
+    locked_pkgs,
+    ''
   )
 )
 
+mismatch <- colophon_rows$field[
+  colophon_rows$field %in% c('R version', paste('Package:', pkg_deps)) &
+    colophon_rows$actual != colophon_rows$locked
+]
+executed_on <- format(Sys.Date(), '%Y-%m-%d')
+
 knitr::kable(
   colophon_rows,
-  col.names = c('Field', 'Value')
+  col.names = c('Field', 'Actual', 'Locked')
 )
 ```
 
@@ -85,4 +115,7 @@ lockfile is the L1 artifact. The L2 step, a `Dockerfile`
 that pins the operating system and the R runtime,
 `r if (dockerfile_present) 'is also in place' else 'is not yet in place'`.
 
-Last rendered: see the build timestamp on the homepage.
+A lockfile records versions; it does not make the session
+use them. `r if (length(mismatch) == 0) 'Every row the lockfile records agreed with the session that executed this page.' else paste0('In the session that executed this page, ', length(mismatch), if (length(mismatch) == 1) ' row' else ' rows', ' differed from the lockfile (', paste(sub('^Package: ', '', mismatch), collapse = ', '), '). Restoring the lockfile would reinstall the locked package versions but not R itself, which only a pinned environment, the L2 rung, fixes.')`
+
+This page last executed on `r executed_on`.
