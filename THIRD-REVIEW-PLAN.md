@@ -871,6 +871,27 @@ HTML repairs. The PDF tagging trial (D24) is recorded separately below.
 | Also | Ch 3 prerequisites now name Ch 2 (its new check draws on it); `.Rbuildignore` lists `INSTRUCTOR-GUIDE.md`; `.gitignore` no longer ignores `partials/*.html`; week 6 lab no longer says 'built in CI' | |
 | Render | Clean; 666 pages; suite 438/438 | V |
 
+**D24 tagging trial (not adopted; trial branch deleted).** With
+`documentclass: book` and `pdf-standard: ua-2`, LuaLaTeX failed in
+`tagpdf` ('there is no open structure on the stack') inside a
+highlighted code line: the book's fvextra `Highlighting` redefinition,
+which wraps long code lines, is not compatible with tagging. Without
+that redefinition the build succeeds: `Tagged: yes`, PDF 2.0, 664
+pages. The cost is code that no longer wraps: 86 words print past the
+page edge (13 in the committed build) and about 608 past the outer
+margin (272), a rough `pdftotext -bbox` measure that ignores the
+facing-page margins. Quarto also warned that the cover image lacks alt
+text, and could not validate conformance because `verapdf` is not
+installed, so 'tagged' here means a structure tree exists, not PDF/UA
+conformance. Side effect: during the first attempt Quarto ran
+`tlmgr`, updated the existing TeX Live packages, and installed
+`latex-lab` and `nameref` in the system TeX installation.
+Recommendation: keep `scrbook` untagged for now, state in the colophon
+that the HTML edition is the accessible one (D24 option b), and retry
+when tagging supports fvextra's line breaking. The 13 words past the
+page edge in the committed build are a separate defect to fix (long
+unbreakable tokens in code or tables).
+
 ## 13. Limitations
 
 - **The expert reviewers are simulated personas,** not people. Human
