@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Run by render-book.yml before the render: chapters read the synthetic
+# cohort, and the package tests gate the build.
+set -euo pipefail
+
+Rscript analysis/scripts/simulate_cohort.R
+
+Rscript -e '
+  pkgload::load_all(".", quiet = TRUE)
+  r <- tinytest::run_test_dir("inst/tinytest", verbose = 0)
+  print(summary(r))
+  if (!all(as.logical(r))) stop("tinytest: one or more tests failed")
+'
