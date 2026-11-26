@@ -87,11 +87,14 @@ answer:**
 - Images and containers: the vocabulary, and the Rocker
   project.
 - Making the image itself reproducible: pinning by
-  digest and by dated snapshot.
+  digest and by dated snapshot, and adding system
+  libraries.
 - Running the analysis inside the image: `docker run`
-  with the project mounted, and the `renv` pitfall.
-- When Docker is not an option: licensing, clusters, and
-  the alternatives the appendix treats in full.
+  with the project mounted, the `renv` pitfall, and disk
+  housekeeping.
+- When Docker is not an option: whether L2 is needed,
+  licensing, clusters, and the alternatives the appendix
+  treats in full.
 - Apple Silicon and multi-architecture images: why a
   digest needs a fixed platform.
 - Environment-variable determinism: locale, time zone,
@@ -180,21 +183,11 @@ figure, because that machine runs an older release of
 R in which a numerical default differs. The lockfile
 did its job perfectly.
 
-The lockfile pins the R packages and nothing beneath
-them. It says nothing about the operating system, the
-system libraries such as GDAL or `libxml2` that many
-packages link against, or the R interpreter itself.
-As Ushey observed in documenting `renv`, the tool
-records the packages an analysis used, not the
-platform it ran on [@ushey2020]. A lockfile restored
-under a different R version, or on an operating system
-missing a required system library, may fail to
-install or, more insidiously, may install and behave
-differently. This is the gap the present chapter
-closes. Its subject is the container, the technology
-that fixes the operating system, the system
-libraries, and the runtime, and so carries an
-analysis from L1 to L2, pinned environment.
+The lockfile records the packages an analysis used, not
+the platform it ran on [@ushey2020]. The present
+chapter's subject is the container, which fixes that
+platform and so carries an analysis from L1 to L2,
+pinned environment.
 
 We shall build the container from first principles,
 assuming no prior contact with it. The reason is that
@@ -247,7 +240,7 @@ belong to the analyst and to no script.
    anything, and it is tempting to reach for the
    largest base image that surely contains whatever
    one might need. That instinct is wrong. A manuscript
-   archetype needs a base carrying a LaTeX toolchain;
+   archetype needs a base carrying a PDF engine;
    an R-package archetype needs only R and the check
    tools; a simulation archetype may want more cores
    than it wants software. Provisioning far above the
@@ -282,13 +275,15 @@ belong to the analyst and to no script.
 ## The vocabulary of this chapter
 
 - **Image.** A frozen, read-only filesystem together
-  with metadata, bundling an operating system, R, a
-  set of packages, and configuration. It is analogous
-  to a snapshot of a fully installed computer, packaged
-  so it can be shipped.
+  with metadata, bundling everything of an operating
+  system except its kernel, plus R, a set of packages,
+  and configuration, packaged so it can be shipped.
 - **Container.** A running instance of an image. One
   image can start many containers; each begins from the
   same frozen filesystem.
+- **Kernel.** The core of an operating system, which
+  runs programs and manages the hardware. Containers
+  have none of their own; they share a Linux kernel.
 - **Layer.** Each instruction in an image's recipe
   produces one filesystem layer. An image is the stack
   of its layers, and identical layers are shared and
@@ -345,14 +340,10 @@ carries the real requirement.
 
 ## What the lockfile leaves standing
 
-The boundary of what a lockfile fixes is the whole
-motivation for the container. A lockfile records, for
-every R package the analysis code uses, the exact version
-and the repository it came from, and `renv::restore()`
-reinstalls that precise set [@ushey2020]. That is the L0-to-L1
-transition, and it is genuine progress. Beneath the
-packages, however, sits a stack of determinants the
-lockfile never touches.
+@sec-dependencies ended at a boundary, and it is the
+whole motivation for the container: beneath the
+packages sits a stack of determinants the lockfile
+never touches.
 
 Three of these matter most. The first is the operating
 system, which supplies the C library and the
@@ -373,56 +364,42 @@ result silently: the `sample()` default that changed
 in R 3.6.0, the `stringsAsFactors` default that flipped
 in R 4.0.0. Restore the same lockfile under a different
 R, and the packages match while their behavior does
-not.
-
-`renv` is therefore necessary and, by itself,
-insufficient. It closes the package layer cleanly and
-leaves the three layers beneath it exposed. Fixing
-those takes a tool that packages the whole computer
-the packages ran on, which is the container.
-
-::: {.callout-note icon=false collapse=true}
-## Check your understanding: three layers, one tool
-
-Name the three determinants beneath the package layer
-that a lockfile cannot pin, and say, for each, why it is
-not an R package and so cannot appear in a lockfile.
-
-::: {.callout-note icon=false collapse=true}
-## Answer
-
-The operating system supplies the C library and the
-locale and sorting conventions every package was
-compiled against, and it is not installed by
-`install.packages()`. The system libraries, such as GDAL
-or `libxml2`, are compiled non-R software that packages
-link against but do not bundle, so `renv` has nothing to
-record about them. The R interpreter itself is the
-program the lockfile's `install.packages()` calls run
-inside, not a package those calls install. Its version
-is recorded in the lockfile's `R` block, but the
-lockfile cannot install it. All three
-need something beneath the package manager, which is the
-container's job.
-:::
-:::
+not. `renv` is therefore necessary and, by itself,
+insufficient.
 
 ## Images and containers
 
-The idea of the container is straightforward, and it is
-easiest to grasp through the distinction between an
-image and a container. The two are as different as a
-recipe from a meal, or a class from an object.
+The idea of the container is straightforward, and one
+analogy carries it through this chapter. The Dockerfile
+is a recipe. The image is a dish cooked once from that
+recipe and frozen. A container is one portion of that
+dish, thawed and served; any number of portions come
+from the same frozen batch, and what is left on the
+plate is thrown away.
 
 An **image** is a frozen filesystem plus metadata. It
-is, quite literally, a snapshot of a fully installed
-computer: it holds an operating system, the
-system libraries, a particular R, a particular set of R
+holds everything of an operating system except its
+kernel, the core that runs programs and manages the
+hardware. That means the Linux user space, the system
+libraries, a particular R, a particular set of R
 packages, and the configuration that ties them
-together. All of this is captured as a single read-only
-artifact. The image does not run.
-It is inert, like a disk image or a virtual-machine
-template, waiting to be started.
+together. All of this is
+captured as a single read-only artifact. The image does
+not run. It is inert, waiting to be started.
+
+The missing kernel explains much of how Docker behaves
+on a laptop. A container borrows the kernel of the
+machine it runs on, and that kernel must be Linux. On a
+Mac or a Windows laptop, Docker Desktop therefore runs a
+small Linux virtual machine in the background and starts
+every container inside it. This is why Docker Desktop
+must be running before any `docker` command works. It is
+also why its settings carry their own limits on
+processors, memory, and disk for that virtual machine.
+And the container's instructions still execute on the
+host's processor, which is why, as the section on
+environment variables shows, the CPU can still move the
+last digits of a result.
 
 A **container** is what one gets by starting an image.
 It is a running instance. The frozen filesystem is made
@@ -436,7 +413,63 @@ container exits, any change it made to its own
 filesystem is ordinarily discarded, and the next
 container starts again from the pristine image. The
 image is the durable, shippable thing; the container is
-the ephemeral, running thing.
+the ephemeral, running thing. @fig-docker-objects draws
+the three objects and the two commands that connect
+them.
+
+```{r}
+#| label: fig-docker-objects
+#| fig-cap: 'The three objects of this chapter. `docker build` turns a Dockerfile, a text recipe kept under version control, into an image, a frozen read-only filesystem named by a digest. `docker run` starts containers from that image; each begins from the same frozen state, and its changes are discarded when it exits. Every container runs on a Linux kernel it does not carry: the host''s own on Linux, or that of the virtual machine Docker Desktop runs on a Mac or Windows laptop.'
+#| fig-alt: 'Three boxes from left to right. The first, labeled Dockerfile, text recipe, committed to git, has an arrow labeled docker build to the second box, labeled image, frozen and read-only, named by a digest. From the image, two arrows labeled docker run lead to two stacked boxes labeled container 1 and container 2, running and discarded on exit. A bar beneath the two containers is labeled Linux kernel, from the host or from Docker Desktop''s virtual machine.'
+#| fig-width: 7
+#| fig-height: 2.8
+
+library(ggplot2)
+library(tibble)
+
+boxes <- tibble(
+  xmin = c(0.2, 3.8, 7.6, 7.6),
+  xmax = c(2.4, 6.0, 9.8, 9.8),
+  ymin = c(1.6, 1.6, 2.55, 1.05),
+  ymax = c(3.1, 3.1, 3.45, 1.95),
+  fill = c('#eef4f4', '#c3ddda', '#dcebea', '#dcebea'),
+  label = c('Dockerfile\ntext recipe,\ncommitted to git',
+            'image\nfrozen, read-only,\nnamed by a digest',
+            'container 1\nrunning;\ndiscarded on exit',
+            'container 2\nrunning;\ndiscarded on exit')
+)
+
+ggplot() +
+  geom_rect(data = boxes,
+            aes(xmin = xmin, xmax = xmax,
+                ymin = ymin, ymax = ymax, fill = fill),
+            color = 'grey40', linewidth = 0.4) +
+  scale_fill_identity() +
+  geom_text(data = boxes,
+            aes(x = (xmin + xmax) / 2, y = (ymin + ymax) / 2,
+                label = label),
+            size = 2.9, lineheight = 0.95) +
+  annotate('segment', x = 2.45, xend = 3.75, y = 2.35, yend = 2.35,
+           arrow = arrow(length = unit(0.08, 'inches')),
+           color = 'grey25') +
+  annotate('text', x = 3.1, y = 2.55, label = 'docker build',
+           family = 'mono', size = 2.6) +
+  annotate('segment', x = 6.05, xend = 7.55, y = 2.55, yend = 3.0,
+           arrow = arrow(length = unit(0.08, 'inches')),
+           color = 'grey25') +
+  annotate('segment', x = 6.05, xend = 7.55, y = 2.15, yend = 1.5,
+           arrow = arrow(length = unit(0.08, 'inches')),
+           color = 'grey25') +
+  annotate('text', x = 6.85, y = 2.35, label = 'docker run',
+           family = 'mono', size = 2.6) +
+  annotate('rect', xmin = 7.6, xmax = 9.8, ymin = 0.15, ymax = 0.8,
+           fill = 'grey90', color = 'grey40', linewidth = 0.4) +
+  annotate('text', x = 8.7, y = 0.475, size = 2.6, lineheight = 0.95,
+           label = paste0('Linux kernel: the host\'s,\n',
+                          'or Docker Desktop\'s VM')) +
+  coord_cartesian(xlim = c(0, 10), ylim = c(0.1, 3.6)) +
+  theme_void()
+```
 
 Images are built in **layers**, which explains both the
 speed of the tool and the way we shall pin it. An image
@@ -465,10 +498,7 @@ the guarantee holds across every machine with a
 compatible runtime, and it is silent about machines
 that have none. This is a real boundary, and we return
 to it, and to the runtimes that widen it, in
-@sec-backends. For present purposes the container gives
-us what the lockfile could not: a fixed operating
-system, fixed system libraries, and a fixed R,
-traveling together as one artifact.
+@sec-backends.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: image or container
@@ -606,7 +636,12 @@ Apple Silicon below explains why that platform, and the
 alternative of pinning the platform-specific digest.
 
 @fig-tag-digest follows one unchanged recipe across a
-year to show what the difference costs. The recipe is not
+year to show what the difference costs. The timeline is
+illustrative. Rocker rebuilds a versioned tag while that
+R release is current: on Docker Hub, `rocker/r-ver:4.6.1`
+was last updated on 29 October 2026, the day R 4.6.2 was
+released, while the `4.4.0` tag of the figure has not
+changed since June 2024. The recipe is not
 edited at any point in either row; the only thing that
 varies is whether its `FROM` line names the tag or the
 digest. (The digest strings shown here and in the figure,
@@ -622,8 +657,8 @@ reproducibility claim.
 
 ```{r}
 #| label: fig-tag-digest
-#| fig-cap: 'One unchanged recipe built repeatedly over a year, under a tag and under a digest. The upper row builds on whatever the tag currently points at, so a maintainer rebuild in April and another in September silently change the ground the analysis stands on, giving three different environments from identical text. The lower row names a digest, builds for one fixed platform, and receives the same bytes at every build. The maintainer rebuilds are ordinary maintenance, not mistakes: the point is that a mutable pointer cannot carry an immutable claim.'
-#| fig-alt: 'Two horizontal timelines running from January to December. The upper timeline, labeled FROM rocker/r-ver colon 4.4.0, is divided into three differently colored segments broken at April and September, marked as maintainer rebuilds, and annotated three environments from one recipe. The lower timeline, labeled FROM rocker/r-ver at sha256, is a single unbroken segment of one color across the whole year, annotated one environment, always.'
+#| fig-cap: 'An illustrative timeline: one unchanged recipe built repeatedly over a year, under a tag and under a digest. The upper row builds on whatever the tag currently points at, so a maintainer rebuild in April and another in September silently change the ground the analysis stands on, giving three different environments from identical text. The lower row names a digest, builds for one fixed platform, and receives the same bytes at every build. The maintainer rebuilds are ordinary maintenance, not mistakes: the point is that a mutable pointer cannot carry an immutable claim.'
+#| fig-alt: 'An illustrative chart of two horizontal timelines running from January to December. The upper timeline, labeled FROM rocker/r-ver colon 4.4.0, is divided into three differently colored segments broken at April and September, marked as maintainer rebuilds, and annotated three environments from one recipe. The lower timeline, labeled FROM rocker/r-ver at sha256, is a single unbroken segment of one color across the whole year, annotated one environment, always.'
 #| fig-width: 7
 #| fig-height: 2.6
 
@@ -754,12 +789,13 @@ miss.
   binaries built against a different set of system
   libraries.
 - **`WORKDIR` gives the project a directory of its own.**
-  Without it the build runs in `/`, the root of the file
-  system, which `renv` would then treat as the project.
-  That directory contains the home directory, and
-  `renv::init()` refuses to initialize a project in that
-  position. A dedicated directory avoids the problem and
-  keeps `renv`'s files out of the root.
+  It keeps the copied lockfile, and anything `renv`
+  writes beside it, out of `/`, the root of the file
+  system. It is also the directory into which `docker
+  run` later mounts the project (@sec-docker-run). It is
+  a matter of order, not of correctness: a variant built
+  without it restored the same packages and left
+  `renv.lock` in `/`.
 - **`renv` is installed at the version the lockfile
   records.** The lockfile names the `renv` that wrote it,
   here 1.2.3. On the snapshot date that was the current
@@ -807,17 +843,64 @@ replaces: the later setting wins.
 
 The container and the lockfile divide the labor. The
 `FROM` line fixes the operating system, the system
-libraries, and the R; the snapshot fixes where packages
-come from; the `COPY renv.lock` and `renv::restore()`
-fix the exact package versions inside that environment.
-Neither the container nor the lockfile alone is enough.
-A container without a lockfile fixes the environment but
-not which package versions live in it; a lockfile
-without a container fixes the packages but not the
-platform. An L2 analysis uses both. The honest reading
-of an image, then, is that it reaches L2 only when the
-base is pinned by digest, the snapshot is dated, and a
+libraries the base carries, and the R; the snapshot
+fixes where packages come from; the `COPY renv.lock` and
+`renv::restore()` fix the exact package versions inside
+that environment. An image reaches L2 only when the base
+is pinned by digest, the snapshot is dated, and a
 lockfile is restored inside it.
+
+### System libraries the base does not carry
+
+The showcase installs no system library, so a lockfile
+that pins a package such as `sf`, the standard spatial
+package, meets the orientation's GDAL failure again,
+inside the image. On 2026-11-26 we installed `sf` 1.1-1
+and its dependencies from the showcase's snapshot into
+the showcase image. They arrived as binaries and
+installed without complaint; loading `sf` then failed on
+the first missing library (output abridged):
+
+```
+#> package or namespace load failed for 'sf' in dyn.load(...):
+#>  unable to load shared object '.../units/libs/units.so':
+#>   libudunits2.so.0: cannot open shared object file: No such
+#>   file or directory
+```
+
+The fix is one instruction placed before the restore,
+which installs the libraries from Ubuntu's archive with
+`apt-get`, Ubuntu's package manager:
+
+```docker
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      libgdal-dev libgeos-dev libproj-dev libudunits2-dev \
+ && rm -rf /var/lib/apt/lists/*
+```
+
+`renv::sysreqs()` names the libraries a lockfile needs
+(@sec-dependencies); its list assumes a build from
+source, and these four sufficed for the binaries. We
+built the showcase with this line added and a lockfile
+pinning `sf`, with `--platform linux/amd64` on Apple
+Silicon. The build took 114 seconds, and the `apt-get`
+step installed 138 Ubuntu packages occupying 590 MB.
+Inside the image, `library(sf)` printed
+`Linking to GEOS 3.10.2, GDAL 3.4.1, PROJ 8.2.1`.
+
+This line is not pinned the way the rest of the recipe
+is. `apt-get` resolves against Ubuntu's live archive on
+the day of the build, and neither the digest nor the
+package snapshot reaches it. Our build also upgraded 13
+packages the base already carried, `libxml2` and
+`libssl3` among them, so it changed part of what the
+digest had fixed. A version can be named in the line
+(`libgdal-dev=3.4.1+dfsg-1build4`), but such a line
+builds only while the archive still serves that version.
+What stays fixed is the built image. To keep the system
+libraries, keep the image, by digest in a registry
+(@sec-archiving), and not only the recipe.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -1000,6 +1083,38 @@ since `--rm` removes it when the command ends.
 :::
 :::
 
+### Housekeeping: disk space
+
+Images, their layers, and the build cache accumulate.
+Every rebuild after a change can leave the previous
+image behind, untagged, and an Apple Silicon Mac may
+hold both an `arm64` and an `amd64` copy of a base. A
+full disk can surface as 'no space left on device' or
+as a build that stalls, with nothing in the message
+that points to Docker. On a Mac or Windows laptop the limit
+that binds first may be the disk size set for Docker
+Desktop's virtual machine rather than the laptop's own.
+`docker system df` reports the space in use. On the
+machine used for this chapter it printed:
+
+```bash
+docker system df
+#> TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE
+#> Images          17        0         21.6GB    16.47GB (76%)
+#> Containers      0         0         0B        0B
+#> Local Volumes   25        0         1.479GB   1.479GB (100%)
+#> Build Cache     94        0         3.576GB   0B
+```
+
+`docker image prune` removes dangling images, the
+untagged leftovers of earlier builds and pulls; run just before
+that listing, it reclaimed 997.1 MB. `docker builder
+prune` removes unused build cache. Both ask for
+confirmation unless given `-f`. `docker image prune -a`
+goes further and removes every image no container is
+using, a pinned base included, so an image that must be
+kept should be tagged or pushed (@sec-archiving) first.
+
 ## When Docker is not an option {#sec-docker-alternatives}
 
 Everything in this chapter assumes that Docker runs on the
@@ -1027,6 +1142,18 @@ A student in a research group at a public university
 should therefore ask the institution before relying on
 Docker Desktop, which is why many institutions either
 license it or avoid it.
+
+A prior question is whether the analysis needs L2 at
+all. Consider a short-lived analysis written in R
+alone, whose packages link to no system library and
+whose results no one expects to rerun elsewhere. It may
+stop at L1, a committed lockfile and the R version it
+records, provided the claim is stated as L1. Installing
+that R version on the host with `rig`
+(@sec-dependencies) narrows the gap further without a
+container. The container earns its cost when the
+analysis must outlive its machine, depends on system
+libraries such as GDAL, or will be rerun by others.
 
 Neither obstacle forces a reader back to L1. The image this
 chapter builds is a standard OCI image that other programs
@@ -1105,7 +1232,10 @@ one a labmate on an Intel laptop, a CI runner, or a
 cluster node builds from the same `FROM` line. It starts
 from a different base image, and in our `arm64` build of
 the showcase the packages compiled from source where an
-`amd64` build installs binaries. An image built natively
+`amd64` build installs binaries. Package Manager serves
+`jammy` binaries for x86_64 only; for Ubuntu 24.04
+(`noble`) it also serves arm64 (@sec-dependencies). An
+image built natively
 on a Mac and pushed to a registry will also not run on
 an `x86` cluster. The flag is what makes a Mac build the
 same image the cluster runs, so this book passes
@@ -1123,11 +1253,26 @@ with QEMU 'can be much slower than native builds', especially
 for compute-heavy work [@docker2024multiplatform]. Every
 package compile and every `renv::restore()` inside the image
 pays this tax; a build that takes two minutes natively can
-take much longer under emulation. This is a real cost, worth
-planning a build around, but it is a cost in time, not in
-correctness. A QEMU-translated `amd64` instruction still
-computes the `amd64` result, so a container built this way
-runs the same program, only more slowly.
+take much longer under emulation. Emulation is also less
+robust. Docker's documentation gives a manual QEMU install
+for builds that the bundled emulators do not handle
+[@docker2024multiplatform]. An emulated build that crashes
+is therefore a known failure path, not the reader's error.
+Two routes then help. Docker Desktop's setting 'Use Rosetta
+for x86_64/amd64 emulation on Apple Silicon', off by
+default and offered with the Apple Virtualization
+framework, replaces QEMU with Apple's Rosetta
+translator. Or
+the image can be built on a CI service with an `amd64`
+runner (@sec-verification) and pulled. Apple has
+announced macOS 27 as the last release to support Rosetta
+for Intel-only applications; whether Docker's option
+outlasts it is not stated, and the route should be
+rechecked. When an emulated build completes, the cost has
+been in time, not in correctness. A QEMU-translated
+`amd64` instruction still computes the `amd64` result, so
+a container built this way runs the same program, only
+more slowly.
 
 Emulation is not where a numerical risk would come from;
 the native build is. A native `arm64` build of the
@@ -1363,6 +1508,22 @@ manuscript. (`rocker/rstudio`, between the first two,
 serves those who want the browser-based IDE without the
 tidyverse.)
 
+Size is a practical difference among them, and
+@tbl-rocker-sizes gives it for the current R release.
+The figures are compressed download sizes, as Docker Hub
+reports them; an image occupies more once unpacked. The
+showcase image, built on `rocker/r-ver:4.4.0`, whose
+`amd64` download is 331 MB, occupied 853 MB on disk.
+
+| Base, tag `4.6.2` | `linux/amd64` | `linux/arm64` |
+|---|---:|---:|
+| `rocker/r-ver` | 416 MB | 396 MB |
+| `rocker/rstudio` | 882 MB | 864 MB |
+| `rocker/tidyverse` | 1,097 MB | 1,075 MB |
+| `rocker/verse` | 1,956 MB | not published |
+
+: Compressed sizes of the Rocker bases for R 4.6.2, from the Docker Hub API on 26 November 2026. Sizes change with every rebuild of a tag. {#tbl-rocker-sizes}
+
 A recipe should be written so that the base can change
 in as few lines as possible. Moving a project from one
 base to another then changes the `FROM` line and, at
@@ -1396,13 +1557,21 @@ archetype; only the base changes.
   `rocker/tidyverse` or `rocker/r-ver`, according to how
   much of its stack it draws from the base rather than
   the lockfile.
-- A **manuscript** archetype needs `rocker/verse`,
-  because rendering to PDF requires the LaTeX toolchain
-  that it carries and the lighter bases do not.
-- An **R-package** archetype needs very little: R and
-  the check tools suffice, so `rocker/r-ver` is the
-  honest choice, and provisioning a LaTeX toolchain it
-  never uses would be waste.
+- A **manuscript** archetype needs a PDF engine.
+  `rocker/verse` carries a LaTeX one, which the lighter
+  bases do not, and is the usual choice. A lighter engine
+  added to a smaller base, such as TinyTeX, a small LaTeX
+  distribution, or the Typst engine that Quarto bundles,
+  is an alternative that @sec-literate bears on.
+- An **R-package** archetype needs little: R and the
+  check tools, so `rocker/r-ver` is the honest choice.
+  That base carries R and the compilers but not `pandoc`,
+  `qpdf`, or LaTeX; we checked the `4.4.0` and `4.6.0`
+  tags. R Markdown vignettes need `pandoc`, a check with
+  `--as-cran` uses `qpdf` on PDF files, and the PDF
+  manual needs LaTeX unless the check is run with
+  `--no-manual`. A full LaTeX toolchain the package never
+  uses would still be waste.
 - A **simulation** archetype often wants more cores than
   software, so the base may be `rocker/r-ver` while the
   container is run with a larger core allocation. Here
@@ -1465,10 +1634,12 @@ where the full image takes minutes. Because the team
 image is itself pinned by digest, recorded in a
 committed file, and built and pulled for one platform
 (`--platform linux/amd64`), every member runs the same
-filesystem. 'Works on my machine' therefore cannot
-arise: there is, in the relevant sense, only one
-machine. A member who drops the flag on an Apple Silicon
-Mac falls outside that guarantee. The mechanics of building, pushing,
+filesystem. Most causes of 'works on my machine' are
+thereby removed. The processor, and any thread variable
+overridden at run time, remain, as the section on
+environment variables explains. A member who drops the
+flag on an Apple Silicon Mac falls outside even that
+guarantee. The mechanics of building, pushing,
 digest-recording, and updating the team image are the
 business of @sec-archiving.
 
@@ -1494,9 +1665,10 @@ the raw base every time reintroduces the chance that two
 builds diverge, when they run on different days against
 a live snapshot or a different system-library patch
 level. No lockfile would catch such a divergence,
-because it sits below the package layer. The shared team image is what makes 'works
-on my machine' inapplicable across the whole lab, not
-only within one project.
+because it sits below the package layer. The shared team
+image is what removes most causes of 'works on my
+machine' across the whole lab, not only within one
+project.
 :::
 :::
 
@@ -1599,15 +1771,11 @@ the image CI built. These commands were checked against
 the framework's source, not run for this chapter.
 :::
 
-What has she gained, in the vocabulary of the ladder?
-Before the container, at L1, her collaborator's restore
-could fail for a missing system library, or succeed and
-compute a different number under a different R. After
-it, at L2, the operating system, the system libraries,
-and the R are fixed and travel with the analysis, and
-the locale and time-zone and thread variables are
-declared rather than inherited. What she has not yet
-gained is verification, L3. An image that builds and a
+In the vocabulary of the ladder she has moved from L1
+to L2: the platform now travels with the analysis, and
+the locale, time-zone, and thread variables are declared
+rather than inherited. What she has not yet gained is
+verification, L3. An image that builds and a
 report that renders are not the same as a report whose
 numbers have been regenerated and shown to match a
 recorded baseline. That is the subject of
@@ -1846,18 +2014,12 @@ the in-image installer points at a dated snapshot, with
 a distribution codename that matches the base image's
 Ubuntu release, and that `renv::restore()` is told to
 use it. Finally, confirm that `LANG`, `LC_ALL`, and `TZ`
-are set. Then build the image twice and confirm the two
-builds carry the same content, comparing the installed
-operating system and the R and package versions. This
-can be done, for instance, through `renv::status()` and
-the apt and R package version lists. Do not compare
-image digests, which differ across rebuilds even for a
-correctly pinned recipe because per-layer timestamps
-vary. If the content
-differs, the recipe is not pinned, whatever the model
-asserted. If an agent ran the two builds, read the two
-version lists yourself; its report that they match is not
-the comparison (@sec-llm-delegate).
+are set. Then run the two-build content comparison of
+the Verification box above, not a digest comparison. If
+the content differs, the recipe is not pinned, whatever
+the model asserted. If an agent ran the two builds, read
+the two version lists yourself; its report that they
+match is not the comparison (@sec-llm-delegate).
 
 *A better prompt.* 'Write a Dockerfile for an R
 `<version>` analysis restored from the attached
@@ -1967,12 +2129,14 @@ contributions, and it is not one to delegate.
    showcase Dockerfile that pins the thread count, and
    say why it sets two variables rather than one.
 
-8. (Spacing) This exercise returns to the lockfile of
-   Chapter 6, 'Pinning Packages with renv' (@sec-dependencies).
-   Explain, in two or three sentences, what a pinned
-   `renv.lock` guarantees about a result and what it does
-   not, and name the specific gap this chapter's container
-   closes that the lockfile by itself cannot.
+8. (Spacing) This exercise returns to the dependency
+   check of 'Pinning Packages with renv'
+   (@sec-dependencies). The showcase image restores
+   whatever `renv.lock` records. Name the check from that
+   chapter that should pass before you build the image.
+   Then explain, in two or three sentences, what a
+   container built from a lockfile that fails the check
+   would lack, and when the gap would surface.
 
 ## Solutions
 
@@ -2091,8 +2255,9 @@ the recipe from unpinned to pinned.
 example, or `rocker/tidyverse` when the analysis draws
 most of its stack from the base rather than the lockfile;
 the trade is set out below. **Manuscript:**
-`rocker/verse`, because rendering to PDF needs the LaTeX
-toolchain that it carries and the lighter bases do not.
+`rocker/verse`, because rendering to PDF needs a PDF
+engine and it carries LaTeX, unless a smaller base with
+a lighter engine is preferred.
 **R package:** `rocker/r-ver`, because a package must be
 checked against a clean environment carrying only its
 declared dependencies, and a rich base can mask a missing
@@ -2275,26 +2440,21 @@ chapter's own 'The cohort, continued' section.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 8
 
-A pinned `renv.lock` guarantees that every R package the
-analysis loads is reinstalled at the exact version
-recorded, from the repository recorded, so two restores of
-the same lockfile install the same packages. It guarantees
-nothing about the operating system, the system libraries a
-package links against, or the version of R itself that
-runs those packages. None of those three is an R package.
-The lockfile's `R` block records the R version, but the
-lockfile can install none of the three.
+The check is `renv::status()`, in its CI form
+`Rscript -e 'if (!renv::status()$synchronized) quit(status = 1)'`,
+which fails when the code uses a package the lockfile
+does not record, the inclusion
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$.
 
-The specific gap this chapter's container closes is
-exactly those three: the `FROM` line fixes the operating
-system and the system libraries, and the digest-pinned
-Rocker base fixes which R runtime runs the restored
-packages. The lockfile answers 'which packages' and the
-container answers 'on what'. Consider this chapter's own
-orientation story: the GDAL-dependent package that failed
-to install on a collaborator's machine even though the
-lockfile pinned its version exactly. That is a failure
-the lockfile could not prevent and the container does.
+A container built from a lockfile that fails it restores
+every package the lockfile names and none that it omits.
+The image builds without complaint, because the restore
+has nothing to say about packages it was never told
+about. The gap surfaces only when the analysis runs
+inside the container and a `library()` call fails, which
+may be on a reviewer's machine months later. Running the
+check before the build moves that failure to the
+analyst's desk, where it costs one snapshot.
 :::
 
 ## Cheat sheet {#sec-cheat-containers}
@@ -2307,7 +2467,9 @@ the lockfile could not prevent and the container does.
 | `ENV LANG=... LC_ALL=...` | Fixes locale-dependent sorting and formatted output. |
 | `ENV TZ=UTC` | Fixes day-boundary assignment for date/time arithmetic. |
 | `ENV OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1` | Removes thread count as a source of floating-point variation, trading speed for stability. |
-| `WORKDIR /project` | Keeps `renv` out of the image root, where it refuses to initialize. |
+| `WORKDIR /project` | Gives the project its own directory, out of the image root; `docker run` mounts the project there. |
+| `RUN apt-get install -y --no-install-recommends ...` | Adds system libraries the base lacks; resolved against Ubuntu's live archive, so fixed only in the built image. |
+| `docker system df`, `docker image prune` | Reports Docker's disk use; removes dangling images. |
 | `COPY renv.lock renv.lock` + `renv::restore()` | Restores the exact package set inside the fixed environment. |
 | `docker build --platform linux/amd64` | Selects the `amd64` entry of an index, so a Mac builds the same image as CI and the cluster; required on Apple Silicon for `amd64`-only bases such as `rocker/tidyverse:4.4.0` (check each version with `imagetools inspect`). |
 | `docker buildx imagetools inspect image:tag` | Asks the registry for the index digest a tag currently resolves to, and each platform's manifest digest. |

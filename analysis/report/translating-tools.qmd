@@ -1,0 +1,90 @@
+# Translating the Tools {#sec-translating-tools}
+
+This book teaches each capture point with an R tool. The
+ideas do not depend on R. A lockfile, a container, a
+literate document, a pipeline, a test, and a continuous
+integration run each have counterparts in other
+languages. A reader who works in Python or Stata can
+apply the chapters by substituting them.
+@tbl-translating-tools gives the substitutions we could
+confirm against each tool's own documentation, opened on
+26 November 2026. An empty cell means we did not confirm
+an equivalent, not that none exists. Nothing in the core
+chapters depends on this appendix.
+
+| Capture point | This book (R) | Python | Stata |
+|---|---|---|---|
+| Version control (@sec-version-control) | `git` | `git` | `git`, for do-files and ado-files |
+| Package versions (@sec-dependencies) | `renv` and `renv.lock` | `uv` and `uv.lock`; or `pixi` and `pixi.lock` | |
+| Language behavior across releases | The R version recorded in `renv.lock` and fixed by the image | | A `version` statement at the top of every do-file |
+| Environment (@sec-containers) | A Docker image built from a digest-pinned base | The same Docker recipe, with Python in place of R | |
+| Literate document (@sec-literate) | Quarto with the `knitr` engine | A Jupyter notebook, or a `.qmd` file, rendered by Quarto | `dyndoc`, to HTML or Word |
+| Pipeline (@sec-pipelines) | `targets` | Snakemake | |
+| Tests and checks (@sec-testing) | `tinytest`, and `stopifnot()` for data | `pytest` | `assert`, for data |
+| Continuous integration (@sec-verification) | GitHub Actions with `r-lib/actions` | GitHub Actions with `actions/setup-python` and `pytest` | |
+
+: This book's R tools and their counterparts in Python and Stata {#tbl-translating-tools}
+
+Each Python and Stata entry rests on the source below.
+
+- **`uv.lock`.** The `uv` documentation describes it as
+  recording the exact resolved versions installed in the
+  project environment, across operating systems,
+  architectures, and Python versions. It says the file
+  'should be checked into version control'
+  (<https://docs.astral.sh/uv/concepts/projects/layout/>).
+- **`pixi.lock`.** The `pixi` documentation describes a
+  lock file listing the exact dependencies resolved for
+  every environment and platform in the manifest, and
+  argues for committing it, with an exception for library
+  projects (<https://pixi.prefix.dev/latest/workspace/lock_file/>).
+  @sec-backends discusses `pixi` with the rest of the
+  conda family.
+- **Stata `version`.** The Stata manual advises typing
+  `version` at the top of every do-file, so that the
+  do-file 'will continue to run in all future versions of
+  Stata'. The version setting also selects the
+  random-number generator
+  (<https://www.stata.com/manuals/pversion.pdf>). It fixes
+  how the interpreter behaves, not which add-on packages
+  are installed, so it is not a lockfile.
+- **Jupyter and Quarto.** In Jupyter's own words, a
+  notebook is 'a shareable document that combines computer
+  code, plain language descriptions, data, rich
+  visualizations like 3D models, charts, graphs and
+  figures, and interactive controls'
+  (<https://docs.jupyter.org/en/latest/>). Quarto renders
+  a notebook, but does not execute its cells unless asked
+  to with `--execute`
+  (<https://quarto.org/docs/computations/python.html>).
+  The hidden-state landmine of @sec-literate applies with
+  particular force to notebooks.
+- **`dyndoc`.** Stata's `dyndoc` converts a Markdown
+  document containing Stata commands to HTML or a Word
+  document, running the commands and inserting their
+  output (<https://www.stata.com/manuals/rptdyndoc.pdf>).
+- **Snakemake.** 'A tool to create reproducible and
+  scalable data analyses', in its documentation's words
+  (<https://snakemake.readthedocs.io/en/stable/>). In a
+  Python project it plays the role that @sec-pipelines
+  gives to `targets`.
+- **`pytest`.** A framework that 'makes it easy to write
+  small, readable tests' (<https://docs.pytest.org/en/stable/>).
+- **Stata `assert`.** It verifies that an expression is
+  true and, if not, stops with return code 9
+  (<https://www.stata.com/manuals/dassert.pdf>), which makes
+  it the counterpart of `stopifnot()` after a merge or a
+  recode.
+- **Python on GitHub Actions.** GitHub's guide 'Building
+  and testing Python' sets up Python with
+  `actions/setup-python` and runs `pytest`
+  (<https://docs.github.com/en/actions/tutorials/build-and-test-code/python>).
+
+Two cautions apply to every row. First, a counterpart
+reaches the same rung only if it is used the same way:
+a `uv.lock` that is not committed pins nothing, and a
+notebook rendered from stored outputs is not a fresh
+render. Second, Stata is licensed software, and we did not
+check how its license applies inside a container or to a
+deposited image, so the table leaves the Stata
+environment cell empty.

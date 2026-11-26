@@ -89,6 +89,7 @@ book:
   appendices:
     - 06-backends-runtimes.qmd
     - ci-other-forges.qmd
+    - translating-tools.qmd
     - cheat-sheet-index.qmd
     - glossary.qmd
     - credits.qmd
@@ -153,7 +154,10 @@ filters:
   - _filters/contents-html-only.lua
 
 bibliography: references.bib
-csl: https://www.zotero.org/styles/apa
+# Committed copy of the Zotero APA 7th edition style (updated
+# 2026-10-02, CC BY-SA 3.0), so the render reads nothing from the
+# network (fourth review, RA-08).
+csl: apa.csl
 
 execute:
   freeze: auto

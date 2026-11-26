@@ -236,3 +236,60 @@ wrapper now exits with Quarto's status. The second render: logged exit
 literal entities in the PDF. TOC: Ch 9 'targets and Make'; Appendix A
 backends, Appendix B other forges. PDF 708 pages (700 before). The
 instructor guide renders (exit 0).
+Committed as `e73c46e`.
+
+### Phase 31, currency and remaining findings (`phase-31-currency-minor`)
+
+Six agents (A to F) on disjoint file groups under
+`docs/fourth-review/phase31/BRIEF.md`; each report there has one row
+per finding ID with what was run and every source opened on
+2026-11-26. The lead merged the shared files.
+
+**Agents' scope and status** (details and evidence in the reports):
+
+| Agent | Files | Findings | Status |
+|---|---|---|---|
+| A | Ch 1 to 3, `_llm-rule.qmd` | R1-02 to R1-07, R2-01, R2-04, R2-06 to R2-11, R3-01, R3-02, R4-010, R4-009 (Ch 2 sentence) | Done; R2-04 move proposed only; R2-06 and R2-10 rest on sources that were paywalled or refused (Baker, ACM) |
+| B | Ch 4, Ch 5 | R4-V05 to V11, V13, R5-04 to R5-10 | Done; R4-V08 table row and R5-09 by the lead or author |
+| C | Ch 6, Ch 7 | R6-05 to R6-10, R7-03 to R7-14, R4-011 item 4 | Done; chapters grew (+361, +1,222 words) despite about 750 words cut |
+| D | Ch 8, Appendix A, new Appendix C | R9-03 to R9-11, R8-02 to R8-05, R8-07 to R8-12, R4-009 | Done; R8-07 and R8-08 corrected from the review's wording after checking |
+| E | Ch 9, Ch 10, `analysis/exercises/pipeline-start/` | R10-03, R10-07, R10-10, R11-03, R11-04, R11-07 to R11-13, R4-013 | Mostly done; exercise grading and testing Exercise 4 not done; pre-commit steps untested |
+| F | Ch 11, Ch 12, Appendix B | R12-04, R12-07 to R12-12, R4-008 (Ch 12), R13-04 to R13-09, R13-11, R4-010 | Done; openICPSR page refused, so no discipline-repository row |
+
+**Lead, shared files:** `apa.csl` committed and `_quarto.yml` points
+to it (RA-08); `translating-tools.qmd` added as Appendix C; the
+cheat-sheet index now reads the appendices, filters generic labels,
+and points to the primer and setup page (RA-07; it had silently
+dropped the backends appendix after Phase 29); glossary: capture,
+validation, recipe (RA-11, R4-020), new CRAN, Dockerfile,
+environment variable, kernel entries, Daemon and Podman corrected
+(R8-02); bibliography: 17 entries from agent F (URLs checked;
+Zenodo's page refuses automated requests), `pimentel2019` and the
+`saju2025` proceedings version from the publisher, tinytest 1.4.3,
+`githublargefiles` date; setup page: push-protection row (R4-V08) and
+an emulated-build symptom row (R7-06); Conventions: MCSE marked
+optional; `test-cohort.R` gains the missing-age bound the chapter's
+listing shows (R11-12).
+
+**Incident.** Agent C ran `docker image prune -f` while documenting
+disk housekeeping, which deleted one untagged image on the author's
+machine (an old ClickHouse image, about 997 MB). No tagged image or
+volume was touched. The other agents were stopped from running any
+destructive Docker command for the rest of the phase. Agent B
+overwrote the lead's render script in the scratchpad by reusing its
+file name; the lead's script was recreated under a distinct name.
+
+**For the author:** R5-09 (Ch 5's de-identified study examples: cite
+if they are the author's work); `targets` not in `renv.lock` (Ch 9
+exercises); `R/cohort.R` names the logistic model
+`run_primary_analysis()` while Ch 10 calls the Cox model canonical;
+proposed moves of `sec-llm-delegate` and `sec-llm-disclosure` out
+of Ch 2 (agent A's report lists the 17 references).
+
+Verification (V): tinytest 458/458 (two new results: the missing-age
+bound in `test-cohort.R` and one new check's answer). Full render:
+logged exit 0, no warnings, no unresolved references or missing
+citations, no literal entities in the PDF; TOC shows Appendices A
+(backends), B (other forges), C (translating the tools). PDF 738
+pages (708 before, +30). Instructor guide renders (exit 0). No
+citation key is missing from `references.bib`.

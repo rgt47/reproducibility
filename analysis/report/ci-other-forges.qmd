@@ -47,6 +47,8 @@ stages:
 gates:
   stage: gates
   # The tag must name the R version recorded in renv.lock.
+  # rocker/verse:4.6.1 listed amd64 only on 26 November
+  # 2026, so the job needs an amd64 runner.
   image: rocker/verse:4.6.1
   script:
     - Rscript -e 'renv::restore(prompt = FALSE)'
@@ -82,8 +84,15 @@ gates from the repository root, so that every R step, and
 the check subprocess it launches, sees the restored
 library. The `.Rprofile` assumption of 'Where CI bugs
 hide' in @sec-verification applies to both. The image tag
-above names R 4.6.1 only as an example; a compendium names
-the release its own lockfile records. The
+above names R 4.6.1, the version this book's lockfile
+records, although R 4.6.2 was the newest release on 26
+November 2026 [@cranrsources]. A compendium names the
+release its own lockfile records, not the newest one. The
+`rocker/verse` tags for both releases were published for
+the amd64 architecture only when we checked on 26 November
+2026 [@rockerversetags]. On an institutional runner built
+on arm64 the job therefore fails or runs under emulation,
+so the job should be sent to an amd64 runner. The
 `rocker/verse` image is used here because it ships pandoc,
 which the render gate needs; on GitHub the `setup-pandoc`
 action supplies it. Each script line is a separate shell
@@ -219,6 +228,7 @@ stages: [gates]
 
 gates:
   stage: gates
+  # amd64 only on 26 November 2026: use an amd64 runner
   image: rocker/verse:4.6.1
   script:
     - Rscript -e 'renv::restore(prompt = FALSE)'

@@ -72,8 +72,9 @@ default branch is conventionally called `main`.
 
 []{#gloss-capture}**Capture.** Fixing an input so that it cannot drift: writing a
 lockfile, building a container image. Capture sets levels L0 to
-L2; L3 is reached by validation, which pins nothing new.
-(@sec-levels)
+L2; L3 is reached by verification, the form of validation that
+compares regenerated outputs with a baseline, which pins nothing
+new. (@sec-levels)
 
 []{#gloss-checksum}**Checksum.** A short fingerprint, computed from a file's or an
 object's bytes by a hash function such as SHA-256, with the
@@ -134,13 +135,19 @@ fresh virtual machine, rebuilds the project, and runs a defined
 set of checks. It reports success or failure automatically.
 (@sec-verification)
 
+[]{#gloss-cran}**CRAN.** The Comprehensive R Archive Network, the
+main public repository of R packages, from which
+`install.packages()` fetches by default. (@sec-dependencies)
+
 
 ## D {.unnumbered .unlisted}
 
 []{#gloss-daemon}**Daemon.** A background system service that runs continuously
-with elevated privilege. Docker relies on one; Podman and
-Apptainer do not, which is why they run without administrative
-rights. (@sec-backends)
+with elevated privilege. A standard Docker installation relies on
+one; Podman and Apptainer do not. Running without a daemon is not
+running without an administrator: rootless Docker or Podman needs
+subordinate user IDs that only an administrator can add.
+(@sec-backends)
 
 []{#gloss-data-availability-statement}**Data-availability statement.** A sentence in a manuscript,
 or in its compendium, naming where the data behind its
@@ -219,8 +226,18 @@ inspect`, which reports the index digest and each platform's
 manifest digest; a locally cached digest may be stale.
 (@sec-containers)
 
+[]{#gloss-dockerfile}**Dockerfile.** The text file of instructions
+from which `docker build` makes an image: a `FROM` line naming the
+base image, then the steps that install and configure everything
+above it. (@sec-containers)
+
 
 ## E {.unnumbered .unlisted}
+
+[]{#gloss-environment-variable}**Environment variable.** A named
+setting, such as `LANG` or `TZ`, that a shell passes to every
+program it starts; R reads several of them at startup. The Shell
+Primer explains how to set and inspect them. (@sec-containers)
 
 []{#gloss-expectation}**Expectation.** A single assertion, such as
 `expect_equal(actual, expected)`, that passes or fails.
@@ -345,6 +362,12 @@ function, or a package, has changed. (@sec-pipelines)
 
 
 ## K {.unnumbered .unlisted}
+
+[]{#gloss-kernel}**Kernel.** The core of an operating system, which runs
+programs and manages the hardware. A container image holds no kernel;
+containers share the Linux kernel of the machine that runs them, which
+is why Docker Desktop runs a small Linux virtual machine on macOS and
+Windows. (@sec-containers)
 
 []{#gloss-knitr-and-sweave}**`knitr` and Sweave.** The engines that execute code inside a
 literate document. Sweave came first; `knitr` superseded it and
@@ -476,8 +499,9 @@ without attaching its package. It still creates a dependency,
 and a scanner that looked only for `library()` would miss it.
 (@sec-dependencies)
 
-[]{#gloss-podman}**Podman.** A daemonless, rootless container runtime that runs
-the same images as Docker. The usual answer where Docker Desktop
+[]{#gloss-podman}**Podman.** A daemonless container runtime, able to run
+rootless once an administrator has set up subordinate user IDs,
+that runs the same images as Docker. The usual answer where Docker Desktop
 licensing is a constraint. (@sec-backends)
 
 []{#gloss-podman-run}**`podman run`.** Starts a container without a root daemon,
@@ -570,8 +594,10 @@ approximation rather than a record. (@sec-dependencies)
 the processed datasets regenerated from them by code.
 (@sec-compendium)
 
-[]{#gloss-recipe}**Recipe (or command).** The shell command Make runs to bring a
-target up to date from its prerequisites. (@sec-pipelines)
+[]{#gloss-recipe}**Recipe.** A file or rule of instructions that builds
+something. For a container, the `Dockerfile` that builds an image
+(@sec-containers); for Make, the shell command a rule runs to bring
+a target up to date from its prerequisites (@sec-pipelines).
 
 []{#gloss-registry}**Registry.** A server that stores and distributes container
 images, from which collaborators pull a pre-built environment.
@@ -847,7 +873,8 @@ commits down. (@sec-version-control)
 
 []{#gloss-validation}**Validation.** Confirming that the captured inputs actually
 suffice, by rebuilding and re-running. Validation does not pin
-anything new; it checks. (@sec-levels)
+anything new; it checks. Without a comparison against a recorded
+baseline, validation confirms L2, not L3. (@sec-levels)
 *Regulated sense:* in FDA software guidance, validation is
 confirmation, by examination and objective evidence, that
 software specifications conform to user needs and intended uses

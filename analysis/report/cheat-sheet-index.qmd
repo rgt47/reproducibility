@@ -14,11 +14,17 @@ book is built, so the index cannot fall out of step with them.
 #| echo: false
 #| results: asis
 
-# Part and chapter order come from the book's manifest; each entry
-# lists the first column of that chapter's cheat-sheet table.
+# Part and chapter order come from the book's manifest, appendices
+# included; each entry lists the first column of that chapter's
+# cheat-sheet table, without the generic row labels.
 manifest <- readLines('_quarto.yml', warn = FALSE)
-stop_at <- grep('^\\s*appendices:', manifest)[1]
-manifest <- manifest[seq_len(stop_at - 1)]
+first_line <- grep('^\\s*chapters:', manifest)[1]
+last_line <- grep('^format:', manifest)[1] - 1
+manifest <- manifest[first_line:last_line]
+appendix_re <- '^\\s*appendices:'
+generic_re <- '^(Rule of thumb|Habit [0-9]+)'
+# Pages without a cheat sheet that a reader still needs to find.
+pointer_files <- c('shell-primer.qmd', 'setup-appendix.qmd')
 
 part_re <- "^\\s*- part: '(.*)'\\s*$"
 file_re <- '^\\s+- ([A-Za-z0-9_-]+[.]qmd)\\s*$'
@@ -30,7 +36,12 @@ first_cell <- function(row) {
 entry <- function(file) {
   lines <- readLines(file, warn = FALSE)
   start <- grep('^## Cheat sheet \\{#sec-cheat-', lines)
-  if (length(start) == 0) return(NULL)
+  if (length(start) == 0) {
+    if (!file %in% pointer_files) return(NULL)
+    title <- trimws(sub('\\{.*$', '', sub('^# ', '', lines[1])))
+    return(paste0('**[', title, '](', file, ')**. No table; the ',
+                  'page itself is the reference.\n\n'))
+  }
   chapter_id <- sub('.*\\{#(sec-[A-Za-z0-9-]+).*', '\\1', lines[1])
   title <- trimws(sub('\\{.*$', '', sub('^# ', '', lines[1])))
   cheat_id <- sub('.*\\{#(sec-cheat-[A-Za-z0-9-]+)\\}.*', '\\1',
@@ -40,6 +51,7 @@ entry <- function(file) {
   rows <- grep('^\\|', rows, value = TRUE)
   rows <- rows[-(1:2)]
   cells <- unique(first_cell(rows))
+  cells <- cells[!grepl(generic_re, cells)]
   stopifnot(length(cells) > 0)
   paste0(
     '**@', chapter_id, ', ', title, '** (@', cheat_id, '). ',
@@ -50,6 +62,8 @@ entry <- function(file) {
 for (ln in manifest) {
   if (grepl(part_re, ln)) {
     cat('## ', sub(part_re, '\\1', ln), '\n\n', sep = '')
+  } else if (grepl(appendix_re, ln)) {
+    cat('## Appendices\n\n')
   } else if (grepl(file_re, ln)) {
     out <- entry(sub(file_re, '\\1', ln))
     if (!is.null(out)) cat(out)

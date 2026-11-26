@@ -80,7 +80,6 @@ answer:**
 - The ladder: capture sets the level, validation
   confirms it.
 - Reproduced, replicated, and a warning about the words.
-- Two numbering schemes, and which this book uses.
 - The ladder grades every archetype.
 - No framework pins the whole stack.
 - Worked example: one analysis walked up all four rungs.
@@ -143,6 +142,14 @@ converged. It should be checked, for example by refitting
 under several optimizers with `lme4::allFit()`, and
 reported as optimizer-sensitive.
 
+The story is invented, but its mechanism is not. In
+`lme4` 1.1-20, released in February 2019, the default
+optimizer for linear mixed models fitted by `lmer()`
+changed from `bobyqa` to `nloptwrap`. The package's NEWS
+file records the change and the control setting that
+restores the old default. A package's NEWS file is the
+first place to look when a re-run moves.
+
 This chapter is about naming that 'everything
 underneath', and about grading how much of it a given
 analysis has secured. We introduced in @sec-intro the
@@ -157,8 +164,7 @@ particular effort has reached: L0 locatable, L1 pinned
 packages, L2 pinned environment, and L3 verified. With
 the ladder in hand, we consider how the words
 'reproduced' and 'replicated' have shifted across the
-literature, and how the framework's own numbering differs
-from ours. Lastly, we examine how the ladder grades each
+literature. Lastly, we examine how the ladder grades each
 archetype, admit that no framework pins the whole stack,
 walk one analysis up all four rungs, and then place this
 book's own compendium on the ladder.
@@ -171,8 +177,8 @@ L0-to-L1 step. Pinning the environment with a container
 (@sec-containers) is the L1-to-L2 step. And verifying
 the outputs (@sec-verification) is the L2-to-L3 step.
 Before we can teach the climbing we need the ladder
-itself, together with the discipline of naming, without
-flinching, the rung one has actually reached.
+itself, together with the discipline of naming plainly
+the rung one has actually reached.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what changed, and what did not
@@ -490,9 +496,16 @@ runs the verification rather than as a layer of
 reproducibility in its own right. Pinning is capture;
 re-running to confirm is validation.
 
-The four rungs follow from this distinction. Levels L0
-through L2 are reached by the capture axes, and L3 is
-reached by the validation layer. @tbl-ladder states each
+The four rungs follow from this distinction.^[The
+framework's own teaching vignette uses a second scale,
+Levels 1 to 5, that counts the tools a project has
+adopted: a basic R project, then `renv`, Docker, unit
+tests, and continuous integration. It is a useful on-ramp
+but grades adoption, not verification, since a project
+can hold every tool and have verified nothing. In this
+book a bare 'L2' always means the rung defined here.]
+Levels L0 through L2 are reached by the capture axes, and
+L3 is reached by the validation layer. @tbl-ladder states each
 rung, what it pins, the artifact that marks it, and what
 the rung means for a reader of health research.
 
@@ -656,8 +669,8 @@ every time. Conversely, a finding can replicate across
 laboratories while no single analysis in the set is
 computationally reproducible. Leek and Peng press exactly
 this point, that a reproducible analysis can still be
-wrong, and that reproducibility is therefore a floor and
-not a ceiling [@leek2015]. Patil, Peng, and Leek go
+wrong [@leek2015], and it follows that reproducibility is
+a floor and not a ceiling. Patil, Peng, and Leek go
 further and offer a statistical framing of the
 distinction. They cast replication as a question about the
 agreement of estimates across studies rather than about
@@ -754,68 +767,6 @@ Its one executed placement, the cohort compendium in
 repository's artifacts each time the chapter renders,
 not asserted here. Every rung above the one that section
 prints is left to the chapters this ladder points toward.
-:::
-
-## Two numbering schemes, and which this book uses
-
-Before applying the ladder to particular archetypes, we
-need to dispose of a source of confusion. A reader who
-consults the documentation of the framework this book uses
-will encounter a second numbering scheme, and the two are
-easily confused.
-
-The framework's teaching materials include a vignette that
-presents a *five-level* ramp. Level 1 is a basic R project
-with manual package management, and Level 2 is the
-addition of `renv`. Level 3 is the addition of Docker,
-Level 4 the addition of unit testing, and Level 5 the
-addition of continuous integration. That scale counts *which tools a
-project has adopted*, and it is a pedagogical on-ramp,
-meant to be walked from the bottom as a project matures.
-It is a useful thing, but it is not the scale of this book.
-
-The scale of this book is the *architectural* ladder of
-the preceding sections, L0 through L3. It grades something
-different: *how far down the determinant stack a result has
-been locked, and whether the lock has been verified*. The
-two axes are related but not identical. Adopting `renv`
-(the tool scheme's Level 2) is what lifts a project to L1.
-Adopting a container (the tool scheme's Level 3) is what
-lifts it to L2. The tool scheme's testing and
-continuous-integration levels belong to the validation
-layer that reaches L3. However, one can imagine a project
-that has adopted every tool and still verified nothing.
-The architectural ladder, not the tool count, is what
-tells the reader whether the result has been shown to
-reproduce.
-
-To avoid ambiguity we adopt a single convention. This book
-uses the L0 to L3 architectural ladder throughout, in every
-chapter and every worked example. Where the framework's own
-documentation speaks of 'Level 1' through 'Level 5', it is
-using the tool-adoption ramp, and the reader should read it
-as such and not conflate it with our L0 to L3. When we
-write a bare 'L2', we always mean the architectural rung.
-
-::: {.callout-note icon=false collapse=true}
-## Check your understanding: two scales, one word
-
-A student writes in a lab notebook, 'the project is at
-Level 2, so it is container-pinned.' Using this chapter's
-two scales, is the inference safe?
-
-::: {.callout-note icon=false collapse=true}
-## Answer
-
-No. On the tool-adoption ramp, Level 2 means `renv` has
-been added, which is the architectural chapter's L1, not
-its L2; the container arrives at the ramp's Level 3. The
-student's sentence silently mixed the two scales' numbers.
-The safe habit is to never write a bare number without
-saying which scale it belongs to. This book's own
-convention, stated above, is to let an unqualified 'L2'
-always mean the architectural rung.
-:::
 :::
 
 ## The ladder grades every archetype
@@ -1217,7 +1168,9 @@ exclude it.'
    each would cause two runs to disagree.
 
 4. The framework's documentation grades a project 'Level 4'
-   on its five-level tool-adoption scale. State what this does
+   on its five-level tool-adoption scale (an R project,
+   then `renv`, Docker, unit tests, and continuous
+   integration). State what this does
    and does not tell you about the project's rung on the L0 to
    L3 architectural ladder, and name one artifact you would
    inspect to settle the question.

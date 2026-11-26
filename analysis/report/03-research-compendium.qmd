@@ -94,6 +94,8 @@ answer:**
   types, by hand, with a `zzcollab` box.
 - The cohort, continued: this book's own compendium
   against the five things it must capture.
+- How each archetype treats the chapters ahead: a
+  reference table for later chapters.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -145,6 +147,7 @@ This is the L0 rung and no further.
 
 ```{r}
 #| label: fig-stack-compendium
+#| echo: false
 #| fig-cap: 'The determinant stack of @sec-levels, with analysis code and input data marked as captured by this chapter. A research compendium does not pin a package version or an operating system; what it captures, for the first time, is that the code and the data are locatable, organized by convention, and separated into raw and derived, which is the L0 rung this chapter secures and the container the later chapters install L1 through L3 into.'
 #| fig-alt: !expr determinant_stack_alt(captures = c('Analysis code', 'Input data'))
 #| fig-width: 7
@@ -205,11 +208,11 @@ next set out the five things a compendium must capture
 and the directory layout, then the README, the data
 dictionary, and project-oriented paths with `here`. Five
 project types follow, each with a health-sciences
-example and a note of how it weighs the chapters ahead.
-Lastly, we show how one layout lets a project grow from
-one type to another, work one compendium through two
+example. We then show how one layout lets a project grow
+from one type to another, work one compendium through two
 types, and measure this book's own compendium against the
-five.
+five. A reference table of how each type weighs the
+chapters ahead closes the chapter, before the exercises.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the scatter is missing
@@ -323,6 +326,29 @@ themselves.
 - **Progressive disclosure** (zzcollab term). The
   property that one layout grows without restructuring
   as a project moves from one archetype to another.
+
+Six terms of R-package development recur below. Each is
+treated at length in *R Packages* (2e) [@wickham2023].
+
+- **Package tarball.** The single `.tar.gz` file that
+  `R CMD build` makes from a package directory; it is
+  what `R CMD check` examines and what gets installed.
+- **`Imports` and `Suggests`.** Two fields of
+  `DESCRIPTION`: packages the code needs in order to run,
+  and packages needed only for tests, examples, or
+  vignettes.
+- **`NAMESPACE`.** A generated file listing which
+  functions the package makes available to its users and
+  which functions it takes from other packages.
+- **Roxygen comment.** A comment beginning `#'` above a
+  function, from which `roxygen2` writes the help page
+  and the `NAMESPACE` entries.
+- **Exported function.** A function marked `@export` in
+  its roxygen comment, and so available to anyone who
+  loads the package; the others stay internal.
+- **Vignette.** A long-form document in `vignettes/`
+  that shows a package in use, rendered when the package
+  is built.
 :::
 
 ## The compendium as the unit of reproducible work
@@ -1104,7 +1130,8 @@ script fits a Cox proportional-hazards model and writes
 the coefficient table to `tables/`, and a plotting script
 writes the Kaplan-Meier curves to `figures/`. There may be
 a short results document, but the deliverable is the
-pipeline and its outputs.
+pipeline and its outputs. (Outside health research, an
+ecological field-survey analysis has the same shape.)
 
 The applicable gates are the universal `R CMD check` and
 the unit tests. The latter guard the cleaning logic and
@@ -1124,12 +1151,12 @@ principle. A `report.Rmd` or `index.qmd` file in
 `analysis/report/` is created on day one and written in
 parallel with the analysis, so that the prose and the
 numbers never drift apart. Every figure in the paper is
-regenerated on each render, rather than pasted in by hand. A
-representative deployment is a study of the comorbidity of
-PTSD, depression, and diabetes among Black women drawn from
-a trauma-study cohort. The study uses variable selection,
-multiple imputation, and causal mediation analysis. The
-compendium
+regenerated on each render, rather than pasted in by hand.
+Consider a paper on the comorbidity of PTSD, depression,
+and diabetes in a trauma-study cohort. It uses variable
+selection, multiple imputation, and causal mediation
+analysis. (An economics replication package accompanying
+a journal article has the same shape.) The compendium
 organizes the manuscript in `analysis/report/report.Rmd`,
 the statistical functions in `R/` with `roxygen2`
 documentation, the analysis pipeline in
@@ -1154,11 +1181,11 @@ distinguishes this archetype is that *there is no report
 to render at all*. A package that generates
 publication-quality clinical-trial summary tables has no
 manuscript as its deliverable; its
-deliverable is the exported, documented, tested function. A
-representative deployment is exactly such a summary-table
-package, hosting its source in `R/`, its examples in
-`vignettes/`, and its
-documentation as a generated website.
+deliverable is the exported, documented, tested function.
+Such a package keeps its source in `R/`, its examples in
+`vignettes/`, and its documentation as a generated
+website. (A package of estimators for a field's standard
+survey design is the same archetype.)
 
 The gates for this archetype are `R CMD check`, run at its
 full strength, and the unit tests. There is no render gate,
@@ -1203,7 +1230,9 @@ an earlier session and committed (@sec-testing). A second
 call in the same session is not such a test, because it
 agrees with the first even when the generator has
 changed. A render gate is optional, since the deliverable is
-often the stored results rather than a paper.
+often the stored results rather than a paper. (A study of
+an estimator's bias under simulated survey nonresponse has
+the same shape.)
 
 ### 5. Blog (a teaching notebook)
 
@@ -1226,7 +1255,9 @@ by a render gate that must succeed for *each* post the
 compendium carries. The multiplicity is the distinguishing
 feature of the general case: a blog compendium is a
 render-many, where the manuscript is a render-one and the
-package is a render-none.
+package is a render-none. (A methods blog in any field, a
+series of posts on causal inference for economists, say,
+has the same shape.)
 
 The five archetypes and their differences are summarized
 in @tbl-archetypes, and @fig-gates shows which validation
@@ -1236,6 +1267,7 @@ universal columns, to see how much stays fixed.
 
 ```{r}
 #| label: tbl-archetypes
+#| echo: false
 #| tbl-cap: 'The five research-compendium archetypes. The reproducibility machinery is identical across all five; only the directory emphasis, the presence of a rendered report, and the gates that apply on top of the universal R CMD check differ.'
 
 library(tibble)
@@ -1284,6 +1316,7 @@ knitr::kable(
 
 ```{r}
 #| label: fig-gates
+#| echo: false
 #| fig-cap: 'Validation gates by archetype. The R-package check and the unit tests apply universally; the render and seeding gates apply selectively. Where a render gate is only optional, as for a data analysis or a simulation study without a report, the cell is left unmarked. The underlying reproducibility machinery, the Five Pillars, is identical across every row.'
 #| fig-alt: 'A grid of five archetype rows (data analysis, scholarly manuscript, R package, simulation study, and blog) against four gate columns (R CMD check, unit tests, render report, and seeded baseline). Universal cells use a dark blue fill with a white filled circle, selective cells a dark green fill with a white filled triangle, and cells where the gate does not apply are a medium blue-gray without a symbol. Every cell in the R CMD check and unit tests columns is universal, ten circles in all. The render report column is selective for scholarly manuscript and blog, and the seeded baseline column is selective for simulation study only, three triangles in all. A legend below the grid keys the three statuses, Universal, Selective, and Does not apply, by both fill and symbol.'
 
@@ -1384,30 +1417,10 @@ document.
 :::
 :::
 
-## How each archetype treats the chapters ahead
-
-The reproducibility machinery is identical across the five
-archetypes; only its weight shifts. @tbl-archetype-weight
-is the reference every later chapter points back to rather
-than restates. For each archetype, it records how the
-ladder reads it (@sec-levels) and how heavily it leans on a
-[sealed render](glossary.qmd#gloss-sealed-render)
-(@sec-literate). It also records which kind of test
-carries its weight (@sec-testing) and how its
-continuous-integration gates are configured
-(@sec-verification). Lastly, it records how much a
-pipeline tool earns its keep (@sec-pipelines) and how the
-compendium is ultimately shared (@sec-archiving).
-
-| Archetype | Ladder (@sec-levels) | Literate programming (@sec-literate) | Testing (@sec-testing) | CI gates (@sec-verification) | Pipeline (@sec-pipelines) | Sharing (@sec-archiving) |
-|---|---|---|---|---|---|---|
-| Data analysis | Same rungs as a manuscript; L3 via a baseline on a derived rate | Light; an internal HTML summary, not a typeset report | Leans on data-validation and reproducibility tests | Render gate only if a report exists | Strong case for `targets`, since it is re-run constantly and skipping unchanged steps saves time | Deposited as itself |
-| Scholarly manuscript | Full apparatus; L3 compares tables and figures with recorded baselines | Center of gravity; the sealed render this chapter is built around | Adds a report-renders-and-matches-baseline test | Render gate is central, not optional | Modest; often a one-target build around the sealed report | Deposited beside the article it supports |
-| R package | L1 and L2 as for any archetype, since `R CMD check` is a gate, not a rung; L3 via a baseline on function output after a clean rebuild | Largely absent; help pages and vignettes stand in | Native home of unit testing; `R CMD check` runs the suite | No render gate unless a vignette exists | None; `R CMD check` plays the corresponding role | Also released to CRAN or an R-universe, not only archived |
-| Simulation study | L2 is nominal without the seed discipline; RNG kind is the load-bearing determinant | Thin; a presentation layer over pre-computed, stored results | Leans hardest on the seeded baseline test | A reduced, fixed-seed grid runs under CI; the full grid runs elsewhere | Strongest case of the five; `targets` branching maps the parameter grid | Recorded seeds and the union lockfile are what a re-runner needs |
-| Blog | Applies post by post; L3 needs a baseline per post | Central but multiplied across many rendered posts | Tests the code each post's examples depend on | Render gate iterates over every post | Rebuilds only the posts whose sources changed | Deployed as a website; the compendium behind it is still deposited |
-
-: How each archetype treats the topics of the chapters ahead. The reproducibility machinery under every cell is the same; the table records only where the emphasis falls. {#tbl-archetype-weight}
+Each later chapter notes how its weight differs by
+archetype. @tbl-archetype-weight, in the last section
+before the exercises, collects those notes for reference;
+its terms are defined in the chapters it names.
 
 ## Progressive disclosure
 
@@ -1803,6 +1816,34 @@ the analyst, who reads every change under `inst/tinytest/`
 and `inst/baseline/` before it is merged
 (@sec-llm-delegate).
 
+## How each archetype treats the chapters ahead
+
+This section is a reference to return to, not reading for
+a first pass; most of its terms are defined only in the
+chapters it names. The reproducibility machinery is
+identical across the five archetypes; only its weight
+shifts. @tbl-archetype-weight is the reference every later
+chapter points back to rather than restates. For each
+archetype, it records how the
+ladder reads it (@sec-levels) and how heavily it leans on a
+[sealed render](glossary.qmd#gloss-sealed-render)
+(@sec-literate). It also records which kind of test
+carries its weight (@sec-testing) and how its
+continuous-integration gates are configured
+(@sec-verification). Lastly, it records how much a
+pipeline tool earns its keep (@sec-pipelines) and how the
+compendium is ultimately shared (@sec-archiving).
+
+| Archetype | Ladder (@sec-levels) | Literate programming (@sec-literate) | Testing (@sec-testing) | CI gates (@sec-verification) | Pipeline (@sec-pipelines) | Sharing (@sec-archiving) |
+|---|---|---|---|---|---|---|
+| Data analysis | Same rungs as a manuscript; L3 via a baseline on a derived rate | Light; an internal HTML summary, not a typeset report | Leans on data-validation and reproducibility tests | Render gate only if a report exists | Strong case for `targets`, since it is re-run constantly and skipping unchanged steps saves time | Deposited as itself |
+| Scholarly manuscript | Full apparatus; L3 compares tables and figures with recorded baselines | Center of gravity; the sealed render this chapter is built around | Adds a report-renders-and-matches-baseline test | Render gate is central, not optional | Modest; often a one-target build around the sealed report | Deposited beside the article it supports |
+| R package | L1 and L2 as for any archetype, since `R CMD check` is a gate, not a rung; L3 via a baseline on function output after a clean rebuild | Largely absent; help pages and vignettes stand in | Native home of unit testing; `R CMD check` runs the suite | No render gate unless a vignette exists | None; `R CMD check` plays the corresponding role | Also released to CRAN or an R-universe, not only archived |
+| Simulation study | L2 is nominal without the seed discipline; RNG kind is the load-bearing determinant | Thin; a presentation layer over pre-computed, stored results | Leans hardest on the seeded baseline test | A reduced, fixed-seed grid runs under CI; the full grid runs elsewhere | Strongest case of the five; `targets` branching maps the parameter grid | Recorded seeds and the union lockfile are what a re-runner needs |
+| Blog | Applies post by post; L3 needs a baseline per post | Central but multiplied across many rendered posts | Tests the code each post's examples depend on | Render gate iterates over every post | Rebuilds only the posts whose sources changed | Deployed as a website; the compendium behind it is still deposited |
+
+: How each archetype treats the topics of the chapters ahead. The reproducibility machinery under every cell is the same; the table records only where the emphasis falls. {#tbl-archetype-weight}
+
 ## Exercises
 
 1. Take an existing analysis of your own, currently a
@@ -1888,8 +1929,9 @@ blog.
 
 The gates on top of the universal `R CMD check` are drawn
 from a short list. Unit tests apply universally; the render
-gate applies where a document is the deliverable; and seed
-determinism applies where the result is stochastic. Naming
+gate applies where a document is the deliverable; and the
+seeded-baseline gate applies where the result is
+stochastic. Naming
 a gate that does not apply is as much the point of the
 exercise as naming one that does, since the chapter's
 claim is that the machinery is identical and only the
@@ -1942,11 +1984,13 @@ indefinitely.
 `R CMD check` is universal because it is the one gate that
 applies to every archetype regardless of deliverable. A
 manuscript, a simulation, a blog, and a package all carry
-the same skin. That is, each has functions in `R/` that
-must load, declared dependencies that must resolve, and
-tests that must pass. `R CMD check` verifies exactly those
-three things without knowing or caring what the project
-produces. The
+the same skin. Each can have functions in `R/` that must
+load, declared dependencies that must resolve, and tests
+that must pass. `R CMD check` verifies exactly those three
+things without knowing or caring what the project
+produces. For an analysis whose code is all in
+`analysis/`, with `R/` still empty, the check verifies
+little until functions move into `R/`. The
 archetype-specific gates, rendering a document and
 checking a seeded baseline, apply to some archetypes and
 not others; this one applies to all of them.
@@ -2181,11 +2225,11 @@ operationalization that this chapter builds on is Marwick,
 Boettiger, and Mullen's proposal that an R package is the
 natural compendium container, together with their `rrtools`
 tool [@marwick2018]. The reader who wants the R-package
-mechanics in full should consult Wickham's book on R
-packages, which is the standard reference for the skin that
-makes `R CMD check` apply [@wickham2015]. For the
+mechanics in full should consult *R Packages* (2e), by
+Wickham and Bryan, which is the standard reference for the
+skin that makes `R CMD check` apply [@wickham2023]. For the
 complementary skill of *reading* a compendium one has
-received rather than writing one, Nust, Boettiger, and
+received rather than writing one, Nüst, Boettiger, and
 Marwick offer a short and practical guide [@nust2018].
 Finally, Peng's argument that reproducibility is a minimum
 standard for computational science supplies the motivation

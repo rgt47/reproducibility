@@ -17,12 +17,13 @@ Scientific Containers for Mobility of Compute* (2017)
 :::
 
 By the end of this appendix you will be able to take any
-of three situations and name the one alternative to
+of four situations and name the one alternative to
 Docker that fits, chosen by the constraint that actually
-binds. The situations are a job a cluster's scheduler
-refuses to run under Docker, a laboratory that has
-declined to license Docker Desktop, and a reviewer who
-will install nothing. The alternatives are Podman,
+binds. The first two are a job a cluster's scheduler
+refuses to run under Docker and a laboratory that has
+declined to license Docker Desktop. The other two are a
+Windows laboratory whose pipeline mixes R and Python and a
+reviewer who will install nothing. The alternatives are Podman,
 Apptainer, Nix, the conda family, and Binder, each a
 route to the pinned-environment rung that
 @sec-containers reaches with Docker.
@@ -65,13 +66,15 @@ and reading a short shell command; no new R idiom appears.
   a small `default.nix` declaration produced by `rix`,
   without conflating what each one pins?
 - given a concrete constraint, a cluster with no
-  administrative rights, a Windows-only laboratory, a
-  reviewer who installs nothing, name the one tool that
-  fits, and state honestly which rung it reaches?
+  administrative rights, an institution without a Docker
+  Desktop license, a Windows laboratory mixing R and
+  Python, a reviewer who installs nothing, name the one
+  tool that fits, and state honestly which rung it
+  reaches?
 
 **Outline.** We begin with where the chapter sits on the
 stack: the same two layers Docker captures, reached by a
-different route. The orientation then introduces three
+different route. The orientation then introduces four
 health scientists Docker cannot serve directly, and the
 analyst's contribution follows, which is to diagnose the
 binding constraint before picking a tool. The three axes
@@ -159,15 +162,17 @@ L2, and a reader who mistakes the instrument for the goal
 will be at a loss the first time Docker is unavailable,
 unwanted, or forbidden.
 
-Consider three health scientists who cannot simply follow
+Consider four health scientists who cannot simply follow
 the Docker recipe of @sec-containers. The first runs
 a large simulation study that must execute on a shared
 university cluster, where the scheduler will not grant her
 the administrative privileges that Docker's standard,
-root-owned daemon requires. The
-second works in a laboratory of Windows machines and a
+root-owned daemon requires. The second works at an
+institution that has declined to license Docker Desktop
+for her laptop. The
+third works in a laboratory of Windows machines and a
 pipeline that mixes R with Python, a combination that sits
-awkwardly inside the Rocker images. The third has prepared
+awkwardly inside the Rocker images. The fourth has prepared
 a teaching blog and wants a reviewer to re-run a single
 post in a browser, installing nothing at all. Each needs
 the pinned environment that L2 names; none of them can
@@ -243,15 +248,20 @@ chapter.
 - **Daemon.** A background system service that runs
   continuously with elevated privilege. A standard Docker
   installation relies on one; Podman and Apptainer do
-  not, which is why they run without administrative
-  rights. Docker also has a rootless mode, but its
-  prerequisites are usually installed by an
-  administrator, so on a shared cluster it is rarely
-  available to an ordinary user.
+  not. Not needing a daemon is not the same as needing no
+  administrator, however. Rootless operation of Docker or
+  of Podman needs one-time setup by an administrator,
+  described under Podman below.
 - **Rootless.** Able to run under an ordinary user
   account, without the `root` superuser privilege. A
   requirement on shared clusters, where users are not
   administrators.
+- **Login node and partition.** On a cluster, the login
+  node is the shared machine users connect to, to edit
+  files and submit jobs; the jobs themselves run on
+  compute nodes. A partition is a named group of compute
+  nodes, with its own limits, to which a job is
+  submitted.
 - **Backend.** The mechanism that supplies the
   environment. Docker is the container backend; Nix is a
   container-free backend that declares the environment
@@ -307,25 +317,42 @@ only the command that launches the container differs.
 
 ### Podman
 
-Podman is a daemonless, rootless,
-Docker-command-compatible runtime. Where Docker interposes
+Podman is a daemonless,
+Docker-command-compatible runtime that can run rootless.
+Where Docker interposes
 a background daemon running with elevated privilege,
 Podman runs the container directly under the invoking
 user's account. Its command-line interface is close
 enough to Docker's that `podman run` stands in for
-`docker run` in most cases:
+`docker run` in most cases. As in @sec-containers, the
+commands state the platform, since on an Apple Silicon Mac
+the default would otherwise be arm64:
 
 ```bash
-$ podman build -t myproject .
-$ podman run --rm -v "$(pwd)":/project myproject \
+$ podman build --platform linux/amd64 -t myproject .
+$ podman run --rm --platform linux/amd64 \
+    -v "$(pwd)":/project myproject \
     Rscript -e 'source("analysis/run.R")'
 ```
 
+Rootless Podman still needs an administrator once. Each
+user needs a range of subordinate user and group IDs in
+`/etc/subuid` and `/etc/subgid`. Podman's rootless
+tutorial states that 'root privileges are required to add
+or update entries within these files'. The helper programs
+`newuidmap` and `newgidmap` and a user-mode networking
+tool must also be installed
+(<https://github.com/containers/podman/blob/main/docs/tutorials/rootless_tutorial.md>).
+On a workstation the analyst administers, the analyst
+can make these changes. On a shared cluster that has not been
+set up for it, rootless Podman fails, and the analyst
+should ask the administrators or use Apptainer.
+
 Two properties recommend Podman to the health scientist.
-The first is that, being daemonless and rootless, it runs
-on a multi-user Linux machine where an analyst has no
-administrative rights, a situation in which Docker's
-daemon is often simply unavailable. The second concerns
+The first is that, being daemonless, it runs on a
+multi-user Linux machine whose administrator has enabled
+rootless containers, without granting any user a
+privileged daemon. The second concerns
 licensing, which @sec-docker-alternatives sets out:
 Docker Desktop is licensed software, and its free terms do
 not cover every research setting. Podman carries no such
@@ -346,6 +373,31 @@ scientific clusters provide. A user with no
 administrative rights can nonetheless run a containerized
 analysis under the cluster's job system.
 
+The name has two heirs. The project moved and was
+renamed in 2021, but the company Sylabs, which had forked
+it, kept the old name for its own line
+(<https://apptainer.org/news/community-announcement-20211130/>).
+Sylabs continues it as SingularityCE, whose current release
+is 4.6 (<https://sylabs.io/docs/>). A cluster may
+therefore offer the `singularity` command rather than
+`apptainer`; its own documentation says which flags it
+accepts.
+
+::: {.callout-note}
+## Where Apptainer runs
+
+Apptainer runs natively only on Linux. Its installation
+guide states that Linux container runtimes 'cannot run
+natively on Windows or Mac' and recommends a Linux
+virtual machine: WSL2 on Windows and Lima on macOS
+(<https://apptainer.org/docs/admin/latest/installation.html>).
+On a cluster, the administrators install it. Where the
+cluster uses environment modules, `module avail` lists
+them, under the name `apptainer` or `singularity`, and
+`module load` makes one available in the session
+(<https://modules.readthedocs.io/en/latest/module.html>).
+:::
+
 Two rules govern its use, and observing them keeps the
 image pinning of @sec-containers intact. The first is that
 an Apptainer image should be built from the
@@ -361,12 +413,21 @@ checksum.) The build and a subsequent run look as
 follows:
 
 ```bash
-$ apptainer build env.sif \
+$ apptainer build --arch amd64 env.sif \
     docker://ghcr.io/lab/env@sha256:9f2c...
 
 $ apptainer exec env.sif \
     Rscript -e 'source("analysis/run.R")'
 ```
+
+The `--arch` option names the architecture to build for
+(<https://apptainer.org/docs/user/latest/cli/apptainer_build.html>).
+It matters when the SIF is built on one machine and run
+on another. An example is a SIF built in an arm64 Linux
+virtual machine on an Apple Silicon Mac, for a cluster
+whose nodes are amd64. The command `uname -m` on a login
+node reports the cluster's architecture (`x86_64` for
+amd64).
 
 The second is that the single file Apptainer produces, the
 SIF, is itself an archival artifact. Unlike a Docker image,
@@ -466,18 +527,41 @@ from R, in R idiom that a health scientist already knows
 so that the analyst writes a familiar R call and `rix`
 writes the Nix:
 
-```r
-library(rix)
+```{r}
+#| label: lock-r-version
+#| include: false
+lock_path <- file.path('../..', 'renv.lock')
+lock_r <- if (file.exists(lock_path)) {
+  jsonlite::read_json(lock_path)$R$Version
+} else {
+  as.character(getRversion())
+}
+```
 
-rix(
-  r_ver = "4.4.1",
-  r_pkgs = c("dplyr", "ggplot2", "targets"),
-  system_pkgs = NULL,
-  git_pkgs = NULL,
-  ide = "rstudio",
-  project_path = "."
+```{r}
+#| label: rix-call
+#| echo: false
+#| results: asis
+cat(
+  '```r',
+  'library(rix)',
+  '',
+  'rix(',
+  sprintf("  r_ver = '%s',", lock_r),
+  "  r_pkgs = c('dplyr', 'ggplot2', 'targets'),",
+  '  system_pkgs = NULL,',
+  '  git_pkgs = NULL,',
+  "  ide = 'rstudio',",
+  "  project_path = '.'",
+  ')',
+  '```',
+  sep = '\n'
 )
 ```
+
+The R version in the call is the one this book's own
+`renv.lock` records, `r lock_r`, read when this page was
+built, so the example cannot fall behind the lockfile.
 
 That call produces a `default.nix` file, the declaration
 that pins the environment. A reader need not master the
@@ -646,7 +730,14 @@ pinned image only when the configuration is a
 and the image must also serve Jupyter, which a
 `rocker/binder` base provides, with
 `jupyter-rsession-proxy` for RStudio. Second, the public
-service limits each session's memory and lifetime. The
+service limits each session's memory and lifetime. As of
+26 November 2026, its user guidelines guarantee at least
+1 GB of memory, with a maximum of 2 GB. They shut a
+session down after 10 minutes of inactivity and aim for up
+to six hours per session
+(<https://mybinder.readthedocs.io/en/latest/about/user-guidelines.html>).
+An analysis that needs more memory or time than that
+belongs on the cluster, not in Binder. The
 honest level is then L2 for the life of the session, and
 only when the image is the pinned one. Nothing is pinned
 on the reviewer's own machine, and the session does not
@@ -719,47 +810,47 @@ library(knitr)
 
 comparison <- tibble(
   name = c(
-    "Docker", "Podman", "Apptainer",
-    "Nix (via rix)", "Guix", "conda / pixi",
-    "Binder", "Devcontainer / Codespaces"
+    'Docker', 'Podman', 'Apptainer',
+    'Nix (via rix)', 'Guix', 'conda / pixi',
+    'Binder', 'Devcontainer / Codespaces'
   ),
   axis = c(
-    "runtime", "runtime", "runtime",
-    "backend", "backend", "backend",
-    "remote", "remote"
+    'runtime', 'runtime', 'runtime',
+    'backend', 'backend', 'backend',
+    'remote', 'remote'
   ),
   pins = c(
-    "the image (OS, R, libraries)",
-    "the image (OS, R, libraries)",
-    "the image, as one SIF file",
-    "R, packages, system libraries",
-    "R, packages, system libraries",
-    "R and Python packages, less strictly",
-    "the image (server-side, per session)",
-    "the image (in the editor)"
+    'the image (OS, R, libraries)',
+    'the image (OS, R, libraries)',
+    'the image, as one SIF file',
+    'R, packages, system libraries',
+    'R, packages, system libraries',
+    'R and Python packages, less strictly',
+    'the image (server-side, per session)',
+    'the image (in the editor)'
   ),
   container = c(
-    "yes", "yes", "yes",
-    "no", "no", "no",
-    "yes (hosted)", "yes (hosted)"
+    'yes', 'yes', 'yes',
+    'no', 'no', 'no',
+    'yes (hosted)', 'yes (hosted)'
   ),
   best_fit = c(
-    "the default local runtime",
-    "licensing constraint; rootless Linux",
-    "an HPC cluster; archival SIF",
-    "maximum rigor; input-addressed builds",
-    "a Nix-aligned site",
-    "Windows-only or mixed R and Python",
-    "a reviewer who installs nothing",
-    "a collaborator editing in the environment"
+    'the default local runtime',
+    'licensing constraint; a workstation the analyst administers',
+    'an HPC cluster; archival SIF',
+    'maximum rigor; input-addressed builds',
+    'a Nix-aligned site',
+    'Windows-only or mixed R and Python',
+    'a reviewer who installs nothing',
+    'a collaborator editing in the environment'
   )
 )
 
 kable(
   comparison,
   col.names = c(
-    "Name", "Axis", "What it pins",
-    "Container?", "Best-fit setting"
+    'Name', 'Axis', 'What it pins',
+    'Container?', 'Best-fit setting'
   )
 )
 ```
@@ -850,6 +941,21 @@ and_list <- function(x) {
   }
 }
 art <- backend_artifacts
+dev_image <- if (art[['devcontainer']]) {
+  dev_lines <- readLines(
+    file.path(repo_root, '.devcontainer', 'devcontainer.json'))
+  img <- grep('^\\s*"image"\\s*:', dev_lines, value = TRUE)
+  if (length(img)) sub('^[^:]*:\\s*"([^"]+)".*$', '\\1', img[1]) else NA
+} else {
+  NA
+}
+dev_image_r <- sub('^.*:', '', dev_image)
+dev_r_txt <- if (!is.na(dev_image_r) && dev_image_r != lock_r) {
+  paste0(' Its R, ', dev_image_r, ', is not the ', lock_r,
+         ' the lockfile records.')
+} else {
+  ''
+}
 code_names <- function(x) sprintf('`%s`', x)
 found_txt <- and_list(code_names(names(art)[art]))
 missing_txt <- and_list(code_names(names(art)[!art]))
@@ -866,15 +972,17 @@ backend_rung <- if (rung_short == 'L2') {
   rung_short
 }
 dev_txt <- if (art[['devcontainer']] && !art[['Dockerfile']]) {
-  paste(
+  paste0(paste(
     'The devcontainer file is an instance of axis three, a',
     'development container, but its own comments say plainly',
     'that it is a stand-in. It starts from a generic',
-    '`rocker/verse:4.4.0` image, not one built from this',
+    paste0('`', dev_image, '`'),
+    'image, not one built from this',
     "compendium's own pinned recipe, because that recipe does",
     'not exist yet. It lets a collaborator open an editor',
     'already inside a working R environment, at the cost of',
-    'pinning nothing specific to the cohort analysis itself.')
+    'pinning nothing specific to the cohort analysis itself.'),
+    dev_r_txt)
 } else if (art[['devcontainer']]) {
   paste(
     'The devcontainer file is an instance of axis three, a',
@@ -953,7 +1061,8 @@ declined to license Docker Desktop, the image runs under
 Podman with no change to the image and no licensing cost:
 
 ```bash
-$ podman run --rm -v "$(pwd)":/project \
+$ podman run --rm --platform linux/amd64 \
+    -v "$(pwd)":/project \
     ghcr.io/lab/cohort-env@sha256:9f2c... \
     Rscript -e 'source("analysis/run.R")'
 ```
@@ -965,7 +1074,17 @@ submits it to the scheduler. Nothing is rebuilt, and the
 image contents are the same ones pinned on the laptop,
 because the SIF was built from that one digest and not
 reauthored. The SIF pins the recipe; it does not control
-what the cluster passes into the run.
+what the cluster passes into the run. Nor does it pin the
+processor. Numerical libraries such as OpenBLAS choose
+their compute kernels for the CPU they detect, and
+OpenBLAS's documentation attributes small numerical
+deviations to fused multiply-add instructions and to how
+work is split across threads
+(<https://github.com/OpenMathLib/OpenBLAS/blob/develop/docs/faq.md>).
+We infer, without having measured it, that a laptop and a
+cluster node can therefore disagree in the last digits.
+This is why @sec-testing compares outputs within a stated
+tolerance.
 
 ::: {.callout-warning}
 ## Pitfall
@@ -987,6 +1106,14 @@ combination `--containall --bind "$PWD" --pwd "$PWD"`
 isolates the same things; without `--pwd` it starts the
 job in the container's home directory, where relative
 paths such as `analysis/simulate.R` no longer resolve.
+Launch from the project directory, never from the home
+directory itself. Apptainer mounts the working directory
+as well as `$HOME`, and its documentation notes that a
+working directory under `$HOME` stays mounted unless both
+are disabled with `--no-mount home,cwd`
+(<https://apptainer.org/docs/user/latest/bind_paths_and_mounts.html>).
+A job started in `$HOME` therefore sees the home directory
+whatever `--no-home` says.
 :::
 
 ```bash
@@ -1127,8 +1254,12 @@ and nothing the cluster happened to load on the
 analyst's behalf. Because `--cleanenv` also strips the
 `SLURM_*` variables, the script passes back the two the
 analysis needs with `--env`. `SLURM_ARRAY_TASK_ID` tells
-`simulate.R` which replicate set to run, and should also
-choose its seed. `SLURM_CPUS_PER_TASK` tells it how many
+`simulate.R` which replicate set to run. It should also
+select that task's random-number stream, rather than a
+seed of its own: the per-task streams of @sec-testing,
+precomputed from one seed with
+`parallel::nextRNGStream()`, with the task's index
+choosing its stream. `SLURM_CPUS_PER_TASK` tells it how many
 cores it was granted. The image of @sec-containers pins
 `OMP_NUM_THREADS` and `OPENBLAS_NUM_THREADS` to 1, so the
 four requested cores are used only if the script itself
@@ -1142,6 +1273,25 @@ script should be treated as an illustrative
 template to adapt to a given site's partition names and
 resource limits, not as a script copied and run
 unexamined.
+
+When a route of this appendix fails, the symptom usually
+points to one of a few causes. @tbl-backend-failures
+lists the common ones and whom to ask. None of these rows
+was reproduced on a cluster. They follow from the
+documentation cited in this appendix and from Slurm's
+`sbatch` manual (<https://slurm.schedmd.com/sbatch.html>),
+which states that a job whose time limit exceeds its
+partition's limit stays pending, possibly indefinitely.
+
+| Symptom | Likely cause | What to try | Whom to ask |
+|---|---|---|---|
+| Rootless Podman stops with an error naming `newuidmap` or the subordinate ID files | No `/etc/subuid` and `/etc/subgid` entries for the user | Use Apptainer on the cluster | The system administrators, to add the entries |
+| The shell does not recognize `apptainer` | The runtime is a module not yet loaded, or is installed as `singularity` | `module avail`, then `module load` | The cluster's help desk |
+| The SIF runs, but R finds other packages or settings | Host variables, `$HOME`, or a startup file reached the container | `--cleanenv --no-home`, `Rscript --vanilla`, and launch from the project directory | Nobody; the fix is in the command |
+| A job waits and never starts, or is stopped when its time runs out | Its `--time` exceeds the partition's limit, or is too short for the work | Set `--time` within the partition's limit, or choose another partition | The cluster's documentation, then its help desk |
+| A Binder session restarts its kernel or disappears | Over 2 GB of memory, or 10 minutes idle | Use a smaller example, or run it on the cluster | Nobody; these are the service's published limits |
+
+: When an alternative runtime fails {#tbl-backend-failures}
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the script does and does not pin
@@ -1218,8 +1368,8 @@ mount target unchanged, and add no other mounts. For each
 command, give the check that shows which image digest ran
 and which host directory the container could see.'
 
-**Prompt.** 'Write a `rix::rix()` call that pins R 4.4.1
-with dplyr, ggplot2, and targets, producing a
+**Prompt.** 'Write a `rix::rix()` call that pins
+R `r lock_r` with dplyr, ggplot2, and targets, producing a
 `default.nix`.'
 
 *Watch for.* Check that the answer is the `rix` call
@@ -1256,8 +1406,10 @@ the level reached.
    runs. State, in one sentence, why the reproducibility
    level is unchanged.
 
-2. Build an Apptainer SIF file from a digest-pinned
-   `docker://` reference. Compute a checksum of the SIF and
+2. Apptainer runs only on Linux (see 'Where Apptainer
+   runs' above). On a cluster login node or a Linux
+   machine, build an Apptainer SIF file from a
+   digest-pinned `docker://` reference. Compute a checksum of the SIF and
    explain how that single file could serve both as the
    cluster runtime and as an archival deposit.
 
@@ -1314,14 +1466,17 @@ result.
 ## Exercise 1
 
 ```bash
-podman run --rm -v "$PWD":/project -w /project \
+podman run --rm --platform linux/amd64 \
+  -v "$PWD":/project -w /project \
   <image>@sha256:... Rscript analysis/run.R
 ```
 
 The container starts and the analysis runs, with no
 rebuild, because Podman consumes the same OCI image format
 Docker produces. The command differs only in its first
-word.
+word. On a machine set up for rootless Podman it needs no
+administrative rights; where the subordinate ID entries
+are missing, it fails until an administrator adds them.
 
 **Why the level is unchanged.** The reproducibility level
 is a property of what is *captured*, and the image is the
@@ -1343,7 +1498,8 @@ environment inside does not change.
 ## Exercise 2
 
 ```bash
-apptainer build analysis.sif docker://<image>@sha256:...
+apptainer build --arch amd64 analysis.sif \
+  docker://<image>@sha256:...
 sha256sum analysis.sif
 ```
 
@@ -1379,11 +1535,19 @@ gigabytes, which some archives will not accept.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-```r
-rix::rix(
-  r_ver = '4.4.0',
-  r_pkgs = c('dplyr', 'ggplot2', 'targets'),
-  project_path = '.'
+```{r}
+#| label: ex3-rix-call
+#| echo: false
+#| results: asis
+cat(
+  '```r',
+  'rix::rix(',
+  sprintf("  r_ver = '%s',", lock_r),
+  "  r_pkgs = c('dplyr', 'ggplot2', 'targets'),",
+  "  project_path = '.'",
+  ')',
+  '```',
+  sep = '\n'
 )
 ```
 
@@ -1391,8 +1555,13 @@ The pinned `nixpkgs` snapshot appears near the top of the
 generated `default.nix`, in the `fetchTarball` expression
 that imports `nixpkgs`. In current versions of `rix` it is
 a dated branch of the `rstats-on-nix/nixpkgs` fork, a URL
-ending in a date (`2024-04-29.tar.gz` for R 4.4.0), and
+ending in a date, and
 from version 0.18.3 on it carries the archive's `sha256`.
+`rix::available_dates()` lists the dates `rix` knows. One
+R release can have several; given only `r_ver`, the
+`rix` source (version 0.18.6) takes the most recent date
+listed for that release, so passing `date =` instead fixes
+the snapshot exactly.
 Older versions of `rix` omit the `sha256`, and older
 versions or hand-written declarations may instead name a
 commit of `NixOS/nixpkgs`. A full commit hash with a
@@ -1552,8 +1721,8 @@ need not, and do not, match.
 
 | Command or rule | What it does |
 |---|---|
-| `podman run ...` | Daemonless, rootless substitute for `docker run`; same OCI image, same digest, same L2. |
-| `apptainer build x.sif docker://img@sha256:...` | Converts a digest-pinned OCI image into one archival SIF file. |
+| `podman run --platform linux/amd64 ...` | Daemonless substitute for `docker run`; same OCI image, same digest, same L2. Rootless use needs subordinate IDs set up once by an administrator. |
+| `apptainer build --arch amd64 x.sif docker://img@sha256:...` | Converts a digest-pinned OCI image into one archival SIF file for the stated architecture. |
 | `apptainer exec --cleanenv --no-home --bind "$PWD" x.sif Rscript --vanilla ...` | Runs the SIF with host environment variables cleared, the host `$HOME` unmounted, the project directory bound (Apptainer's system binds such as `/tmp` remain), and no R startup file read; `--cleanenv` alone clears variables only (see the Pitfall above). |
 | `rix::rix(r_ver=, r_pkgs=, project_path=)` | Generates a `default.nix` pinning R, packages, and system libraries together. |
 | `nix-shell default.nix` | Enters the Nix-declared environment; no image is built. |

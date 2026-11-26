@@ -592,8 +592,9 @@ was made. If Docker Hub removes it, an analysis that
 depended on it is lost. The source of truth should be
 the committed Dockerfile together with the lockfile it
 restores from. That is a transparent, diffable, durable
-recipe that reconstructs the same pinned environment,
-though not byte-identical image layers, from pinned inputs. The image is a convenience cache; the recipe is
+recipe that, from pinned inputs, reconstructs the same
+pinned environment (though not byte-identical image
+layers). The image is a convenience cache; the recipe is
 the guarantee. Pushing after every install also wastes
 effort, since the image need only be rebuilt
 periodically from the union lockfile.
@@ -622,6 +623,32 @@ storage moves, and it can be cited in the article the
 compendium supports. The DOI is what lifts a compendium
 from merely locatable on a forge, which is fragile, to
 durably findable, which is the archival requirement.
+
+Zenodo is one choice among several, and the field often
+decides. @tbl-repositories sets out the four kinds of
+repository a compendium is likely to meet. Whichever is
+chosen, the deposit should mint a persistent identifier,
+state its access route, and carry a license.
+
+| Kind | Example | What it holds, and the identifier |
+|--------------|--------------|------------------------------------------|
+| General-purpose | Zenodo; OSF | Any research output. Zenodo mints a DOI for each version and one for the record as a whole [@zenodoversioning]. OSF mints a DOI for a public project or component, and automatically for a registration or preprint made public [@osfdoi]. |
+| General-purpose, data only | Dryad | Data in any discipline, released under the CC0 waiver, so files that cannot be released under it do not belong there. Code and software can be sent through Dryad to Zenodo and stay linked to the Dryad DOI [@dryadrequirements]. |
+| Institutional | The university's own repository | Whatever the institution's policy admits; the library can say whether it mints DOIs and how long it keeps a deposit. |
+| Controlled access | dbGaP | Data released only to approved users under an agreement, cited from the open deposit by accession (@sec-restricted-deposit) [@dbgap]. |
+
+: Kinds of research repository, with one example each, as described on each repository's own pages on 26 November 2026. A field-specific repository named by a funder or journal takes precedence over this list. {#tbl-repositories}
+
+Two details of Zenodo matter for citation. Linked to a
+GitHub repository, Zenodo archives the repository and
+issues a new DOI each time a release is created, but it
+can access only public repositories [@githubciting]. And
+a Zenodo record has two kinds of DOI. The concept DOI
+represents all versions and resolves to the newest. The
+version DOI represents one version, and Zenodo advises
+citing it in the normal case [@zenodoversioning]. The article should therefore
+cite the version DOI of the release that produced its
+numbers.
 
 A deposit should carry the environment as well as the
 source. Here the container runtimes of @sec-backends
@@ -689,6 +716,38 @@ copyright, to nothing. 'The cohort, continued' below
 returns to what license this book's own compendium
 carries.
 
+Choosing one is a decision the analyst usually makes
+alone, and @tbl-license-choice gives a starting point for
+each kind of material. The `usethis` functions named in
+it write the `LICENSE` file and the `DESCRIPTION` field
+together (@sec-compendium). Two rules sit above the
+table. Creative Commons licenses are not recommended for
+software [@choosealicensenonsoftware]. And data obtained
+under an agreement or a license are not the analyst's to
+license at all. A funder, a journal, or the institution
+may also impose terms of its own, which come first.
+
+| Material | A common choice | Why | In R |
+|------------|-------------|----------------------------|------------------|
+| Code you wrote | MIT or Apache-2.0 (permissive); GPL-3 (copyleft) | A permissive license lets anyone reuse the code, in closed software too; GPL-3 permits the same except distributing closed-source versions [@choosealicense] | `usethis::use_mit_license()`, `use_apache_license()`, `use_gpl_license(version = 3)` |
+| Data you collected and may release | CC0 or CC BY 4.0 | Both are open licenses for non-software material; CC BY requires attribution, CC0 waives it, and some repositories, Dryad among them, accept only CC0 [@choosealicensenonsoftware; @dryadrequirements] | `usethis::use_cc0_license()`, `use_ccby_license()` |
+| Data derived from a licensed source | The source's terms | The derived files inherit the license or agreement under which the source was obtained; the deposit states those terms and the route to the source | None: the terms are not the analyst's choice |
+| Restricted data | No open license | The data do not enter an open deposit (@sec-restricted-deposit); the data-availability statement names the access route | None |
+| Prose, figures, and documentation | CC BY 4.0 | An open license for non-software material that requires attribution [@choosealicensenonsoftware] | `usethis::use_ccby_license()` |
+
+: A starting point for choosing a license, by kind of material. A compendium that mixes kinds, as this book's own does, carries one license per kind and says in `LICENSE` which files each covers. {#tbl-license-choice}
+
+The functions in the last column each set the single
+`License` field of `DESCRIPTION`; they do not combine.
+When we called `use_mit_license()` and then
+`use_ccby_license()` in a scratch package, in a
+non-interactive session with `usethis` 3.2.1, the field
+changed to CC BY 4.0. The MIT text in
+`LICENSE.md` was left in place, so the two disagreed. A
+compendium that mixes kinds therefore runs one function,
+for its code, and writes the other licenses into
+`LICENSE` by hand.
+
 Two further instruments round out what a deposit should
 carry, beyond the license file itself.
 
@@ -707,9 +766,16 @@ written once serves both the forge and the archive. What
 it pre-fills is only what the file says, the `license`
 field included. A compendium with one license for its
 prose and another for its code cannot record in that
-field which license covers which files, so the license on
-the resulting deposit is checked against `LICENSE` before
-it is published. Without a `CITATION.cff`, a reader who wants to
+field which license covers which files. The field may
+hold a list, but the format reads a list of licenses as
+alternatives, any one of which applies, not as a split by
+file [@cffschemaguide]. The license on the resulting
+deposit is therefore checked against `LICENSE` before it
+is published. And if the repository also holds a
+`.zenodo.json` file, Zenodo uses that file's metadata and
+ignores `CITATION.cff` entirely [@zenodocitationfile], so
+an edit to one file does not reach a deposit governed by
+the other. Without a `CITATION.cff`, a reader who wants to
 cite the compendium constructs a citation by hand from
 whatever metadata happens to be visible on the page. This
 is the same fragility that motivated the DOI in the first
@@ -807,12 +873,17 @@ single chapter allows. They should begin there.
 ### When the data are restricted {#sec-restricted-deposit}
 
 Everything said so far about depositing assumes that every
-file in the compendium may be published. In health
-research that assumption is usually false. A compendium
-built on patient records contains, or was built from,
-such data. Their release is governed by law, by the
-consent the participants gave, and by the data-use
-agreement under which the analyst received the extract.
+file in the compendium may be published. For confidential
+or restricted data that assumption is false. Patient
+records are the case this book follows, but licensed
+survey microdata, administrative records, and
+export-controlled or proprietary data raise the same
+question. Their release is governed by law, by the
+consent the participants gave where there was one, and
+by the data-use agreement or license under which the
+analyst received the extract. The health-specific rules
+below (HIPAA, dbGaP, NIH) are examples; the four routes
+apply to every kind.
 A deposit in an
 open repository is a publication to anyone, indefinitely,
 and a file placed there cannot be recalled.
@@ -821,12 +892,15 @@ and a file placed there cannot be recalled.
 ## Restricted data
 
 The rule is the commit rule of @sec-version-control, made
-stricter. Patient-level data do not go into an open
-deposit unless three conditions hold. They must have been
-formally de-identified, and the consent and the agreement
-must both permit public release. The responsible data
-steward or IRB must also have confirmed it in writing. In
-their place, a deposit may take four routes:
+stricter. Restricted data, whether patient records,
+licensed survey microdata, administrative records, or
+export-controlled or proprietary data, do not go into an
+open deposit unless three conditions hold. They must have
+been formally de-identified or otherwise cleared for
+release. Any consent, and the agreement or license, must
+both permit public release. The responsible data steward,
+IRB, or data provider must also have confirmed it in
+writing. In their place, a deposit may take four routes:
 
 - the code, the tests, the lockfile, the Dockerfile, and
   the archived image, always;
@@ -1087,7 +1161,12 @@ not drafted after data collection is underway
 [@nihdms2020]. Applications submitted on or after 25 May
 2026 use an updated Plan format [@nihnot26100], and
 career development (K) awards no longer need a Plan
-[@nihnot26120]. The Plan goes in the 'Other Plan(s)'
+[@nihnot26120]. Existing awards move to the new format
+too. An active award subject to the 2023 policy submits a
+revised Plan with its next progress report. Every
+active award expected to generate scientific data,
+including those under the 2003 policy, does so by its
+fiscal year 2027 report [@nihnot26100]. The Plan goes in the 'Other Plan(s)'
 attachment of the research plan; only a brief summary
 and the associated costs go in the budget and its
 justification [@nihdmswriting]. NIH program staff
@@ -1101,6 +1180,22 @@ of the award, and can affect future funding decisions
 among the four routes above was therefore made, in
 outline, when the grant was written; the deposit executes
 the Plan.
+
+Other funders impose comparable duties. @tbl-mandates in
+@sec-crisis lists the NIH policies and the 2022 OSTP
+memorandum to US federal agencies. @tbl-funders adds four
+funders outside NIH, each read from the funder's own page
+on 26 November 2026. A funder's page summarizes the
+policy, and the grant's terms and conditions govern.
+
+| Funder | Plan | What must be shared | Source dated |
+|------------|----------------|------------------------------|-----------|
+| National Science Foundation (US) | A data management plan in every proposal; program solicitations may add requirements | Peer-reviewed publications deposited in the NSF Public Access Repository, for proposals due on or after 25 January 2016; datasets need not be deposited there | Page updated 18 September 2025 [@nsfpublicaccess] |
+| UK Research and Innovation | Not stated on the page read | Research articles submitted on or after 1 April 2022 open access on publication, under CC BY or another permitted license, with no embargo on the repository route; every article carries a data access statement | Page updated 26 August 2026 [@ukrioa] |
+| Wellcome | An outputs management plan at application, where outputs will be of value to others | Data underpinning a publication available at publication, with any original software needed to view the data or replicate the analyses; persistent identifiers on shared outputs | Page updated 3 July 2026 [@wellcomedata] |
+| Horizon Europe (European Commission) | A data management plan for the project's data, kept up to date | Peer-reviewed publications open access; research data FAIR and 'as open as possible, as closed as necessary' | Undated summary page [@reaopenscience] |
+
+: Data and publication sharing duties of four funders outside NIH, as stated on each funder's page on 26 November 2026. The NIH and OSTP rows are in @tbl-mandates. {#tbl-funders}
 
 **The journal side.** A code-availability statement is a
 narrower instrument than the data-availability statement
@@ -1171,7 +1266,10 @@ the code that implements it.
 Journal policies vary more than the guidelines do.
 @tbl-journal-code summarizes three that biostatistics and
 epidemiology authors commonly meet, each read from the
-journal's own pages on 8 November 2026. Policies change, so
+journal's own pages on 8 November 2026. Two policies from
+other fields, *PLOS Computational Biology*'s code
+requirement and the American Economic Association's data
+and code policy, are in @tbl-mandates. Policies change, so
 the target journal's current instructions, not this table,
 govern a submission.
 
@@ -1198,11 +1296,13 @@ can the environment still be recovered?
 
 For the R ecosystem a useful recovery tool is `rang`,
 described by Chan and colleagues [@chan2023]. (`rang`
-was archived on CRAN on 2026-08-22. The historical
-versions remain installable from the CRAN archive or
-from its GitHub repository. The technique it illustrates
-is worth knowing even if the package itself needs an
-alternative source or a successor tool by the time a
+was archived on CRAN on 2026-08-22 [@rangcran]. Its last
+release, 0.3.0, still installs from the CRAN archive with
+`remotes::install_version('rang', version = '0.3.0')`,
+which fetches its other dependencies from CRAN; we
+installed it that way under R 4.6.2 in November 2026. The
+technique it illustrates is worth knowing even if the
+package itself needs a successor tool by the time a
 reader needs it.) The ordinary workflow pins
 prospectively, by recording a lockfile at development
 time and restoring from it. `rang`, by contrast,
@@ -1441,11 +1541,21 @@ prompt is not part of the commands, and lines beginning
 # Dockerfile and the union lockfile, then publish it.
 $ docker build -t cohort-env:latest .
 
-# Before the image leaves the laboratory, confirm that
-# no study data were copied into it; the expected
-# result is an empty listing.
+# Before the image leaves the laboratory, list every
+# file the build copied into the project directory,
+# /project here, leaving out renv's library. Read the
+# whole listing: a data file appears whatever its name.
 $ docker run --rm cohort-env:latest \
-    find / -xdev -path '*raw_data*' -type f
+    find /project -path /project/renv/library -prune \
+    -o -type f -print | sed 's|^/project/||' | sort \
+    > /tmp/image-files.txt
+$ cat /tmp/image-files.txt
+
+# Files that git does not track deserve the first look.
+# A committed data file is in the listing above but not
+# here; the commit rule should have kept it out of git.
+$ git ls-files | sort > /tmp/tracked-files.txt
+$ comm -23 /tmp/image-files.txt /tmp/tracked-files.txt
 
 $ docker tag cohort-env:latest \
     ghcr.io/mylab/cohort-env:2026-q3
@@ -1829,7 +1939,9 @@ trusting it.
 
 5. Take a compendium with an `renv.lock` and, using
    `rang`, generate a Dockerfile that reconstructs its
-   environment from the date it was created. Compare the
+   environment from the date it was created. `rang` is no
+   longer on CRAN; install its archived release with
+   `remotes::install_version('rang', version = '0.3.0')`. Compare the
    reconstructed package set against the lockfile and
    report any differences, explaining why a
    date-based reconstruction may not match a lockfile
@@ -2101,9 +2213,18 @@ that nobody performed.
 lockfile <- renv::lockfile_read('renv.lock')
 pkg_names <- names(lockfile$Packages)
 
-graph <- rang::resolve(pkg_names, snapshot_date = '2026-06-29')
+# The date the compendium was created, for example the
+# date of its first commit.
+created <- '<YYYY-MM-DD>'
+graph <- rang::resolve(pkg_names, snapshot_date = created)
 rang::dockerize(graph, output_dir = 'rang_build')
 ```
+
+The two `rang` calls were run on one package, `digest`,
+with a snapshot date of 2024-01-01: `resolve()` reported
+version 0.6.33 and `dockerize()` wrote a `Dockerfile`, an
+`rang.R`, and a `README`. The listing above, run on a
+whole lockfile, was not.
 
 The comparison typically shows most packages matching and
 a minority differing, with the differing set growing as
@@ -2239,13 +2360,20 @@ unrecallable.
 
 **What would have caught it.** An inspection of the built
 image's file system before the push. This is the check
-this chapter's worked example performs with `docker run
---rm ... find / -xdev -path '*raw_data*' -type f`, run
-against the actual data directory rather than assumed from
-the `.dockerignore` pattern. A pattern-matching ignore file
-is a plan; a listing of what the built image actually
-contains is a verification. Only the second one catches
-a file the plan did not anticipate. This is the Verification
+this chapter's worked example performs: it lists every
+file under the image's project directory, so `extra.tsv`
+appears whatever its name or extension, and whether or
+not the branch committed it. Comparing the listing with
+`git ls-files` brings the files git does not track to
+the top, but a committed file passes that filter, so the
+full listing is what is read. A pattern-matching ignore
+file is a plan; a listing of what the built image
+actually contains is a verification. A search by name,
+such as `find / -path '*raw_data*'`, is itself a plan,
+and misses a file saved under any other name. Only a
+full listing catches a file the plan did not anticipate,
+and only within the directories the `COPY` instructions
+write to. This is the Verification
 callout's own rule, 'how to see a claim actually holds,'
 applied to the narrower claim that no data entered the
 image.
@@ -2295,7 +2423,7 @@ items is doing real work.
 | Command or rule | What it does or checks |
 |---|---|
 | `docker inspect --format '{{index .RepoDigests 0}}' <img>` | Reports the immutable digest to record, not the mutable tag |
-| `docker run --rm <img> find / -xdev -path '*raw_data*'` | Confirms no restricted data were copied into the built image |
+| `docker run --rm <img> find /project -type f` | Lists every file copied into the image's project directory, whatever its name; comparing with `git ls-files` brings untracked files forward |
 | `apptainer build out.sif docker://<img>@sha256:...` | Exports a digest-pinned image as a single archival file |
 | `renv.lock` + `Dockerfile`, committed | The reproducibility guarantee; the pushed image is a cache, not the record |
 | Two-layer model | The team image (operating system, R, system libraries, lab-wide packages) is lead-governed and slow; the project lockfile is contributor-governed and fast, under the union model |

@@ -86,6 +86,10 @@ expect_true(all(cohort$sex %in% c('F', 'M')),
 expect_true(all(cohort$age_at_enroll >= 18 & cohort$age_at_enroll <= 105,
                 na.rm = TRUE),
             info = 'ages lie within the enrollment criteria')
+# The range check above passes on missing ages, so a bound on their
+# share keeps it from passing on an export that blanked them.
+expect_true(mean(is.na(cohort$age_at_enroll)) < 0.05,
+            info = 'the age check is not passing on missing ages')
 expect_true(mean(is.na(cohort$incident_dm)) < 0.15,
             info = 'outcome missingness stays under fifteen percent')
 expect_true(all(!is.na(cohort$enroll_date)),

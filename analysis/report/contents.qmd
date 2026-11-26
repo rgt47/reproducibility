@@ -52,6 +52,7 @@ Every part and chapter of the book on one page, in reading order.
 - [A Backends and Runtimes: Nix, Podman, and
   Apptainer](06-backends-runtimes.qmd)
 - [B Continuous Integration on Other Forges](ci-other-forges.qmd)
+- [C Translating the Tools](translating-tools.qmd)
 - [Cheat-Sheet Index](cheat-sheet-index.qmd)
 - [Glossary](glossary.qmd)
 - [Credits](credits.qmd)

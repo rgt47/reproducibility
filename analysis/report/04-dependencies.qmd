@@ -236,11 +236,13 @@ analyst's.
 2. **Distinguishing a result dependency from a
    development tool.** No scanner can know that
    `languageserver` powers the editor while `dplyr`
-   powers the analysis. The analyst must keep the
-   lockfile an honest, minimal record of what
-   determines the result, and keep mere tooling out of
-   it, a distinction we develop below and that the
-   accompanying whitepaper treats at length.
+   powers the analysis. Two tests settle the placement
+   of a package. Does its version affect the result?
+   Does the project's code reference it? A package that
+   passes either test belongs in the lockfile; a package
+   that passes neither is tooling and stays out. The
+   table after this list applies the tests to three
+   packages.
 
 3. **Matching the reproducibility claim to the layer
    actually pinned.** A lockfile secures the package
@@ -249,6 +251,12 @@ analyst's.
    the operating system, and the system libraries
    remain unpinned, overstates what has been achieved,
    and only the analyst can prevent that.
+
+| Package | Version affects result? | Code references it? | In the lockfile? |
+|---|---|---|---|
+| `dplyr` | yes | yes, in the analysis | yes |
+| `tinytest` | no | yes, in the tests | yes |
+| `languageserver` | no | no, only the editor | no |
 
 ::: {.callout-note}
 ## The vocabulary of this chapter
@@ -372,7 +380,10 @@ abbreviated only by deleting fields and records; nothing
 has been added or reordered.
 The record for `dplyr` omits, among others, its `Type`,
 `Authors@R`, `Description`, `URL`, and `Suggests`
-fields.
+fields. Later versions may add fields. A snapshot taken
+with `renv` 1.3.1 on 2026-11-26 wrote records of the
+same form, and the four features discussed below held
+for it as well.
 
 ```json
 {
@@ -457,23 +468,8 @@ was byte-identical to the one recorded. A lockfile in
 either format therefore cannot detect a repository that
 serves altered contents under an unchanged version
 string. That protection, such as it is, rests with the
-repository.
-
-::: {.callout-warning}
-## Pitfall
-
-A reader who has worked with `renv` before 1.1.0 may
-look for the old `Hash` field and, finding it absent in
-a current lockfile, worry that integrity checking has
-been removed. Nothing has been lost, because the old
-`Hash` never checked file integrity in the first place.
-It only fingerprinted `DESCRIPTION` fields for the
-package cache. The actual pitfall is believing either
-format's record proves the installed bytes match what
-was recorded. Neither does, and a lockfile's protection
-against a repository silently serving different code
-under the same version string is exactly nil.
-:::
+repository. A reader who misses the old `Hash` has
+therefore lost nothing.
 
 ### The init, snapshot, restore workflow
 
@@ -1008,10 +1004,29 @@ Linux the binary path is more specific. Pre-compiled
 binaries are served from a distribution-specific form of
 the URL, such as
 `https://packagemanager.posit.co/cran/__linux__/noble/2026-06-29`,
-and R may need to send its version in the HTTP user agent.
-The plain dated path shown above should be expected to
-deliver source to be built. In the framework this book uses, the
-project's generated configuration points R at a dated
+and R must send its version and platform in the HTTP
+user agent, from which Package Manager chooses the
+binary. Rocker images already set this; elsewhere,
+Posit's documentation gives this line for a startup
+file such as `~/.Rprofile`:
+
+```r
+options(HTTPUserAgent = sprintf(
+  'R/%s R (%s)', getRversion(),
+  paste(getRversion(), R.version['platform'],
+        R.version['arch'], R.version['os'])
+))
+```
+
+Binaries exist only for the distributions and processors
+Package Manager lists. On 26 November 2026 its
+documentation listed Ubuntu 24.04 (`noble`) for both
+x86_64 and arm64, Ubuntu 22.04 (`jammy`) for x86_64
+only, and a portable 'manylinux' build for other Linux
+systems with `glibc` 2.28 or newer. Elsewhere, and on
+the plain dated path shown above, expect source to be
+built. In the framework this book uses, the project's
+generated configuration points R at a dated
 snapshot automatically. The two benefits thus accrue
 without the analyst assembling the URL by hand. The date
 of the snapshot becomes, in effect, part of the
@@ -1061,17 +1076,62 @@ behind a spatial package or the `libxml2` behind an XML
 parser. A restore on a machine lacking a required
 system library may therefore fail to compile a package
 or, more insidiously, may install a differently
-behaving one.
+behaving one. @ushey2020 designed `renv` to solve the
+package problem and no more, and closing the gap beneath
+it is where @sec-containers begins.
 
-`renv` does its one job well, but the package layer is
-one layer of a taller stack. Pinning it leaves every
-layer beneath it as the next machine happens to provide.
-@ushey2020 designed `renv` to solve the package problem
-and no more; the environment problem is out of its scope
-by design. An analysis equipped with a faithful lockfile
-has reached L1, pinned packages, and every layer beneath
-the packages remains exposed. Closing that remaining gap is the work of the
-container, and it is where @sec-containers begins.
+Three tools and one lockfile record narrow these gaps
+without a container, though none of them lifts an
+analysis above L1. The first is `rig`,
+the R Installation Manager from the r-lib project, which
+installs several R versions side by side and switches
+among them, with an administrator-free mode for managed
+machines. `rig add 4.6.1` followed by `rig default 4.6.1`
+would put the R a lockfile records on the host (we did
+not run these; the syntax is from the tool's README).
+
+The second is `renv::sysreqs()`, added in `renv` 1.1.2.
+It lists the system packages that a set of R packages
+needs on a named Linux distribution, and from 1.3.1 it
+reads the lockfile by default, so it can run before
+anything is installed. For the spatial package `sf` on
+Ubuntu 22.04 it printed, among other output:
+
+```r
+renv::sysreqs('sf', distro = 'ubuntu:22.04', check = FALSE)
+#> sudo apt install -y cmake
+#> sudo apt install -y gdal-bin
+#> sudo apt install -y libabsl-dev
+#> sudo apt install -y libgdal-dev
+#> sudo apt install -y libgeos-dev
+#> sudo apt install -y libproj-dev
+#> sudo apt install -y libsqlite3-dev
+#> sudo apt install -y libssl-dev
+#> sudo apt install -y libudunits2-dev
+```
+
+The list covers `sf`'s own dependencies too, and it
+assumes a build from source. @sec-containers installs
+such libraries inside an image.
+
+The third is `pak`, a faster installer that resolves
+and downloads packages in parallel. `renv` can hand its
+installs to it: after
+`options(renv.config.pak.enabled = TRUE)`, a
+`renv::restore()` in a scratch project of ours installed
+the recorded versions through `pak`. The lockfile is
+unchanged by the choice.
+
+The record concerns Bioconductor, the repository of
+genomics and bioinformatics packages, which issues
+numbered releases paired with R versions. `renv` records
+the release in its own block beside `R`. After
+`renv::settings$bioconductor.version('3.23')` in a
+scratch project, the next snapshot wrote
+`"Bioconductor": {"Version": "3.23"}`, and
+`renv::init(bioconductor = TRUE)` sets this up for a new
+project. Upgrading R usually means upgrading the
+Bioconductor release with it.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what a lockfile cannot promise
@@ -1117,7 +1177,11 @@ requires foresight, a committed lockfile written while
 the analysis was live, `rang` offers hindsight,
 recovering an approximate environment after the fact.
 It is the natural instrument for a legacy analysis that
-one wishes to resurrect.
+one wishes to resurrect. `rang` was archived on CRAN on
+2026-08-22, so `install.packages()` no longer finds it;
+`remotes::install_version('rang', '0.3.0')` installs its
+last release from CRAN's archive, as we confirmed under
+R 4.6.2.
 
 The `groundhog` package of @simonsohn2026 pursues the
 same date-based idea but at a different point in the
@@ -1145,13 +1209,8 @@ while preserving the lockfile as the eventual source of
 truth.
 
 Each of these approaches pins the package layer and only
-the package layer. Whether the pin is a committed
-lockfile, a reconstructed date, or a run-time call, none
-reaches down to the R version, the operating system, or
-the system libraries.
-The choice among them is a choice of ergonomics and of
-foresight versus hindsight, not a choice of how far down
-the determinant stack one has pinned.
+that layer, so the choice among them is one of
+ergonomics and of foresight versus hindsight.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: foresight or hindsight
@@ -1379,13 +1438,13 @@ convention by which test infrastructure is pinned while
 pure development tooling is not. The distinction is a
 judgment, not a rule the model can read off the file.
 
-*Verification.* Decide the placement yourself against
-the two-test procedure: does the package's version
-affect the result, and does the code reference it?
-Confirm that development-only tools such as
-`languageserver` are in the Dockerfile and absent from
-the lockfile, and that test packages are handled by your
-stated convention.
+*Verification.* Decide the placement yourself with the
+two tests of the second judgment above: does the
+package's version affect the result, and does the code
+reference it? `tinytest` passes the second test, since
+the project's tests call it, and stays. Confirm that an
+editor-only tool such as `languageserver` is absent from
+the lockfile.
 
 **Prompt.** 'Set my repository to a dated Posit Package
 Manager snapshot for 2026-06-29.'
@@ -1443,10 +1502,14 @@ rather than building from source.'
    terms of binaries versus source, why it arises.
 
 5. Take a small analysis that has no lockfile and use
-   `rang` to reconstruct the package environment as it
-   stood on a chosen past date. Compare the resulting
-   version set with what a current `install.packages()`
-   would provide. Which packages differ, and by how much?
+   `rang::resolve()`, with the packages it loads and a
+   chosen past date as `snapshot_date`, to list the
+   versions current on that date; no container is
+   needed. (`rang` is archived on CRAN; the section on
+   lighter approaches gives the install line.) Compare
+   the resulting version set with what a current
+   `install.packages()` would provide. Which packages
+   differ, and by how much?
 
 6. Argue, in a short paragraph, why an analysis that
    passes its dependency check has reached L1 and not
@@ -1527,7 +1590,9 @@ reader working from an older tutorial may expect a
 `Hash` field. `renv` before 1.1.0 wrote one, but it was a
 fingerprint of `DESCRIPTION` fields used to key the
 package cache, never a hash of the installed files.
-Current `renv` does not write it.
+When we checked `renv` 1.3.1, its snapshot wrote no `Hash`
+for a package from CRAN or for one installed from
+GitHub; we did not test every kind of source.
 
 A useful way to hold the fields together: the version
 says which release, the source says whose copy of it,
@@ -1640,7 +1705,11 @@ This exercise also has no single correct answer, since
 what differs depends on the date chosen and on the size of
 the dependency tree. A good answer reports the count of
 differing packages, gives one or two concrete version
-pairs, and draws the general conclusion.
+pairs, and draws the general conclusion. For instance,
+`rang::resolve('dplyr', snapshot_date = '2023-01-15')`
+reported, when we ran it, that `dplyr` was then at
+1.0.10, the version of this chapter's opening story,
+with 15 dependencies.
 
 The general conclusion is that `rang` reconstructs what
 was *current on a date*, which is not the same thing as
@@ -1756,8 +1825,9 @@ regenerate from the one file that actually matters.
 | `renv::status()` | Compares the installed, recorded, and used package sets, documents included, and reports any disagreement; repairs nothing. |
 | `Rscript -e 'if (!renv::status()$synchronized) quit(status = 1)'` | The CI form: exits nonzero on any disagreement; run it after `renv::restore()`. |
 | `options(repos = c(CRAN = '.../cran/YYYY-MM-DD'))` | Points installs at a dated, fixed snapshot of the repository. |
+| `renv::sysreqs(pkgs, distro = 'ubuntu:22.04')` | Lists the system packages the R packages need on that Linux distribution. |
 | Rule of thumb | A lockfile pins the package layer and nothing beneath it; L1, not L2. |
-| Rule of thumb | An oracle, a declared dependency, or a pinned version must come from outside the thing it checks; a lockfile is no exception for file integrity. |
+| Rule of thumb | A package belongs in the lockfile if its version affects the result or the code references it. |
 | Habit 3 | Never let restricted data reach an unapproved model endpoint, even to ask a dependency question. |
 
 ::: {.callout-note icon=false}
@@ -1795,14 +1865,5 @@ Reading the three together clarifies that pinning the
 package layer admits several idioms with different
 demands on foresight.
 
-On the discipline of where a package belongs, the
-placement whitepaper accompanying the framework develops
-the two-test decision procedure and the two-layer model
-that this chapter summarizes. It is the place to turn
-when a package sits awkwardly between the lockfile and
-the Dockerfile. Finally, the boundary this chapter
-insists on, that the lockfile pins the packages and
-nothing beneath them, is taken up directly in
-@sec-containers. There the container fixes the R version,
-the operating system, and the system libraries that
-`renv` by design does not.
+Finally, @sec-containers takes up the layers beneath the
+packages where this chapter stops.

@@ -100,8 +100,8 @@ uses.
 
 ## The evidence that it is not happening
 
-The case for taking this seriously is empirical, and it is
-grim. In psychology, the Open Science Collaboration's
+The case for taking this seriously is empirical, and the
+evidence is consistent and sobering. In psychology, the Open Science Collaboration's
 teams judged only 39 of 100 replications successful
 [@opensciencecollaboration2015]. In preclinical oncology,
 @begley2012 confirmed only 6 of 53 landmark findings.
@@ -109,18 +109,20 @@ These are replication failures, at the scientific end of
 the spectrum, and their causes are many. However, a
 growing body of evidence isolates the specifically
 computational failures. These are, if anything, more
-damning, because they are more avoidable.
+telling, because they are more avoidable.
 
 @trisovic2022 re-ran more than nine thousand R files
 deposited in the Harvard Dataverse. They found that
 roughly one in four executed without error, and that was
-before asking whether the output matched. @saju2025,
+before asking whether the output matched. Automated code
+cleaning raised that share to about 44 percent, which
+shows how much of the failure is mechanical. @saju2025,
 examining R code supplements on the Open Science
 Framework, found that only about a quarter of the R
 scripts ran without error, even after an automated
 pipeline rebuilt their environments. They also found that
-nearly every project carried no description of its
-dependencies at all. These
+about 99 percent of the projects carried no description
+of their dependencies at all. These
 analyses could not be made to run a second time, so the
 question of whether they reached the right conclusion
 never arose. The scholarship, in Buckheit and Donoho's
@@ -131,16 +133,18 @@ Setting the four studies beside one another, as in
 @fig-failure-rates, makes the shape of the problem visible.
 The replication studies and the re-execution studies
 measure different things, and for that reason the figure
-keeps them in separate panels. Nevertheless, the rates are
-comparably low in both. The right-hand panel differs in
+keeps them in separate panels. Each bar also counts a
+different unit: studies, findings, files, or scripts. The
+rates are therefore not comparable with one another, but
+each is low on its own terms. The right-hand panel differs in
 one respect: it counts failures that better engineering
 would fix and that no amount of additional data collection
 would.
 
 ```{r}
 #| label: fig-failure-rates
-#| fig-cap: 'Reported success rates in four studies, separated by what each measured. The left panel reports replication studies, in which new data was collected to test a prior finding. The right panel reports re-execution studies, in which deposited code was run again without any attempt to evaluate the science. The re-execution figures are those stated in the text of the studies as cited in this chapter, and are approximate where the source reports a bound rather than a point estimate.'
-#| fig-alt: 'A two-panel bar chart of four studies. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent and Begley and Ellis at 11 percent. The right panel, labeled re-execution, shows Trisovic and colleagues at about 26 percent and Saju and colleagues at about 26 percent of scripts. All four bars sit well below half, and the two panels reach comparably low values by different routes.'
+#| fig-cap: 'Reported success rates in four studies, separated by what each measured. The left panel reports replication studies, in which new data was collected to test a prior finding. The right panel reports re-execution studies, in which deposited code was run again without any attempt to evaluate the science. Each bar is labeled with the unit it counts, and the units differ, so the bars are not comparable with one another. The Trisovic bar is the rate before automated code cleaning. The re-execution figures are those stated in the text of the studies as cited in this chapter, and are approximate where the source reports a bound rather than a point estimate.'
+#| fig-alt: 'A two-panel bar chart of four studies, each bar labeled with its unit. The left panel, labeled replication, shows the Open Science Collaboration at 39 percent of 100 studies and Begley and Ellis at 11 percent of 53 findings. The right panel, labeled re-execution, shows Trisovic and colleagues at 26 percent of R files and Saju and colleagues at 26 percent of R scripts. All four bars sit well below half; because each counts a different unit, each rate is low on its own terms rather than comparable with the others.'
 #| fig-width: 7
 #| fig-height: 3.2
 
@@ -153,6 +157,8 @@ studies <- tibble(
             'Trisovic et al.\n(2022)',
             'Saju et al.\n(2025)'),
   rate = c(39, 11, 26, 26),
+  unit = c('of 100 studies', 'of 53 findings',
+           'of R files', 'of R scripts'),
   kind = factor(
     c('Replication: new data collected',
       'Replication: new data collected',
@@ -165,9 +171,9 @@ studies <- tibble(
 
 ggplot(studies, aes(x = reorder(study, rate), y = rate)) +
   geom_col(aes(fill = kind), width = 0.62, show.legend = FALSE) +
-  geom_text(aes(label = paste0(rate, '%')),
-            hjust = -0.18, size = 3.4) +
-  coord_flip(ylim = c(0, 48)) +
+  geom_text(aes(label = paste0(rate, '% ', unit)),
+            hjust = -0.08, size = 3.1) +
+  coord_flip(ylim = c(0, 80)) +
   facet_wrap(~kind, scales = 'free_y', ncol = 2) +
   scale_fill_manual(values = c(
     'Replication: new data collected' = '#4c72b0',
@@ -206,28 +212,14 @@ organizing question of this book.
 
 ## The tools, and the framework this book uses
 
-The R ecosystem has, over two decades, produced mature
-tools for nearly every layer of that stack. Literate
-programming, through `knitr`, R Markdown, and now Quarto
-[@allaire2024], binds prose to the code that produces it.
-`renv` [@ushey2020] pins package versions in a lockfile.
-Docker, through Rocker's R-specific base images
-[@boettiger2015; @nust2020rockerverse], pins the operating
-system and its libraries. Continuous integration re-runs
-the whole compendium on a clean machine to confirm that the
-pinned layers actually suffice. Alternatives exist at every
-layer: Nix and its R front-end `rix` in place of `renv`
-[@dolstra2004; @rodrigues2024rix], Podman or Apptainer in
-place of Docker [@kurtzer2017], GitLab in place of GitHub.
-We introduce each tool where the chapter ahead needs it,
-not in one early catalog. Package pinning appears in
-@sec-dependencies, and the environment and its
-alternatives in @sec-containers and @sec-backends.
-@sec-compendium treats the compendium structure that
-@gentleman2007 and @marwick2018's `rrtools` established.
-Finally, @sec-pipelines, @sec-testing, and
-@sec-verification treat the workflow, quality, and
-validation layer.
+Nearly every layer of that stack has a mature tool, and
+we introduce each one in the chapter that needs it rather
+than in an early catalog. Three carry most of the weight.
+A lockfile records package versions (`renv`,
+@sec-dependencies), and a container fixes the operating
+system and the R release (Docker, @sec-containers).
+Continuous integration re-runs the work on a clean
+machine (@sec-verification).
 
 The difficulty lies in composing this tooling by hand.
 `renv` says nothing about the operating system, and Docker
@@ -239,10 +231,10 @@ correctly, for every project, by hand. The running example
 of this book uses `zzcollab`, a framework that assembles
 the triad (`renv` for packages, Docker for the
 environment, continuous integration for validation) into
-one workflow. A biostatistician thereby obtains the
-composition without building it from scratch. Each chapter
-ahead develops the part of `zzcollab` relevant to its own
-layer, against the concept it has just introduced.
+one workflow. An analyst thereby obtains the composition
+without building it from scratch. Each chapter ahead
+shows its step with the general tools first, and the
+`zzcollab` shortcut for the same step in a separate box.
 
 Like every tool this book covers, `zzcollab` is held to the
 standard it teaches. By its own accounting it firmly pins a
@@ -253,8 +245,8 @@ libraries, the random-number discipline, the graphics
 device, intrinsic non-determinism) to the base image or to
 convention. Reproducibility tooling in general has an
 adoption problem more than a capability problem.
-@saju2025 found that most deposited code supplements
-carry no dependency description at all, even though
+@saju2025 found that about 99 percent of the projects
+they examined carried no dependency description, even though
 mature, free, documented tools for that exact
 problem have existed for years. The task of this book is
 therefore to make existing capability teachable and
@@ -316,8 +308,8 @@ shell, inside a running example compendium. The reader who
 follows along will finish with a reproducible project of
 their own. More durably, the reader will acquire the
 judgment to reason about reproducibility with any
-toolchain, and to state without flinching the level a
-given analysis has actually reached.
+toolchain, and to state plainly the level a given
+analysis has actually reached.
 
 Seven habits recur across the chapters that follow. A
 chapter's own rules of thumb will cite a habit by number
@@ -325,3 +317,13 @@ rather than restate it. The closing chapter recalls them
 once the argument of the book is complete.
 
 {{< include _habits.qmd >}}
+
+Four terms in the box are taught later and need a gloss
+here. A *gate* is an automated check that can stop a change
+from being merged or released. A *baseline* is a set of
+outputs recorded from a trusted run, and a *tolerance* is
+the stated distance within which a new result counts as
+the same. *Restricted data* are confidential data held
+under conditions that limit who may see them, such as
+patient records, licensed survey microdata, or
+export-controlled data.

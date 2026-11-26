@@ -1,0 +1,29 @@
+---
+title: 'Laser treatment and time to vision loss'
+output: html_document
+---
+
+```{r setup, include = FALSE}
+# Step 4 of 4. Render from this directory with
+# Rscript -e 'rmarkdown::render("report.Rmd")'
+library(survival)
+library(ggplot2)
+model <- readRDS('model.rds')
+figures <- readRDS('figures.rds')
+ci <- summary(model)$conf.int
+```
+
+The data are the `diabetic` retinopathy trial shipped with the
+`survival` package: `r nrow(survival::diabetic)` eyes of
+`r length(unique(survival::diabetic$id))` patients, one eye of each
+patient treated by laser.
+
+Laser treatment is associated with a hazard ratio for vision loss of
+`r sprintf('%.2f', ci['armLaser', 'exp(coef)'])` (95% CI
+`r sprintf('%.2f', ci['armLaser', 'lower .95'])` to
+`r sprintf('%.2f', ci['armLaser', 'upper .95'])`, robust standard
+errors clustered on patient), adjusting for age at diagnosis.
+
+```{r km, echo = FALSE}
+figures
+```

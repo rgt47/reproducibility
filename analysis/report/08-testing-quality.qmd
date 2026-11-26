@@ -42,11 +42,20 @@ cohort.
 the capture-versus-validation vocabulary this chapter
 relies on throughout; @sec-compendium, for the
 `inst/tinytest/` layout and the R-package archetype.
-Statistically, no more than comfort reading a
-coefficient table from a fitted model and a percentile
-bootstrap interval; no new statistics are introduced.
+Statistically, comfort reading a coefficient table from
+a fitted model and a percentile bootstrap interval. The
+two-tier baseline check and the optional section on
+Monte Carlo error and parallel streams also assume the
+idea of a standard error of a simulated quantity. They
+introduce the Monte Carlo standard error and random-number
+streams, which a reader who neither resamples nor
+simulates can skip.
 R knowledge assumed: writing and calling a function,
-vectors, and basic control flow.
+vectors, and basic control flow. The chapter up to the
+reproducibility tests uses the intervening chapters only
+in its opening check and in passing comparisons, so a
+reader can take that part straight after
+@sec-compendium.
 
 **Objectives.** By the end of this chapter, can you:
 
@@ -72,7 +81,8 @@ pre-specified analysis plan as an oracle. We next
 introduce `tinytest`'s bare-expectation style, work the
 four kinds of test on the cohort and the retinopathy
 trial, and separate Monte Carlo error from a change of
-sampler. We then distinguish behavior from
+sampler (with an optional section on Monte Carlo error
+and parallel streams). We then distinguish behavior from
 implementation, treat linting, styling, and the
 pre-commit gate, and set out what 'validation' means in
 regulated work, before turning to how one analyst reviews
@@ -532,6 +542,67 @@ follow the convention throughout: bare top-level
 expectations, one concern per file, named
 `test-<thing>.R`.
 
+A failing run is worth seeing once before it matters. We
+planted a bug in a scratch copy of `calculate_mean()`: it
+passed `na.rm` to `sum()` but still divided by the full
+length, missing value included. Each expectation in the
+test file carries an `info` message, which `tinytest`
+prints beside a failure. In a terminal the progress line
+is redrawn in place, so it appears here once, and the
+long `call` line is cut where marked.
+
+```bash
+$ cat R/mean.R
+#> calculate_mean <- function(x, na.rm = FALSE) {
+#>   sum(x, na.rm = na.rm) / length(x)
+#> }
+$ cat inst/tinytest/test-calculate_mean.R
+#> expect_equal(calculate_mean(c(2, 4, 6)), 4,
+#>              info = 'the mean of 2, 4, 6 is 4 by hand')
+#> expect_true(is.nan(calculate_mean(numeric(0))),
+#>             info = 'an empty vector has no mean')
+#> expect_equal(calculate_mean(c(1, NA, 3), na.rm = TRUE), 2,
+#>              info = 'a missing value is dropped before averaging')
+$ Rscript -e 'source("R/mean.R")' \
+    -e 'tinytest::run_test_file("inst/tinytest/test-calculate_mean.R")'
+#> test-calculate_mean.R.........    3 tests 1 fails 33ms
+#> ----- FAILED[data]: test-calculate_mean.R<5--6>
+#>  call| expect_equal(calculate_mean(c(1, NA, 3), na.rm = TRUE), 2,
+#> (rest of the call line elided)
+#>  diff| Expected '2', got '1.33333333333333'
+#>  info| a missing value is dropped before averaging
+#>
+#> Showing 1 out of 3 results: 1 fails, 2 passes (33ms)
+```
+
+The report names the file and its lines (`<5--6>`), the
+call, the difference between the expected and the actual
+value, and the `info` message. The two passing
+expectations are only counted. An `info` message that
+states the oracle, as these do, tells the reader of a
+failure what the test believed and why.
+
+Most R packages a reader opens use `testthat` instead, and
+the skills transfer directly. @tbl-tinytest-testthat sets
+the two side by side; the assertions are the same idea
+under nearly the same names. One tool works with either:
+`covr::package_coverage()` reports which lines of a
+package's code its tests executed. On a scratch package
+with a `tinytest` suite, it named the one untested branch.
+A line it counts as covered was run, not checked against
+an oracle, so coverage measures where tests are missing,
+never whether they are right.
+
+| Task | `tinytest` | `testthat` |
+|---|---|---|
+| Where test files live | `inst/tinytest/test-*.R` | `tests/testthat/test-*.R` |
+| One test | A bare `expect_equal(f(x), 4)` | The same call inside `test_that('label', { ... })` |
+| A class check | `expect_inherits(x, 'lm')` | `expect_s3_class(x, 'lm')` |
+| The runner `R CMD check` calls | `tests/tinytest.R`, calling `tinytest::test_package('pkg')` | `tests/testthat.R`, calling `testthat::test_check('pkg')` |
+| Running during development | `tinytest::run_test_dir('inst/tinytest')` | `testthat::test_dir('tests/testthat')` |
+
+: The book's `tinytest` calls and their `testthat` equivalents. Function names checked against `tinytest` 1.4.3 and `testthat` 3.3.2. {#tbl-tinytest-testthat}
+
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: reading a bare file
 
@@ -706,6 +777,8 @@ expect_true(all(c('mrn', 'age_at_enroll', 'sex', 'incident_dm')
 # within the observed range
 expect_true(all(cohort$age_at_enroll >= 18 &
                 cohort$age_at_enroll <= 105, na.rm = TRUE))
+# and the range check is not passing on missing ages alone
+expect_true(mean(is.na(cohort$age_at_enroll)) < 0.05)
 
 # sex takes only its two coded levels once cleaned
 expect_true(all(cohort$sex %in% c('F', 'M')))
@@ -714,6 +787,48 @@ expect_true(all(cohort$sex %in% c('F', 'M')))
 # can tolerate
 expect_true(mean(is.na(cohort$incident_dm)) < 0.15)
 ```
+
+The age check needs its missingness partner because of
+`na.rm = TRUE`. An export that blanked every age would
+leave nothing to compare, and `all()` of an empty set is
+`TRUE`, so the range check alone would pass. On this
+extract cleaning sets one implausible age to missing, well
+inside the bound.
+
+Rules of this kind can also be kept as data. The
+`validate` package, maintained by the author of
+`tinytest`, holds them in a `validator()` object that can
+be confronted with any extract and summarized rule by
+rule. We ran three of the rules above with `validate`
+1.1.7, on the raw extract and on the cleaned cohort:
+
+```r
+library(validate)
+rules <- validator(
+  age_range = in_range(age_at_enroll, min = 18, max = 105),
+  sex_coded = sex %in% c('F', 'M'),
+  age_present = mean(is.na(age_at_enroll)) < 0.05
+)
+cols <- c('name', 'items', 'passes', 'fails', 'nNA')
+summary(confront(raw, rules))[, cols]
+#>          name items passes fails nNA
+#> 1   age_range   338    337     1   0
+#> 2   sex_coded   338    320    18   0
+#> 3 age_present     1      1     0   0
+summary(confront(cohort, rules))[, cols]
+#>          name items passes fails nNA
+#> 1   age_range   337    336     0   1
+#> 2   sex_coded   337    337     0   0
+#> 3 age_present     1      1     0   0
+```
+
+The raw extract fails where its planted defects lie, and
+the cleaned cohort passes. The missing age is reported in
+its own column rather than counted as a pass. The book
+keeps its data checks as `tinytest` expectations, so that
+one runner covers them all. A `validator()` earns its
+place when the same rules must be applied to many
+extracts, or reported to someone who does not read R.
 
 These are the tests that most directly repay a
 health scientist, because they catch the errors that
@@ -965,7 +1080,8 @@ follows the same distinction. Its four decimals are there
 for the seed-exact tier. As a statistical result, an MCSE
 of `r sig2(mcse)` supports reporting the bound
 as `r sprintf(paste0('%.', d_bmi, 'f'), baseline)` under
-either sampler, by the rule the next section gives.
+either sampler, by the rule the optional next section
+gives.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -1021,9 +1137,12 @@ that the captured files agree with one another; it
 rebuilds nothing and cannot earn L3.
 :::
 
-## Monte Carlo error and parallel streams
+## Monte Carlo error and parallel streams (optional)
 
-@tbl-baseline-rng fixed the seed and varied only the
+A reader who neither resamples nor simulates may skip
+this section, except for its closing comparison of the
+four kinds of test (@fig-test-coverage), which belongs to
+the core. @tbl-baseline-rng fixed the seed and varied only the
 sampler (the default that R changed in version 3.6.0),
 which isolated one source of change in the bootstrap
 bound. A second source is always present and has nothing
@@ -1045,6 +1164,11 @@ standard deviation of the result; then raise `B` and watch
 it shrink. The chunk below does this with `bootstrap_ci()`
 on the HbA1c odds ratio, at `B = 250` and at the
 package default `B = 1000`, with 20 seeds each.
+`bootstrap_ci()` resamples the logistic model of
+`fit_model()`, the compendium's first and simpler
+analysis. The analysis the book treats as canonical, and
+checks against a recorded baseline, is the Cox model of
+@sec-cohort-continued-testing.
 
 ```{r}
 #| label: mc-stability
@@ -1068,6 +1192,12 @@ d_upper <- digits_supported(mcse1000['upper'])
 d_lower <- digits_supported(mcse1000['lower'])
 stopifnot(d_upper < 2)
 ci_default <- bootstrap_ci(cohort)
+dp <- function(d) {
+  paste(d, if (d == 1) 'decimal place' else 'decimal places')
+}
+ci_text <- paste(
+  sprintf(paste0('%.', d_lower, 'f'), ci_default['lower']), 'to',
+  sprintf(paste0('%.', d_upper, 'f'), ci_default['upper']))
 # Replicates for the MCSE to fall below half a unit of one
 # more decimal, scaling the observed MCSE by 1/sqrt(B).
 B_for <- function(mcse, d, B = 1000) {
@@ -1099,13 +1229,11 @@ number of repetitions from the precision required
 rule for the number of replicates. Choose `B` so that the
 MCSE of each reported quantity is below about half a unit
 of its last reported digit, or report only the digits the
-MCSE supports. At the default `B = 1000` the rule allows the
-lower bound `r d_lower` decimal place and the upper bound
-`r d_upper`, so the default call's interval should be
-reported as
-`r sprintf(paste0('%.', d_lower, 'f'), ci_default['lower'])`
-to
-`r sprintf(paste0('%.', d_upper, 'f'), ci_default['upper'])`.
+MCSE supports. At the default `B = 1000` the rule allows
+`r dp(d_lower)` for the lower bound and `r dp(d_upper)`
+for the upper. The default call's interval should
+therefore be reported as `r ci_text`, each bound rounded
+to the digits its own MCSE supports.
 Reporting the upper bound to one more decimal would need
 about `r format(signif(B_upper_next, 2), big.mark = ',')`
 replicates. A two-decimal interval from `bootstrap_ci()`
@@ -1406,7 +1534,14 @@ fixing indentation, spacing, and alignment, so that
 formatting is never a matter for human attention or
 for a code review. The two are complementary;
 `styler` fixes the formatting that `lintr` would
-otherwise complain about.
+otherwise complain about. Air, a formatter from Posit
+written in Rust, does the same job from inside Positron,
+RStudio, or VS Code. It takes the tidyverse style guide
+as its main source with a few stated departures, and it
+offers a pre-commit hook, `air-format`. Either formatter
+serves, but a project should choose one, since two
+formatters whose layouts differ will keep undoing each
+other's changes.
 
 Both are ordinary R calls, run from the project root.
 We ran them on a scratch package whose one function,
@@ -1539,6 +1674,24 @@ repos:
       - id: readme-rmd-rendered
       - id: no-browser-statement
 ```
+
+::: {.callout-note icon=false}
+## Before you run this
+
+The configuration file does nothing on its own. Two
+pieces are installed separately. The first is the
+`pre-commit` framework, a Python program: install it with
+`pip install pre-commit`, with `brew install pre-commit`
+on macOS, or from R with `precommit::install_precommit()`,
+which needs miniconda first. Then `pre-commit --version`
+should print a version number. The second is the R
+package `precommit`, installed from CRAN like any other.
+Running `precommit::use_precommit()` in the project then
+installs the hook; it must be run once in every clone,
+because a clone does not carry the hook. These steps come
+from the `pre-commit` and `precommit` documentation, read
+on 26 November 2026; we have not run them for this book.
+:::
 
 With this in place, an attempt to commit code that
 `styler` would reformat, or that `lintr` flags, or
@@ -2186,7 +2339,10 @@ audit.
 ## Exercises
 
 1. Take a function you have written for a current
-   analysis and write three `tinytest` unit tests
+   analysis, or one of the functions you wrote for the
+   pipeline starter project
+   (`analysis/exercises/pipeline-start/`) in Exercise 3
+   of @sec-pipelines, and write three `tinytest` unit tests
    for it: one ordinary case with a hand-computed
    oracle, and two edge cases. State, for each, where
    the expected value came from.
@@ -2199,7 +2355,9 @@ audit.
    sentence on why reproduction did not catch it.
 
 3. Write a data-validation test file for a dataset
-   you use, encoding at least four domain constraints.
+   you use, or for the pipeline starter project's
+   `data/raw_data.csv`, encoding at least four domain
+   constraints.
    These are an expected set of columns, a plausible range for a
    continuous variable, an admissible set of labels
    for a categorical variable, and a bound on the
@@ -2213,15 +2371,19 @@ audit.
    position on the L0 to L3 ladder.
 
 5. Write a reproducibility test of the baseline form:
-   run a small analysis, save its result with
+   run a small analysis, such as the starter project's
+   model fit, save its result with
    `saveRDS`, and write a test that recomputes the
    result and compares it against the saved baseline
    with an appropriate tolerance. Then change one line
    of the analysis and observe the test fail.
 
-6. Install the `precommit` package, add the
-   `.pre-commit-config.yaml` of this chapter to a
-   project, and attempt to commit deliberately
+6. Install the `pre-commit` framework and the
+   `precommit` package, as the 'Before you run this' box
+   describes. Run `precommit::use_precommit()` in a
+   project, replace the `.pre-commit-config.yaml` it
+   writes with the one of this chapter, and attempt to
+   commit deliberately
    misformatted R code. Report what the hook does, and
    contrast it with what continuous integration would
    do in @sec-verification if the hook were absent.
@@ -2270,9 +2432,10 @@ audit.
 ## Solutions
 
 Attempt an exercise before expanding its solution. You
-perform these exercises on your own functions and data,
-so the code will vary; the boxes record the form the
-answer should take and the reasoning behind it.
+perform Exercises 1 to 3 and 5 on your own functions and
+data or on the pipeline starter project, so the code will
+vary; for those, the boxes record the form the answer
+should take and the reasoning behind it.
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 1
@@ -2351,8 +2514,9 @@ what no amount of environment capture can.
 ## Exercise 3
 
 The four constraints, written for the running cohort in
-the form the chapter uses; your own dataset will have
-its own names and bounds:
+the form the chapter uses, with the missingness partner
+that keeps the age range from passing on missing values;
+your own dataset will have its own names and bounds:
 
 ```r
 # inst/tinytest/test-data-cohort.R
@@ -2368,6 +2532,10 @@ expect_true(
   all(cohort$age_at_enroll >= 18 &
         cohort$age_at_enroll <= 105, na.rm = TRUE),
   info = 'age lies within the enrollment criteria'
+)
+expect_true(
+  mean(is.na(cohort$age_at_enroll)) < 0.05,
+  info = 'the age check is not passing on missing ages'
 )
 expect_true(
   all(cohort$sex %in% c('F', 'M')),

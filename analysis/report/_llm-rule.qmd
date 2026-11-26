@@ -1,25 +1,28 @@
 ::: {.callout-important}
 ## Restricted data
 
-One rule comes first (habit 3). Never paste or upload
-protected health information, identifiable records, or data
-held under a data use agreement, nor outputs derived from
-them, into a model or a coding agent unless three conditions
-all hold. The institution has approved that endpoint for
-that class of data. The IRB protocol and the consent permit
-the processing. The data use agreement, or the provider's
-terms, permits it. If any of the three is unclear, the
-answer is no.
+One rule comes first (habit 3), and it covers confidential
+or restricted data of every kind: for example protected
+health information, identifiable records, licensed survey
+microdata, administrative records, and export-controlled or
+proprietary data. Never paste or upload such data, nor
+outputs derived from them, into a model or a coding agent
+unless three conditions all hold. The institution has
+approved that endpoint for that class of data. Any ethics
+approval and consent that govern the data permit the
+processing. The data use agreement, license, or provider's
+terms permit it. If any of the three is unclear, the answer
+is no.
 
 The third condition is the one most often missed.
 Institutional approval of a tool does not override the terms
-under which a data provider released the data. NIH, for
-example, treats sharing controlled-access data through
-prompts with public generative AI tools, which it glosses as
-third-party tools, as a breach of the data use certification.
-It treats a model trained on such data as a data derivative,
-to be shared only with other approved users and not kept
-after the project closes [@nihgenai2025].
+under which a provider released the data. NIH, for example,
+treats sharing controlled-access data through prompts with
+public generative AI tools, which it glosses as third-party
+tools, as a breach of the data use certification. It treats
+a model trained on such data as a data derivative, to be
+shared only with other approved users and not kept after the
+project closes [@nihgenai2025].
 
 Describe the structure instead: the column names and types,
 or a small synthetic example generated from the data

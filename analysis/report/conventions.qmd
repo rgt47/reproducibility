@@ -229,7 +229,7 @@ a reader working alone, can take the whole book in order.
 | Pinning the Environment with Docker | Core |
 | Literate Programming and the Rendered Report | Core |
 | Automating the Analysis: targets and Make | Core for the `targets` section and the worked example; the comparison with GNU Make, Snakemake, Nextflow, workflowr, and a language model inside the pipeline are optional |
-| Testing and Code Quality | Core |
+| Testing and Code Quality | Core; the section on Monte Carlo error and parallel streams is optional |
 | Continuous Integration and Verification | Core |
 | Collaboration, Archiving, and Stewardship | Core |
 | Where to Begin | Core |

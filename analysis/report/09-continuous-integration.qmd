@@ -41,7 +41,7 @@ to work.
 
 **Prerequisites.** @sec-testing supplies
 `tinytest`, the four kinds of test, and the baseline test
-this chapter's verification gate runs. Chapter 3
+this chapter's verify job runs. Chapter 3
 (@sec-levels) supplies the L0-L3 ladder and the
 capture-versus-validation vocabulary this chapter makes
 operational. Chapter 6 (@sec-dependencies) supplies the
@@ -457,7 +457,7 @@ the record, and runs the test script. The actions are
 pinned by major-version tag, as elsewhere in this
 chapter; @sec-ci-secrets explains why a commit SHA is
 safer. @tbl-ci-reading-workflow reads the six constructs
-the file uses.
+the file uses, and a seventh that the next workflow adds.
 
 | Construct | In the file | What it means |
 |---|---|---|
@@ -467,8 +467,9 @@ the file uses.
 | Expression | `${{ secrets.GITHUB_TOKEN }}` | Not YAML: to YAML it is plain text. GitHub evaluates it rather than treating it as a string, here inserting a token issued for the run. |
 | Block scalar | `run: |` | The indented lines that follow form one text value, with their line breaks kept. GitHub runs them in one shell, and the default shell stops at the first failing line. |
 | Quoting | `r-version: '4.10'` | An unquoted value that looks like a number is read as one, so `4.10` becomes 4.1. Quotes keep the value as text. |
+| Nested quoting | `error-on: '"warning"'` | A YAML string that holds an R string. YAML removes the outer single quotes; the action pastes what remains into R code, so R receives the string `"warning"`. Without the inner quotes R would read `warning` as the name of an object, not as text. |
 
-: Reading the workflow. Each row names a YAML or GitHub Actions construct, quotes an example from `tests.yml` (the last row's example is not in the file), and states how it is read [@githubworkflowsyntax; @githubexpressions]. {#tbl-ci-reading-workflow}
+: Reading the workflow. Each row names a YAML or GitHub Actions construct, quotes an example, and states how it is read. The last two examples are not in `tests.yml`; the last comes from the workflow of the three gates [@githubworkflowsyntax; @githubexpressions; @rlibcheckaction]. {#tbl-ci-reading-workflow}
 
 The test script is the first form of a file that
 @sec-verification-l3 extends with a baseline check. It
@@ -950,6 +951,21 @@ request that replaces the SHA and its comment when a new
 release appears, so that each update is a reviewed
 commit rather than a silent change.
 
+A pin also freezes the JavaScript runtime that the action
+declares in its own metadata. GitHub removed Node 20 from
+its runners in September 2026. It asked maintainers to
+release versions declaring Node 24, and users to update to
+them [@githubnode20removal]. On 26 November 2026,
+`actions/checkout` at the tag `v4`, the pin many older
+tutorials show, still declared `node20`, while `v7.0.1`
+declared `node24`. The changelog states that runners now
+use Node 24 for JavaScript actions; whether an action
+written for Node 20 runs correctly under it was not
+checked here. A workflow pinned to an old
+release receives the maintainer's Node 24 release only
+when someone updates the pin, which is one more reason to
+let a tool propose the updates.
+
 The chapter's own workflow examples fall short of their
 own advice. They should be read as a teaching
 simplification, not a model to copy unchanged. The
@@ -1058,6 +1074,84 @@ workflow, run after the gates pass:
           -e RENV_CONFIG_AUTOLOADER_ENABLED=FALSE
           -v "$PWD":/work -w /work
           compendium:ci Rscript ci/run-tests.R
+```
+
+@fig-ci-flow joins the two jobs into one picture. The
+`needs:` key is what orders them. Each job starts on a
+fresh runner of its own, and `verify` starts only if
+every step of `gates` exited with status 0.
+
+```{r}
+#| include: false
+ci_flow <- data.frame(
+  step = c('Push or pull\nrequest', 'Check out,\nrestore renv.lock',
+           'Gate 1:\nR CMD check', 'Gate 2:\ndependency manifest',
+           'Gate 3:\nrender', 'Rebuild the\nproject image',
+           'Tests in the image,\nbaseline included',
+           'Status on\nthe commit'),
+  yaml = c('on:', 'setup-renv', 'check-r-package',
+           'dependency-gate.R', 'Render gate', 'docker build',
+           'run-tests.R', 'exit statuses'),
+  x = c(1, 2, 3, 4, 5, 5, 4, 3),
+  y = c(2, 2, 2, 2, 2, 1, 1, 1)
+)
+ci_flow_alt <- paste0(
+  'A flow diagram in two rows. The top row, labeled job gates, ',
+  'on a fresh runner, runs left to right: ',
+  paste(gsub('\n', ' ', ci_flow$step[1:5]), collapse = ', then '),
+  '. An arrow labeled needs: gates leads down to the bottom row, ',
+  'labeled job verify, on another fresh runner, which runs right ',
+  'to left: ',
+  paste(gsub('\n', ' ', ci_flow$step[6:8]), collapse = ', then '),
+  '. Inside each box, in code type, is the workflow key, action, ',
+  'step name, script, or outcome it corresponds to: ',
+  paste(ci_flow$yaml, collapse = '; '), '.')
+```
+
+```{r}
+#| label: fig-ci-flow
+#| fig-cap: 'The workflow of this chapter as a flow. A push or pull request starts the job `gates` on a fresh runner, which restores the lockfile and runs the three gates in order. Only if every step exits with status 0 does `needs: gates` start the job `verify`, which rebuilds the project image and runs the tests, a baseline test among them, inside it. The commit''s status is green only if every step of both jobs exited with status 0. The code-type line in each box names the key, action, step, or script in the YAML listings above that implements the box.'
+#| fig-alt: !expr ci_flow_alt
+#| echo: false
+#| fig-width: 7
+#| fig-height: 3
+library(ggplot2)
+hw <- 0.45
+hh <- 0.3
+edges <- data.frame(x = ci_flow$x[-8], y = ci_flow$y[-8],
+                    xend = ci_flow$x[-1], yend = ci_flow$y[-1])
+dx <- sign(edges$xend - edges$x) * hw
+dy <- sign(edges$yend - edges$y) * hh
+ggplot(ci_flow, aes(x, y)) +
+  annotate('rect', xmin = 1.5, xmax = 5.55, ymin = 1.6,
+           ymax = 2.55, fill = '#e8f0f8') +
+  annotate('rect', xmin = 3.5, xmax = 5.55, ymin = 0.45,
+           ymax = 1.4, fill = '#e6f2ee') +
+  annotate('text', x = 1.56, y = 2.47, hjust = 0, size = 2.6,
+           label = 'job gates, on a fresh runner',
+           colour = 'grey30') +
+  annotate('text', x = 3.56, y = 0.53, hjust = 0, size = 2.6,
+           label = 'job verify, on another fresh runner',
+           colour = 'grey30') +
+  annotate('text', x = 4.95, y = 1.5, hjust = 1, size = 2.4,
+           label = 'needs: gates', family = 'mono',
+           colour = 'grey30') +
+  geom_segment(data = edges,
+               aes(x = x + dx, xend = xend - dx, y = y + dy,
+                   yend = yend - dy),
+               arrow = grid::arrow(length = grid::unit(0.12, 'cm'),
+                                   type = 'closed'),
+               linewidth = 0.45, colour = 'grey45') +
+  geom_rect(aes(xmin = x - hw + 0.04, xmax = x + hw - 0.04,
+                ymin = y - hh + 0.06, ymax = y + hh - 0.06),
+            fill = 'white', colour = 'grey40', linewidth = 0.3) +
+  geom_text(aes(y = y + 0.07, label = step), size = 2.5,
+            lineheight = 0.9, colour = 'grey15') +
+  geom_text(aes(y = y - 0.15, label = yaml), size = 2.2,
+            family = 'mono', colour = 'grey35') +
+  coord_cartesian(xlim = c(0.5, 5.6), ylim = c(0.42, 2.58),
+                  expand = FALSE) +
+  theme_void()
 ```
 
 The test step runs `ci/run-tests.R`, the script of
@@ -2002,8 +2096,8 @@ what the analyst must verify and cannot delegate.
    gate), describe a specific defect in a compendium that
    the gate catches and the other two do not. Then name one
    reproducibility failure that none of the three catches,
-   and say which gate, verification or data integrity,
-   addresses it.
+   and say which of the chapter's two further checks, the
+   verify job or the checksum manifest, addresses it.
 
 3. **What a digest can and cannot tell you.** Take the code
    in @tbl-integrity as a starting point. Extend it to hash
@@ -2088,8 +2182,11 @@ trusted rather than tested.
 
 **A concrete failure.** A base image is repointed by its
 maintainer and the Dockerfile pins it by tag rather than
-digest. With CI, the next push rebuilds and the check
-fails, naming the day it broke. Without CI, the
+digest. A repointed tag usually rebuilds without error.
+With CI, the next rebuild either fails, naming the day it
+broke, or, if the verify job runs a baseline test,
+reports the changed estimate. A green rebuild without a
+baseline test shows nothing either way. Without CI, the
 compendium looks healthy on the author's machine, where
 the old image is cached, and fails for the first reader
 who builds it from scratch. A package pulled from CRAN,
@@ -2136,11 +2233,10 @@ fires.
 version leaves the code valid, the document renderable,
 and the manifests consistent. Meanwhile every number in
 the report changes. All three gates pass. The
-**data-integrity gate** addresses it, by hashing the
-inputs and derived outputs and comparing against a
-recorded manifest.
+**checksum manifest** addresses it, by hashing the raw
+inputs and comparing against the recorded digests.
 
-The **verification gate** addresses the adjacent case in
+The **verify job** addresses the adjacent case in
 which the code changes a result without any of the three
 noticing. It does so by comparing computed outputs
 against recorded baselines.

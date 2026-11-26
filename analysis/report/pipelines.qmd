@@ -497,14 +497,18 @@ t_clean <- time_it({
                   labels = c('Untreated', 'Laser'))
   d <- d[!is.na(d$time), ]
 })
+# Each patient contributes two eyes, so the fit clusters on
+# id for robust standard errors and the bootstrap resamples
+# patients rather than eyes.
 t_fit <- time_it(
   fit <- survival::coxph(survival::Surv(time, status) ~ arm + age,
-                         data = d)
+                         data = d, cluster = id)
 )
 t_boot <- time_it({
   set.seed(1)
+  rows_by_id <- split(seq_len(nrow(d)), d$id)
   replicate(200, {
-    i <- sample(nrow(d), replace = TRUE)
+    i <- unlist(sample(rows_by_id, replace = TRUE), use.names = FALSE)
     unname(coef(survival::coxph(
       survival::Surv(time, status) ~ arm + age, data = d[i, ]))[1])
   })
@@ -529,6 +533,9 @@ t_total <- t_load + t_clean + t_fit + t_boot
 boot_share <- floor(100 * t_boot / t_total)
 ```
 
+Each patient in the trial contributes two eyes, so the fit
+clusters on the patient identifier and the bootstrap
+resamples patients, not eyes.
 On this build the bootstrap took `r t_boot` milliseconds,
 at least `r boot_share` percent of the four steps' total,
 and none of the other three took more than
@@ -781,6 +788,19 @@ is language-agnostic: a single Makefile can orchestrate
 an analysis whose steps are written in R, Python, the
 shell, and a typesetting engine, without knowing what
 language each step uses.
+
+::: {.callout-note icon=false}
+## Before you run this
+
+The commands in this section need the `make` program, which
+is installed separately from R. Run `make --version` in a
+terminal; a first line beginning `GNU Make` means it is
+present. If the shell reports that the command is not
+found, the machine checklist on the
+[setup page](setup-appendix.qmd#sec-setup-checklist) gives
+the install route for macOS and for Windows. Nothing in the
+`targets` sections needs `make`.
+:::
 
 A Makefile is a list of **rules**, and a rule has three
 parts. The first is a **target**, the file the rule
@@ -1162,7 +1182,11 @@ Snakemake or Nextflow fits. Both are built for exactly
 this setting, many languages, many steps, and execution
 spread across a cluster or the cloud, with native support
 for job schedulers. Make has none, and `targets` reaches a
-scheduler only through backends such as `clustermq`.
+scheduler only through a backend. The current route is the
+`crew` package with its cluster plugins (`crew.cluster`);
+the older `clustermq` backend survives in the `targets`
+manual's appendix 'High-performance computing (the old
+way)'.
 `targets` would be the wrong reach because it is R-native. Its
 dependency inference works by hashing R function bodies
 and R objects. That has nothing to track in a pipeline
@@ -1643,7 +1667,11 @@ in a checkout where the real notes are not mounted
 ## Exercises
 
 1. Take a multi-step analysis of your own that you currently run
-   by hand, and draw its dependency graph on paper: a node for
+   by hand, or the starter project in
+   `analysis/exercises/pipeline-start/` of this book's
+   repository (its README says how to copy and run it). Exercises
+   2 to 5 continue on the same analysis. Draw its dependency
+   graph on paper: a node for
    each step, an arrow for each 'consumes the output of' relation.
    Confirm the graph is acyclic. Then identify, for a change to
    one upstream input of your choosing, exactly which nodes are
@@ -1740,9 +1768,12 @@ in a checkout where the real notes are not mounted
 ## Solutions
 
 Attempt an exercise before expanding its solution.
-Exercises 1 to 5 are performed on an analysis of your own,
-so the outputs vary; for those, the boxes record what
-should happen and the reasoning that makes it expected.
+Exercises 1 to 5 are performed on an analysis of your own
+or on the starter project, so the outputs vary. For those,
+the boxes record what should happen and the reasoning that
+makes it expected. On the starter, the worked example's
+`_targets.R` fits once the four functions exist; only the
+packages named in `tar_option_set()` change.
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 1

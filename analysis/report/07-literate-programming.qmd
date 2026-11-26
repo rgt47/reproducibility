@@ -308,7 +308,8 @@ overclaimed.
 - **Rendering toolchain.** The programs a render invokes
   behind the scenes: `knitr` or the Quarto engine to run
   the code, `pandoc` to convert the result, and, for
-  PDF, a LaTeX distribution to typeset it.
+  PDF, a typesetter: a LaTeX distribution, or Typst.
+
 - **Determinism (of a render).** The property that
   rendering the same source under the same environment
   produces a byte-for-byte identical output file. A
@@ -753,8 +754,7 @@ committed. Several common patterns reach outside that
 boundary, and each produces the same failure signature,
 a document that renders flawlessly for its author and
 errors, or worse renders differently, for a later
-reader. The zzcollab publishing playbook calls these
-landmines, and the name is apt, because they lie
+reader. We call these landmines, because they lie
 undetonated in a document that works until the moment
 someone else steps on it. We take the principal ones in
 turn.
@@ -827,6 +827,23 @@ discipline of self-contained chunks and, at the level of
 the toolchain, rendering each document in a fresh session
 so that no state leaks in from the author's console.
 
+A large study of this landmine concerns Python, not R.
+A Jupyter notebook is a literate document too, but its
+cells can be run in any order, and the saved file keeps
+the outputs of that interactive session. Pimentel and
+colleagues studied 1.4 million notebooks from GitHub
+[@pimentel2019]. Among those whose execution order could be
+read unambiguously, 36.36 percent had cells run out of
+order. Of 863,878 attempted re-executions, only 24.11
+percent ran without errors and only 4.03 percent produced
+the same results. The remedy is the fresh-session render
+again: restart the kernel and run every cell, or render
+with `quarto render notebook.ipynb --execute`, since
+Quarto does not execute a notebook's cells by default
+(<https://quarto.org/docs/computations/python.html>).
+@sec-translating-tools maps this book's R tools to their
+Python and Stata counterparts.
+
 The fifth is **reading uncommitted files**. A chunk may
 read a file that exists in the author's working directory
 but was never committed to version control, a scratch
@@ -858,7 +875,7 @@ beginning of the question, not the end.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: diagnosing a landmine
 
-A colleague's `report.Rmd` renders on her laptop but
+A colleague's `report.qmd` renders on her laptop but
 fails in continuous integration with the message 'cannot
 open file: data/interim.csv'. Name two distinct landmines
 that could produce this symptom, and give the one-line
@@ -983,7 +1000,7 @@ numbers are current.
 ## HTML or PDF, and the toolchain each needs
 
 A literate source document is format-agnostic; the same
-`report.Rmd` can render to HTML, to PDF, or to Word. The
+`report.qmd` can render to HTML, to PDF, or to Word. The
 choice of format is not merely cosmetic, however, because
 each format invokes a different toolchain behind the
 render, and the environment must carry whatever the
@@ -1000,18 +1017,34 @@ burden. For most of a project's life, and for every
 archetype whose output is read rather than submitted,
 HTML is the sensible target.
 
-PDF is heavier, because a PDF is typeset, and typesetting
-in this ecosystem means LaTeX. Rendering to PDF runs the
+PDF is heavier, because a PDF is typeset, and the usual
+typesetter in this ecosystem is LaTeX. Rendering to PDF
+with `format: pdf` runs the
 same `knitr` and `pandoc` steps and then hands the result
 to a LaTeX distribution. The distribution lays out the
 pages, resolves the cross-references, sets the
 mathematics, and embeds the fonts. A LaTeX distribution
 is large: a full TeX Live installation occupies several
-gigabytes. Its absence is the single most common
-cause of a PDF render failing on a machine where the
-HTML render succeeds. This is precisely the
-environmental problem the earlier chapters solved, and
+gigabytes. Its absence, or the absence of one package
+within it, is a common cause of a PDF render failing on a
+machine where the HTML render succeeds. This is precisely
+the environmental problem the earlier chapters solved, and
 it is why the framework's publishing profile exists.
+
+Quarto offers a lighter route to PDF. With
+`format: typst` it typesets through Typst, a newer
+typesetting system whose command-line program ships inside
+Quarto itself, so 'no separate installation of Typst is
+required' (<https://quarto.org/docs/output-formats/typst.html>).
+We rendered the anatomy listing above with `format: typst`
+under Quarto 1.11.9, with no LaTeX program on the search
+path, and it produced `report.pdf` with the same sentence.
+A Typst PDF is pinned by pinning the Quarto version, and
+the image needs no LaTeX distribution. Quarto's
+documentation also states that its Typst support still has
+limitations, so a document that relies on LaTeX packages,
+or on a publisher's LaTeX template, stays with
+`format: pdf`.
 
 The publishing profile builds on the `rocker/verse` base
 image, which carries a base LaTeX distribution sufficient
@@ -1027,24 +1060,38 @@ the base image does not ship them. A project that renders
 to PDF chooses the publishing profile at initialization.
 A project that renders only to HTML does not need it, and
 pays neither the build time nor the image size that the
-LaTeX toolchain costs. The playbook that migrates a
-compendium to the publishing profile turns on exactly
-this question. It scans every report's YAML for a
-`pdf_document` or `latex_engine` output and, finding one,
-concludes that the verse base is required.
+LaTeX toolchain costs. Whether a project needs LaTeX can
+be read from its documents' YAML headers. Any LaTeX-based
+PDF output means it does: `format: pdf` in Quarto, or
+`pdf_document` and `latex_engine` in R Markdown. A Typst
+PDF does not.
 
 As elsewhere in the book, the literate document declares
 what it wants to be, and the environment must be
-provisioned to supply it. HTML asks little; PDF asks for
-LaTeX. The honest way to supply LaTeX is to pin it in the
+provisioned to supply it. HTML asks little; a PDF
+through `format: pdf` asks for LaTeX. The honest way to supply LaTeX is to pin it in the
 image, not to install it, fragilely and at render time,
 on whatever machine happens to build the document.
+
+Installing TeX in the image fixes it only for that one
+built image. By default `tlmgr` installs from
+`https://mirror.ctan.org/systems/texlive/tlnet`, which
+picks a mirror and serves the packages current on the day
+of the build (`tlmgr help`). A rebuild therefore pins TeX
+only if `tlmgr` is pointed at a frozen snapshot of the
+TeX Live release it installed.
+The TeX Users Group's historic archive keeps a final
+repository for each past release, such as
+`systems/texlive/2025/tlnet-final/` on its mirrors
+(<https://www.tug.org/historic/>). Setting it with
+`tlmgr option repository <url>` is the TeX analogue of
+the dated CRAN snapshot of @sec-containers.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: choosing the profile
 
 A project renders only to HTML today, but a collaborator
-wants to add a `pdf_document2` output to one report next
+wants to add a `format: pdf` output to one report next
 month. What, if anything, should change about the project's
 Docker image now, and why might waiting be the wrong call?
 
@@ -1060,7 +1107,7 @@ on `rocker/verse`). It must also confirm that any
 package-specific LaTeX dependencies are present, rather
 than installing `tlmgr` packages ad hoc on whichever
 machine first attempts the PDF render. Waiting to decide is fine; waiting to act once the
-YAML declares `pdf_document2` reintroduces exactly the
+YAML declares `format: pdf` reintroduces exactly the
 render-time, machine-specific fragility this chapter warns
 against.
 :::
@@ -1127,10 +1174,9 @@ stamps each rendered PDF with the render time and the
 source path, in a footer, and stages a dated copy whose
 name and manifest row record the git version of the
 source. A reader can therefore tell two renders apart and
-trace each to its source commit. The rendered document is thus
-a dated,
-signed presentation of a result; the object of record is
-the computation.
+trace each to its source commit. The rendered document is
+thus a dated, traceable presentation of a result; the
+object of record is the computation.
 
 ::: {.callout-important}
 ## The honest level
@@ -1148,7 +1194,7 @@ this chapter raises it.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: two PDFs, one analysis
 
-Two renders of the same, unchanged `report.Rmd` produce PDF
+Two renders of the same, unchanged `report.qmd` produce PDF
 files with different checksums. Does this mean the analysis
 is not reproducible?
 
@@ -1199,14 +1245,14 @@ same; only how heavily an archetype leans on it changes.
 
 An R package maintainer is told, by a colleague who has read
 only the manuscript archetype's section above, that the
-package needs a `report.Rmd` to be reproducible. Is the
+package needs a `report.qmd` to be reproducible. Is the
 colleague right?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
 No. The R-package archetype has no single analysis to
-report, so it has no `report.Rmd` to seal. Its literate
+report, so it has no `report.qmd` to seal. Its literate
 surface is the vignette and the roxygen-generated help page,
 and its correctness is established by `R CMD check` and the
 test suite rather than by a rendered result. Demanding a
@@ -1229,7 +1275,7 @@ copying is manual and the results and the prose are
 separate artifacts from the start.
 
 The write-as-you-go doctrine inverts the order. We
-create the `report.Rmd` on the first day of the project,
+create the `report.qmd` on the first day of the project,
 before there is any analysis to report. Into it we
 write the research question, the background, and the
 planned methods as prose. The analysis code is then added
@@ -1246,8 +1292,8 @@ build-time-versus-load-time boundary named among the
 analyst's contributions above. The compendium's directory
 structure, in this view, emerges from the writing rather
 than preceding it. That is, the manuscript drives the
-analysis, and the `R/`, `tests/`, and `scripts/`
-directories fill in as the code in the document matures.
+analysis, and the `R/`, `inst/tinytest/`, and
+`analysis/scripts/` directories fill in as the code in the document matures.
 
 The doctrine's reproducibility payoff is that the
 document is sealed from the first day and stays sealed.
@@ -1261,7 +1307,7 @@ at which to enter.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: why day one, not day thirty
 
-The write-as-you-go doctrine creates `report.Rmd` before any
+The write-as-you-go doctrine creates `report.qmd` before any
 analysis exists. What specifically would be lost by instead
 writing the analysis scripts first for a month and only then
 starting the document, even if every number in the eventual
@@ -1286,13 +1332,13 @@ once it already has.
 
 ## Worked example
 
-We now assemble the pieces into a concrete `report.Rmd`,
+We now assemble the pieces into a concrete `report.qmd`,
 as a health scientist beginning a cohort analysis would.
 On the first day, before any data are analyzed, the author
 creates the report and writes its header. A representative
 YAML header, shown here as a static, unrendered block,
-declares the title, the authorship, the output
-formats, and the bibliography:
+declares the title, the authorship, the date, the output
+formats, the chunk defaults, and the bibliography:
 
 ```yaml
 ---
@@ -1300,45 +1346,63 @@ title: 'Bill morphology across three penguin species'
 author:
   - name: A. Analyst
     affiliation: Department of Epidemiology
-date: '`r format(Sys.Date(), "%B %d, %Y")`'
-output:
-  bookdown::pdf_document2:
-    number_sections: true
-    keep_tex: true
-  bookdown::html_document2:
+date: today
+format:
+  pdf:
+    number-sections: true
+    keep-tex: true
+  html:
     toc: true
+execute:
+  echo: false
+  message: false
+  warning: false
 bibliography: references.bib
 ---
 ```
 
-Two features of this header repay attention. The `output`
-field names two formats, a PDF built through LaTeX for
-submission and an HTML version for reading on a screen. The
-project that renders the former needs the publishing
-profile and its baked-in LaTeX distribution, while the
-latter needs neither. The `date` field is itself a small
-literate device: it holds an inline R expression that
-inserts the render date, so the header cannot claim a date
-the render did not have. The provenance footer discussed
-below is not declared in this header at all; it is applied
-at render time by a separate stamping step.
+Three features of this header repay attention. The
+`format` field names two formats, a PDF built through
+LaTeX for submission and an HTML version for reading on a
+screen. The project that renders the former needs the
+publishing profile and its baked-in LaTeX distribution,
+while the latter needs neither. The `execute` field sets
+the chunk defaults for the whole document: no code, no
+messages, and no warnings on the page. A `#|` option inside
+one chunk overrides it for that chunk
+(<https://quarto.org/docs/computations/execution-options.html>).
+The `date` field holds the keyword `today`, which Quarto
+replaces with the date of the render
+(<https://quarto.org/docs/reference/dates.html>). The
+provenance footer discussed below is not declared in this
+header at all; it is applied at render time by a separate
+stamping step.
 
-Below the header the author writes a setup chunk that fixes
-the chunk defaults and loads the packages the document
-uses. Each package is named with an explicit `library()`
-call so that `renv` can discover them and no package is
-installed at render time:
+Below the header the author writes a setup chunk that loads
+the packages the document uses. Each package is named with
+an explicit `library()` call so that `renv` can discover
+them and no package is installed at render time:
 
 ```r
-knitr::opts_chunk$set(
-  echo = FALSE,
-  message = FALSE,
-  warning = FALSE,
-  fig.path = '../figures/'
-)
 library(dplyr)
 library(ggplot2)
 ```
+
+The same report written in R Markdown, as `report.Rmd`,
+still renders, and Quarto renders most `.Rmd` files without
+change; the Quarto project states that R Markdown remains
+supported, with no plans for deprecation
+(<https://quarto.org/docs/faq/rmarkdown.html>). We start
+new work in Quarto. A reader converting an older document
+needs the three correspondences in @tbl-rmd-to-quarto.
+
+| In R Markdown (`.Rmd`) | In Quarto (`.qmd`) |
+|---|---|
+| `output: bookdown::pdf_document2` | `format: pdf` |
+| `knitr::opts_chunk$set(echo = FALSE)` in a setup chunk | `execute:` with `echo: false` in the header |
+| A figure cross-reference written `\@ref(fig:name)` | A chunk labeled `fig-name`, cited as `@fig-name` |
+
+: R Markdown settings and their Quarto equivalents {#tbl-rmd-to-quarto}
 
 From here the write-as-you-go doctrine takes over. The
 author writes the introduction as prose and adds a
@@ -1375,23 +1439,30 @@ been stepped on, and the failure names which.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the header's `date` field buys
 
-The YAML header above sets the `date` field to an inline
-expression that evaluates `Sys.Date()` at render time,
-rather than a fixed string typed on the day the project
-began. What would be lost by typing the date literally
-instead, and is this an instance of the same seal as the
-figure and the inline numbers?
+The YAML header above sets the `date` field to `today`,
+which Quarto fills in at render time, rather than a fixed
+string typed on the day the project began. What would be
+lost by typing the date literally instead, and is this an
+instance of the same seal as the figure and the inline
+numbers?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-A literal date would freeze at whatever day it was typed,
+A literal date would stay at whatever day it was typed,
 so a document rendered months later would still carry its
-first day's date, silently misrepresenting when the reader's
-copy was actually produced. It is the same seal, applied to
-metadata rather than to a result: the date is computed from
-the render itself, so it cannot drift from the moment it
-claims to describe.
+first day's date, misrepresenting when the reader's copy
+was produced. It is not the same seal. The date records
+when the file was rendered, not when the code that
+produced the numbers last ran, and under freeze
+(@sec-freeze) the two differ. We checked this
+in a scratch Quarto project with `freeze: true`: a second
+render advanced a `date: now` field while a chunk's printed
+`Sys.time()` kept its first value. An inline R expression
+in the header's `date` field is code, and in the same test
+it kept its first value too, so it dates the execution and
+not the file. The seal covers results; the date is
+provenance about a render.
 :::
 :::
 
@@ -1561,7 +1632,11 @@ is a dependency in its own right (@sec-llm-in-pipeline).
    it twice and confirm the figure is identical. Then remove
    the `set.seed()` call, render twice more, and explain in
    terms of this chapter why the figure now differs between
-   renders and what that implies for the seal.
+   renders and what that implies for the seal. Render the
+   single file (`quarto render fig.qmd`), which always
+   executes its code; a render of a whole project with
+   `freeze` set reuses the stored results (@sec-freeze) and
+   hides the change.
 
 3. Deliberately plant each of the five landmines from this
    chapter, one at a time, in a copy of a working document.
@@ -1752,7 +1827,9 @@ document's specific LaTeX dependencies are present, since
 `verse` carries a substantial but not unlimited TeX
 installation. Add any missing packages explicitly to
 the Dockerfile rather than letting a run-time installer
-fetch them. Then render inside the container and confirm
+fetch them, and point `tlmgr` at the frozen `tlnet-final`
+repository of the image's TeX Live release, so that a
+rebuild installs the same package versions. Then render inside the container and confirm
 the PDF is produced.
 
 **Which level the move raises the project to.** L2, from
@@ -1946,7 +2023,10 @@ on the tool, in the spirit of habit 4.
 |---|---|
 | `library(pkg)`, one per package | Names a dependency in the form every scanner recognizes and loads without installing; prefer it to `pacman::p_load()`, which installs at render time. |
 | An inline R expression in prose | Seals a number in prose to the code that computes it. |
-| `knitr::opts_chunk$set(...)` | Sets chunk defaults, `echo`, `message`, `warning`, `fig.path`, once near the top. |
+| `execute:` in the YAML header | Sets chunk defaults (`echo`, `message`, `warning`) for the whole document; an option set inside one chunk overrides it there. R Markdown does this with `knitr::opts_chunk$set()`. |
+| `format: typst` | Renders a PDF through Typst, which ships with Quarto, so the image needs no LaTeX distribution. |
+| `date: today` | Quarto inserts the render date; under freeze it can be later than the computation. |
+| `quarto render notebook.ipynb --execute` | Renders a Jupyter notebook in a fresh session; without `--execute` Quarto uses the stored cell outputs. |
 | `SOURCE_DATE_EPOCH` | Fixes the embedded build timestamp, so two renders agree on that one field. |
 | `make docker-render` (zzcollab) | Renders inside the pinned container and stamps the provenance footer (habit 6). |
 | Five landmines | Installing at render time; `pacman::p_load()`; an absolute host path; hidden cross-chunk state; reading an uncommitted file. |

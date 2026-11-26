@@ -78,8 +78,8 @@ answer:**
   limits of that record as evidence?
 - Can you perform the everyday git operations at the
   shell, staging and committing, reading the log and the
-  diff, and writing an archetype-appropriate
-  `.gitignore`?
+  diff, and writing a `.gitignore` suited to what the
+  project produces?
 - Can you state what must never be committed in health
   research, and explain why deleting such a file in a
   later commit does not remove it from the history?
@@ -161,6 +161,7 @@ everything else. That is the subject of the section on
 
 ```{r}
 #| label: fig-stack-version-control
+#| echo: false
 #| fig-cap: 'The determinant stack of @sec-levels, with the analysis-code layer marked as captured here. Version control is what first pins the code, lifting it from unlocatable to L0; the input-data layer immediately below is left unhighlighted on purpose, because this chapter spends as much effort keeping some data out of the history as it spends getting the code into it.'
 #| fig-alt: !expr determinant_stack_alt(captures = c('Analysis code'))
 #| fig-width: 7
@@ -339,9 +340,9 @@ collected here for reference.
   the history.
 - **Branch.** A movable name for a line of
   development. The default branch is conventionally
-  called `main`, although git itself still names it
-  `master` unless told otherwise, as with
-  `git init -b main`.
+  called `main`. Git 2.x still names it `master` unless
+  told otherwise, as with `git init -b main`; the
+  planned Git 3.0 changes that default to `main`.
 - **Remote.** A copy of the repository hosted
   elsewhere, typically on GitHub or GitLab, used for
   backup, distribution, and collaboration. `origin` is
@@ -443,7 +444,10 @@ git init -b main
 The `-b main` names the first branch `main`; without it,
 git as of version 2.56 names it `master`, and the
 `git push -u origin main` commands later in this chapter
-would then fail. The git preflight of the setup page
+would then fail. Git 3.0 is planned to make `main` the
+default, but it had no release date as of 26 November
+2026 (<https://git-scm.com/docs/BreakingChanges>), and
+`-b main` works under both. The git preflight of the setup page
 ([Git preflight](setup-appendix.qmd#sec-git-preflight)) sets `main` as the default once per
 machine, together with the name and e-mail address every
 commit records. It is worth running before this chapter's
@@ -460,7 +464,9 @@ alone does not determine it. The commit object references
 the snapshot, folds in the metadata, and records the hash
 of the commit before it. (Git also supports repositories
 that use the longer SHA-256 hash of sixty-four
-characters, though SHA-1 remains the default.) Because
+characters. SHA-1 remains the default in git 2.x; the
+planned Git 3.0 makes SHA-256 the default for new
+repositories.) Because
 each commit's hash incorporates its parent's, the history
 is a chain. No past entry can be altered without changing
 its hash and the hash of every commit after it. The
@@ -473,14 +479,30 @@ clone, can detect that the history leading to it was
 later changed.
 
 But how much evidence is tamper-evidence? It is weaker
-than it sounds, and anyone headed for regulated work
-should know exactly how much weaker. The
-author's name and e-mail address, and both dates a commit
-carries, are whatever the committer's own git client
-supplies. Setting `GIT_AUTHOR_DATE` and
-`GIT_COMMITTER_DATE` and passing `--author` produces a
-commit under another person's name dated years in the
-past, which git accepts without complaint.
+than it sounds. The author's name and e-mail address, and
+both dates a commit carries, are whatever the committer's
+own git client supplies. History is also rewritable by
+design. `git commit --amend`, `git rebase`, and
+`git filter-repo` all replace commits with new ones, and
+in a repository the analyst controls nothing prevents it.
+The hash chain detects a rewrite only for someone holding
+an earlier hash to compare against. Within those limits,
+a well-kept history is an honest and very useful record
+of how an analysis was built. The rest of this chapter
+treats it as that.
+
+::: {.callout-note icon=false collapse=true}
+## For regulated work
+
+A reader whose analysis falls under a regulated quality
+system, such as a clinical trial, can skip this box on a
+first reading and return to it before the work is audited.
+
+**Identity and dates are asserted, not proven.** Setting
+`GIT_AUTHOR_DATE` and `GIT_COMMITTER_DATE` and passing
+`--author` produces a commit under another person's name
+dated years in the past, which git accepts without
+complaint.
 
 ```bash
 GIT_AUTHOR_DATE='2019-03-01T09:00:00' \
@@ -489,24 +511,32 @@ GIT_COMMITTER_DATE='2019-03-01T09:00:00' \
     -m 'Backdated commit'
 ```
 
-History is also rewritable by design. `git commit
---amend`, `git rebase`, and `git filter-repo` all replace
-commits with new ones, and in a repository the analyst
-controls nothing prevents it. The hash chain detects a
-rewrite only for someone holding an earlier hash to
-compare against. Assurance is added from outside the
-commit. One source is commits signed with a key bound to
-a verified identity. Another is a forge configured to
-protect the main branch against force-pushes and to log
-pushes, reviews, and merges on its own servers with its
-own clock. Even then, a git history is not, by itself,
-the audit trail that FDA's regulations require of
-electronic records in the studies they cover. That trail
-must be secure, computer-generated, and time-stamped, and must record
-operator actions independently [@cfr21part11]. Within
-those limits, a well-kept history is an honest and very
-useful record of how an analysis was built. The rest of
-this chapter treats it as that.
+**Assurance comes from outside the commit.** One source is
+commits signed with a key bound to a verified identity.
+Another is a forge configured to protect the main branch
+against force-pushes and to log pushes, reviews, and
+merges on its own servers with its own clock.
+
+**A history is not a Part 11 audit trail.** Even with
+both, a git history is not, by itself, the audit trail
+that FDA's regulations require of electronic records in
+the studies they cover. That trail must be secure,
+computer-generated, and time-stamped, and must record
+operator actions independently. Its changes 'shall not
+obscure previously recorded information'
+[@cfr21part11, sec. 11.10(e)], which is why a history
+rewrite in such a repository is a controlled change
+(step 3 of the incident procedure below).
+
+**A pull-request approval is not a signature.** The
+review record a forge keeps for a pull request is review
+evidence. By default it does not carry the printed name,
+the date and time, and the meaning of the signature that
+21 CFR 11.50(a) requires of a signed electronic record
+[@cfr21part11]. Whether it counts as a controlled approval
+depends on the organization's validated configuration of
+the forge and on its SOPs.
+:::
 
 The third idea is the **history** itself, the chain of
 commits, each pointing back to its parent, running from
@@ -537,6 +567,20 @@ git add analysis.R
 # record the staged change with a message
 git commit -m "Add Cox model for 30-day readmission"
 ```
+
+The same cycle is available without a terminal. RStudio's
+Git pane stages, commits, pushes, and pulls; *Happy Git*
+walks through it in 'Connect RStudio to Git and GitHub'
+(<https://happygitwithr.com/rstudio-git-github.html>).
+Positron's Source Control view does the same
+(<https://positron.posit.co/git.html>). GitHub Desktop, for
+Windows and macOS, commits and pushes from a separate
+application
+(<https://docs.github.com/en/desktop/overview/about-github-desktop>).
+Each is a view onto the model described here. This chapter
+uses the command line because it is the same on every
+machine and is what a continuous-integration runner
+executes.
 
 The message is the part of a commit that carries the
 scientific value. The convention, which merits adoption
@@ -664,6 +708,7 @@ history without any real project's contents.
 
 ```{r}
 #| label: tbl-audit-trail
+#| echo: false
 #| tbl-cap: 'A synthetic commit history for the first weeks of a cohort analysis, read as a record of decisions. Each row is one atomic, message-bearing commit; together they record not only what changed but, in the message, why. Note the reviewer-driven change to the outlier threshold, the kind of decision an auditor is entitled to trace.'
 
 library(tibble)
@@ -746,7 +791,18 @@ clutter the history. Rendered outputs (a compiled PDF, an
 `.html` report, the figures a script regenerates on every
 run) are the clearest case. Committing them couples the
 history to products that the code already determines.
-Large raw data files bloat every clone. Editor and
+Large raw data files bloat every clone, and GitHub blocks
+any file over 100 MiB [@githublargefiles]. Large data
+belong outside git, with their location and checksum
+recorded (@sec-archiving). Git LFS keeps only a small
+pointer file in the repository and stores the content
+elsewhere
+(<https://docs.github.com/en/repositories/working-with-files/managing-large-files/about-git-large-file-storage>);
+it moves large files, but it does not make restricted data
+safe to push. On Windows, line endings need one setting
+before the first commit: step 5 of the
+[Git preflight](setup-appendix.qmd#sec-git-preflight).
+Editor and
 operating-system cruft (`.Rhistory`, `.DS_Store`,
 `.Rproj.user/`) is pure noise. None of these is
 dangerous; all of them are better ignored.
@@ -768,7 +824,14 @@ kinds dominate.
   contents of a `.Renviron` holding a secret, private
   keys: a credential committed to a repository, and
   worse pushed to a remote, is a credential to be
-  treated as compromised.
+  treated as compromised. GitHub's push protection for
+  users is on by default and blocks a push of a
+  recognized secret to a public repository
+  (<https://docs.github.com/en/code-security/secret-scanning/introduction/about-push-protection>).
+  For other repositories it is off until an
+  administrator enables it. It matches known secret
+  formats, such as a provider's token, not patient data,
+  so it supplements `.gitignore` and does not replace it.
 - **Restricted or embargoed data** more generally, under
   a data-use agreement that forbids redistribution, even
   when not directly identifying.
@@ -854,11 +917,9 @@ last step.
    it, open a deviation or incident, obtain QA approval
    under the organization's SOPs, document what is being
    removed and why, and keep whatever record of the
-   pre-rewrite state the quality system requires. The
-   audit-trail provision of 21 CFR Part 11 states that
-   'Record changes shall not obscure previously recorded
-   information' [@cfr21part11, sec. 11.10(e)]. A rewrite
-   obscures that information by design, which is why the
+   pre-rewrite state the quality system requires. A
+   rewrite obscures previously recorded information by
+   design (see 'For regulated work' above), so the
    deviation record must carry what the history no longer
    does. Better still,
    keep regulated records out of a rewritable forge in
@@ -885,13 +946,13 @@ been cleaned; the rewrite reaches only the copies it is
 run on and pushed to.
 
 A `.gitignore` is a small file, and its content depends
-on the archetype of the compendium, a classification the
-next chapter, @sec-compendium, develops in full. For now
-two archetypes suffice: a data-analysis compendium, whose
-deliverable is a set of results from data, and an
-R-package compendium, whose deliverable is reusable
-code. The reproducibility machinery is identical
-across archetypes; the list of files to ignore is not. A
+on what the project produces. The next chapter,
+@sec-compendium, sorts projects into types, which it
+calls *archetypes*; here two kinds suffice. A
+data-analysis project delivers a set of results from
+data, and an R-package project delivers reusable code.
+The reproducibility machinery is identical for both; the
+list of files to ignore is not. A
 **data-analysis compendium** ignores its *derived outputs
 and its raw data*. These are the regenerable tables and
 figures, and the large or sensitive registry extract that
@@ -901,8 +962,8 @@ must ignore its *build artifacts*. These are the
 `.Rcheck` directory, the built `.tar.gz` and binary
 archives, and the `src/` object files a compiled package
 leaves behind. The two `.gitignore` files barely
-overlap, and writing the right one is part of naming the
-archetype.
+overlap, and writing the right one is part of naming what
+the project is.
 
 ```bash
 # .gitignore for a data-analysis compendium
@@ -962,7 +1023,12 @@ re-includes a pattern otherwise ignored. This is how one
 ignores a whole data directory but keeps a small,
 non-sensitive example file or a data dictionary under
 version control (`analysis/data/raw_data/*` followed by
-`!analysis/data/raw_data/data_dictionary.csv`). Second,
+`!analysis/data/raw_data/data_dictionary.csv`). The
+directory pattern must end in `/*`, not `/`. In a scratch
+repository, `raw_data/` followed by the `!` line left the
+dictionary ignored, because git does not re-include a file
+whose parent directory is excluded; `raw_data/*` let it
+back in. Second,
 a committed-by-accident file, once added to `.gitignore`,
 is still tracked until explicitly untracked with `git rm
 --cached`. Ignoring a file does not retroactively remove
@@ -1176,6 +1242,7 @@ diagram changes when the branch is created or merged.
 
 ```{r}
 #| label: fig-branch
+#| echo: false
 #| fig-cap: 'A branch and its merge, drawn as the commit graph git actually stores. The lower line is `main`; the upper line is a sensitivity-analysis branch created at commit B and merged back at M. Commits A through C exist once and are shared by both lines: the branch adds commits rather than copying them. The merge commit M is the only commit in the diagram with two parents, which is what records that the two lines rejoined and when.'
 #| fig-alt: 'A commit graph with two horizontal rows of circles joined by lines, with time running left to right. The lower row, labeled main, runs A, B, C, then the merge commit M, then D. The upper row, labeled a sensitivity-analysis branch, holds two commits S1 and S2. A line rises from B to S1, marking the branch point, and a line descends from S2 to M, the merge. M is annotated as the only commit with two parents. Commits A, B, and C lie on the shared portion of the graph rather than being copied onto the branch.'
 #| fig-width: 7
@@ -1289,9 +1356,10 @@ git reset --hard HEAD~1
 # the undone commit's edits are discarded entirely
 ```
 
-A reset, like the `amend` and `rebase` discussed earlier
-in this chapter, is a rewrite of what the branch name
-points to, not an addition to history. The same caution
+A reset, like `git commit --amend` and `git rebase`, which
+also replace commits (named in the git-model section), is
+a rewrite of what the branch name points to, not an
+addition to history. The same caution
 applies. A reset is harmless on commits that exist only
 in the analyst's own clone. It is a serious act, needing
 the collaborators' agreement and a force-push, once those
@@ -1303,9 +1371,8 @@ so `git reset --hard <that-hash>` restores them. The
 reflog records only commits, however. Edits that were
 never committed are not in it, and `--hard` overwrites
 them in the working tree. Unstaged edits are then gone
-permanently; staged ones survive only as unnamed objects
-that `git fsck --lost-found` can sometimes recover, file
-by file and without their names. Before any
+permanently. Staged ones may be partly recoverable; ask
+for help before doing anything else. Before any
 `--hard`, therefore, read `git status`, and commit or
 `git stash` whatever uncommitted work should survive.
 
@@ -1492,15 +1559,10 @@ Its record, who proposed what, who reviewed it, what was
 said, and when it was merged, is held on the forge's
 servers rather than asserted by a client. It therefore
 complements the commit history with a record of the
-*review* of each change that is harder to backdate. That
-record is review evidence, not by itself a regulated
-signature. An approval on a forge does not, by default,
-carry the printed name, the date and time, and the
-meaning of the signature that 21 CFR 11.50(a) requires
-of a signed electronic record [@cfr21part11]. Whether it
-counts as a controlled approval depends on the
-organization's validated configuration of the forge and
-on its SOPs.
+*review* of each change that is harder to backdate. It
+is review evidence, not by itself a regulated signature;
+the 'For regulated work' box in the git-model section
+gives the difference.
 
 The same gate serves when the contributor is a coding agent.
 The agent works on a branch of its own and opens a pull
@@ -1716,8 +1778,9 @@ untracked folder to a tagged, remotely hosted repository.
 We stay at the level of the commands and the judgment
 behind them. The shell sessions below are not executed when
 the book renders. The outputs shown with `#>` were captured
-once, on 2026-11-08, from a scratch copy of the example with a
-synthetic identity, and are abridged.
+on 2026-11-08 (the `.gitignore` check on 2026-11-26) from a
+scratch copy of the example with a synthetic identity, and
+are abridged.
 
 The analyst begins with a folder of scripts and a registry
 extract. The very first act, before a single commit, is to
@@ -1740,7 +1803,7 @@ the extract before the `.gitignore` is written and omits it
 after, and `git check-ignore -v` names the rule responsible.
 
 ```bash
-# output abridged, from git 2.56.0
+# output abridged, from git 2.56.1, run 2026-11-26
 # before .gitignore
 git status --untracked-files=all
 #> Untracked files:
@@ -1756,7 +1819,7 @@ git status --untracked-files=all
 #>   analysis/scripts/01-clean.R
 
 git check-ignore -v analysis/data/raw_data/extract.csv
-#> .gitignore:1:analysis/data/raw_data/  analysis/data/raw_data/extract.csv
+#> .gitignore:1:analysis/data/raw_data/*  analysis/data/raw_data/extract.csv
 ```
 
 Only once `git status` confirms that the sensitive extract
@@ -1940,7 +2003,7 @@ yours to supply.
 
 *A better prompt.* 'Below is the directory tree of my R
 analysis compendium, file names only, with no file opened.
-Write a `.gitignore` that excludes `analysis/data/raw_data/`,
+Write a `.gitignore` that excludes `analysis/data/raw_data/*`,
 `.Renviron` and any other credential file, and regenerable
 outputs, but keeps the code, `renv.lock`, and the synthetic
 cohort tracked. Label each line generic or project-specific,
@@ -1981,7 +2044,8 @@ description into an accountable record.
 3. Write a `.gitignore` for a data-analysis compendium and a
    second for an R-package compendium, and list the patterns
    that appear in one but not the other. Explain each
-   difference in terms of what the archetype produces.
+   difference in terms of what each kind of project
+   produces.
 
 4. Explain, to a colleague who has just deleted a
    PHI-containing file in a new commit and believes the
@@ -2258,15 +2322,11 @@ The compressed version of the answer: the commit history
 answers 'what changed and why'; the pull request answers
 'who checked it, and did they agree'. A direct push to
 `main` answers only the first, and in a multi-site trial
-the second question has auditors too. In a regulated
-trial, the approval is review evidence rather than, by
-itself, a signed record carrying the printed name, the
-date and time, and the meaning that 21 CFR 11.50(a)
-requires; whether it serves as one depends on the sponsor's
-validated configuration and SOPs. The analysis change
-behind the commit is itself approved through the
-sponsor's own process, here an amendment to the
-statistical analysis plan, not through the pull request.
+the second question has auditors too. In a trial, the
+analysis change behind the commit is itself approved
+through the sponsor's own process, here an amendment to
+the statistical analysis plan, not through the pull
+request.
 :::
 
 ::: {.callout-note icon=false collapse=true}

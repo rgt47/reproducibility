@@ -16,7 +16,7 @@ on Reproducibility* (2016)
 :::
 
 By the end of this chapter you will be able to look at a
-re-execution failure like the auditor's below and say,
+re-execution failure like the thesis analysis below and say,
 concretely, whether the fault is statistical or
 computational. You will also be able to name the
 specific silent default most likely responsible, and to
@@ -72,8 +72,8 @@ answer:**
 
 **Outline.**
 
-- Orientation: an auditor's regenerated analysis that
-  moved in the third decimal place.
+- Orientation: a thesis analysis, re-run for a reviewer,
+  whose estimate moved.
 - Where this sits on the stack: which layers this
   chapter diagnoses.
 - The analyst's contribution: three judgments no tool
@@ -93,66 +93,30 @@ answer:**
   in `load_cohort()`.
 :::
 
-::: {.callout-note icon=false collapse=true}
-## Check your understanding: from earlier chapters
-
-A colleague re-runs a cohort script deposited in 2019,
-written under R 3.6, on a laptop with a current release of
-R. The script finishes without error, but `read.csv()` now
-returns `sex` as a character column where the original run
-had a factor. The colleague reports that the finding 'did
-not replicate'. Using @sec-intro, is 'replicate' the right
-word? Which layer of the determinant stack is at fault, and
-which tool would have pinned it?
-
-::: {.callout-note icon=false collapse=true}
-## Answer
-
-'Replicate' is the wrong word for the failed re-run of the
-2019 cohort script. In the National Academies' terms that
-@sec-intro adopts, re-running the same code on the same data
-tests reproducibility; replicability asks whether a finding
-holds in a new study with its own data. The character column
-is the R 4.0.0 change of the `stringsAsFactors` default from
-`TRUE` to `FALSE`. The fault therefore lies in the language
-runtime, R itself, and not in the statistics. A lockfile from
-`renv` would not have closed it, because `renv` pins package
-versions and this change is in R. A container built from a
-Rocker image would have, since it pins the operating system
-and the runtime, the rung the book calls L2, pinned
-environment. Continuous integration on a clean machine would
-then confirm that the pinned layers suffice.
-:::
-:::
-
 ## Orientation
 
-Consider a situation that every
-quantitative health scientist eventually meets. A
-biostatistician on a clinical-trial team runs the primary
-analysis and obtains the treatment effect and its
-confidence interval. The biostatistician exports the
-table that will anchor the regulatory submission and
-files the script. Two years later, during an audit, an
-inspector asks that the analysis be regenerated from the
-archived code and data. On a fresh machine the script
-errors on the first `library()` call. Once the missing
-package is located and installed, the analysis runs. The
-point estimate has moved in the third decimal place,
-however, and one confidence interval no longer excludes
-the null. Nothing in the statistical reasoning was wrong.
-What failed was everything around the statistics: a
-package that changed beneath the code, a default that
-shifted between releases of R, a system library
-present on the first machine and absent on the
-second.
+Consider a situation that many graduate students meet.
+A doctoral student fits the main model of a thesis
+chapter, submits the chapter to a journal, and moves on.
+A year later the reviewers ask for one additional
+sensitivity analysis. On the student's new laptop the
+script errors on the first `library()` call. Once the
+missing package is located and installed, the analysis
+runs, but the hazard ratio in the main table has moved
+from 1.32 to 1.29 and its interval is slightly wider. The
+student cannot say which number the submitted paper
+should report, or why they differ. Nothing in the
+statistical reasoning was wrong. What failed was
+everything around the statistics: a package that changed
+beneath the code, a default that shifted between releases
+of R, a system library present on the first machine and
+absent on the second.
 
 This book exists to prevent that failure, and in this
 chapter we shall establish that the failure is real,
-common, and specifically computational. In a health
-science, a result that cannot be regenerated cannot be
-audited. An analysis that a regulator cannot reproduce is
-one a regulator may decline to trust. A clinical
+common, and specifically computational. A result that
+cannot be regenerated cannot be checked, whether by a
+reviewer, a thesis committee, or a regulator. A clinical
 recommendation built on a number that no one can
 recompute rests on faith rather than evidence.
 
@@ -168,7 +132,7 @@ runtime, and the system libraries are fixed as well,
 usually inside a container. It is L3, verified, when
 the recorded computational outputs have been shown to
 regenerate within a stated tolerance from a clean
-rebuild, checked by a baseline test. The auditor's failure
+rebuild, checked by a baseline test. The student's failure
 above is the failure of an analysis that reached, at
 best, L0: the code could be found, and nothing else
 about the computation had been fixed. The ladder is
@@ -192,7 +156,7 @@ loading function.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: naming the rung
 
-The auditor's script ran, after installing a missing
+The thesis script ran, after installing a missing
 package, but returned a moved estimate. Using only the
 L0-L3 vocabulary introduced above, what is the most that
 can honestly be said about the rung this analysis had
@@ -365,12 +329,13 @@ wrong.
 :::
 
 We begin with the large replication studies, because
-they set the scale of the problem. We then turn to the
-narrower and, for our purposes, more damning studies that
+they set the scale of the problem and are the context in
+which the word 'crisis' arose. We then turn to the
+narrower and, for our purposes, more telling studies that
 isolate the computational failures.
 
 In psychology, the Open Science Collaboration
-re-ran one hundred published studies. Its teams judged
+conducted replications of one hundred published studies. Its teams judged
 the original finding replicated in only thirty-nine of
 them, and only thirty-six percent of the replications
 reached statistical significance
@@ -405,7 +370,11 @@ majority agreed that science was facing a
 reproducibility crisis. More than seventy percent
 reported that they had tried and failed to
 reproduce another scientist's experiments
-[@baker2016].
+[@baker2016]. By the article's own account, the online
+survey probably attracted respondents already concerned
+about the issue, so its figures
+describe those who answered rather than researchers in
+general.
 
 These are, for the most part, failures of
 replication, at the scientific end of a spectrum we
@@ -420,12 +389,14 @@ re-ran more than nine thousand R files deposited
 alongside published articles in the Harvard Dataverse.
 Roughly one in four executed without
 error, before any question of whether the output
-matched the published result [@trisovic2022]. Saju and
+matched the published result. Automated code cleaning
+raised that share to about 44 percent, which shows how
+much of the failure is mechanical [@trisovic2022]. Saju and
 colleagues examined R code supplements archived on
 the Open Science Framework. Only about a quarter of the
 R scripts ran without error, even in environments the
 authors rebuilt, and only one project in six ran in
-full. Close to ninety-nine percent of the projects
+full. About 99 percent of the projects
 carried no formal description of their dependencies at
 all [@saju2025].
 
@@ -459,6 +430,16 @@ analyses cannot be regenerated even in principle. The
 reason is that the computational scaffolding needed to
 run them was never captured. The tooling in this book
 addresses the second failure.
+
+The two failures are not independent, and this is why the
+replication studies matter to a book about re-execution.
+When a replication fails, the first question is what the
+original analysis actually did. A field that cannot
+re-execute its own analyses cannot answer that question,
+and so cannot tell a fragile finding from a mislabeled
+group or a shifted default. Reproducibility does not
+settle whether a finding holds, but it is what makes a
+failed replication diagnosable.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: two kinds of failure
@@ -494,13 +475,13 @@ replication is warranted.
 Before proceeding we need to fix our terms. The
 vocabulary of this field is genuinely contested, and a
 reader who does not fix it will be confused by the
-literature. Goodman and colleagues surveyed the usage and
-found that the same words carry opposite meanings in
-different research communities: one field's
-'reproducibility' is another field's 'replication'
-[@goodman2016]. We adopt the distinctions of the National
-Academies, whose 2019 consensus report offers the
-settlement most widely followed in the health sciences
+literature. Goodman and colleagues reviewed the explicit
+and implicit definitions in use and found the terminology
+nonstandard and unsettled across the sciences, so that
+the same words can carry conflicting meanings in
+different fields [@goodman2016]. We adopt the
+distinctions of the National Academies, whose 2019
+consensus report offers a widely cited settlement
 [@nas2019].
 
 *Reproducibility* is obtaining consistent
@@ -671,7 +652,11 @@ that requires a factor [@rcoreteam2020]. Neither
 change was a bug; both were deliberate improvements.
 Both would nonetheless break the exact reproduction of
 an analysis written under the old default, and neither
-would say a word.
+would say a word. Nothing here is peculiar to R. In
+Python 3.0, dividing one integer by another stopped
+rounding down and began returning a fraction. Stata's
+manual asks every do-file to declare its `version`, so
+that later releases read it as written.
 
 To these language-level shifts we must add the
 steadier erosion of package churn, the phenomenon by
@@ -1150,6 +1135,38 @@ not a substitute for pinning the runtime itself.
 :::
 :::
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the chapter as a whole
+
+A colleague re-runs a cohort script deposited in 2019,
+written under R 3.6, on a laptop with a current release of
+R. The script finishes without error, but `read.csv()` now
+returns `sex` as a character column where the original run
+had a factor. The colleague reports that the finding 'did
+not replicate'. Is 'replicate' the right word? Which layer
+of the determinant stack is at fault, and which rung of
+the ladder would have pinned it?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+'Replicate' is the wrong word for the failed re-run of the
+2019 cohort script. In the National Academies' terms that
+this chapter adopts, re-running the same code on the same
+data tests reproducibility; replicability asks whether a
+finding holds in a new study with its own data. The
+character column is the R 4.0.0 change of the
+`stringsAsFactors` default from `TRUE` to `FALSE`. The fault
+therefore lies in the R runtime, and not in the statistics.
+A lockfile at L1 would not have closed it, because a
+lockfile records package versions and this change is in R
+itself. L2, pinned environment, would have, since it fixes
+the R release; @sec-containers shows how. The code-level
+fix of 'The cohort, continued' closes this one default
+without pinning the runtime.
+:::
+:::
+
 ## Collaborating with an LLM
 
 We turn finally to the use of a large language model as
@@ -1157,6 +1174,19 @@ an assistant. A model is a capable assistant for the
 material of this chapter, provided the analyst treats its
 output as a draft to be verified rather than an authority
 to be trusted.
+
+That output is also, in this chapter's sense, not
+reproducible. Unlike a package version, a model's output
+is not a fixed artifact. Model behavior drifts across
+versions, and providers retire and replace model
+identifiers over time. Even repeated calls to one
+unchanged version are not guaranteed to return identical
+output. The text a model produced in January may
+therefore not be the text it would produce from the same
+prompt in June, or even twice in the same afternoon. A
+model can help write an analysis, but whatever it
+contributed has to be kept, and checked, as a file in the
+compendium.
 
 {{< include _llm-rule.qmd >}}
 
@@ -1300,15 +1330,8 @@ A statement that says only 'written with AI assistance'
 gives a future reader no way to audit what was used. Give
 the identifier exactly as the interface or the API
 reported it, as 'R 4.4.1, glmnet 4.1-8' gives a package,
-not an approximate version. Unlike a package version,
-however, a model's output is not a fixed, reproducible
-artifact. Model behavior drifts across versions, and
-providers retire and replace model identifiers over time.
-Even repeated calls to one unchanged version are not
-guaranteed to return identical output. The text a model
-produced in January may therefore not be the text it
-would produce from the same prompt in June, or even twice
-in the same afternoon. The identifier narrows the search,
+not an approximate version. Since a model's output is not
+a fixed artifact, the identifier only narrows the search,
 the way a `sessionInfo()` snapshot narrows an R version
 mismatch, but it cannot regenerate the text. Keep the
 prompts, and the transcripts where the interface allows,
@@ -1546,9 +1569,9 @@ shows. For a blog, the pinned package versions, since
 posts are written once and read for years while the
 packages beneath them move.
 
-If you answered 'the data' for every archetype, you have
-not made an error so much as missed the exercise, which
-is to notice that the binding constraint moves.
+If you answered 'the data' for every archetype, look
+again: the exercise asks where the binding constraint
+moves from one archetype to the next.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1610,13 +1633,14 @@ real. Its whole claim is that a large fraction of
 deposited analyses cannot be re-executed, and that is a
 problem soluble by engineering rather than by more
 studies. The Open Science Collaboration measures a
-problem this book does not address and cannot fix.
+problem this book does not address directly.
 
-The stronger version of the answer notes that the two are
-not independent in practice. A field that cannot
-re-execute its own analyses cannot easily diagnose why a
-replication failed, because it cannot establish what the
-original analysis actually did.
+A stronger answer adds the point the chapter makes after
+the re-execution studies: the two are not independent in
+practice. A field that cannot re-execute its own analyses
+cannot easily diagnose why a replication failed, because
+it cannot establish what the original analysis actually
+did.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1709,10 +1733,10 @@ cost rather than a plan.
   and repays reading in full for the
   care with which it separates them.
 
-- Goodman and colleagues [@goodman2016] document the
-  terminological confusion directly and propose a
-  cleaner lexicon; read it to understand why the same
-  words mean opposite things across fields.
+- Goodman and colleagues [@goodman2016] review the
+  competing definitions of reproducibility and its
+  related terms; read it to understand why the same
+  words carry conflicting meanings across fields.
 
 - Peng's short article [@peng2011], together with his
   earlier treatment [@peng2006], is the origin of the
