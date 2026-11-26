@@ -9,42 +9,48 @@ Every part and chapter of the book on one page, in reading order.
 
 - [Copyright](copyright.qmd)
 - [Preface](preface.qmd)
-- [Conventions](conventions.qmd)
 - [1 Introduction: reproducibility as a computational problem](00-intro.qmd)
+- [Conventions](conventions.qmd)
 
 ## Part I. Foundations {.unnumbered}
 
 - [2 The Reproducibility Crisis](01-reproducibility-crisis.qmd)
 - [3 Levels of Reproducibility](02-levels-of-reproducibility.qmd)
+
+## Part II. Getting Set Up {.unnumbered}
+
+- [Shell Primer](shell-primer.qmd)
+- [Setting Up Your Machine](setup-appendix.qmd)
+
+## Part III. Organizing the Work {.unnumbered}
+
 - [4 Version Control with Git and GitHub](version-control.qmd)
 - [5 The Research Compendium](03-research-compendium.qmd)
 
-## Part II. Capturing the Environment {.unnumbered}
+## Part IV. Capturing the Environment {.unnumbered}
 
 - [6 Pinning Packages with renv](04-dependencies.qmd)
 - [7 Pinning the Environment with Docker](05-containers.qmd)
-- [8 Backends and Runtimes: Nix, Podman, and
-  Apptainer](06-backends-runtimes.qmd)
 
-## Part III. Validation {.unnumbered}
+## Part V. Validation {.unnumbered}
 
-- [9 Literate Programming and the Rendered
+- [8 Literate Programming and the Rendered
   Report](07-literate-programming.qmd)
-- [10 Automating the Analysis: Make and targets](pipelines.qmd)
-- [11 Testing and Code Quality](08-testing-quality.qmd)
-- [12 Continuous Integration and
+- [9 Automating the Analysis: Make and targets](pipelines.qmd)
+- [10 Testing and Code Quality](08-testing-quality.qmd)
+- [11 Continuous Integration and
   Verification](09-continuous-integration.qmd)
 
-## Part IV. Collaboration and Stewardship {.unnumbered}
+## Part VI. Collaboration and Stewardship {.unnumbered}
 
-- [13 Collaboration, Archiving, and Stewardship](10-archiving-sharing.qmd)
+- [12 Collaboration, Archiving, and Stewardship](10-archiving-sharing.qmd)
 
 ## References and Appendices {.unnumbered}
 
-- [14 Where to Begin](11-closing.qmd)
+- [13 Where to Begin](11-closing.qmd)
 - [References](references.qmd)
-- [Shell Primer](shell-primer.qmd)
-- [Setup Appendix: Docker and Git on Your Own Machine](setup-appendix.qmd)
+- [A Backends and Runtimes: Nix, Podman, and
+  Apptainer](06-backends-runtimes.qmd)
 - [Cheat-Sheet Index](cheat-sheet-index.qmd)
 - [Glossary](glossary.qmd)
 - [Credits](credits.qmd)

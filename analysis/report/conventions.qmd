@@ -206,17 +206,18 @@ a reader working alone, can take the whole book in order.
 | Introduction | Core |
 | The Reproducibility Crisis | Core |
 | Levels of Reproducibility | Core |
+| Shell Primer and Setting Up Your Machine | Core for a reader new to the terminal; otherwise reference |
 | Version Control with Git and GitHub | Core |
 | The Research Compendium | Core |
 | Pinning Packages with renv | Core |
 | Pinning the Environment with Docker | Core |
-| Backends and Runtimes: Nix, Podman, and Apptainer | Optional |
 | Literate Programming and the Rendered Report | Core |
 | Automating the Analysis: Make and targets | Core for the Make section; `targets`, Snakemake, Nextflow, and workflowr are optional |
 | Testing and Code Quality | Core |
 | Continuous Integration and Verification | Core |
 | Collaboration, Archiving, and Stewardship | Core |
 | Where to Begin | Core |
+| Appendix: Backends and Runtimes (Nix, Podman, Apptainer) | Optional |
 
 ## Cross-references
 

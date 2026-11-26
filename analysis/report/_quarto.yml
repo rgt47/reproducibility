@@ -48,13 +48,21 @@ book:
     - index.qmd
     - contents.qmd
     - preface.qmd
-    - conventions.qmd
     - 00-intro.qmd
+    - conventions.qmd
 
     - part: 'Foundations'
       chapters:
         - 01-reproducibility-crisis.qmd
         - 02-levels-of-reproducibility.qmd
+
+    - part: 'Getting Set Up'
+      chapters:
+        - shell-primer.qmd
+        - setup-appendix.qmd
+
+    - part: 'Organizing the Work'
+      chapters:
         - version-control.qmd
         - 03-research-compendium.qmd
 
@@ -62,7 +70,6 @@ book:
       chapters:
         - 04-dependencies.qmd
         - 05-containers.qmd
-        - 06-backends-runtimes.qmd
 
     - part: 'Validation'
       chapters:
@@ -80,8 +87,7 @@ book:
     - references.qmd
 
   appendices:
-    - shell-primer.qmd
-    - setup-appendix.qmd
+    - 06-backends-runtimes.qmd
     - cheat-sheet-index.qmd
     - glossary.qmd
     - credits.qmd

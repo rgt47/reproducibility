@@ -40,7 +40,7 @@ capture-versus-validation distinction of Chapter 3
 (@sec-levels). This chapter's central claim, that a
 pipeline validates re-execution without capturing any new
 layer, is stated entirely in those terms. The sealed,
-reproducible render of Chapter 9 (@sec-literate). A
+reproducible render of @sec-literate. A
 pipeline is what a growing analysis needs once some of
 its computation has moved out of that single document and
 into scripts. Comfort writing an R function with explicit

@@ -1,13 +1,13 @@
-# Setup Appendix: Docker and Git on Your Own Machine {#sec-setup .unnumbered}
+# Setting Up Your Machine {#sec-setup .unnumbered}
 
 @sec-containers teaches what a container is and why pinning a
-base image by digest matters. This appendix is narrower and more
+base image by digest matters. This page is narrower and more
 mundane. Its subject is getting Docker itself to run at all, on
 the machines most readers actually sit down at, before any of
 that chapter's content applies. We take up Docker on `arm64`
 laptops, `--platform linux/amd64` emulation and its consequences,
 Windows and WSL2, and locked-down institutional laptops. We add no
-reproducibility theory here. The appendix is a checklist for the
+reproducibility theory here. The page is a checklist for the
 moment before the first `docker build` succeeds. Its last two
 sections do the same for git, which @sec-version-control needs
 earlier in the course: a preflight to run once per machine
@@ -162,7 +162,7 @@ worth asking for:
   infrastructure, not the laptop.
 
 - **A department-provided remote server or HPC login node,**
-  reached over SSH. @sec-backends's HPC worked example already
+  reached over SSH. The HPC worked example in @sec-backends already
   shows the companion half of this. Apptainer, not Docker, is the
   standard container runtime on a shared cluster, and it runs
   unprivileged. That is exactly the property that makes it
@@ -183,7 +183,8 @@ worth asking for:
   or substitute for. Expect licensing to be the first question:
   Docker Desktop is licensed software, and its free educational
   use does not cover a research group's shared work
-  (@sec-backends). Docker Engine on Linux or WSL2, or Podman,
+  (@sec-docker-alternatives). Docker Engine on Linux or WSL2,
+  or Podman,
   runs the same images without that license.
 
 ## Diagnosing a failed or unexpectedly slow build {#sec-setup-diagnose}
@@ -304,7 +305,7 @@ the step at length, with the RStudio detail this book omits.
 ## When git refuses {#sec-git-refuses}
 
 The messages in @tbl-git-refuses are quoted as git 2.56.0 printed
-them, on macOS, in scratch repositories built for this appendix
+them, on macOS, in scratch repositories built for this page
 on 2026-11-08, shortened where an ellipsis appears. Two rows are
 the exception and say so: their messages come from the forge,
 not from git, and were not reproduced. The table follows the

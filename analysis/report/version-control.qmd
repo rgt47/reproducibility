@@ -60,7 +60,7 @@ commands that make up most of this chapter are
 independent of R, and the two R chunks that appear are
 read for their output, not written by the reader. Git
 itself must be installed and configured; the preflight in
-the setup appendix ([Git preflight](setup-appendix.qmd#sec-git-preflight)) checks both in a
+the setup page ([Git preflight](setup-appendix.qmd#sec-git-preflight)) checks both in a
 few minutes. Every command here is typed in a terminal; a
 reader who has never opened one should read the
 [Shell Primer](shell-primer.qmd) first.
@@ -443,7 +443,7 @@ git init -b main
 The `-b main` names the first branch `main`; without it,
 git as of version 2.56 names it `master`, and the
 `git push -u origin main` commands later in this chapter
-would then fail. The git preflight of the setup appendix
+would then fail. The git preflight of the setup page
 ([Git preflight](setup-appendix.qmd#sec-git-preflight)) sets `main` as the default once per
 machine, together with the name and e-mail address every
 commit records. It is worth running before this chapter's
@@ -2397,7 +2397,7 @@ container rebuild was never designed to protect.
   substrate with the working analyst's concerns foremost.
   The longer online book by Bryan and colleagues, *Happy
   Git and GitHub for the useR* [@bryanhappygit], is the
-  companion practical manual. The setup appendix points to
+  companion practical manual. The setup page points to
   its chapters on installing git, identity, and
   credentials.
 - @wilson2017 and @sandve2013 place version control among

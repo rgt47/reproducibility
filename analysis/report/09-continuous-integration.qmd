@@ -39,7 +39,7 @@ to work.
 
 **Reading time.** About 80 minutes.
 
-**Prerequisites.** Chapter 11 (@sec-testing) supplies
+**Prerequisites.** @sec-testing supplies
 `tinytest`, the four kinds of test, and the baseline test
 this chapter's verification gate runs. Chapter 3
 (@sec-levels) supplies the L0-L3 ladder and the

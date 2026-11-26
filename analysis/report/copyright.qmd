@@ -27,9 +27,5 @@ To cite this book, please use:
 \clearpage
 \tableofcontents
 \clearpage
-\listoffigures
-\clearpage
-\listoftables
-\clearpage
 ```
 :::

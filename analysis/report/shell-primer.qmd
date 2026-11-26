@@ -3,7 +3,7 @@
 From @sec-version-control onward, most chapters of this book
 run commands at a shell prompt: `git commit`, `docker build`,
 `Rscript`, `quarto render`. The earlier chapters need little
-beyond R itself. This appendix supplies the shell for a reader
+beyond R itself. This primer supplies the shell for a reader
 who has never opened a terminal. It covers enough of the Unix
 shell to follow every command shown elsewhere in the book, in
 the order those commands are needed, with nothing beyond that
@@ -21,7 +21,7 @@ commands in this book assume a bash-compatible shell.
 - **macOS.** Open the Terminal application from Spotlight, or
   from the `Applications/Utilities` folder in the Finder
   (<https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac>).
-  Its default shell is zsh; the last section of this appendix
+  Its default shell is zsh; the last section of this primer
   covers the two differences that matter.
 - **Windows.** We recommend one shell: the Linux terminal of
   WSL2, which the Docker chapters need anyway
@@ -401,7 +401,7 @@ examples assume bash-compatible syntax throughout. On macOS in
 particular, Apple switched the default shell from bash to zsh
 in macOS Catalina (2019). A reader following this book on a
 current Mac is therefore, by default, typing these commands into
-zsh, not bash. The everyday commands in this appendix, `pwd`,
+zsh, not bash. The everyday commands in this primer, `pwd`,
 `ls`, `cd`, `cp`, `mv`, `rm`, redirection, pipes, `export`,
 `chmod`, behave the same in both, with one exception that a
 reader of this book will meet: a wildcard that matches nothing.

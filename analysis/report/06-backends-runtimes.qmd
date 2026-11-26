@@ -16,7 +16,7 @@ Scientific Containers for Mobility of Compute* (2017)
 ```
 :::
 
-By the end of this chapter you will be able to take any
+By the end of this appendix you will be able to take any
 of three situations and name the one alternative to
 Docker that fits, chosen by the constraint that actually
 binds. The situations are a job a cluster's scheduler
@@ -42,10 +42,10 @@ pkgload::load_all('../..', quiet = TRUE)
 
 **Prerequisites.** @sec-containers, for the Docker recipe,
 the digest pin, and the dated snapshot that every
-alternative in this chapter must match to count as reaching
+alternative in this appendix must match to count as reaching
 the same rung. Also @sec-levels, for the L0-L3 ladder and
 the capture-versus-validation vocabulary used throughout.
-This chapter is marked optional in the one-quarter core
+This appendix is optional in the one-quarter core
 path (see the [Conventions](conventions.qmd) page); a
 reader on that pace can skip it without losing the
 ladder itself, which @sec-containers alone already
@@ -53,7 +53,7 @@ secures. No new statistics are introduced. R
 knowledge assumed: calling a function with named arguments
 and reading a short shell command; no new R idiom appears.
 
-**Objectives.** By the end of this chapter, can you:
+**Objectives.** By the end of this appendix, can you:
 
 - explain why Docker is one route to the pinned-environment
   rung and not the only one?
@@ -126,7 +126,7 @@ so a stated tolerance is still needed.
 
 ## Where this sits on the stack
 
-This chapter captures nothing beyond what @sec-containers
+This appendix captures nothing beyond what @sec-containers
 already pinned. Its subject is reaching the identical rung
 by a different road. @fig-stack-backends marks the same
 two layers Docker's chapter captures, the operating system
@@ -136,7 +136,7 @@ service instead of a locally built Docker image.
 
 ```{r}
 #| label: fig-stack-backends
-#| fig-cap: 'The determinant stack of @sec-levels, with the operating system, system libraries, and R runtime marked as captured, the same two layers @sec-containers captures with Docker. This chapter reaches the identical pinned-environment rung, L2, by Podman, Apptainer, Nix, conda, or a remote service instead of a Docker build: the same rung, by a different route, not a new capability.'
+#| fig-cap: 'The determinant stack of @sec-levels, with the operating system, system libraries, and R runtime marked as captured, the same two layers @sec-containers captures with Docker. This appendix reaches the identical pinned-environment rung, L2, by Podman, Apptainer, Nix, conda, or a remote service instead of a Docker build: the same rung, by a different route, not a new capability.'
 #| fig-alt: !expr determinant_stack_alt(captures = c('Operating system, system libraries', 'R runtime'))
 #| fig-width: 7
 #| fig-height: 4.4
@@ -160,7 +160,7 @@ will be at a loss the first time Docker is unavailable,
 unwanted, or forbidden.
 
 Consider three health scientists who cannot simply follow
-the Docker recipe of the previous chapter. The first runs
+the Docker recipe of @sec-containers. The first runs
 a large simulation study that must execute on a shared
 university cluster, where the scheduler will not grant her
 the administrative privileges that Docker's standard,
@@ -171,7 +171,7 @@ awkwardly inside the Rocker images. The third has prepared
 a teaching blog and wants a reviewer to re-run a single
 post in a browser, installing nothing at all. Each needs
 the pinned environment that L2 names; none of them can
-obtain it in the ordinary Docker way. In this chapter we
+obtain it in the ordinary Docker way. In this appendix we
 shall see that the ladder does not depend on any one tool,
 and how to choose among the alternatives by the
 constraint at hand.
@@ -198,7 +198,7 @@ stated.
 
 ## The analyst's contribution
 
-No tool in this chapter chooses itself. Three judgments
+No tool in this appendix chooses itself. Three judgments
 remain the analyst's, and they are the substance of the
 chapter.
 
@@ -231,7 +231,7 @@ chapter.
    the claim.
 
 ::: {.callout-note}
-## The vocabulary of this chapter
+## The vocabulary of this appendix
 
 - **Runtime.** The program that runs a container image:
   Docker, Podman, or Apptainer. The runtime is
@@ -287,7 +287,7 @@ axis do not excuse the analyst from reporting the rung
 honestly. At best Nix reaches L2, the pinned environment,
 and only once the declaration has actually been run.
 'Fully reproducible' overstates it because no rebuild has
-been verified, which is this chapter's own honest-level
+been verified, which is this appendix's own honest-level
 warning in miniature.
 :::
 :::
@@ -326,26 +326,9 @@ The first is that, being daemonless and rootless, it runs
 on a multi-user Linux machine where an analyst has no
 administrative rights, a situation in which Docker's
 daemon is often simply unavailable. The second concerns
-licensing, and it catches many university users unawares.
-Docker Desktop, the packaged Docker distribution for macOS
-and Windows, is under its current terms not free for use
-by larger commercial and institutional organizations, and
-many universities fall within those terms. The
-subscription agreement, as last updated on 26 August
-2026, is narrower than the short summary on Docker's
-documentation site suggests [@dockerssa2026]. Free
-educational use is limited to individual members of an
-educational organization enrolled in a classroom
-learning environment, and it excludes several members of
-one department or research group using personal
-subscriptions for a shared project, which is the usual
-situation of a lab. Government entities, a definition
-that includes public education entities of a US state,
-may not use Docker Desktop without a paid subscription.
-A student in a research group at a public university
-should therefore ask the institution before relying on
-Docker Desktop, which is why many institutions either
-license it or avoid it. Podman carries no such
+licensing, which @sec-docker-alternatives sets out:
+Docker Desktop is licensed software, and its free terms do
+not cover every research setting. Podman carries no such
 restriction. For an analyst whose institution has
 declined to license Docker Desktop, Podman reaches the
 same L2 environment, from the same image, at no
@@ -596,7 +579,7 @@ the required packages are available there.
 ::: {.callout-important}
 ## The honest level
 
-This chapter describes as many as five routes to L2, the
+This appendix describes as many as five routes to L2, the
 pinned environment: Podman, Apptainer, Nix through `rix`,
 a Binder session, or a devcontainer. Describing a route
 is not taking it, and 'The cohort, continued' below
@@ -937,7 +920,7 @@ libraries directly, reaching L2 without any Dockerfile.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the open door
 
-Given the artifact check above, which of this chapter's
+Given the artifact check above, which of this appendix's
 three axes could lift the cohort compendium to L2 today,
 without waiting for any other chapter's work to land first?
 
@@ -1038,7 +1021,7 @@ the laptop and the cluster share.
 
 The three destinations used three tools, drawn from two of
 the three axes, and one image throughout. The pinning was
-done once, in @sec-containers; this chapter merely ran it
+done once, in @sec-containers; this appendix merely ran it
 in three places. Had the group instead chosen Nix from the outset,
 the image would have been replaced by a `default.nix`, and
 the laptop and cluster runs would have entered the
@@ -1196,7 +1179,7 @@ inside it.
 ## Collaborating with an LLM
 
 A language model is a capable assistant for the mechanics
-of this chapter and a poor judge of its trade-offs. The
+of this appendix and a poor judge of its trade-offs. The
 commands and recipes it helps with need no data, but they
 can name it, and the prompts should keep them from doing
 so.
@@ -1205,7 +1188,7 @@ so.
 
 Any host path that names a site, study, or participant
 should be replaced with a placeholder before a command
-is pasted. For the commands of this chapter, what a
+is pasted. For the commands of this appendix, what a
 coding agent can see runs through the bind mount:
 whatever `-v` or `--bind` names is visible to an agent
 that runs them. The following triples show where each
@@ -1510,7 +1493,7 @@ execution: Binder, if readers are to run the posts
 themselves. Its audience is on the web, and each post is
 small enough for a browser session. The render on every
 push is a separate matter, the continuous integration of
-@sec-verification, which is not one of this chapter's
+@sec-verification, which is not one of this appendix's
 three axes.
 
 **Why the pinning is nonetheless identical.** Both are

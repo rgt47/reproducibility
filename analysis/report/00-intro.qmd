@@ -319,27 +319,33 @@ unit of reproducible work, introduced in @sec-compendium.
 The book is written for a one-quarter, ten-week course.
 Not every chapter fits in ten weeks, and an instructor
 teaching on that schedule should expect to treat some
-material as optional. The four parts proceed as follows.
+material as optional. The parts proceed as follows.
 
-- **Part I, Foundations.** The reproducibility crisis and
-  its computational character (@sec-crisis); the levels of
+- **Foundations.** The reproducibility crisis and its
+  computational character (@sec-crisis), and the levels of
   reproducibility and the determinants that set them
-  (@sec-levels); version control with git as the foundation
-  of a locatable analysis (@sec-version-control); and the
-  research compendium (@sec-compendium).
-- **Part II, Capturing the environment.** Pinning packages
-  with a lockfile (@sec-dependencies); pinning the operating
-  system and runtime with a container (@sec-containers); and
-  the alternatives, from Nix to Podman to Apptainer
-  (@sec-backends).
-- **Part III, Validation.** The practices that let a pinned
+  (@sec-levels).
+- **Getting set up.** The [Shell Primer](shell-primer.qmd)
+  and the [Setting Up Your Machine](setup-appendix.qmd), for a
+  reader who has not yet used a terminal or installed the
+  tools the later chapters need.
+- **Organizing the work.** Version control with git as the
+  foundation of a locatable analysis
+  (@sec-version-control), and the research compendium
+  (@sec-compendium).
+- **Capturing the environment.** Pinning packages with a
+  lockfile (@sec-dependencies), and pinning the operating
+  system and runtime with a container (@sec-containers).
+  The alternatives, from Nix to Podman to Apptainer, are
+  treated in an appendix (@sec-backends).
+- **Validation.** The practices that let a pinned
   analysis be re-run and checked: literate programming and
   the rendered report (@sec-literate); automating the
-  analysis with make and targets (@sec-pipelines); testing and code
-  quality (@sec-testing); and continuous integration and
-  verification (@sec-verification).
-- **Part IV, Collaboration and stewardship.** Sharing a
-  compendium with a team and with the world (@sec-archiving).
+  analysis with make and targets (@sec-pipelines); testing
+  and code quality (@sec-testing); and continuous
+  integration and verification (@sec-verification).
+- **Collaboration and stewardship.** Sharing a compendium
+  with a team and with the world (@sec-archiving).
 - **Closing.** The argument in four points, a plan for
   the reader's own project, and a one-page brief for a
   supervisor (@sec-closing).

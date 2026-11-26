@@ -37,7 +37,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 55 minutes.
+**Reading time.** About 65 minutes.
 
 **Prerequisites.** @sec-levels, for the L0-L3 ladder and
 the capture-versus-validation vocabulary this chapter
@@ -51,7 +51,7 @@ The commands are typed in a terminal; the
 [Shell Primer](shell-primer.qmd) covers that for a reader who has never
 used one. Docker itself must be installed and running
 before the hands-on sections. The
-[Setup Appendix](setup-appendix.qmd) covers installation, Apple Silicon, and
+[Setting Up Your Machine](setup-appendix.qmd) covers installation, Apple Silicon, and
 Windows.
 
 **By the end of this chapter you will be able to
@@ -90,6 +90,8 @@ answer:**
   digest and by dated snapshot.
 - Running the analysis inside the image: `docker run`
   with the project mounted, and the `renv` pitfall.
+- When Docker is not an option: licensing, clusters, and
+  the alternatives the appendix treats in full.
 - Apple Silicon and multi-architecture images: why a
   digest needs a fixed platform.
 - Environment-variable determinism: locale, time zone,
@@ -864,12 +866,12 @@ restored
 concluded that containers so far may not give the
 robustness a regulatory submission needs
 [@fdapilot4review2026; @rconsortiumpilot4_2026]; the
-[setup appendix](setup-appendix.qmd#sec-setup-locked) covers such locked-down
+[setup page](setup-appendix.qmd#sec-setup-locked) covers such locked-down
 machines. 'Unlicensed' matters beyond the agency: Docker
 Desktop requires a paid subscription in larger
 organizations, and its terms limit free educational use
-(@sec-backends sets out the current terms and the
-license-free alternatives).
+(@sec-docker-alternatives sets out the current terms
+and the license-free alternatives).
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -972,7 +974,7 @@ at all.
 
 On Windows, keep the project inside the WSL2 file system
 and run these commands from a WSL2 terminal; the
-[setup appendix](setup-appendix.qmd#sec-setup-wsl) explains why.
+[setup page](setup-appendix.qmd#sec-setup-wsl) explains why.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the mount does
@@ -995,6 +997,63 @@ file system and been discarded with the container,
 since `--rm` removes it when the command ends.
 :::
 :::
+
+## When Docker is not an option {#sec-docker-alternatives}
+
+Everything in this chapter assumes that Docker runs on the
+machine at hand, and for many readers it does not. Two
+obstacles are common. The first is administrative: a
+university cluster or a managed laptop rarely lets an
+ordinary user run the Docker daemon. The second is
+licensing, and it catches many university users unawares.
+Docker Desktop, the packaged Docker distribution for macOS
+and Windows, is under its current terms not free for use
+by larger commercial and institutional organizations, and
+many universities fall within those terms. The
+subscription agreement, as last updated on 26 August
+2026, is narrower than the short summary on Docker's
+documentation site suggests [@dockerssa2026]. Free
+educational use is limited to individual members of an
+educational organization enrolled in a classroom
+learning environment, and it excludes several members of
+one department or research group using personal
+subscriptions for a shared project, which is the usual
+situation of a lab. Government entities, a definition
+that includes public education entities of a US state,
+may not use Docker Desktop without a paid subscription.
+A student in a research group at a public university
+should therefore ask the institution before relying on
+Docker Desktop, which is why many institutions either
+license it or avoid it.
+
+Neither obstacle forces a reader back to L1. The image this
+chapter builds is a standard OCI image that other programs
+can run, and the pinned environment can also be reached
+without a container at all. @sec-backends treats
+the alternatives in full; in brief, the choice follows the
+constraint that binds.
+
+- **No license for Docker Desktop, on a machine the
+  analyst administers.** Podman runs the same image with commands
+  close enough to Docker's that `podman run` stands in for
+  `docker run`. Docker Engine on Linux or inside WSL2 is
+  also open source. Both projects are released under the
+  Apache 2.0 license.
+- **A university cluster.** Apptainer, which most clusters
+  already provide, builds a single image file from the same
+  digest-pinned image and runs it under the scheduler. It
+  runs on Linux; a Mac or Windows laptop needs a Linux
+  virtual machine to build with it.
+- **A reviewer who will install nothing.** A hosted service
+  such as Binder serves the same image in a browser.
+- **No container at all.** Nix, through the `rix` package,
+  pins R, the packages, and the system libraries together
+  without building an image.
+
+Whichever route is taken, the rules of this chapter travel
+with it: pin the base by digest, name the platform
+(`--platform linux/amd64`) wherever an index digest is
+pulled on a Mac, and fix the environment variables.
 
 ## Apple Silicon and multi-architecture images
 

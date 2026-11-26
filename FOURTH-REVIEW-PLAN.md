@@ -20,6 +20,14 @@ Recorded 2026-11-25 from the author's reply ('1. agree, 2. ok, 3 ok,
 | D28 | Add real cases from the REVIEW.md Section 5 bank, beginning with Duke (Baggerly and Coombes); make `targets` the core pipeline tool and Make the optional comparison. | Reopens A10 (under D18) and D3 |
 | D29 | Implement D2 as decided: a boxed 'With zzcollab' track paired with 'By hand' blocks; tool vocabulary introduced in neutral terms first. The author's reply 'ok' to an either/or question is read as 'build D2 as decided'. | Confirms D2 |
 
+Recorded 2026-11-26 at the Phase 29 checkpoint (AskUserQuestion):
+
+| ID | Decision |
+|---|---|
+| D30 | Chapter 8 (Backends and Runtimes) moves to the appendices as 'Alternative runtimes and backends'; Ch 7 gains a short 'When Docker is not an option' section; Chapters 9 to 14 become 8 to 13. |
+| D31 | The Shell Primer and Setup Appendix move into an unnumbered 'Getting set up' part placed just before Version Control, with pointers kept in the appendices. Chapter numbers do not change because of it. |
+| D32 | Front matter: drop the PDF lists of figures and tables, place Conventions after the Introduction, and remove the duplicate License section from the Welcome page. Chapter 2's apparatus is not reordered. |
+
 ## 2. Phases
 
 Each phase on its own branch, stacked, verified by the tinytest suite
@@ -151,3 +159,34 @@ project for the pipeline exercises; 'Before you run this' boxes for
 `make` and `pre-commit` (Ch 10, 11); the Ch 8 Apptainer note; R12-08's
 nested-quoting row. The primer and setup appendix stay in the
 appendices until Phase 29 moves them (D27 scope).
+Committed as `27d3449`.
+
+### Phase 29, structure (`phase-29-structure`)
+
+Moves only (D30 to D32); no prose was cut, so the moves can be
+checked against `27d3449`. The Ch 12 cuts, the D29 zzcollab boxes,
+the D28 `targets` switch, and the Ch 1 to 3 dedupe follow in a later
+phase. **`REVIEW.md` and the raw reports use the old chapter
+numbers**: old Ch 8 is now Appendix A, and old Ch 9 to 14 are now
+Ch 8 to 13.
+
+| Decision | Change | Evidence |
+|---|---|---|
+| D30 | `06-backends-runtimes.qmd` listed under `appendices` (Appendix A), id `sec-backends` kept; its 16 self-references now say 'this appendix'. Ch 7 gains 'When Docker is not an option' (`sec-docker-alternatives`); the Docker Desktop licensing paragraph moved there from the appendix, which keeps a one-sentence pointer; Ch 7 and the setup appendix point to the new section. Ch 9's opening check (R9-02) no longer needs the appendix: recast around a home-directory mount | V: the recast scenario run in the showcase image (home mounted at `/root`: `Rounding` sampler and different draws; `Rscript --vanilla`: default draws) |
+| D31 | Shell Primer and Setup Appendix form Part II, 'Getting Set Up', before Part III, 'Organizing the Work' (Version Control, The Research Compendium); Part I, 'Foundations', now holds Ch 2 and 3. Intro, preface, and core-path table updated | V: PDF TOC |
+| D32 | `\listoffigures` and `\listoftables` removed from `copyright.qmd` (TOC kept); Conventions follows the Introduction; the Welcome page's License section replaced by a pointer to the Copyright page | V: render |
+| Renumbering | Three typed chapter numbers removed from prose; the instructor guide's headings, week table, and prose renumbered, and its quiz-chapter list now derived from `_quarto.yml` instead of typed | V: the derivation run on its own; the guide rendered (exit 0, no warnings) and lists Ch 2 to 12 |
+
+Verification (V): tinytest 452/452 (Ch 7 card 55 to 65 minutes, by
+the rule, after the new sections). The frozen `cheat-sheet-index`
+and `colophon` outputs were cleared so they re-executed. Render:
+exit 0, no warnings, no unresolved references or missing citations;
+no duplicate `sec-`, `tbl-`, or `fig-` ids. PDF TOC: Chapters 1 to
+13 in six parts, Appendix A. PDF 700 pages (706 before). The first
+case box now falls on PDF page 24; under R4-002 the first real
+number was on page 41.
+
+The setup page is retitled 'Setting Up Your Machine' (formerly
+'Setup Appendix: Docker and Git on Your Own Machine'), since it now
+sits in Part II and covers every tool; prose and link text say 'the
+setup page'. File name and anchors are unchanged.

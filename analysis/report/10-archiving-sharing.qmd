@@ -43,7 +43,7 @@ chapter. Chapter 7 (@sec-containers) supplies the
 digest-pinned Docker image this chapter archives, whose
 guarantee it relocates from the image to the
 Dockerfile, and a first look at the two-layer team model
-this chapter develops. Chapter 8 (@sec-backends), which
+this chapter develops. @sec-backends, which
 the core path marks optional, is the source of the
 single-file SIF image used in the deposit; the archiving
 section explains the one command the deposit needs, so

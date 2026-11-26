@@ -90,32 +90,35 @@ with exercises, a cheat sheet, and further reading.
 
 Your bootstrap confidence interval is computed inside a
 digest-pinned image with a restored lockfile. A colleague
-runs the same image as a SIF under Apptainer on her
-cluster, with `--cleanenv`, the same seed, and the same
-data, and her interval differs. Her home directory holds
-an `.Rprofile` that calls
+runs the same image with `docker run`, mounting the
+project as @sec-docker-run shows and, so that her own
+settings travel with her, mounting her home directory at
+the container's home, `/root`. Her interval differs. Her
+home directory holds an `.Rprofile` that calls
 `RNGkind(sample.kind = 'Rounding')`, and the project has
-none. Drawing on @sec-levels, @sec-containers, and
-@sec-backends, which determinant layer failed, why did the
-image not prevent it, and what closes it?
+none. Drawing on @sec-levels and @sec-containers, which
+determinant layer failed, why did the image not prevent
+it, and what closes it?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-The colleague's different bootstrap interval comes from
-the session-configuration layer, not the R runtime. The R
-release sets the default random-number kind, so the image
-fixes that default at L2 (@sec-levels, @sec-containers).
-Her `~/.Rprofile` overrides the default, and an override is
-session configuration, fixed only by an explicit
-`RNGkind()` call in the analysis code. The image did not
-prevent it because Apptainer mounts the host `$HOME` by
-default, and `--cleanenv` drops only environment
-variables, so R inside the container still reads her
-startup file (@sec-backends). Two changes close it: an
-explicit `RNGkind()` call in the analysis, and a run with
-`--no-home` and `Rscript --vanilla`, so that no startup
-file is read.
+The different interval comes from the session-configuration
+layer, not the R runtime. The R release sets the default
+random-number kind, so the image fixes that default at L2
+(@sec-levels, @sec-containers). Her `.Rprofile` overrides
+the default, and an override is session configuration,
+fixed only by an explicit `RNGkind()` call in the analysis
+code. The image did not prevent it because the mount
+placed her startup file where R looks for one, so R
+inside the container read it. We ran exactly this case:
+with the home directory mounted, a seeded `sample()`
+returned different draws and reported the `Rounding`
+sampler; with `Rscript --vanilla` it returned the
+image's default draws. Two changes close it: an explicit
+`RNGkind()` call in the analysis, and a run with
+`Rscript --vanilla`, or without the home mount, so that no
+personal startup file is read.
 :::
 :::
 

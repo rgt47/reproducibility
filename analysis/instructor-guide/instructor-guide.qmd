@@ -63,9 +63,10 @@ stopifnot(length(gen_seed) == 1)
 
 This guide is for course instructors and is distributed
 separately from the book. It holds the grading key for
-Exercise 7 of each of Chapters 2 to 13, the cohort-based
-exercise that a script can grade, and a grading note for
-the paired-review Exercise 9 of Chapter 11. It also holds
+Exercise 7 of each of Chapters 2 to 12 and of the
+backends appendix, the cohort-based exercise that a script
+can grade, and a grading note for the paired-review
+Exercise 9 of Chapter 10. It also holds
 the course material: a week-by-week plan of the
 one-quarter core path, a schedule of low-stakes cumulative
 quizzes, notes on grading, and the rough edges we know of.
@@ -415,7 +416,7 @@ integer); naming only `OMP_NUM_THREADS`, when the showcase
 the Rocker image links R against OpenBLAS, which reads its
 own variable.
 
-## Chapter 8: Backends and Runtimes {#sec-ig-ch06}
+## Appendix A: Backends and Runtimes {#sec-ig-ch06}
 
 ```{r}
 #| label: ig-ch06
@@ -461,7 +462,7 @@ the runtime on, and
 L2 (it points at a generic image, not a compendium-specific
 one); not explaining why axis two is the available path.
 
-## Chapter 9: Literate Programming and the Rendered Report {#sec-ig-ch07}
+## Chapter 8: Literate Programming and the Rendered Report {#sec-ig-ch07}
 
 ```{r}
 #| label: ig-ch07
@@ -487,7 +488,7 @@ cleaned cohort holds `r n_cohort` records, of which
 rather than using inline expressions; using `nrow(raw)`
 (`r nrow(raw)`) instead of `nrow(cohort)` (`r n_cohort`).
 
-## Chapter 10: Automating the Analysis: Make and targets {#sec-ig-pipelines}
+## Chapter 9: Automating the Analysis: Make and targets {#sec-ig-pipelines}
 
 ```{r}
 #| label: ig-pipelines
@@ -529,7 +530,7 @@ L3 because the pipeline runs green: a pipeline pins no
 determinant, so the compendium stays at the rung its
 capture artifacts set, `r rung` on this render.
 
-## Chapter 11: Testing and Code Quality {#sec-ig-ch08}
+## Chapter 10: Testing and Code Quality {#sec-ig-ch08}
 
 ```{r}
 #| label: ig-ch08
@@ -590,7 +591,7 @@ age rows dropped rather than set to missing, missing-outcome
 rows dropped in cleaning, and an unstated rule for which
 duplicate to keep.
 
-## Chapter 12: Continuous Integration and Verification {#sec-ig-ch09}
+## Chapter 11: Continuous Integration and Verification {#sec-ig-ch09}
 
 ```{r}
 #| label: ig-ch09
@@ -628,7 +629,7 @@ before CI runs a render.
 whole project rather than on `R/cohort.R` alone; not
 testing the planted `library(sandwich)` scenario.
 
-## Chapter 13: Collaboration, Archiving, and Stewardship {#sec-ig-ch10}
+## Chapter 12: Collaboration, Archiving, and Stewardship {#sec-ig-ch10}
 
 ```{r}
 #| label: ig-ch10
@@ -723,10 +724,10 @@ Exercise 7 key in this guide.
 | 4 | Ch 5, The Research Compendium | Convert a scatter of scripts into a compendium; add a README and data dictionary | [Ch 5](#sec-ig-ch03) |
 | 5 | Ch 6, Pinning Packages with renv | A lockfile, then a restore on a second machine | [Ch 6](#sec-ig-ch04) |
 | 6 | Ch 7, Pinning the Environment with Docker | A digest-pinned image, built locally with `--platform linux/amd64` and its digest recorded | [Ch 7](#sec-ig-ch05) |
-| 7 | Ch 9, Literate Programming and the Rendered Report; the Make section of Ch 10, Automating the Analysis: Make and targets | A sealed render with every number computed inline | [Ch 9](#sec-ig-ch07), [Ch 10](#sec-ig-pipelines) |
-| 8 | Ch 11, Testing and Code Quality | Data-validation tests for the extract's planted defects (Exercise 7); an oracle test and a baseline test | [Ch 11](#sec-ig-ch08) |
-| 9 | Ch 12, Continuous Integration and Verification | A CI workflow that compares to a committed baseline, demonstrated failing once on purpose | [Ch 12](#sec-ig-ch09) |
-| 10 | Ch 13, Collaboration, Archiving, and Stewardship | Deposit to the Zenodo sandbox; rewrite the data-availability statement for a registry extract held under a data-use agreement (Exercise 4) | [Ch 13](#sec-ig-ch10) |
+| 7 | Ch 8, Literate Programming and the Rendered Report; the Make section of Ch 9, Automating the Analysis: Make and targets | A sealed render with every number computed inline | [Ch 8](#sec-ig-ch07), [Ch 9](#sec-ig-pipelines) |
+| 8 | Ch 10, Testing and Code Quality | Data-validation tests for the extract's planted defects (Exercise 7); an oracle test and a baseline test | [Ch 10](#sec-ig-ch08) |
+| 9 | Ch 11, Continuous Integration and Verification | A CI workflow that compares to a committed baseline, demonstrated failing once on purpose | [Ch 11](#sec-ig-ch09) |
+| 10 | Ch 12, Collaboration, Archiving, and Stewardship | Deposit to the Zenodo sandbox; rewrite the data-availability statement for a registry extract held under a data-use agreement (Exercise 4) | [Ch 12](#sec-ig-ch10) |
 
 ```{r}
 #| label: ig-weeks-check
@@ -753,9 +754,9 @@ table_titles <- c(
 stopifnot(all(table_titles %in% h1))
 ```
 
-Chapter 8, Backends and Runtimes: Nix, Podman, and
-Apptainer, and the `targets`, Snakemake, Nextflow, and
-workflowr material of Chapter 10 are optional at this pace.
+The appendix on backends and runtimes (Nix, Podman, and
+Apptainer), and the `targets`, Snakemake, Nextflow, and
+workflowr material of Chapter 9, are optional at this pace.
 A two-quarter offering can restore them in a second term.
 
 ## Low-stakes cumulative quizzes {#sec-ig-quizzes}
@@ -763,14 +764,24 @@ A two-quarter offering can restore them in a second term.
 ```{r}
 #| label: ig-quiz-chapters
 #| include: false
-chapter_files <- c(
-  '01-reproducibility-crisis.qmd', '02-levels-of-reproducibility.qmd',
-  'version-control.qmd', '03-research-compendium.qmd',
-  '04-dependencies.qmd', '05-containers.qmd',
-  '06-backends-runtimes.qmd', '07-literate-programming.qmd',
-  'pipelines.qmd', '08-testing-quality.qmd',
-  '09-continuous-integration.qmd', '10-archiving-sharing.qmd')
-chapter_numbers <- 2:13
+# Chapter numbers follow the book's own order, read from its
+# configuration, so a reordering cannot leave this list stale.
+book_cfg <- yaml::read_yaml('analysis/report/_quarto.yml')$book
+flatten_chapters <- function(x) {
+  unlist(lapply(x, function(item) {
+    if (is.list(item)) flatten_chapters(item$chapters) else item
+  }))
+}
+is_numbered <- function(f) {
+  first <- grep('^# ', readLines(file.path('analysis/report', f),
+                                 warn = FALSE), value = TRUE)[1]
+  !is.na(first) && !grepl('unnumbered', first)
+}
+numbered <- Filter(is_numbered, flatten_chapters(book_cfg$chapters))
+chapter_numbers <- seq_along(numbered)
+keep <- !numbered %in% c('00-intro.qmd', '11-closing.qmd')
+chapter_files <- numbered[keep]
+chapter_numbers <- chapter_numbers[keep]
 has_cumulative <- vapply(chapter_files, function(f) {
   any(grepl('^## Check your understanding: from earlier chapters',
             readLines(file.path('analysis/report', f), warn = FALSE)))
@@ -924,6 +935,7 @@ the content gaps the coverage sweep of `REFACTOR-PLAN.md`
 section 10.10 found,
 `r if (all(covered)) paste0('all have since been filled: ', knitr::combine_words(names(covered)), ' are in the book.') else paste0(knitr::combine_words(names(covered)[covered]), if (sum(covered) == 1) ' is' else ' are', ' now in the book, and ', knitr::combine_words(names(covered)[!covered]), ' remain open.')`
 The week table needs no separate row for them: licensing
-falls in Chapter 13 (week 10), the HPC worked example in
-the optional Chapter 8, and the shell primer is an
-appendix to assign with the week 1 setup check.
+falls in Chapter 12 (week 10), the HPC worked example in
+the optional backends appendix, and the shell primer is
+a getting-set-up page to assign with the week 1 setup
+check.
