@@ -18,7 +18,7 @@ Shell commands, which recur constantly in this book, are
 shown with a `$` prompt that is not part of the command:
 
 ```bash
-$ zzc status
+$ git status
 ```
 
 Inline code is in `monospace`. File and directory names
@@ -86,7 +86,7 @@ rather than the conclusion alone.
 ## Callouts
 
 Three kinds of callout appear, each with one job, beside
-two smaller devices described after them.
+three smaller devices described after them.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -128,7 +128,23 @@ A short account of a published, checkable event: what
 happened, how it was found, and what it shows.
 :::
 
-A fifth, smaller device, the honest level, closes most
+The book's running example uses `zzcollab`, a framework
+written by the book's authors. Every step is first shown
+with the general tools a reader can use anywhere: `git`,
+`renv`, `usethis`, Docker, `quarto`, and plain R. Where
+`zzcollab` offers a shortcut for the same step, it appears
+afterwards in a box of its own, which a reader who does
+not use the framework can skip.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+The framework command that performs the step just shown
+by hand, and what it adds. Nothing in the chapter depends
+on reading these boxes.
+:::
+
+A sixth, smaller device, the honest level, closes most
 chapters: one sentence naming the rung the chapter's own
 practice reaches and what it still leaves exposed.
 
@@ -212,7 +228,7 @@ a reader working alone, can take the whole book in order.
 | Pinning Packages with renv | Core |
 | Pinning the Environment with Docker | Core |
 | Literate Programming and the Rendered Report | Core |
-| Automating the Analysis: Make and targets | Core for the Make section; `targets`, Snakemake, Nextflow, and workflowr are optional |
+| Automating the Analysis: targets and Make | Core for the `targets` section and the worked example; the comparison with GNU Make, Snakemake, Nextflow, workflowr, and a language model inside the pipeline are optional |
 | Testing and Code Quality | Core |
 | Continuous Integration and Verification | Core |
 | Collaboration, Archiving, and Stewardship | Core |

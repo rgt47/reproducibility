@@ -1321,8 +1321,7 @@ literate device: it holds an inline R expression that
 inserts the render date, so the header cannot claim a date
 the render did not have. The provenance footer discussed
 below is not declared in this header at all; it is applied
-by the render tooling (`make docker-render`, by way of
-`tools/stamp-render.R`).
+at render time by a separate stamping step.
 
 Below the header the author writes a setup chunk that fixes
 the chunk defaults and loads the packages the document
@@ -1350,10 +1349,19 @@ earlier in this chapter, which computes its result at
 build time and carries its synthetic inputs with it. Each number the introduction and
 discussion cite is inserted by an inline expression that
 reads the computed object, never typed by hand. Rendering
-the document inside the container, with `make docker-render`
-or its equivalent, executes every chunk in a fresh session,
-regenerates every figure, and produces the PDF and HTML,
-each carrying the render's provenance footer.
+the document inside the container, with `quarto render`
+run through `docker run` as @sec-docker-run shows,
+executes every chunk in a fresh session, regenerates every
+figure, and produces the PDF and HTML.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+`make docker-render` renders the report inside the
+project's container and applies the provenance footer by
+way of `tools/stamp-render.R`, so each output carries the
+render's date and source.
+:::
 
 The result is a document that is sealed by construction. To
 convince ourselves that the seal holds, and does not merely
@@ -1940,7 +1948,7 @@ on the tool, in the spirit of habit 4.
 | An inline R expression in prose | Seals a number in prose to the code that computes it. |
 | `knitr::opts_chunk$set(...)` | Sets chunk defaults, `echo`, `message`, `warning`, `fig.path`, once near the top. |
 | `SOURCE_DATE_EPOCH` | Fixes the embedded build timestamp, so two renders agree on that one field. |
-| `make docker-render` | Renders inside the pinned container and stamps the provenance footer (habit 6). |
+| `make docker-render` (zzcollab) | Renders inside the pinned container and stamps the provenance footer (habit 6). |
 | Five landmines | Installing at render time; `pacman::p_load()`; an absolute host path; hidden cross-chunk state; reading an uncommitted file. |
 | Rule of thumb | A sealed render binds prose to code; it pins no package, no environment, and proves nothing correct. |
 | Rule of thumb | Compare the computational outputs with a recorded baseline within a stated tolerance (habit 5), not the rendered PDF or HTML; the render's bytes are not the object of record. |

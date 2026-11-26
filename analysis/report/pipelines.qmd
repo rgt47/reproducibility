@@ -1,4 +1,4 @@
-# Automating the Analysis: Make and targets {#sec-pipelines}
+# Automating the Analysis: targets and Make {#sec-pipelines}
 
 ::: {.bookepigraph}
 ```{=latex}
@@ -44,15 +44,19 @@ reproducible render of @sec-literate. A
 pipeline is what a growing analysis needs once some of
 its computation has moved out of that single document and
 into scripts. Comfort writing an R function with explicit
-arguments and a return value, reading a short shell
-command (the [Shell Primer](shell-primer.qmd) covers this), and
-no prior exposure to Make, `targets`, or any other build
-tool. In the one-quarter core path (see the
-[Conventions](conventions.qmd) page), only the Make
-section below is core. The `targets`, Snakemake,
-Nextflow, and `workflowr` sections that follow it are
-marked optional, and they can be skipped on that schedule
-without losing the chapter's central claim.
+arguments and a return value, and no prior exposure to
+`targets`, Make, or any other build tool. The optional
+Make section also assumes the ability to read a short
+shell command (the [Shell Primer](shell-primer.qmd)
+covers this). In the
+one-quarter core path (see the
+[Conventions](conventions.qmd) page), the `targets`
+section and the worked example are core. Sections marked
+'optional' in their headings (the comparison with GNU Make;
+Snakemake, Nextflow, and `workflowr`; and a language model
+inside the pipeline) can be skipped on that schedule
+without losing the chapter's central claim. So can the
+exercises marked optional.
 
 **By the end of this chapter you will be able to
 answer:**
@@ -66,15 +70,15 @@ answer:**
   graph of steps, and explain why a single command can
   then rebuild exactly what is out of date and nothing
   more?
-- Can you read and write a GNU Make rule, its target,
-  prerequisites, and recipe, explain the timestamp-based
-  staleness check, and say why Make's reach is
-  language-agnostic?
 - Can you build an R-native, function-oriented pipeline
   with `targets`, including `_targets.R`, `tar_target()`,
   `tar_make()`, and `tar_visnetwork()`, and explain how
   `targets` invalidates exactly the targets that depend on
-  a changed function, object, or package?
+  a changed function, object, or file?
+- (Optional.) Can you read and write a GNU Make rule, its
+  target, prerequisites, and recipe, explain the
+  timestamp-based staleness check, and say why Make's
+  reach is language-agnostic?
 - Can you state, in the book's capture-versus-validation
   terms, precisely what a pipeline does and does not add
   to the reproducibility ladder, and judge how heavily the
@@ -90,19 +94,20 @@ answer:**
   not establish.
 - The analysis as a dependency graph: the DAG, and its
   cost measured rather than asserted.
-- GNU Make: targets, prerequisites, rules, and the
-  timestamp check.
 - `targets`: a function-oriented pipeline that hashes code
   and objects, not just file times.
+- GNU Make, for comparison (optional): targets,
+  prerequisites, rules, and the timestamp check.
 - What a pipeline does, and does not, add to the ladder.
 - Pipelines across the archetypes.
-- Beyond R: Snakemake, Nextflow, and `workflowr`.
+- Beyond R (optional): Snakemake, Nextflow, and
+  `workflowr`.
 - Worked example: refactoring four scripts into a
   `targets` pipeline.
 - The cohort, continued: the compendium's own two-step
   graph, timed.
-- A language model inside the pipeline: a dependency no
-  rung pins, and its responses kept as data.
+- A language model inside the pipeline (optional): a
+  dependency no rung pins, and its responses kept as data.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -138,13 +143,11 @@ pinned environment with freeze off, or after deleting
 ## Where this sits on the stack
 
 We begin by locating the chapter on the determinant
-stack. Its claim is the sharpest negative result in the
-book so far: the pipeline tools it teaches pin no new
-determinant at all. They do not fix a package version,
-and they do not fix an operating system or an R runtime;
-that is the work of @sec-dependencies and @sec-containers.
-What a pipeline does is confirm, mechanically and on every
-run, that the recorded analysis code and the input data
+stack. Its claim is a negative one, argued in full in
+@sec-pipeline-adds: the pipeline tools it teaches capture
+no layer at all. What a pipeline does is confirm,
+mechanically and on every run, that the recorded
+analysis code and the input data
 currently in hand are the ones a given output reflects.
 We therefore mark, in @fig-stack-pipelines, the
 analysis-code and input-data layers as validated here, not
@@ -157,7 +160,7 @@ it was last given, correct or not.
 
 ```{r}
 #| label: fig-stack-pipelines
-#| fig-cap: 'The determinant stack of @sec-levels, with the analysis-code and input-data layers marked as validated, not captured, by a pipeline tool. Make and `targets` confirm that a recorded output is current with respect to the code and data that produced it; they do not pin a package version, an operating system, or an R runtime, and they say nothing about whether the code or the data are correct, only whether the output in hand still reflects them.'
+#| fig-cap: 'The determinant stack of @sec-levels, with the analysis-code and input-data layers marked as validated, not captured, by a pipeline tool. `targets` and Make confirm that a recorded output is current with respect to the code and data that produced it; they do not pin a package version, an operating system, or an R runtime, and they say nothing about whether the code or the data are correct, only whether the output in hand still reflects them.'
 #| fig-alt: !expr determinant_stack_alt(validates = c('Analysis code', 'Input data'))
 #| fig-width: 7
 #| fig-height: 4.4
@@ -240,10 +243,11 @@ structure. That structure is a graph of steps, each
 declaring what it consumes and what it produces. From it
 a machine can work out the order, detect the staleness,
 and re-run exactly what a change requires. Such a
-structure is a pipeline, and this chapter is about two
-tools that build one, the venerable and language-agnostic
-GNU Make and the R-native `targets`. The manual-steps
-critique that motivates them is stated crisply in the
+structure is a pipeline. This chapter builds one with the
+R-native `targets` and then, in an optional section,
+compares the older and language-agnostic GNU Make. The
+manual-steps critique that motivates them is stated
+crisply in the
 practices literature. @sandve2013, in their second rule,
 urge that one 'avoid manual data manipulation steps' and
 automate the path from raw data to result. Their reason
@@ -298,30 +302,25 @@ and no pipeline tool makes them.
 
 2. **Keeping the dependency declarations honest.** A
    pipeline can only track dependencies it is told about,
-   or can infer. Make infers nothing. Every prerequisite an
-   analyst omits from a rule is a dependency the tool
-   cannot see, and an omitted prerequisite is exactly how a
+   or can infer, and an undeclared input is exactly how a
    stale output slips through. `targets` infers a great
-   deal automatically, but it too can be defeated, by a
-   step that reads a file without declaring it as a file
+   deal automatically, but it can be defeated by a step
+   that reads a file without declaring it as a file
    target, or that reaches for global state the tool
-   cannot trace. Getting the declared dependencies to match the
+   cannot trace. Make infers nothing, so every
+   prerequisite omitted from a rule is invisible to it.
+   Getting the declared dependencies to match the
    real ones is the analyst's responsibility, and a
    pipeline's correctness rests on it.
 
 3. **Matching the claim to what a pipeline delivers.** A
-   pipeline mechanizes re-execution. It does not pin a
-   package, fix an environment, or establish that a result
-   is correct. An analyst who says 'the analysis is
-   reproducible' because `tar_make()` runs to completion
-   has claimed more than the pipeline delivers. This is
-   the same overreach, for the same reasons, as treating
-   the sealed render of @sec-literate as a
+   pipeline mechanizes re-execution and nothing more
+   (@sec-pipeline-adds). An analyst who says 'the analysis
+   is reproducible' because `tar_make()` runs to
+   completion has claimed more than the pipeline delivers.
+   This is the same overreach, for the same reasons, as
+   treating the sealed render of @sec-literate as a
    reproducibility guarantee.
-   The pipeline secures the act of re-running. The level
-   reached is a separate question, settled by the
-   lockfile, the container, and the verification of the
-   later chapters.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: whose judgment, again
@@ -359,14 +358,14 @@ are different questions entirely.
   flow to outputs, and acyclic because a step cannot,
   directly or transitively, depend on its own output.
 - **Target.** A single step in the pipeline, together with
-  the output it produces. The word is shared by Make and
-  `targets`, with a shift of emphasis: for Make a target is
-  a file, for `targets` it is more often an R object.
-- **Prerequisite.** In Make, an input a target depends on.
-  If any prerequisite is newer than the target, the target
-  is out of date.
-- **Recipe (or command).** The shell command Make runs to
-  bring a target up to date from its prerequisites.
+  the output it produces. The word is shared by `targets`
+  and Make, with a shift of emphasis: for `targets` a
+  target is more often an R object, for Make a file.
+- **Prerequisite.** In Make (optional section), an input a
+  target depends on. If any prerequisite is newer than the
+  target, the target is out of date.
+- **Recipe (or command).** In Make, the shell command run
+  to bring a target up to date from its prerequisites.
 - **Staleness (out-of-date).** The condition of a target
   whose inputs have changed since it was last built, so
   that its stored output no longer reflects its inputs.
@@ -466,7 +465,7 @@ only the plotting code changes, the figures and the
 report are stale but the cleaned data and the model are
 not. The model, which may have taken an hour to fit, is
 not re-fitted. The single command that triggers this,
-`make` or `tar_make()`, replaces the remembered sequence
+`tar_make()` or `make`, replaces the remembered sequence
 with one reliable act. The end-to-end doubt of the
 orientation is thereby dissolved, because the one act, by
 construction, runs everything that is out of date and
@@ -586,21 +585,202 @@ one number.
 :::
 :::
 
-## GNU Make: targets, prerequisites, and rules
+## targets: a function-oriented pipeline for R
 
-We turn now from the idea to the tools. The oldest and
-most widely used pipeline tool is GNU Make, a
-reimplementation of the `make` utility first written in
-1976 to compile programs. It has been
-pressed into service for data analysis ever since. Make
-is worth learning first, before any R-specific tool, for
-two reasons. First, its model is the simplest possible
-expression of the pipeline idea, so that understanding it
-is understanding pipelines in general. Second, its reach
-is language-agnostic. A single Makefile can orchestrate
+We turn now from the idea to the tools. The `targets`
+package, written by William Landau as the successor to
+his earlier `drake` [@landau2018; @landau2021], builds
+the pipeline idea natively in R. It is this chapter's
+core tool for two reasons. It is an R package, so it
+runs wherever R runs, with no separate program to
+install. And it tracks what an R analysis is actually
+made of, the R functions that do the work and the R
+objects they pass between them, not only files on disk.
+
+The reframing is captured in the phrase
+'function-oriented'. In a `targets` pipeline the analyst
+writes the analysis as a set of R functions, one for each
+meaningful step. The analyst then declares a list of
+targets that connect those functions into a graph, in a
+special script named `_targets.R` at the project root.
+Each target is created by `tar_target()`, which names the
+target and gives the R expression that produces it.
+The package reads those expressions and notices that one
+target's expression mentions another target's name. From
+this it infers the dependency graph automatically, with
+no list of dependencies to maintain by hand. A
+`_targets.R` for our running analysis reads:
+
+```r
+library(targets)
+library(tarchetypes)
+tar_option_set(packages = c('dplyr', 'ggplot2'))
+
+# Analysis functions live in R/ and are sourced here.
+tar_source('R')
+
+list(
+  tar_target(
+    raw_file,
+    'data/raw_data.csv',
+    format = 'file'
+  ),
+  tar_target(raw_data, read_raw(raw_file)),
+  tar_target(cleaned, clean_data(raw_data)),
+  tar_target(model, fit_model(cleaned)),
+  tar_target(figures, make_figures(model, cleaned)),
+  tar_render(report, 'report.Rmd')
+)
+```
+
+The last line needs a word, because it is where a
+hand-written pipeline most often goes wrong. A report is a
+file produced from another file, the `report.Rmd` source.
+The target that renders it must therefore track that
+source as well as the results it displays.
+`tar_render()`, from the companion package `tarchetypes`,
+does both. It tracks `report.Rmd` as a file, and it reads
+the document for calls such as `tar_read(model)` and
+`tar_load(figures)`, making each target so named a
+dependency of the report. Inside `report.Rmd`, results are
+therefore fetched with `targets::tar_read()` rather than
+recomputed. For a Quarto document, `tar_quarto()` plays
+the same role. The tempting alternative is a plain
+`tar_target(report, render_report(model,
+figures), format = 'file')`. It tracks the model, the
+figures, and the rendered HTML, but not the source. In a
+scratch run with `targets` 1.12.1 and `tarchetypes`
+0.14.2, editing the report's prose left `tar_outdated()`
+empty under that pattern, while under `tar_render()` it
+listed `report`. A report that does not rebuild when its
+own text changes is a stale report that the pipeline
+calls current.
+
+Two features of this design matter most. First, the
+intermediate results, `raw_data`,
+`cleaned`, `model`, `figures`, are **R objects, not
+files**. `targets` stores each in a hidden `_targets/`
+store, keyed and versioned, and hands it to the next
+target as a plain R value. The analyst never writes a
+`saveRDS` or a `readRDS`, because the storage is the
+tool's job. Where a real file must be tracked, such as the
+raw CSV at the top, the target is declared with
+`format = 'file'`. `targets` then watches the file's
+contents, by hashing them, rather than the R object.
+`tar_render()` does the same for the report's source and
+its rendered output.
+
+Second, and more deeply, `targets` decides staleness by
+comparing **content hashes**, not modification times
+alone, so that a file touched but not changed does not
+trigger a rebuild. The hashing is not unconditional,
+however. When the `trust_timestamps` option is left
+unset, `targets` chooses by file system. On a file system
+with precise time stamps it trusts them: it compares a
+tracked file's modification time with the one
+it recorded and recomputes the hash only if the two
+differ. A file whose content changed while its time stamp
+did not is therefore *not* caught. Such changes are rare
+in ordinary editing, but copying tools that preserve time
+stamps, and file systems with coarse time stamps, can
+produce them. In a scratch run with `targets` 1.12.1, a
+one-digit edit to the raw CSV with its time stamp
+restored left `tar_outdated()` empty under the default.
+Under `tar_option_set(trust_timestamps = FALSE)`, by
+contrast, it listed every target downstream of the file,
+at the cost of hashing every tracked file on every check.
+
+The hashing also extends past the data to the code.
+`targets` records a hash of the body of every function a
+target calls, and of the R expression in the target
+itself. Editing `fit_model()` therefore invalidates the
+`model` target, and everything downstream of it, even
+though no file has changed at all. A changed function
+invalidates exactly the targets that use it, directly or
+transitively, and no others. A change to `make_figures()`
+invalidates `figures` and `report` but leaves `model`
+untouched, and the expensive fit is preserved.
+Sensitivity to the *versions* of the packages a target
+loads is a separate matter, and one that `targets` does
+not provide. `tar_option_set(packages =
+...)` merely attaches those packages to each target's
+evaluation environment, as a call to `library()` would.
+By default `targets` does not track a package's version
+or invalidate a target when that version changes.
+Version-sensitivity comes from the lockfile of
+@sec-dependencies, which is why Landau recommends using
+`renv` alongside `targets`.
+
+`targets` and `tarchetypes` install from CRAN like any
+other package, with
+`install.packages(c('targets', 'tarchetypes'))`. In a
+project that uses `renv`, the new packages then belong in
+the lockfile, recorded as @sec-dependencies describes.
+
+Two commands drive the pipeline. To see the graph,
+`tar_visnetwork()`, which also needs the `visNetwork`
+package, draws it as an interactive network,
+coloring each target by whether it is up to date or out
+of date. This is @fig-pipeline-dag made live and
+queryable:
+
+```r
+tar_visnetwork()
+```
+
+To run the pipeline, `tar_make()` walks the graph, in a
+fresh R session, and builds every target that is out of
+date while **skipping every target that is up to date**:
+
+```r
+tar_make()
+```
+
+On the first run every target builds and `targets`
+reports each in turn. If we edit `make_figures()` and run
+`tar_make()` again, the output is eloquent. `targets`
+names `figures` and `report` as built, and reports
+`raw_data`, `cleaned`, and `model` as already current. In
+`targets` 1.12 and later the up-to-date targets are
+summarized as a count in the progress display rather than
+listed by name. The distinction between what rebuilt and
+what did not is unchanged. The analyst did not have to
+remember which steps the edit affected; the tool derived
+it from the graph and the hashes. A companion command,
+`tar_outdated()`, answers the end-to-end doubt directly.
+It lists the targets that a `tar_make()` would rebuild,
+without running anything. One can thus ask, at any
+moment, 'what is stale?' and get an exact answer.
+
+::: {.callout-tip icon=false}
+## Verification
+
+To see this hold: in a project with `_targets.R`, run
+`tar_make()` once, then edit the body of any function a
+target calls, change nothing else, and run `tar_outdated()`
+before rebuilding. It should name that target and every
+target downstream of it, and no others. To make it fail on
+purpose, add a line to a function that instead reads a file
+directly with `read.csv()` rather than through a declared
+`format = 'file'` target. Change that file's contents, and
+run `tar_outdated()` again. The target that silently reads
+the file will not appear, because `targets` cannot hash a
+dependency it was never told about.
+:::
+
+## GNU Make, for comparison (optional)
+
+This section may be skipped on the core path. It builds
+the same pipeline with GNU Make, the oldest and most
+widely used pipeline tool, a reimplementation of the
+`make` utility first written in 1976 to compile programs.
+Make is a separate program rather than an R package, and
+it sees only files. What it offers in exchange is the
+simplest expression of the pipeline idea, and reach. It
+is language-agnostic: a single Makefile can orchestrate
 an analysis whose steps are written in R, Python, the
-shell, and a typesetting engine, without knowing or
-caring what language each step uses.
+shell, and a typesetting engine, without knowing what
+language each step uses.
 
 A Makefile is a list of **rules**, and a rule has three
 parts. The first is a **target**, the file the rule
@@ -666,10 +846,8 @@ or, since the first target in the file is the default,
 simply `make`. Make walks the graph and rebuilds what is
 needed, in order, and reports each recipe as it runs.
 
-But how does Make decide what is needed? The mechanism is
-the one subtlety worth dwelling on, because it is both the
-source of Make's power and the source of its most common
-surprise. Make is **timestamp-based**. It compares the
+But how does Make decide what is needed? Make is
+**timestamp-based**. It compares the
 modification time of each target against the modification
 times of its prerequisites. It considers a target out of
 date if any prerequisite is newer than the target.
@@ -683,23 +861,21 @@ change reaches and no further. A target all of whose
 prerequisites are older than it is already up to date.
 Make skips it, printing a line to the effect that there
 is nothing to be done. This is the selective rebuild of
-the previous section, implemented with nothing more than
-the file system's clock.
+the dependency-graph section, implemented with nothing
+more than the file system's clock.
 
-The timestamp rule is also Make's principal limitation. Make knows only whether a file is
-newer, not whether its contents have changed. Touching a
-file without editing it will trigger a needless rebuild.
-More subtly, a change that does not alter a file's
-modification time will be missed. Make also tracks only
-what the analyst declares. It has no way to know that
-`fit_model.R` reads a configuration file unless that file
-is listed as a prerequisite. An undeclared input is
-invisible, and its change will not trigger the rebuild it
-should. Finally, Make tracks files and only files. It
-cannot cache an in-memory R object, so every step must
-serialize its result to disk, and the graph is a graph of
-files. These limitations are the opening that the
-R-native tools were built to close.
+The timestamp rule is also Make's principal limitation.
+Make knows only whether a file is newer, not whether its
+contents have changed. Touching a file without editing
+it will trigger a needless rebuild. More subtly, a change
+that does not alter a file's modification time will be
+missed. Make also sees only the prerequisites the
+analyst lists: if `fit_model.R` reads a configuration
+file that no rule names, a change to that file triggers
+nothing. Finally, Make tracks files and only files, so
+every step must serialize its result to disk. These are
+the gaps `targets` closes, by hashing contents, function
+bodies, and R objects.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what Make rebuilds
@@ -721,190 +897,9 @@ of `report.html`, so `report.html` is rebuilt too. Make
 skips `cleaned.rds` and `model.rds`. Neither the raw data,
 the cleaning script, the fitting script, nor the cleaned
 data changed. Each of those targets therefore remains
-newer than all of its prerequisites and is up to date. The expensive
-model fit is not repeated.
+newer than all of its prerequisites and is up to date.
+The expensive model fit is not repeated.
 :::
-:::
-
-## targets: a function-oriented pipeline for R
-
-Make treats an analysis as a graph of files built by
-shell commands. For an R analysis this is a slightly
-awkward fit. Every step must be a script that reads files
-and writes files, and the intermediate objects must all
-be serialized to disk by hand. Moreover, Make's timestamp
-check is blind to the thing an R analyst most wants
-tracked, the R functions that do the work. The `targets`
-package, written by William Landau as the successor to
-his earlier `drake` [@landau2018; @landau2021], reworks
-the pipeline idea natively for R. It closes exactly these
-gaps.
-
-The reframing is captured in the phrase
-'function-oriented'. In a `targets` pipeline the analyst
-writes the analysis as a set of R functions, one for each
-meaningful step. The analyst then declares a list of
-targets that connect those functions into a graph, in a
-special script named `_targets.R` at the project root.
-Each target is created by `tar_target()`, which names the
-target and gives the R expression that produces it.
-The package reads those expressions and notices that one
-target's expression mentions another target's name. From
-this it infers the dependency graph automatically, with
-no colons and no prerequisites to maintain by hand. A
-`_targets.R` for our running analysis reads:
-
-```r
-library(targets)
-library(tarchetypes)
-tar_option_set(packages = c('dplyr', 'ggplot2'))
-
-# Analysis functions live in R/ and are sourced here.
-tar_source('R')
-
-list(
-  tar_target(
-    raw_file,
-    'data/raw_data.csv',
-    format = 'file'
-  ),
-  tar_target(raw_data, read_raw(raw_file)),
-  tar_target(cleaned, clean_data(raw_data)),
-  tar_target(model, fit_model(cleaned)),
-  tar_target(figures, make_figures(model, cleaned)),
-  tar_render(report, 'report.Rmd')
-)
-```
-
-The last line needs a word, because it is where a
-hand-written pipeline most often goes wrong. A report is a
-file produced from another file, the `report.Rmd` source.
-The target that renders it must therefore track that
-source as well as the results it displays.
-`tar_render()`, from the companion package `tarchetypes`,
-does both. It tracks `report.Rmd` as a file, and it reads
-the document for calls such as `tar_read(model)` and
-`tar_load(figures)`, making each target so named a
-dependency of the report. Inside `report.Rmd`, results are
-therefore fetched with `targets::tar_read()` rather than
-recomputed. For a Quarto document, `tar_quarto()` plays
-the same role. The tempting alternative is a plain
-`tar_target(report, render_report(model,
-figures), format = 'file')`. It tracks the model, the
-figures, and the rendered HTML, but not the source. In a
-scratch run with `targets` 1.12.0 and `tarchetypes`
-0.14.0, editing the report's prose left `tar_outdated()`
-empty under that pattern, while under `tar_render()` it
-listed `report`. A report that does not rebuild when its
-own text changes is a stale report that the pipeline
-calls current.
-
-Several features distinguish this from the Makefile. The
-intermediate results, `raw_data`,
-`cleaned`, `model`, `figures`, are **R objects, not
-files**. `targets` stores each in a hidden `_targets/`
-store, keyed and versioned, and hands it to the next
-target as a plain R value. The analyst never writes a
-`saveRDS` or a `readRDS`, because the storage is the
-tool's job. Where a real file must be tracked, such as the
-raw CSV at the top, the target is declared with
-`format = 'file'`. `targets` then watches the file's
-contents, by hashing them, rather than the R object.
-`tar_render()` does the same for the report's source and
-its rendered output.
-
-That hashing is the second and deeper difference. Where
-Make compares timestamps, `targets` compares **content
-hashes**, so that a file touched but not changed does not
-trigger a rebuild. The hashing is not unconditional,
-however. When the `trust_timestamps` option is left
-unset, `targets` chooses by file system. On a file system
-with precise time stamps it trusts them: it compares a
-tracked file's modification time with the one
-it recorded and recomputes the hash only if the two
-differ. A file whose content changed while its time stamp
-did not is therefore *not* caught. Such changes are rare
-in ordinary editing, but copying tools that preserve time
-stamps, and file systems with coarse time stamps, can
-produce them. In a scratch run with `targets` 1.12.0, a
-one-digit edit to the raw CSV with its time stamp
-restored left `tar_outdated()` empty under the default.
-Under `tar_option_set(trust_timestamps = FALSE)`, by
-contrast, it listed every target downstream of the file,
-at the cost of hashing every tracked file on every check.
-
-The hashing also extends past the data to the code.
-`targets` records a hash of the body of every function a
-target calls, and of the R expression in the target
-itself. Editing `fit_model()` therefore invalidates the
-`model` target, and everything downstream of it, even
-though no file has changed at all. Make, seeing only
-files, cannot detect such a change. A changed function
-invalidates exactly the targets that use it, directly or
-transitively, and no others. A change to `make_figures()`
-invalidates `figures` and `report` but leaves `model`
-untouched, and the expensive fit is preserved.
-Sensitivity to the *versions* of the packages a target
-loads is a separate matter, and one that `targets` does
-not provide. `tar_option_set(packages =
-...)` merely attaches those packages to each target's
-evaluation environment, as a call to `library()` would.
-By default `targets` does not track a package's version
-or invalidate a target when that version changes.
-Version-sensitivity comes from the lockfile of
-@sec-dependencies, which is why Landau recommends using
-`renv` alongside `targets`.
-
-Two commands drive the pipeline. To see the graph,
-`tar_visnetwork()` draws it as an interactive network,
-coloring each target by whether it is up to date or out
-of date. This is @fig-pipeline-dag made live and
-queryable:
-
-```r
-tar_visnetwork()
-```
-
-To run the pipeline, `tar_make()` walks the graph, in a
-fresh R session, and builds every target that is out of
-date while **skipping every target that is up to date**:
-
-```r
-tar_make()
-```
-
-On the first run every target builds and `targets`
-reports each in turn. If we edit `make_figures()` and run
-`tar_make()` again, the output is eloquent. `targets`
-names `figures` and `report` as built, and reports
-`raw_data`, `cleaned`, and `model` as already current. In
-`targets` 1.12 and later the up-to-date targets are
-summarized as a count in the progress display rather than
-listed by name. The distinction between what rebuilt and
-what did not is unchanged. The analyst did not have to
-remember which steps the edit affected; the tool derived
-it from the graph and the hashes. A companion command,
-`tar_outdated()`, answers the end-to-end doubt directly.
-It lists the targets that a `tar_make()` would rebuild,
-without running anything. One can thus ask, at any
-moment, 'what is stale?' and get an exact answer.
-
-::: {.callout-tip icon=false}
-## Verification
-
-To see this hold: in a project with `_targets.R`, run
-`tar_make()` once, then edit the body of any function a
-target calls, change nothing else, and run `tar_outdated()`
-before rebuilding. It should name that target and every
-target downstream of it, and no others. To make it fail on
-purpose, add a line to a function that instead reads a file
-directly with `read.csv()` rather than through a declared
-`format = 'file'` target. Change that file's contents, and
-run `tar_outdated()` again. The target that silently reads
-the file will not appear, because `targets` cannot hash a
-dependency it was never told about. This is the same
-discipline failure Make suffers from an undeclared
-prerequisite.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -936,9 +931,9 @@ comparison cannot see.
 :::
 :::
 
-## What a pipeline does, and does not, add
+## What a pipeline does, and does not, add {#sec-pipeline-adds}
 
-With both tools in hand, we may now ask what they have
+With the tools in hand, we may now ask what they have
 bought us. What a pipeline contributes to reproducibility
 is easily overstated in one direction and undersold in
 the other. The book's capture-versus-validation framework
@@ -983,10 +978,7 @@ may re-run some steps and forget others. The pipeline
 turns 'rebuild the analysis' from a remembered sequence
 into one command whose completeness is structural. In
 doing so it removes the 'did I re-run everything?' doubt
-that undermines every validation step. Like continuous
-integration, a pipeline captures no determinant and adds
-no rung; it makes the re-execution that verification
-(@sec-verification) confirms reliable and repeatable.
+that undermines every validation step.
 
 The relation to continuous integration is especially
 close, and worth making explicit, because the two are
@@ -996,7 +988,7 @@ environment on every change. The pipeline is the
 definition of what 'the rebuild' means. They compose
 naturally. For a pipelined project, a CI workflow's core
 step is to restore the environment and then run
-`tar_make()` or `make`. The pipeline supplies the
+`tar_make()` (or `make`). The pipeline supplies the
 re-execution, and CI supplies the clean, automatic,
 external trigger for it. Neither replaces the other. The
 pipeline without CI still requires a human to remember to
@@ -1040,12 +1032,11 @@ not about level.
 ::: {.callout-important}
 ## The honest level
 
-This chapter's own practice runs `tar_make()` and `make`
-to completion on demand. That demonstrates re-execution
-and nothing about the level actually reached. The level
-is settled only by the lockfile, the container, and the
-baseline comparison of the chapters this one does not
-replace.
+This chapter's pipelines are illustrative: the
+compendium has no `_targets.R` yet (see the cohort
+section below). A pipeline that ran green would
+demonstrate re-execution and, for the reason given in
+this section, nothing about the level reached.
 :::
 
 ## Pipelines across the archetypes
@@ -1098,9 +1089,9 @@ performed by the package toolchain instead.
 :::
 :::
 
-## Beyond R: Snakemake, Nextflow, and workflowr
+## Beyond R: Snakemake, Nextflow, and workflowr (optional)
 
-Make and `targets` are the right tools for an R-centric
+`targets` and Make are the right tools for an R-centric
 analysis. However, a reader whose work reaches beyond R, or
 beyond a single machine, should know the tools that
 dominate computational science more widely. In pipelines,
@@ -1408,8 +1399,16 @@ as three targets would make that staleness mechanical
 rather than remembered:
 
 ```r
+# _targets.R at the project root
+library(targets)
+tar_source('R')
+
 list(
-  tar_target(raw_file, cohort_path, format = 'file'),
+  tar_target(
+    raw_file,
+    'analysis/data/raw_data/cohort_raw.csv',
+    format = 'file'
+  ),
   tar_target(raw, load_cohort(raw_file)),
   tar_target(cleaned, clean_cohort(raw))
 )
@@ -1417,16 +1416,22 @@ list(
 
 The `raw_file` target is what makes `targets` watch the
 CSV's contents. Without it, a lone
-`tar_target(raw, load_cohort(cohort_path))` would track
-only the value of the string `cohort_path`, and a
-corrected CSV at the same path would leave `raw`
-current. The cost is a three-target scaffold in the
-pattern of the five-target one shown in Exercise 3's
-solution below.
+`tar_target(raw, load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
+would track only the text of the path, and a corrected
+CSV at the same path would leave `raw` current. The line
+`tar_source('R')` matters too. It defines the
+compendium's functions in the pipeline's own session, so
+that `targets` hashes their bodies. Loading them with
+`pkgload::load_all()` inside `_targets.R` also runs,
+but an edit to `clean_cohort()` then leaves
+`tar_outdated()` empty, because `targets` does not track
+functions that live in a package. The cost is a
+three-target scaffold in the pattern of the five-target
+one shown in Exercise 3's solution below.
 The repository holds `r cohort_state`, which places the
 compendium at `r cohort_rung`. Adding the pipeline would
-not move it off that rung, since a pipeline pins no
-determinant. It would only make the one existing
+leave it there, for the reason given in
+@sec-pipeline-adds. It would only make the one existing
 transform trustworthy to rebuild without having to recall
 that it exists.
 
@@ -1456,7 +1461,7 @@ things.
 :::
 :::
 
-## A language model inside the pipeline {#sec-llm-in-pipeline}
+## A language model inside the pipeline (optional) {#sec-llm-in-pipeline}
 
 The rest of this chapter treats every step as code the
 analyst controls. A step that sends text to a language
@@ -1534,9 +1539,9 @@ not the model's coding of the notes.
 
 ## Collaborating with an LLM
 
-A language model is a fluent author of Makefiles and
-`targets` pipelines. Its characteristic failures are worth
-anticipating, because they bear directly on the one
+A language model is a fluent author of `targets`
+pipelines and Makefiles. Its characteristic failures are
+worth anticipating, because they bear directly on the one
 discipline this chapter rests on, the honesty of the
 dependency declarations.
 
@@ -1548,29 +1553,6 @@ types of the data. A printed data frame or a log of
 row-level output is derived output under the rule. A
 coding agent asked to convert or run a pipeline will
 execute it and so read every input it touches.
-
-**Prompt.** 'Write a Makefile for my analysis: I have a cleaning
-script, a modeling script, and a report.'
-
-*Watch for.* The model cannot know the analyst's true
-dependencies, so check every rule for a guessed one. Look
-for an omitted prerequisite, such as a configuration file
-the modeling script reads or a helper script the cleaning
-script sources. Such a Makefile looks complete but fails
-to rebuild when the undeclared input changes. Check also
-for spaces where Make demands a literal tab to indent
-recipes, a classic error that produces a 'missing
-separator' message or, on a recipe line containing a
-colon, no error at all.
-
-*Verification.* Check every rule against what each step actually
-reads and writes: list, for each script, its real inputs, and
-confirm each appears as a prerequisite. The decisive test is
-operational. Build once, then touch each declared input in
-turn and confirm the expected targets rebuild. Then touch
-an undeclared file the step secretly reads and confirm, as
-a negative check, that the Makefile wrongly fails to
-rebuild, which reveals the missing prerequisite.
 
 **Prompt.** 'Convert my scripts to a `targets` pipeline.'
 
@@ -1608,9 +1590,34 @@ declare every file the pipeline reads as a
 an edit to it should invalidate, so that I can check the
 list against `tar_outdated()`.'
 
-**Prompt.** 'Add a step to my pipeline that sends each
-free-text note to `<tool name>` and codes it as current,
-former, or never smoker.'
+**Prompt** (for readers of the optional Make section).
+'Write a Makefile for my analysis: I have a cleaning
+script, a modeling script, and a report.'
+
+*Watch for.* The model cannot know the analyst's true
+dependencies, so check every rule for a guessed one. Look
+for an omitted prerequisite, such as a configuration file
+the modeling script reads or a helper script the cleaning
+script sources. Such a Makefile looks complete but fails
+to rebuild when the undeclared input changes. Check also
+for spaces where Make demands a literal tab to indent
+recipes, a classic error that produces a 'missing
+separator' message or, on a recipe line containing a
+colon, no error at all.
+
+*Verification.* Check every rule against what each step actually
+reads and writes: list, for each script, its real inputs, and
+confirm each appears as a prerequisite. The decisive test is
+operational. Build once, then touch each declared input in
+turn and confirm the expected targets rebuild. Then touch
+an undeclared file the step secretly reads and confirm, as
+a negative check, that the Makefile wrongly fails to
+rebuild, which reveals the missing prerequisite.
+
+**Prompt** (for readers of the optional section on a
+language model inside the pipeline). 'Add a step to my
+pipeline that sends each free-text note to `<tool name>`
+and codes it as current, former, or never smoker.'
 
 *Watch for.* Check where the call sits. A call inside a
 target expression makes every rebuild of that target a
@@ -1644,15 +1651,17 @@ in a checkout where the real notes are not mounted
    set to the steps you would, in practice, remember to re-run by
    hand.
 
-2. Write a Makefile of three or four rules for the analysis of
-   the previous exercise. Run `make`, then edit one intermediate
+2. (Optional; uses the optional Make section.) Write a
+   Makefile of three or four rules for the analysis of
+   Exercise 1. Run `make`, then edit one intermediate
    script and run `make` again, and record which targets rebuilt
    and which were skipped. Explain the result in terms of the
    timestamp rule. Then `touch` an input without changing its
    contents, run `make` once more, and explain why Make rebuilds
    a target whose contents did not change.
 
-3. Convert the same analysis to a `targets` pipeline. Refactor
+3. Convert the analysis of Exercise 1 to a `targets`
+   pipeline. Refactor
    each step into a function in `R/`, write `_targets.R`, and
    confirm with `tar_visnetwork()` that the graph matches the one
    you drew in exercise 1. Run `tar_make()`, then change the body
@@ -1660,14 +1669,20 @@ in a checkout where the real notes are not mounted
    `tar_outdated()` which targets will rebuild. Run `tar_make()`
    and check your prediction.
 
-4. Demonstrate the difference between Make's and `targets`'
-   staleness checks. Choose a helper function that one of your
-   scripts sources from a file the Makefile of exercise 2 does
-   not list as a prerequisite. Edit its body in a way that
-   changes the result, and confirm that `targets` invalidates
-   the dependent targets. Explain, in one or two sentences, why
-   the same edit could be missed by a Makefile that tracked
-   only the script files' timestamps.
+4. Demonstrate what `targets` does and does not track, in
+   the pipeline of Exercise 3. Choose a helper function in
+   `R/`, loaded by `tar_source()`, that one of your targets
+   calls. Edit its body in a way that changes the result,
+   and confirm with `tar_outdated()` that the dependent
+   targets are invalidated. Then add to that function a
+   line that reads a small file directly with
+   `read.csv()`, rebuild, change the file's contents, and
+   run `tar_outdated()` again. Explain, in one or two
+   sentences, why the first edit is caught and the second
+   is not. (Optional, for readers of the Make section:
+   explain why the first edit could be missed by a
+   Makefile that tracked only the script files'
+   timestamps.)
 
 5. State, in the book's capture-versus-validation terms, what
    your pipeline has and has not added to the reproducibility of
@@ -1684,11 +1699,18 @@ in a checkout where the real notes are not mounted
    which it is absent, name the mechanism that plays the
    corresponding role instead.
 
-7. Run `cohort <- clean_cohort(load_cohort('analysis/data/raw_data/cohort_raw.csv'))`
-   and report `nrow(cohort)`. Then write the three-target
-   `_targets.R` fragment that wraps `load_cohort()` and
+7. Work from the root of a clone of this book's
+   repository. The raw extract is not committed, so first
+   generate it with `Rscript analysis/scripts/simulate_cohort.R`.
+   Then, in R, load the compendium's functions with
+   `pkgload::load_all()`, run
+   `cohort <- clean_cohort(load_cohort(path))` with `path`
+   set to `'analysis/data/raw_data/cohort_raw.csv'`, and
+   report `nrow(cohort)`. Then write the three-target
+   `_targets.R` that wraps `load_cohort()` and
    `clean_cohort()` on this path, following the `raw_file`
-   and `raw` split of Exercise 3's solution, and state what
+   and `raw` split of Exercise 3's solution and loading the
+   functions with `tar_source('R')`. State what
    `tar_outdated()` would report immediately after the first
    `tar_make()` and after a second one with no file changed.
 
@@ -1701,8 +1723,10 @@ in a checkout where the real notes are not mounted
    artifact, absent here, whose addition would be needed to
    reach the next rung.
 
-9. Take the illustrative `_targets.R` fragment of the
-   section on a language model inside the pipeline
+9. (Optional; uses the optional section on a language
+   model inside the pipeline.) Take the illustrative
+   `_targets.R` fragment of the section on a language
+   model inside the pipeline
    (@sec-llm-in-pipeline). For each of four situations,
    state which targets `tar_outdated()` would list and what
    the next `tar_make()` would do: (a) a fresh clone, with
@@ -1715,9 +1739,9 @@ in a checkout where the real notes are not mounted
 
 ## Solutions
 
-Attempt an exercise before expanding its solution. Every
-exercise in this chapter is performed on an analysis of the
-reader's own, so the outputs vary; the boxes record what
+Attempt an exercise before expanding its solution.
+Exercises 1 to 5 are performed on an analysis of your own,
+so the outputs vary; for those, the boxes record what
 should happen and the reasoning that makes it expected.
 
 ::: {.callout-note icon=false collapse=true}
@@ -1776,17 +1800,22 @@ direction and unreliable in the other. It will happily
 rebuild things that did not need rebuilding, which costs
 time and nothing else. It will also miss a change that
 leaves timestamps as it found them, which costs
-correctness. The first behavior is the one
-this exercise demonstrates; the second is the subject of
-exercise 4.
+correctness. The first behavior is the one this exercise
+demonstrates. The second is the timestamp blind spot
+named in the Make section, and the `trust_timestamps`
+passage of the `targets` section shows the same blind
+spot in `targets`. Exercise 4 takes up a related failure,
+an input that was never declared.
 :::
 
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
 The refactoring is the substance of the exercise. Each
-Make rule becomes a function in `R/`, and `_targets.R`
-declares the targets that call them:
+step of the hand-drawn graph (or each Make rule, if you
+did Exercise 2) becomes a function in `R/`, and
+`_targets.R` declares the targets that call them. After
+`library(targets)` and `tar_source('R')`, the list reads:
 
 ```r
 list(
@@ -1835,40 +1864,36 @@ instead of recalling it.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 4
 
-Editing a function body in `R/` changes no file that a
-Makefile would ordinarily list as a prerequisite of the
-model target. The Makefile lists the *script* that fits
-the model, not the helper file the script sources.
-`targets` invalidates the dependent targets anyway, and
-`tar_outdated()` names them before the rebuild.
+**The first edit is caught.** `targets` hashes the
+*bodies of the functions each target calls*. Because
+function dependencies are discovered from the code, an
+edited helper that `tar_source()` loaded cannot be
+forgotten: `tar_outdated()` names the target that calls
+it and everything downstream, before the rebuild.
 
-**Why a Makefile could miss the equivalent edit.** Because
-it tracks the timestamps of the files it was told to
+**The second is not.** The file read with `read.csv()`
+inside the function is not a target, so `targets` never
+hashed it, and `tar_outdated()` stays empty after the
+file changes. A function from an installed package is
+likewise not tracked this way. The repair is to make the
+file a `format = 'file'` target and pass its path to the
+function as an argument, as the worked example does for
+the raw CSV.
+
+**Optional: why a Makefile could miss the first edit.**
+Make tracks the timestamps of the files it was told to
 track, and nothing told it about the helper. If
 `fit_model.R` sources `R/helpers.R` and the rule declares
 only `fit_model.R` as a prerequisite, then editing
 `helpers.R` advances a timestamp Make never looks at.
 Every downstream target remains, in Make's view, up to
-date. The analysis then reports results computed by the
-old function body, with no error and no indication that
-anything is stale.
-
-`targets` avoids this because it hashes the *bodies of the
-functions each target calls*, and the R objects those
-targets produce, rather than the modification times of a
-declared file list. Because function dependencies are
-discovered from the code, an edited helper that
-`tar_source()` loaded cannot be forgotten. Other
-dependencies still can: a file read inside a function
-without a `format = 'file'` target, or a function from an
-installed package, is not tracked this way.
-
-The fair statement of the comparison is that a correctly
-and completely written Makefile would catch this too. The
-difference is that `targets` makes completeness the
-default for function code and Make makes it the analyst's
-responsibility,
-and the failure mode of an incomplete Makefile is silence.
+date, and the analysis reports results computed by the
+old function body with no indication that anything is
+stale. A correctly and completely written Makefile would
+catch this too. The difference is that `targets` makes
+completeness the default for function code and Make
+makes it the analyst's responsibility, and the failure
+mode of an incomplete Makefile is silence.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1990,12 +2015,12 @@ and `smoking` is reproduced exactly, because
 endpoint is never contacted. This is the case the design
 exists for.
 
-In (b) the hash of `notes_file` changes, so `notes` and
-`smoking` are outdated. The corrected note has new text,
+In (b) the hash of `notes_file` changes, so `notes_file`,
+`notes`, and `smoking` are outdated. The corrected note has new text,
 and therefore a new key with no row in the response file,
 so `join_responses()` stops and names that one note. In
-(c) the hash of `prompt_file` changes, so `smoking` is
-outdated; because the prompt's hash enters every key,
+(c) the hash of `prompt_file` changes, so `prompt_file`
+and `smoking` are outdated; because the prompt's hash enters every key,
 every note is now missing and the stop names them all. In
 (d) the command of `smoking` changes, which outdates it,
 and again every key is missing.
@@ -2016,16 +2041,17 @@ report their agreement, as you would for a second rater.
 
 | Command or rule | What it means or checks |
 |---|---|
-| Rule: `target: prerequisites` | Declares a Make target and the files it depends on |
-| Make recipe line | Indented with a literal tab, never spaces (Pitfall above) |
-| `make` | Rebuilds every target older than one of its prerequisites |
-| `touch file` | Advances a file's timestamp without changing its contents; triggers Make, not `targets` |
 | `tar_target(x, expr)` | Declares a `targets` target; the dependency graph is inferred from `expr` |
 | `tar_target(x, path, format = 'file')` | Tracks `x` as a file, by content hash, not by R object |
+| `tar_source('R')` | Defines the functions in `R/` so that `targets` tracks their bodies |
 | `tar_make()` | Builds every out-of-date target, in order, and skips the rest |
 | `tar_outdated()` | Lists what a `tar_make()` would rebuild, without running anything |
 | `tar_visnetwork()` | Draws the dependency graph, colored by up to date or out of date |
 | `tar_render()` / `tar_quarto()` | Tracks a report's own source as well as the targets it reads |
+| Rule: `target: prerequisites` | (Optional, Make.) Declares a Make target and the files it depends on |
+| Make recipe line | (Optional, Make.) Indented with a literal tab, never spaces (Pitfall above) |
+| `make` | (Optional, Make.) Rebuilds every target older than one of its prerequisites |
+| `touch file` | Advances a file's timestamp without changing its contents; triggers Make, not `targets` |
 | Capture vs. validation | A pipeline captures no determinant; it validates that an output is current |
 | Honest claim | 'The pipeline re-executes reliably' is not 'the analysis is reproducible'; name the rung separately |
 | LLM response cache | A committed file of model responses keyed by input hash, prompt version, and model identifier; the pipeline reads it and never queries (@sec-llm-in-pipeline) |

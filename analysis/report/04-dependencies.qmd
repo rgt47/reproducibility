@@ -59,7 +59,8 @@ to `renv` itself is assumed.
   produces and consumes it?
 - State the dependency-triad invariant relating the
   code, the `DESCRIPTION`, and the lockfile, and run the
-  automated check that keeps the three in agreement?
+  automated check that keeps the code and the lockfile
+  in agreement?
 - Configure a dated snapshot of a package repository so
   that a restore draws fixed versions, as pre-compiled
   binaries where the platform is served?
@@ -71,8 +72,8 @@ to `renv` itself is assumed.
 L0-to-L1 transition it motivates; the three judgments
 that stay with the analyst; packrat to renv and what a
 lockfile records; the init, snapshot, restore workflow;
-the dependency-triad invariant and the automated check
-that enforces it; dated snapshots of a package
+the dependency-triad invariant and the `renv` check
+that enforces its binding inclusion; dated snapshots of a package
 repository; the limits of renv; lighter alternatives;
 the cohort's own dependencies, scanned for real;
 collaborating with an LLM; exercises, a cheat sheet, and
@@ -520,15 +521,35 @@ A collaborator who clones the repository and calls
 analysis was written against, irrespective of what
 versions are current.
 
-In the framework this book uses, this lifecycle is
-partly automated so that an analyst does not forget the
-snapshot. The project's generated `.Rprofile` installs
-an exit hook that snapshots the library when an
-interactive session ends, and restores missing packages
-when a session begins. A package installed during
-analysis is thus captured. The automation removes the
-two most common ways the library and the lockfile drift
-apart.
+::: {.callout-note icon=false}
+## With zzcollab
+
+`zzcollab` automates part of this lifecycle, and the
+automation trades the analyst's control for coverage.
+The `.Rprofile` it generates defines an exit hook that
+calls `renv::snapshot()` whenever an R session in the
+project container ends normally, a script run by
+`Rscript` included, provided the project's `renv/`
+directory is present. A matching step restores missing
+packages when a session starts. Neither runs on the
+host or when the `CI` variable is set. The cost falls
+on the first judgment above: a package installed and
+used in passing enters the lockfile at the next exit,
+whether or not the analysis is at a point worth
+recording. Setting `ZZCOLLAB_AUTO_SNAPSHOT=false` (and
+`ZZCOLLAB_AUTO_RESTORE=false`) in the container's
+environment disables the hooks. The snapshot hook reads
+its variable at exit, so
+`Sys.setenv(ZZCOLLAB_AUTO_SNAPSHOT = 'false')` during a
+session also works. The framework's own `make r` sets
+both variables to `false` and runs its repairing
+dependency check after the session instead. When the
+profile itself initializes `renv` in a new project, it
+sets the `explicit` snapshot type. A snapshot then
+records the packages `DESCRIPTION` declares rather than
+those the code uses, so the implicit behavior described
+above does not hold there.
+:::
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -630,15 +651,14 @@ That is, the strict `DESCRIPTION` inclusion is exact for
 the package archetype but archetype-conditional in
 general. As a matter of placement an analysis-script
 dependency may still be listed in `DESCRIPTION` under
-`Suggests`. However, the framework does not enforce the
-strict `DESCRIPTION` inclusion as a gate on a compendium,
-precisely because that inclusion does not hold for one.
-The gate it enforces
-on a compendium is the single inclusion $\mathrm{Code}
-\subseteq \mathrm{renv.lock}$, that nothing the code uses
-goes unpinned. The strict double inclusion is applied only
-in the package archetype, where `DESCRIPTION` is the
-authoritative dependency interface.
+`Suggests`. However, a check on a compendium should not
+enforce the strict `DESCRIPTION` inclusion, precisely
+because that inclusion does not hold for one. The gate
+for a compendium is the single inclusion
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$, that
+nothing the code uses goes unpinned. The strict double
+inclusion belongs only to the package archetype, where
+`DESCRIPTION` is the authoritative dependency interface.
 
 @fig-triad draws the nesting, with the archetype
 qualification marked. A package may sit legitimately in
@@ -693,164 +713,202 @@ ggplot() +
   theme_void()
 ```
 
-The invariant can be checked by machine. The framework's
-`check-renv` gate, backed by
-the `zzrenvcheck` package, scans all three sources and
-tests the two inclusions. It reports any violation: a
-package used in code but undeclared, or declared but
-unpinned. It can also repair a violation on request. It
-writes a missing declaration into `DESCRIPTION` through
-the `desc` package. For a package absent from the
-lockfile, it writes a record of the version installed in
-the analyst's library, the version the code was actually
-run against. Only when the package is not installed at
-all does it fall back to the current CRAN version. It
-then prints a warning saying so, since that version may
-not be the one that produced any result. The repair does
-not call `renv::snapshot()` or `install.packages()`; it
-edits the two manifests as text. Two limits follow.
-First, the record it writes is minimal, a name, version,
-and source without the copied `DESCRIPTION` metadata.
-Second, it covers the missing package alone, not that
-package's own dependencies. The repair is therefore a prompt to
-review, and a later `renv::snapshot()` remains the
-authoritative record of the library.
+The invariant can be checked by machine, and `renv`
+itself checks the inclusion that binds every archetype,
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$.
+`renv::status()` compares three sets: the packages
+installed in the project library, those recorded in the
+lockfile, and those the code uses, as
+`renv::dependencies()` finds them. It reports every
+package on which the three disagree. We ran it on a
+scratch project whose report, `analysis/report.qmd`, had
+gained a `library(here)` call after the last snapshot:
 
-```bash
-$ make check-renv
+```r
+renv::status()
+#> The following package(s) are in an inconsistent state:
+#>
+#>  package   installed recorded used
+#>  here      y         n        y
+#>  rprojroot y         n        y
+#>
+#> See `?renv::status` for advice on resolving these issues.
 ```
 
-In the framework this book uses, this target runs the
-check with repair enabled before a commit. Outside the
-framework the same call is
-`zzrenvcheck::check_packages(auto_fix = TRUE)`. Under
-continuous integration the check must run with repair
-disabled and must be able to fail the build:
+The package `here` is installed and used but not
+recorded, and `rprojroot` arrives with it as a
+dependency. After `renv::snapshot()` the same call
+printed 'No issues found -- the project is in a
+consistent state.' The check reports; it repairs
+nothing, and the repair, a snapshot, stays the
+analyst's decision.
+
+Under continuous integration the check must be able to
+fail the build, and `renv::status()` alone cannot. On
+the drifted project, `Rscript -e 'renv::status()'`
+printed the table above and exited with status 0. The
+verdict is in the returned list, in a logical field
+named `synchronized`, and the CI step tests it:
 
 ```bash
-Rscript -e "zzrenvcheck::check_packages(auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE)"
+Rscript -e 'if (!renv::status()$synchronized) quit(status = 1)'
 ```
 
-When `error_on_fail` is true, a failed check stops with
-an error and `Rscript` exits with a nonzero status. That
-is what turns the job red. Current `zzrenvcheck` already
-defaults to `error_on_fail = !interactive()`, so a script
-or CI job fails while an interactive console only
-reports. Nevertheless, the CI call above passes the
-argument explicitly so that the gate does not depend on
-how R was started. We confirmed the failure on a scratch project
-whose code called `dplyr` without declaring it: the
-command above printed 'Validation failed' and exited
-with status 1. `zzrenvcheck` is not on CRAN, so the CI
-job installs it first. The gate tool is itself a
-dependency of the evidence it produces, so the job pins
-it to one commit rather than to whatever the default
-branch holds on the day of the run:
+On the drifted project this line exited with status 1,
+and after the snapshot with status 0 (habit 4).
+
+The gate holds only under the default, implicit
+snapshot type, in which the lockfile records what
+`renv::dependencies()` finds. We repeated the session on
+a second scratch project that carried a `DESCRIPTION`.
+There `renv::init()` chose the `explicit` type, which
+counts as used only the packages `DESCRIPTION` declares.
+The report's new `library(here)` went unreported, and
+the CI line exited with status 0. After
+`renv::settings$snapshot.type('implicit')` and a fresh
+snapshot, the same drift failed the line again. A
+compendium relying on this gate should therefore
+confirm its type with `renv::settings$snapshot.type()`. Two
+further properties of the gate follow from what it
+compares, and we observed both on the same project.
+First, it is stricter than the inclusion. When the
+`library(here)` call was removed again, `here` was
+recorded but no longer used, and the line failed until
+a new snapshot dropped it. Second, it compares the
+installed library, so the CI job must run
+`renv::restore()` before it. With the project library
+moved aside, the line failed; after a restore it passed.
+
+The gate is a presence check. It does not test the
+first inclusion, $\mathrm{Code} \subseteq
+\mathrm{DESCRIPTION}$, which binds the package
+archetype; for a package, `R CMD check` reports a
+package called in the code but not declared. Nor does
+it verify that the version floors in `DESCRIPTION`
+agree with the exact pins in the lockfile, which is a
+separate concern.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+`zzrenvcheck`, a package the book's authors also wrote,
+checks both inclusions in one call and adds what
+`renv::status()` leaves out. It applies the archetype
+rule itself: when it finds an `analysis/` directory it
+enters compendium mode (`compendium = 'auto'`, the
+default), in which only packages used in `R/` must be
+declared in `DESCRIPTION`. Passing `compendium = TRUE` or
+`FALSE` overrides the detection. It can also repair a
+violation. It writes a missing declaration into
+`DESCRIPTION` through the `desc` package. For a package
+absent from the lockfile, it writes a record of the
+version installed in the analyst's library. Only when
+the package is not installed does it fall back to the
+current CRAN version, with a warning. The repair edits the
+two manifests as text; it does not call
+`renv::snapshot()`. Its record is minimal, without the
+copied `DESCRIPTION` metadata, and covers the missing
+package alone, not that package's own dependencies, so
+a later `renv::snapshot()` remains the authoritative
+record.
+
+`make check-renv` runs the check with repair enabled,
+on a developer's machine before a commit.
+`make check-renv-no-fix` is the gate form, which a CI
+job runs as
+
+```r
+zzrenvcheck::check_packages(
+  auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE
+)
+```
+
+On the scratch project above, with a minimal
+`DESCRIPTION` added, this call printed 'Validation
+failed.' and exited with status 1. Without a
+`DESCRIPTION` file, version 0.10.0 printed an error and
+exited with status 0, so on such a project the gate
+cannot fail. The package is not on CRAN, so the CI job
+installs it pinned to one commit, the 0.10.0 release
+this box describes:
 
 ```r
 remotes::install_github(
   'rgt47/zzrenvcheck@6f53235668cb4048c1ae793d64b10d6505bf69a2'
 )
 ```
-
-That commit is `zzrenvcheck` 0.10.0, the version whose
-behavior this section describes. A drift
-that escaped the developer's machine therefore fails the
-build rather than being silently repaired. This forces
-the contributor to commit the fix instead of letting the
-clean build paper over it. The gate is a presence check.
-That is, it guarantees that the three sets nest, that
-nothing used is unpinned. It does not
-verify that the version floors in `DESCRIPTION` agree
-with the exact pins in the lockfile, which is a separate
-concern.
-
-The gate is also archetype-aware. When it finds an
-`analysis/` directory at the project root it enters
-compendium mode automatically (`compendium = "auto"` is
-the default). In that mode only packages used in `R/` are
-required in `DESCRIPTION`, while packages used only in
-`analysis/` or `scripts/` need only appear in
-`renv.lock`. On an R-package project, which has no
-`analysis/` directory, the strict double inclusion
-applies. Passing `compendium = TRUE` or
-`compendium = FALSE` overrides the auto-detection when
-the directory layout does not reflect the archetype.
+:::
 
 ### Scanning the documentation, not only the code
 
 The most common way for a dependency check to fail is
-subtle. It scans the analysis code, pronounces the
-project consistent, and overlooks a package that is used
-only in a vignette or in the rendered manuscript. That is
-exactly where a documentation build breaks on a fresh
-machine. `zzrenvcheck` deliberately scans more widely
-than a plain code scan on this point.
+subtle. It pronounces the project consistent and
+overlooks a package used only in a vignette or in the
+rendered manuscript, which is exactly where a
+documentation build breaks on a fresh machine. The check
+`renv` provides does not make this mistake.
+`renv::dependencies()` parses R Markdown (`.Rmd`) and
+Quarto (`.qmd`) documents as well as `.R` scripts, and
+`renv::status()` relies on it. The session above is the
+evidence: `here` was loaded only in
+`analysis/report.qmd`, and the check found it.
 
-The scan does not look at `.R` scripts alone. It parses
-the literate and dynamic documents as well, R Markdown
-(`.Rmd`), Quarto (`.qmd`), and Sweave (`.Rnw`). A package
-loaded inside a report chunk or a vignette is thus seen
-just as one loaded in `R/` is. Within every such file it
-recognizes each of the forms by which R code reaches for a
-package. These are the explicit `library(pkg)` and
-`require(pkg)`, the namespaced `pkg::function()`, and the
-roxygen2 directives `@import` and `@importFrom` from which
-a package's `.Rd` help files are generated. In its strict
-mode it widens the search beyond the analysis
-directories, into the `tests/`, `vignettes/`, and `inst/`
-directories. It is correspondingly careful about what it
-ignores. `README` files and the example directories
-(`man/examples`, `inst/examples`) are skipped, since the
-install-and-demonstrate code they usually carry would
-otherwise raise false alarms. A separate pass reads the
-reproducibility files themselves, the `Dockerfile`, the
-`Makefile`, `install.sh`, and `.Rprofile`, for
-version-pinned installs such as `pak('survival@3.5-8')`.
-This pass catches a version fixed in the container recipe
+A check written for the occasion is where the risk
+lies. A search of the `.R` files for `library(` calls
+would have certified that project as consistent, and
+the report would then have failed to render on a
+reviewer's machine for want of an unpinned package. The
+rule is to use the scanner the tool provides. The point
+matters most for the scholarly manuscript and the blog,
+whose rendered outputs are the deliverable and whose
+package needs sit in documents.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+`zzrenvcheck` parses the same document types and
+recognizes `library()`, `require()`, `pkg::fun()`, and
+the roxygen2 directives `@import` and `@importFrom`. In
+its strict mode it scans the `tests/`, `vignettes/`, and
+`inst/` directories as well as the analysis
+directories. It skips `README` files and the example
+directories (`man/examples`, `inst/examples`), whose
+install-and-demonstrate code would otherwise raise false
+alarms. A separate pass reads the `Dockerfile`, the
+`Makefile`, `install.sh`, and `.Rprofile` for
+version-pinned installs such as `pak('survival@3.5-8')`,
+and so catches a version fixed in the container recipe
 that has drifted from the lockfile.
-
-Consider a manuscript compendium whose analysis in `R/`
-restores cleanly from the lockfile. Its report, however,
-draws a forest plot with a plotting package that appears
-nowhere except the `.qmd` itself. A scanner that read only
-the code would certify the project as consistent. The
-report would then fail to render on the reviewer's machine
-for want of an unpinned package. Because `zzrenvcheck`
-reads the document, the missing dependency is caught and
-pinned before it can break the build. The wider reach
-helps most with the scholarly manuscript and the blog,
-whose rendered outputs are the deliverable. Their package
-needs sit in documents, where a naive check does not look.
+:::
 
 ::: {.callout-note icon=false collapse=true}
-## Check your understanding: what a code-only scan misses
+## Check your understanding: where a report's packages hide
 
 A manuscript's `R/` directory restores cleanly from the
 lockfile, but its `.qmd` report loads a plotting package
-nowhere referenced in `R/`. Would a dependency check that
-scans only `.R` files catch the missing pin, and why does
-`zzrenvcheck` catch it where that scan would not?
+referenced nowhere in `R/`. Would `renv::status()`
+report the missing pin? What kind of check would not?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-No. A code-only scan sees only `R/`, finds every package
-it references already pinned, and certifies the project
-consistent while the report's own dependency goes unseen.
-`zzrenvcheck` catches it because it also parses literate
-documents, `.Rmd` and `.qmd` among them, for `library()`,
-`require()`, and `pkg::fun()` calls. A package loaded
-only inside a report chunk is therefore scanned exactly
-as one loaded in `R/` would be.
+Yes. `renv::status()` relies on `renv::dependencies()`,
+which parses `.qmd` and `.Rmd` documents for
+`library()`, `require()`, and `pkg::fun()` calls. A
+package loaded only inside a report chunk is therefore
+reported as used but not recorded, as `here` was above.
+A check that reads only `.R` files would find every
+package it sees already pinned and certify the project
+consistent, while the report's own dependency went
+unseen.
 :::
 :::
 
 ::: {.callout-important}
 ## The honest level
 
-This chapter's own practice, the `check-renv` gate and the
-lockfile it enforces, reaches L1 package-pinned and
+This chapter's own practice, the `renv::status()` gate
+and the lockfile it enforces, reaches L1 package-pinned and
 nothing further. It leaves the R version, the operating
 system, and the system libraries beneath the package layer
 entirely exposed.
@@ -873,9 +931,8 @@ project, a manuscript compendium, a simulation study,
 and a blog also carry a `DESCRIPTION`. There, however, it
 declares only the API of the reusable code in `R/`.
 Their binding invariant is instead the single
-$\mathrm{Code} \subseteq \mathrm{renv.lock}$. The
-`check-renv` gate applies that weaker rule automatically
-when it detects an `analysis/` directory. A subtlety
+$\mathrm{Code} \subseteq \mathrm{renv.lock}$, the rule
+`renv::status()` checks. A subtlety
 follows for the R-package archetype. A package used only
 by an analysis script or report belongs in `Suggests`
 rather than `Imports`. In that way `R CMD check` does not
@@ -888,8 +945,8 @@ functions never call.
 Continuous integration on an R-package archetype fails
 with the message that `survival` is used in `R/model.R`
 but is not declared in `DESCRIPTION`. Which inclusion of
-the triad has been violated, and what single command
-would most likely repair it?
+the triad has been violated, and how would you most
+likely repair it?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
@@ -906,15 +963,12 @@ another package or through an implicit snapshot;
 `renv::status()` answers that question. The atomic
 breach to report is the code-to-`DESCRIPTION` step. The likely cause is that
 `survival` was installed interactively but never
-declared. Running `make check-renv`, which invokes
-`zzrenvcheck::check_packages()` with automatic repair,
-would write `survival` into `DESCRIPTION` through the
-`desc` package. It would also add a record of the
-installed `survival` version to `renv.lock`, restoring
-both inclusions. This edits the two manifests as text and is distinct
-from an `renv::snapshot()`, which would instead re-derive
-the lockfile from the installed library. The fix must
-then be committed so the clean CI build sees it.
+declared. The repair has two steps. Declare the package,
+with `usethis::use_package('survival')`, which writes it
+into the `Imports` field, and then run
+`renv::snapshot()` so that the lockfile records the
+installed version. Both edits must then be committed so
+the clean CI build sees them.
 :::
 :::
 
@@ -1377,10 +1431,10 @@ rather than building from source.'
 
 3. Deliberately break the dependency triad: add a
    `library()` call for a package you have not declared
-   or pinned. Run the project's dependency check and
-   record which inclusion it reports as violated and how
-   it repairs the violation. Then remove the call and
-   confirm the check passes.
+   or pinned. Run `renv::status()` and record what it
+   reports, then repair the violation by hand. Then
+   remove the call, run the check again, and say what
+   it takes to make it pass.
 
 4. Point your repository at a dated Posit Package Manager
    snapshot and reinstall one package. Time the install,
@@ -1520,38 +1574,32 @@ metadata moves with the version.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-The violated inclusion is the first atomic one,
-$\mathrm{Code} \subseteq \mathrm{DESCRIPTION}$. The code
-now references a package that `DESCRIPTION` does not
-declare. Only that inclusion is known to fail: the
-package may still be pinned in the lockfile, as another
-package's dependency or through an implicit snapshot, so
-whether $\mathrm{Code} \subseteq \mathrm{renv.lock}$
+In a project whose `DESCRIPTION` does not list the
+package, two inclusions are at stake. The code now
+references a package `DESCRIPTION` does not declare,
+which `R CMD check` reports for the package archetype.
+Whether $\mathrm{Code} \subseteq \mathrm{renv.lock}$
 also fails must be checked, with `renv::status()`, not
-inferred. The breach to report is the atomic one.
+inferred: the package may already be pinned as another
+package's dependency.
 
-Running `make check-renv` invokes
-`zzrenvcheck::check_packages()` with automatic repair. It
-writes the package into `DESCRIPTION` through the `desc`
-package and adds a record of its installed version to
-`renv.lock`, restoring both inclusions. If the package is
-not installed, the repair records the current CRAN
-version instead and warns that it has done so. The
-honest response to that warning is to install the
-package, rerun the analysis, and repair again. This edits
-the two manifests as text and is deliberately distinct
-from an `renv::snapshot()`, which would instead re-derive
-the whole lockfile from whatever is currently installed.
+`renv::status()` reports the package as used but not
+recorded, and repairs nothing. The repair is the
+analyst's: declare the package with
+`usethis::use_package()`, install it if it is missing,
+and run `renv::snapshot()`. For the package archetype,
+`R CMD check` is what reports the missing declaration.
 
-Removing the `library()` call and re-running the check
-does make the check pass. However, it does not return the
-manifests to their prior state: the repair already wrote
-the package into `DESCRIPTION` and the lockfile, and
-nothing removes it. A passing check means the inclusions
-hold, not that the project is unchanged. Restoring the
-prior state requires deleting the entries by hand or
-discarding the changes under version control, which is
-itself a small argument for making the repair on a branch.
+Removing the `library()` call does not by itself make
+the check pass. The package is now recorded but no
+longer used, and `renv::status()` reports that mismatch
+too, until a new snapshot drops it from the lockfile.
+The declaration in `DESCRIPTION` stays until it is
+deleted by hand. A passing check means the code and the
+lockfile agree, not that the project is unchanged.
+Discarding the changes under version control is the
+cleaner undo, which is itself a small argument for
+trying the repair on a branch.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -1705,12 +1753,25 @@ regenerate from the one file that actually matters.
 | `renv::snapshot()` | Scans the code for referenced packages and writes their installed versions to `renv.lock`. |
 | `renv::restore()` | Reads `renv.lock` and reinstalls exactly the versions it records. |
 | `renv::dependencies(files)` | Scans one or more files for the packages they name (`library()`, `::`, and similar), base packages included, without touching the lockfile. |
-| `make check-renv` / `zzrenvcheck::check_packages(auto_fix = TRUE)` | Checks and repairs the code-to-`DESCRIPTION`-to-lockfile triad. |
-| `zzrenvcheck::check_packages(auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE)` | The CI form: checks only, and fails the build on a violation. |
+| `renv::status()` | Compares the installed, recorded, and used package sets, documents included, and reports any disagreement; repairs nothing. |
+| `Rscript -e 'if (!renv::status()$synchronized) quit(status = 1)'` | The CI form: exits nonzero on any disagreement; run it after `renv::restore()`. |
 | `options(repos = c(CRAN = '.../cran/YYYY-MM-DD'))` | Points installs at a dated, fixed snapshot of the repository. |
 | Rule of thumb | A lockfile pins the package layer and nothing beneath it; L1, not L2. |
 | Rule of thumb | An oracle, a declared dependency, or a pinned version must come from outside the thing it checks; a lockfile is no exception for file integrity. |
 | Habit 3 | Never let restricted data reach an unapproved model endpoint, even to ask a dependency question. |
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+`make check-renv` runs
+`zzrenvcheck::check_packages(auto_fix = TRUE)`, which
+checks both inclusions of the triad and repairs a
+violation. `make check-renv-no-fix` runs it with
+`auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE`,
+the CI form, which fails rather than repairs. Set
+`ZZCOLLAB_AUTO_SNAPSHOT=false` to stop the
+container's snapshot-on-exit hook.
+:::
 
 ## Further reading
 

@@ -488,7 +488,7 @@ cleaned cohort holds `r n_cohort` records, of which
 rather than using inline expressions; using `nrow(raw)`
 (`r nrow(raw)`) instead of `nrow(cohort)` (`r n_cohort`).
 
-## Chapter 9: Automating the Analysis: Make and targets {#sec-ig-pipelines}
+## Chapter 9: Automating the Analysis: targets and Make {#sec-ig-pipelines}
 
 ```{r}
 #| label: ig-pipelines
@@ -503,6 +503,9 @@ nrow(cohort)
 run `targets`):
 
 ```{.r}
+library(targets)
+tar_source('R')
+
 list(
   tar_target(
     raw_file,
@@ -724,7 +727,7 @@ Exercise 7 key in this guide.
 | 4 | Ch 5, The Research Compendium | Convert a scatter of scripts into a compendium; add a README and data dictionary | [Ch 5](#sec-ig-ch03) |
 | 5 | Ch 6, Pinning Packages with renv | A lockfile, then a restore on a second machine | [Ch 6](#sec-ig-ch04) |
 | 6 | Ch 7, Pinning the Environment with Docker | A digest-pinned image, built locally with `--platform linux/amd64` and its digest recorded | [Ch 7](#sec-ig-ch05) |
-| 7 | Ch 8, Literate Programming and the Rendered Report; the Make section of Ch 9, Automating the Analysis: Make and targets | A sealed render with every number computed inline | [Ch 8](#sec-ig-ch07), [Ch 9](#sec-ig-pipelines) |
+| 7 | Ch 8, Literate Programming and the Rendered Report; the `targets` section and worked example of Ch 9, Automating the Analysis: targets and Make | A sealed render with every number computed inline | [Ch 8](#sec-ig-ch07), [Ch 9](#sec-ig-pipelines) |
 | 8 | Ch 10, Testing and Code Quality | Data-validation tests for the extract's planted defects (Exercise 7); an oracle test and a baseline test | [Ch 10](#sec-ig-ch08) |
 | 9 | Ch 11, Continuous Integration and Verification | A CI workflow that compares to a committed baseline, demonstrated failing once on purpose | [Ch 11](#sec-ig-ch09) |
 | 10 | Ch 12, Collaboration, Archiving, and Stewardship | Deposit to the Zenodo sandbox; rewrite the data-availability statement for a registry extract held under a data-use agreement (Exercise 4) | [Ch 12](#sec-ig-ch10) |
@@ -747,7 +750,7 @@ table_titles <- c(
   'Pinning Packages with renv', 'Pinning the Environment with Docker',
   'Backends and Runtimes: Nix, Podman, and Apptainer',
   'Literate Programming and the Rendered Report',
-  'Automating the Analysis: Make and targets',
+  'Automating the Analysis: targets and Make',
   'Testing and Code Quality',
   'Continuous Integration and Verification',
   'Collaboration, Archiving, and Stewardship')
@@ -755,8 +758,9 @@ stopifnot(all(table_titles %in% h1))
 ```
 
 The appendix on backends and runtimes (Nix, Podman, and
-Apptainer), and the `targets`, Snakemake, Nextflow, and
-workflowr material of Chapter 9, are optional at this pace.
+Apptainer), and the Make comparison, Snakemake, Nextflow,
+workflowr, and language-model material of Chapter 9, are
+optional at this pace.
 A two-quarter offering can restore them in a second term.
 
 ## Low-stakes cumulative quizzes {#sec-ig-quizzes}

@@ -55,15 +55,15 @@ answer:**
 - Can you justify why the R package is the compendium
   container, say precisely what `R CMD check` thereby
   checks, and say what it does not?
-- Can you enumerate the [Five Pillars](glossary.qmd#gloss-the-five-pillars)
-  of a compendium and
-  name the single artifact that captures each?
-- Can you distinguish the five compendium archetypes and
-  state how their directory layout, their report, and
-  their gates differ while the reproducibility machinery
-  stays the same?
-- Can you apply progressive disclosure to walk a project
-  from one archetype to another without reorganizing it?
+- Can you enumerate the five things a compendium must
+  capture (the [Five Pillars](glossary.qmd#gloss-the-five-pillars))
+  and name the single artifact that captures each?
+- Can you distinguish five project types (archetypes)
+  and state how their directory layout, their report,
+  and their gates differ while the reproducibility
+  machinery stays the same?
+- Can you walk a project from one type to another
+  without reorganizing it?
 
 **Outline.**
 
@@ -71,25 +71,29 @@ answer:**
   pinned yet.
 - Orientation: a cohort analysis that is a scatter, not
   an object.
-- The analyst's contribution: naming the archetype,
-  fixing the raw-and-derived boundary, deciding what
-  becomes a function.
+- The analyst's contribution: naming the project type,
+  fixing the raw-and-derived boundary, deciding
+  what becomes a function.
 - The compendium as the unit of reproducible work: where
   the idea comes from.
 - The R package as the compendium container: `R CMD
   check` as a universal gate, and its limit.
 - Building and maintaining the package skeleton: the
   `usethis` and `devtools` commands.
-- The Five Pillars.
-- The directory layout, concretely.
+- The Five Pillars: the five things every compendium
+  must capture.
+- The directory layout, concretely, and Marwick and
+  colleagues' small, medium, and large compendia.
 - The README and the data dictionary, including the
   README's computational requirements.
-- The five archetypes, each with a health-sciences
-  example.
-- Progressive disclosure: one layout, several stages.
-- Worked example: one compendium through two archetypes.
+- The five archetypes: project types, each with a
+  health-sciences example.
+- Progressive disclosure: one layout that grows without
+  restructuring.
+- Worked example: one compendium through two project
+  types, by hand, with a `zzcollab` box.
 - The cohort, continued: this book's own compendium
-  against the Five Pillars.
+  against the five things it must capture.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -197,14 +201,15 @@ The remainder of the chapter proceeds as follows. The
 three judgments that remain the analyst's alone come
 first, and we then trace where the idea of the compendium
 comes from and why the R package became its container. We
-next set out the Five Pillars and the directory layout,
-then the README, the data dictionary, and project-oriented
-paths with `here`. The five archetypes follow, each with a
-health-sciences example and a note of how it weighs the
-chapters ahead. Lastly, we consider
-progressive disclosure, work one compendium through two
-archetypes, and measure this book's own compendium
-against the Five Pillars.
+next set out the five things a compendium must capture
+and the directory layout, then the README, the data
+dictionary, and project-oriented paths with `here`. Five
+project types follow, each with a health-sciences
+example and a note of how it weighs the chapters ahead.
+Lastly, we show how one layout lets a project grow from
+one type to another, work one compendium through two
+types, and measure this book's own compendium against the
+five.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the scatter is missing
@@ -218,8 +223,8 @@ compendium add that the statistics alone do not supply?
 
 The statistics already have correctness. What the
 compendium adds is the property of being a single,
-locatable object. That is, it is a thing that can be
-handed to a colleague, cited, archived, and re-run. This
+locatable object: a thing that can be handed to a
+colleague, cited, archived, and re-run. This
 is possible because every part of it (the code, the data,
 and eventually the environment record) lives in one
 self-describing directory rather than scattered across a
@@ -234,7 +239,7 @@ analyst's alone. No tool scaffolds them. Getting them
 wrong produces a tidy directory that is nonetheless the
 wrong shape for the work.
 
-1. **Naming the archetype.** The analyst must decide
+1. **Naming the project type.** The analyst must decide
    what kind of object the project is: a data analysis,
    a manuscript, a reusable package, a simulation study,
    or a blog. This choice governs the layout, whether a
@@ -264,17 +269,18 @@ wrong shape for the work.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: three judgments, one tool-free
 
-A newcomer asks which of `zzcollab`'s commands tells the
-analyst where the raw-and-derived boundary falls. What is
-the honest answer?
+A newcomer asks which scaffolding command, from
+`usethis` or from a framework such as `zzcollab`, tells
+the analyst where the raw-and-derived boundary falls.
+What is the honest answer?
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-None of them. The framework's commands create the
-directories (`raw_data/`, `derived_data/`) and enforce the
-gates once the boundary is drawn. However, drawing the
-boundary, like naming the archetype and deciding what
+None of them. Such commands create the directories
+(`raw_data/`, `derived_data/`) and run the gates once the
+boundary is drawn. However, drawing the boundary, like
+naming the project type and deciding what
 becomes a function, is a judgment about the science. It
 is not a setting the tooling can infer from the files
 themselves.
@@ -298,14 +304,15 @@ themselves.
   integrity gate on the compendium's package skin
   (`R/`, the tests, `DESCRIPTION`). It does not check
   `analysis/`, which the build excludes.
-- **The Five Pillars.** The five artifacts a compendium
-  manages, one per capture point: the `Dockerfile`,
-  `renv.lock`, `.Rprofile`, the source code, and the
-  data.
-- **Archetype.** The kind of research object a
-  compendium is (data analysis, manuscript, package,
-  simulation study, or blog), which varies the layout
-  and the gates but not the underlying machinery.
+- **The Five Pillars** (zzcollab term). The five things
+  any compendium must capture, one artifact per capture
+  point: the `Dockerfile`, `renv.lock`, `.Rprofile`, the
+  source code, and the data.
+- **Archetype** (zzcollab term). The kind of research
+  object a compendium is (data analysis, manuscript,
+  package, simulation study, or blog), which varies the
+  layout and the gates but not the underlying machinery.
+  The wider literature grades compendia by size instead.
 - **Render gate.** A validation check that a report or
   document rebuilds cleanly from source; it applies to
   archetypes that carry a report and not to those that
@@ -313,9 +320,9 @@ themselves.
 - **Raw versus derived data.** Immutable original
   inputs versus the processed datasets regenerated from
   them by code.
-- **Progressive disclosure.** The property that one
-  layout supports a project's evolution from one
-  archetype to another with no reorganization.
+- **Progressive disclosure** (zzcollab term). The
+  property that one layout grows without restructuring
+  as a project moves from one archetype to another.
 :::
 
 ## The compendium as the unit of reproducible work
@@ -626,12 +633,16 @@ treats `R CMD check` in detail.
 ## The Five Pillars
 
 Having settled the container, we turn to what it holds.
-A compendium is defined by convention, but it *manages* a
-specific and small set of artifacts. The `zzcollab`
-framework organizes these as the Five Pillars. These are
-the five things a compendium reads, writes, and
-version-controls, one for each point at which
-reproducibility can be captured [@thomas2026zzcollab]. An
+Marwick and colleagues state three general principles: a
+compendium organizes its files by a convention, separates
+data from code, and specifies the computational
+environment [@marwick2018]. Spelled out for an R project,
+these principles name a small set of artifacts that any
+compendium must capture, one for each point at which
+reproducibility can be captured. We list five. The
+framework `zzcollab` calls them the Five Pillars
+[@thomas2026zzcollab], and we use its name for brevity
+below; nothing in the list depends on the framework. An
 analysis is reproducible only to the extent that all five
 are captured. Moreover, the pillars are layered rather
 than independent, each resting on the ones beneath it.
@@ -711,8 +722,9 @@ pillar above.
 ## The directory layout, concretely
 
 We now make the layout concrete. The following is the
-top-level structure of a `zzcollab` compendium. The block
-is illustrative and is not executed.
+top-level structure of a compendium in the Marwick
+convention, with the environment files this book adds.
+The block is illustrative and is not executed.
 
 ```
 penguin-analysis/
@@ -736,9 +748,7 @@ penguin-analysis/
 ├── Dockerfile            # Pillar 1: environment
 ├── renv.lock             # Pillar 2: package versions
 ├── .Rprofile             # Pillar 3: session configuration
-├── Makefile              # workflow entry points
-├── zzcollab.yaml         # configuration: base image, archetype
-├── .zzcollab-state       # generated state record; never hand-edited
+├── Makefile              # optional: workflow entry points
 └── .github/workflows/    # continuous-integration definitions
 ```
 
@@ -748,13 +758,35 @@ R-package machinery, and this is the skin that makes
 proper, in the Marwick convention. Its raw-and-derived
 data separation is the analyst's second judgment made
 physical. At the root sit the three environment
-artifacts, one per pillar. Alongside them sit the
-`Makefile` that provides the commands and the
-`zzcollab.yaml` that records, among a small set of
-parameters, the archetype. That last file is our bridge
-to the centerpiece of the chapter. The archetype is a
-first-class parameter recorded there, elicited at
-creation time alongside the choice of base image.
+artifacts, one per pillar, and an optional `Makefile`
+that names the commands a reader runs.
+
+Not every compendium needs all of this. Marwick and
+colleagues grade compendia by size [@marwick2018]. A
+small compendium is a minimal package: a `DESCRIPTION`,
+the data, and a script, perhaps with a license and a
+dynamic document in place of the script. A medium one
+adds `R/` for reusable functions, `man/` for their
+documentation, and `NAMESPACE`. A large one adds
+continuous integration, a `Dockerfile`, a `Makefile`, and
+unit tests. The tree above is a large compendium. The
+scale measures how much of the package machinery a
+project uses. The project type, which we take up
+below, is a separate question: what the compendium
+delivers.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+`zzc init` writes the package and `analysis/` parts of
+this tree; `zzc renv` and `zzc docker` add the
+environment files. The framework adds two files of its
+own at the root: `zzcollab.yaml`, which records the
+base-image choice and the archetype among a few
+parameters, and `.zzcollab-state`, a generated record
+that is never edited by hand. The archetype is chosen at creation, as
+a flag (`--archetype`) or from a prompt.
+:::
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: finding the boundary in the tree
@@ -823,8 +855,9 @@ committed script.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: README versus data dictionary
 
-A compendium's `README.md` says 'run `make all` to reproduce
-every figure in the report' and nothing else about the data.
+A compendium's `README.md` says 'run
+`Rscript analysis/scripts/run_all.R` to reproduce every
+figure in the report' and nothing else about the data.
 Is this README sufficient on its own, and what, if anything,
 is still missing from the compendium?
 
@@ -1018,28 +1051,41 @@ easy to assume that a compendium always exists to render a
 paper. That is the common case, but it is one case among
 five.
 
-`zzcollab` treats the research archetype as a first-class
-initialization parameter, orthogonal to the choice of
-computational environment [@thomas2026zzcollab]. Where
-the base image fixes the environment, the archetype
-determines the starting scaffolding: the directory
-emphasis, whether a primary report exists, and which
-validation gates apply on top of the universal one. The
-tool accepts six archetypes; this chapter teaches the
-five a research project uses. The sixth, `book`, is the
-shape of this book's own repository, a long Quarto
-document whose code supports the prose; for the purposes
-of this chapter it behaves as a manuscript at book
-length, and the cohort analysis inside it is classified
-below as a data analysis. Because
-every one of the five carries the minimal R-package skin,
-`R CMD check` remains the universal gate across all five.
-The framework's own whitepaper stresses this point in its
-account of the archetype axis. The reproducibility
-machinery is identical; what varies is the shape of the
-work and the gates it warrants. We take each in turn, with
-a health-sciences example, and then tabulate the
+The question here is what a compendium delivers: a set
+of outputs, a paper, a function, stored simulation
+results, or a series of posts. Marwick and colleagues'
+small, medium, and large scale, met above, grades
+something else, how much of the package machinery a
+project uses. The project type is independent of the
+computational environment. Where the base image fixes the
+environment, the project type determines the starting
+scaffolding: the directory emphasis, whether a primary
+report exists, and which validation gates apply on top of
+the universal one. We call the project types
+*archetypes*, the word `zzcollab` uses for them
+[@thomas2026zzcollab].
+Because every one of the five carries the minimal
+R-package skin, `R CMD check` remains the universal gate
+across all five. The reproducibility machinery is
+identical; what varies is the shape of the work and the
+gates it warrants. We take each in turn, with a
+health-sciences example, and then tabulate the
 differences.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+The framework records the archetype as a parameter at
+creation, as `zzc init --archetype analysis` does, and
+accepts six: `manuscript`, `analysis`, `book`,
+`package`, `simulation`, and `blog`. This chapter
+teaches the five a research project uses. The sixth,
+`book`, is the shape of this book's own repository, a
+long Quarto document whose code supports the prose; it
+behaves as a manuscript at book length, and the cohort
+analysis inside it is classified below as a data
+analysis.
+:::
 
 ### 1. Data analysis (a cohort study)
 
@@ -1167,9 +1213,9 @@ but many documents. A teaching blog carrying a series of
 methods posts, or a running lab notebook of analyses, is a
 single compendium. Its `analysis/` tree may hold many
 `index.qmd` files, each rendered to a static site by the
-same machinery that renders a manuscript. The framework's
-representative deployment is the limiting case of a single
-post. Integration with Quarto [@allaire2024] enables
+same machinery that renders a manuscript. The smallest
+such compendium is the limiting case of a single post.
+Integration with Quarto [@allaire2024] enables
 publication to the site from the same compendium that
 produced the underlying analyses. As a result, the full
 five-pillar reproducibility stack applies to web-published
@@ -1178,8 +1224,8 @@ teaching content without any change to the workflow.
 The gate here is again the universal `R CMD check`, joined
 by a render gate that must succeed for *each* post the
 compendium carries. The multiplicity is the distinguishing
-feature of the general case. That is, a blog compendium is
-a render-many, where the manuscript is a render-one and the
+feature of the general case: a blog compendium is a
+render-many, where the manuscript is a render-one and the
 package is a render-none.
 
 The five archetypes and their differences are summarized
@@ -1367,12 +1413,13 @@ compendium is ultimately shared (@sec-archiving).
 
 But must a project choose one archetype and keep it? The
 five archetypes can also be stages a single project passes
-through. The framework's most useful structural property
-is that the same layout supports the whole trajectory
-without reorganization. This is what the framework calls
-*progressive disclosure*: the same directory layout, the
-same `Makefile`, and the same Five Pillars carry a project
-from one archetype to the next.
+through. The most useful structural property of the
+layout is that it grows without restructuring: the same
+directories and the same five pillars carry a project
+from one archetype to the next. `zzcollab` calls this
+property *progressive disclosure*, a term that in
+interface design means revealing controls only as a user
+needs them.
 
 The trajectory is easy to picture, and it is the one our
 epidemiology student is likely to walk. The project begins
@@ -1411,8 +1458,8 @@ changes at each transition and one thing that never does.
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
-What changes: the archetype recorded in `zzcollab.yaml`,
-and the set of gates that apply (a render gate joins at
+What changes: the archetype the README declares, and
+the set of gates that apply (a render gate joins at
 the manuscript transition; `R CMD check`'s documentation
 and export checks start to bite once functions migrate
 into `R/`). What never changes: the directory layout
@@ -1424,24 +1471,38 @@ three root-level artifacts throughout.
 
 ## Worked example
 
-To make the progressive-disclosure trajectory concrete, we
-follow a single compendium through its first two
-archetypes. We stay at the level of the directory and the
-gates rather than the analysis. Suppose our student begins
-the incident-diabetes study. The compendium is created and
-its archetype recorded as a data analysis. The shell
-session below is illustrative and is not executed.
+To make the trajectory concrete, we follow a single
+compendium through its first two archetypes. We stay at
+the level of the directory and the gates rather than the
+analysis. Suppose our student begins the incident-diabetes
+study as a data analysis. The skin comes from `usethis`
+(@sec-package-skeleton) and the research directories from
+the shell. We ran the commands below in a terminal
+([Shell Primer](shell-primer.qmd)) on 2026-11-26, with
+R 4.6.2, `usethis` 3.2.1, and `tinytest` 1.4.3:
 
 ```bash
-$ mkdir diabetes-cohort && cd diabetes-cohort
-$ zzc init --archetype analysis  # layout, archetype recorded
-$ zzc tidyverse                  # renv and a tidyverse-based image
+Rscript -e "usethis::create_package('diabetescohort', open = FALSE)"
+cd diabetescohort
+mkdir -p analysis/{data/raw_data,data/derived_data,scripts}
+Rscript -e "usethis::use_build_ignore('analysis')"
+Rscript -e "usethis::use_gpl_license(version = 3)"
+Rscript -e "tinytest::setup_tinytest('.')"
 ```
 
-`make` runs named recipes, the targets defined in the
-project's `Makefile`; the `docker-` targets below run
-each step inside the project's container, which
-@sec-containers introduces.
+The first call wrote `DESCRIPTION`, `NAMESPACE`, and an
+empty `R/`. The package name allows only letters,
+numbers, and dots, so `'diabetes-cohort'` stopped with
+'is not a valid package name'. The `mkdir -p` line makes
+the three research directories in one step; the shell
+expands the braces into three paths. The fourth call
+added `^analysis$` to `.Rbuildignore`, the line the
+previous sections showed the build depends on. The last
+call created `tests/tinytest.R`, `inst/tinytest/`, and a
+placeholder test file, and added `tinytest` to `Suggests`.
+No tool records the archetype here. The student writes a
+`README.md` by hand, as the README section advises, and
+its first line names the project type.
 
 The student places the registry extract under `raw_data/`
 and writes `analysis/scripts/01_clean.R` to produce a
@@ -1454,26 +1515,83 @@ is a test that can actually fail if the model's inputs or
 the `survival` version drift. By contrast, a bound such as
 'no hazard ratio is negative' would be satisfied by every
 correct and every broken fit alike. At this point the only
-gates that apply are the universal check and the tests,
-run in a clean environment:
+gates that apply are the tests and the universal check:
 
 ```bash
-$ make check-renv-no-fix  # dependencies declared and locked; fails if not
-$ make docker-test    # tinytest only
-$ make docker-check   # R CMD check
+Rscript -e "pkgload::load_all(); tinytest::run_test_dir('inst/tinytest')"
+#> All ok, 1 results (23ms)
+Rscript -e "devtools::check()"
+#> Status: OK
 ```
+
+The output shown is from the new skeleton, with only the
+placeholder test. `devtools::test()` is no substitute
+here: on this skeleton it reported 'No testing
+infrastructure found', because it looks for `testthat`.
+A reader without `devtools` can run the same check as
+`R CMD build diabetescohort` followed by
+`R CMD check diabetescohort_0.0.0.9000.tar.gz` from the
+parent directory, which also ended 'Status: OK'. These
+gates run on the host, so they inherit its R and its
+packages. Pinning those is the work of @sec-dependencies
+and @sec-containers.
 
 Some weeks later the results are firm enough to write up.
 The student adds `analysis/report/report.Rmd`, moving the
 figure code out of `02_model.R` and into report chunks that
 regenerate the figures on render. The compendium is now a
-manuscript, and the archetype line in `zzcollab.yaml` is
-updated to reflect it. However, not a single existing file
-has moved. A render gate now joins the others:
+manuscript, and the README's first line says so. However,
+not a single existing file has moved. A render gate now
+joins the others. Rendering to PDF on the host needs a
+LaTeX installation (we used TinyTeX); on a one-chunk
+`report.Rmd` with `output: pdf_document` it ended as
+shown:
 
 ```bash
-$ make docker-render  # rebuild report.Rmd to PDF
+Rscript -e "rmarkdown::render('analysis/report/report.Rmd')"
+#> Output created: report.pdf
 ```
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+The framework replaces the skeleton commands, run in an
+empty directory. `zzc init` writes the layout and records
+the archetype in `zzcollab.yaml`; `zzc renv` adds a
+lockfile, and `zzc docker --profile tidyverse` a
+`Dockerfile` on `rocker/tidyverse`.
+
+```bash
+mkdir diabetescohort
+cd diabetescohort
+zzc init --archetype analysis
+zzc renv
+zzc docker --profile tidyverse
+```
+
+`make` runs named recipes, the targets defined in the
+project's `Makefile`. The `docker-` targets run each
+gate inside the project's container (@sec-containers).
+
+```bash
+make check-renv-no-fix
+make docker-test
+make docker-check
+make docker-render
+```
+
+`check-renv-no-fix` fails when a package is used but not
+declared and locked; the plain `check-renv` repairs the
+files instead, so it cannot serve as a gate.
+`docker-test` runs the `tinytest` suite,
+`docker-check` runs `R CMD check`, and `docker-render`
+rebuilds `analysis/report/report.Rmd`. At the manuscript
+transition the archetype line in `zzcollab.yaml` is
+updated with `zzc config set-local archetype manuscript`.
+These
+commands were checked against the framework's source,
+not run for this chapter.
+:::
 
 The cleaning routine, meanwhile, has grown into a general
 helper worth documenting. It therefore migrates from

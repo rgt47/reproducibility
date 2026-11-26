@@ -541,14 +541,23 @@ confirmed, not L3. But why a tolerance, and not exact
 equality? Estimates are floating-point numbers, and exact
 equality would fail on harmless differences in the last
 digits while saying nothing about whether the substantive
-result moved. In the framework this book uses,
+result moved. A verification step that respects this
+definition records L3 only when the image rebuilds, the
+test suite passes, and at least one baseline test exists
+and has run. Otherwise it can claim only that the project
+was rebuilt and tested, L2, with no baseline comparison.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
 `zzc verify --full` applies this definition. It records L3
 only when the image rebuilds, the test suite passes, and at
 least one baseline test (a file named
 `inst/tinytest/test-baseline*.R`) exists and appears in the
 test log.
-Otherwise it reports the project as rebuilt and tested,
-L2, with no baseline comparison. Continuous integration
+:::
+
+Continuous integration
 that re-runs the check on every change keeps an L3 claim
 current. However, it is the baseline comparison, not the
 automation, that earns the rung.
@@ -1520,7 +1529,7 @@ lockfile alone does not.
 | L3 verified | A baseline test compares regenerated outputs with recorded values, within a stated tolerance, after a clean rebuild |
 | Capture vs. validation | Capture (a lockfile, a container) sets L0 to L2; validation (CI, a baseline test) adds nothing pinned, confirms the captured level, and is what reaches L3 (habit 5) |
 | Reproduced (this book) | Same code, same data, re-run; contrast replicated: a new study, new data |
-| `zzc verify --full` | Reports L3 only if the image rebuilds, tests pass, and a `test-baseline*.R` file appears in the test log |
+| `zzc verify --full` (zzcollab) | Reports L3 only if the image rebuilds, tests pass, and a `test-baseline*.R` file appears in the test log |
 | Honest statement | Name the rung, the artifact, and what remains exposed; never claim 'fully reproducible' (motto) |
 
 ## Further reading

@@ -36,7 +36,7 @@ Every part and chapter of the book on one page, in reading order.
 
 - [8 Literate Programming and the Rendered
   Report](07-literate-programming.qmd)
-- [9 Automating the Analysis: Make and targets](pipelines.qmd)
+- [9 Automating the Analysis: targets and Make](pipelines.qmd)
 - [10 Testing and Code Quality](08-testing-quality.qmd)
 - [11 Continuous Integration and
   Verification](09-continuous-integration.qmd)
@@ -51,6 +51,7 @@ Every part and chapter of the book on one page, in reading order.
 - [References](references.qmd)
 - [A Backends and Runtimes: Nix, Podman, and
   Apptainer](06-backends-runtimes.qmd)
+- [B Continuous Integration on Other Forges](ci-other-forges.qmd)
 - [Cheat-Sheet Index](cheat-sheet-index.qmd)
 - [Glossary](glossary.qmd)
 - [Credits](credits.qmd)

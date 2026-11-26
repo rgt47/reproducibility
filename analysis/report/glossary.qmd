@@ -24,10 +24,11 @@ for shared high-performance computing, where users are not
 administrators. Its SIF format is a single checksummable file.
 (@sec-backends)
 
-[]{#gloss-archetype}**Archetype.** The kind of research object a compendium is (data
-analysis, manuscript, package, simulation study, or blog), which
-varies the layout and the gates but not the underlying
-machinery. (@sec-compendium)
+[]{#gloss-archetype}**Archetype.** (zzcollab term; in general, a project type.) The
+kind of research object a compendium is (data analysis,
+manuscript, package, simulation study, or blog), which varies
+the layout and the gates but not the underlying machinery.
+(@sec-compendium)
 
 []{#gloss-audit-trail}**Audit trail.** In this book, the commit history read as a
 dated, attributed record of what changed in an analysis and,
@@ -51,11 +52,12 @@ declares the environment directly. (@sec-backends)
 the `FROM` line. Here, a Rocker image providing a fixed R
 version on a fixed operating system. (@sec-containers)
 
-[]{#gloss-baseline-test}**Baseline test.** A test, in a file named `test-baseline-*.R`,
-that recomputes key outputs and compares them with values
+[]{#gloss-baseline-test}**Baseline test.** A test that recomputes key outputs and compares them with values
 recorded in an earlier session and committed, using
 `expect_equal()` with a stated tolerance. It is the evidence L3
-requires. (@sec-testing, @sec-verification)
+requires. The book names such files `test-baseline-*.R`, a
+convention `zzcollab` uses to find them. (@sec-testing,
+@sec-verification)
 
 []{#gloss-binder}**Binder.** A service that builds an environment from a public
 repository and serves it in a browser, so a reviewer can run an
@@ -244,7 +246,8 @@ outputs. (@sec-tre)
 []{#gloss-forge}**Forge.** A platform that hosts a version-controlled repository
 and runs its continuous integration. GitHub and GitLab are the
 two principal forges; GitLab is frequently self-hosted by
-universities. (@sec-verification, @sec-archiving)
+universities. (@sec-verification, @sec-ci-other-forges,
+@sec-archiving)
 
 []{#gloss-freeze}**Freeze (Quarto).** A project option under which a render
 reuses a document's stored results from `_freeze/` instead of
@@ -500,13 +503,16 @@ as a gate. (@sec-testing)
 prerequisite is newer than the target, the target is out of
 date. (@sec-pipelines)
 
-[]{#gloss-profile}**Profile.** The base-image bundle a project is built from, such
-as `minimal`, `tidyverse`, `rstudio`, or `publishing`. It
-selects the `FROM` image. (@sec-containers)
+[]{#gloss-profile}**Profile.** (zzcollab term; in general, the choice of base
+image.) The base-image bundle a project is built from, such as
+`minimal`, `tidyverse`, `rstudio`, or `publishing`. It selects
+the `FROM` image. (@sec-containers)
 
-[]{#gloss-progressive-disclosure}**Progressive disclosure.** The property that one layout
-supports a project's evolution from one archetype to another
-with no reorganization. (@sec-compendium)
+[]{#gloss-progressive-disclosure}**Progressive disclosure.** (zzcollab term; the phrase has a
+different, established meaning in interface design.) The
+property that one layout supports a project's growth from one
+project type to another with no reorganization.
+(@sec-compendium)
 
 []{#gloss-prompt-injection}**Prompt injection.** Instructions embedded in content a model
 or agent reads (a README, an issue, a CI log, a data file) that
@@ -782,8 +788,8 @@ such as `file`. (@sec-pipelines)
 derived from the code rather than from a hand-maintained
 declaration. (@sec-pipelines)
 
-[]{#gloss-the-five-pillars}**The Five Pillars.** The five artifacts a compendium manages,
-one per capture point: the `Dockerfile`, `renv.lock`,
+[]{#gloss-the-five-pillars}**The Five Pillars.** (zzcollab term.) The five artifacts a
+compendium manages, one per capture point: the `Dockerfile`, `renv.lock`,
 `.Rprofile`, the source code, and the data. (@sec-compendium)
 
 []{#gloss-the-level-ladder}**The level ladder (L0 to L3).** The four-rung scale, L0
@@ -868,7 +874,7 @@ is traced to a stated requirement. (@sec-testing)
 service what to do: which events trigger it, what environment to
 run in, and what commands to execute. On GitHub these files live
 under `.github/workflows/`; on GitLab the single file is
-`.gitlab-ci.yml`. (@sec-verification)
+`.gitlab-ci.yml`. (@sec-verification, @sec-ci-other-forges)
 
 []{#gloss-working-tree}**Working tree.** The ordinary files in the repository directory
 as they currently exist on disk, as opposed to the versions
@@ -900,6 +906,7 @@ levels ladder. Written by the book's authors; GPL (>= 3),
 []{#gloss-zzrenvcheck-check-packages}**`zzrenvcheck::check_packages()`.** Checks the dependency triad
 and can repair it, writing a missing package into `DESCRIPTION`
 and injecting a resolved entry into the lockfile. The package
-is written by the book's authors and is not on CRAN.
-(@sec-dependencies)
+is written by the book's authors and is not on CRAN; the
+tool-neutral check of the code against the lockfile is
+`renv::status()`. (@sec-dependencies)
 

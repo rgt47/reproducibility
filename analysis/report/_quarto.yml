@@ -88,6 +88,7 @@ book:
 
   appendices:
     - 06-backends-runtimes.qmd
+    - ci-other-forges.qmd
     - cheat-sheet-index.qmd
     - glossary.qmd
     - credits.qmd

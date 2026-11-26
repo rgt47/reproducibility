@@ -1593,7 +1593,7 @@ browser, and by the development-containers specification
 editor. Both rest on the presence-driven principle, a
 configuration file's existence driving an automated build,
 that recurs throughout this book and is developed in
-@sec-verification.
+@sec-ci-other-forges.
 
 The container backend against which all of these are
 alternatives is developed in @sec-containers, and the

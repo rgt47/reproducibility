@@ -69,8 +69,8 @@ answer:**
 - Can you name the environment variables that govern
   locale, time zone, and thread determinism, and predict
   a concrete failure that each one prevents?
-- Can you select a Rocker profile appropriate to a given
-  research archetype, and state honestly which rung of
+- Can you select a Rocker base image appropriate to a
+  given research archetype, and state honestly which rung of
   the reproducibility ladder a given image reaches and
   which it does not?
 
@@ -96,9 +96,10 @@ answer:**
   digest needs a fixed platform.
 - Environment-variable determinism: locale, time zone,
   thread count.
-- Profiles as base images, and a first look at the
-  two-layer team model.
-- Worked example: one project walked from L1 to L2.
+- Choosing a base image (r-ver, tidyverse, verse), and a
+  first look at the two-layer team model.
+- Worked example: one project walked from L1 to L2, by
+  hand, with a `zzcollab` box.
 - The cohort, continued: what the compendium's own
   Dockerfile would still need.
 :::
@@ -206,8 +207,9 @@ make a container itself reproducible rather than merely
 convenient, and the complication that multi-architecture
 images bring to a recent Mac. The environment variables
 that govern determinism follow. We close with the
-profiles and the team model, then work one project from
-L1 to L2 and check this book's own compendium.
+choice of base image and the team model, then work one
+project from L1 to L2 and check this book's own
+compendium.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what the lockfile missed
@@ -310,9 +312,9 @@ belong to the analyst and to no script.
   repository on a particular day, so that installing
   'the current version' resolves to the same version
   on every build.
-- **Profile.** The base-image bundle a project is built
-  from, such as `minimal`, `tidyverse`, `rstudio`, or
-  `publishing`. It selects the `FROM` image.
+- **Profile** (zzcollab term). A named base-image
+  choice, such as `minimal` for `rocker/r-ver`. It
+  selects the `FROM` image.
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -526,8 +528,8 @@ Server as well and is the larger of the two. And
 `rocker/verse` adds a LaTeX toolchain for rendering
 manuscripts to PDF. Each higher image is built on the
 one below, so they share layers, and each fixes a
-larger environment than the last. We shall meet these
-again as the profiles.
+larger environment than the last. We return to the
+choice among them once the recipe is reproducible.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: why not start bare
@@ -1081,8 +1083,8 @@ buildx imagetools inspect`. The digest on the showcase
 Dockerfile's `FROM` line names an index with a
 `linux/amd64` and a `linux/arm64` image (verified). But
 `rocker/tidyverse:4.4.0` and `rocker/verse:4.4.0`, the
-bases of the tidyverse and publishing profiles at that
-version, publish `linux/amd64` only (verified); neither
+two larger bases at that version, publish `linux/amd64`
+only (verified); neither
 carries an `arm64` entry. This changes from version to
 version: on 25 November 2026 the `rocker/tidyverse`
 tags for R 4.6.1 and 4.6.2 carried both architectures,
@@ -1343,59 +1345,66 @@ exists to fix.
 :::
 :::
 
-## Profiles as base images
+## Choosing a base image
 
 The choice of base image is, in practice, a choice from
-a short menu, and the framework this book uses names the
-entries **profiles**. A profile is a base-image bundle,
-and selecting one sets the `FROM` line and little else.
-Four profiles cover most needs.
+the short Rocker hierarchy, and it sets the `FROM` line
+and little else. Three bases cover most needs.
 
-The **minimal** profile builds on `rocker/r-ver`: R on
-Ubuntu with the development essentials and nothing more.
-It is the smallest base, and the right one when the
-analysis pulls in whatever it needs through the
-lockfile. The **tidyverse** profile builds on
-`rocker/tidyverse`, adding the tidyverse packages and
-`pandoc`, and is the natural default for data analysis.
-The **rstudio** profile builds on `rocker/rstudio`,
-adding the RStudio Server environment for those who
-prefer to work in the browser-based IDE. The
-**publishing** profile builds on `rocker/verse`, which
-carries a LaTeX toolchain, and is the base to choose
-when the deliverable is a rendered PDF manuscript.
+`rocker/r-ver` is R on Ubuntu with the development
+essentials and nothing more. It is the smallest base,
+and the right one when the analysis pulls in whatever it
+needs through the lockfile. `rocker/tidyverse` adds the
+tidyverse packages and `pandoc`, and RStudio Server with
+them, and is a common default for data analysis.
+`rocker/verse` adds a LaTeX toolchain, and is the base
+to choose when the deliverable is a rendered PDF
+manuscript. (`rocker/rstudio`, between the first two,
+serves those who want the browser-based IDE without the
+tidyverse.)
 
-The design intent is that the profiles differ in as few
-lines as possible. Moving a project from one profile to
-another changes the `FROM` line and, at most, a single
-system-installation line. The reproducibility-relevant
-configuration stays constant: the locale and time-zone
-variables, the dated snapshot, and the lockfile
-restore. The profile decides
-what the base carries, and the lockfile decides what is
+A recipe should be written so that the base can change
+in as few lines as possible. Moving a project from one
+base to another then changes the `FROM` line and, at
+most, a single system-installation line. The
+reproducibility-relevant configuration stays constant:
+the locale and time-zone variables, the dated snapshot,
+and the lockfile restore. The base decides what is
+already present, and the lockfile decides what is
 installed on top.
 
-The archetypes of @sec-compendium map onto the profiles
+::: {.callout-note icon=false}
+## With zzcollab
+
+The framework names its base-image choices *profiles*:
+`minimal` builds on `rocker/r-ver`, `tidyverse` on
+`rocker/tidyverse`, `rstudio` on `rocker/rstudio`, and
+`publishing` on `rocker/verse`. In an empty directory,
+`zzc <profile>` creates a project on that base; in an
+existing project, `zzc docker --profile <profile>`
+switches the base and regenerates only the Dockerfile.
+:::
+
+The archetypes of @sec-compendium map onto the bases
 naturally, and the mapping is the concrete form of the
 first analyst judgment above. The same machinery, a
 digest-pinned base, a dated snapshot, a restored
 lockfile, and the determinism variables, serves every
 archetype; only the base changes.
 
-- A **data-analysis** archetype is well served by the
-  tidyverse or minimal base, according to how much of
-  its stack it draws from the base rather than the
-  lockfile.
-- A **manuscript** archetype needs the publishing base,
+- A **data-analysis** archetype is well served by
+  `rocker/tidyverse` or `rocker/r-ver`, according to how
+  much of its stack it draws from the base rather than
+  the lockfile.
+- A **manuscript** archetype needs `rocker/verse`,
   because rendering to PDF requires the LaTeX toolchain
-  that `rocker/verse` carries and the lighter bases do
-  not.
+  that it carries and the lighter bases do not.
 - An **R-package** archetype needs very little: R and
-  the check tools suffice, so the minimal base is the
+  the check tools suffice, so `rocker/r-ver` is the
   honest choice, and provisioning a LaTeX toolchain it
   never uses would be waste.
 - A **simulation** archetype often wants more cores than
-  software, so the base may be minimal while the
+  software, so the base may be `rocker/r-ver` while the
   container is run with a larger core allocation. Here
   the analyst must weigh the determinism point above.
   More cores may speed the simulation while changing the
@@ -1404,15 +1413,15 @@ archetype; only the base changes.
   seeding discipline of @sec-compendium deserve
   particular care.
 - A **blog** archetype renders many posts rather than one
-  report, and is well served by the publishing or
-  tidyverse base according to whether any post needs
+  report, and is well served by `rocker/verse` or
+  `rocker/tidyverse` according to whether any post needs
   PDF output.
 
 ::: {.callout-note icon=false collapse=true}
-## Check your understanding: choosing a profile
+## Check your understanding: choosing a base image
 
-An R-package archetype is built against the publishing
-profile because the author 'might as well have LaTeX
+An R-package archetype is built on `rocker/verse`
+because the author 'might as well have LaTeX
 available'. Name the concrete risk this choice creates,
 distinct from image size.
 
@@ -1422,13 +1431,13 @@ distinct from image size.
 A package must be checked against a clean environment
 carrying only its declared dependencies, so that `R CMD
 check` or its equivalent catches a dependency the
-`DESCRIPTION` fails to declare. A rich publishing base can
-mask exactly that failure. The package's code may rely,
-without declaring it, on a LaTeX tool or a system library
-the publishing base happens to carry. The check will then
-pass in this image and fail the moment the package is
-installed on a user's machine that lacks that base. The
-minimal profile is the honest choice because it
+`DESCRIPTION` fails to declare. A rich base such as
+`rocker/verse` can mask exactly that failure. The
+package's code may rely, without declaring it, on a LaTeX
+tool or a system library that base happens to carry. The
+check will then pass in this image and fail the moment
+the package is installed on a user's machine that lacks
+that base. `rocker/r-ver` is the honest choice because it
 cannot hide an undeclared dependency behind extra
 software nobody asked for.
 :::
@@ -1493,75 +1502,102 @@ only within one project.
 
 ## Worked example
 
-We now follow a concrete case through, in the manner of
-the framework this book uses, which generates the
-Dockerfile so that the analyst does not write one by
-hand. A biostatistician is analyzing a registry cohort.
-The deliverable is a set of tables and figures, not a
-typeset manuscript, so the appropriate archetype is data
-analysis and the appropriate profile is minimal. That
-profile carries R and the essentials, with the analysis
-stack drawn from the lockfile. She scaffolds the project and builds the
-image. The shell session, shown as static text and never
-executed here, is short.
+We now follow a concrete case through with the tools
+this chapter has taught. A biostatistician is analyzing a
+registry cohort. The deliverable is a set of tables and
+figures, not a typeset manuscript, so the appropriate
+archetype is data analysis and the appropriate base is
+`rocker/r-ver`. That base carries R and the essentials,
+with the analysis stack drawn from the lockfile.
+
+She copies the showcase recipe of the section on making
+the image itself reproducible into her project root as
+`Dockerfile`. It carries a digest-pinned
+`FROM rocker/r-ver`, the locale, time-zone, and two
+thread variables, and the dated snapshot wired into the
+repository options. It ends with a `renv::restore()` that
+installs the locked packages inside the fixed
+environment. She then builds the image and runs her
+scripts in it with the two commands of @sec-docker-run:
+`docker build --platform linux/amd64`, and `docker run`
+with the project mounted. Adding `-it` and `R` gives her
+an interactive session. The labels on the recipe record the
+base image, its digest, and the snapshot date, so a later
+reader can see exactly what was pinned without leaving
+the image.
+
+Now suppose a reviewer asks for a typeset manuscript with
+the analysis embedded. The archetype has shifted, and so
+should the base. She points the `FROM` line at
+`rocker/verse` for the same R version. She pins it by the
+digest that `docker buildx imagetools inspect` reports
+(Exercise 1 walks through that command) and updates the
+two label values to match. She then rebuilds with the
+same `docker build` command. The LaTeX toolchain comes
+with the new base, and the manuscript renders to PDF
+inside the container. Almost nothing else in the recipe
+changed: the locale and thread variables, the dated
+snapshot, and the lockfile restore are identical. The
+same reproducibility machinery served both archetypes,
+and the move between them changed one instruction and
+the labels that describe it. On an Apple
+Silicon Mac both builds run under emulation, because the
+command asks for `linux/amd64`; `rocker/verse` publishes
+no `arm64` image in any case.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+The framework generates the Dockerfile so that the
+analyst does not write one by hand. In an empty project
+directory:
 
 ```bash
-$ mkdir cohort-study && cd cohort-study
-$ zzc minimal
-$ make docker-build
-$ make r
+zzc minimal
+make docker-build
+make r
 ```
 
-The `zzc minimal` step generates the project, including
-a Dockerfile pinned to a digest and a dated snapshot;
-`make docker-build` builds the image; and `make r` starts
-a container and drops her into an R session inside it.
-The generated Dockerfile follows the showcase's
-structure. It carries a digest-pinned `FROM rocker/r-ver`,
-the locale and time-zone variables, and the dated
-snapshot wired into the repository options. It ends with
-a `renv::restore()` that installs the locked packages
-inside the fixed environment. It departs from this
-chapter's rules in two respects that a reader should
-know (this book's authors maintain the tool, and both are
-recorded as tool issues). On an Apple Silicon Mac the
-tool builds a native `linux/arm64` image for multi-
-architecture bases such as `rocker/r-ver`, to avoid
-emulation, rather than passing `--platform linux/amd64`
-as this book does; the Mac image therefore differs from
-the one CI and an `x86` cluster build. And it sets
-`OMP_NUM_THREADS` but not `OPENBLAS_NUM_THREADS`, so the
-second thread pin must be added by hand. The project's
+`zzc minimal` generates the project, including a
+Dockerfile on `rocker/r-ver` pinned to a digest and a
+dated snapshot; `make docker-build` builds the image;
+and `make r` starts a container and opens an R session
+inside it. For the manuscript, the base is switched and
+the image rebuilt:
+
+```bash
+zzc docker --profile publishing
+make docker-build
+```
+
+The first line regenerates the Dockerfile on
+`rocker/verse` and leaves `.Rprofile` and the `Makefile`
+untouched. A bare `zzc publishing` does not switch an
+existing project; it stops and names this command.
+
+The generated recipe follows the showcase's structure
+but departs from this chapter's rules in three respects
+(this book's authors maintain the tool; the first two
+are recorded as tool issues). On an Apple Silicon Mac
+the tool builds a native `linux/arm64` image for
+multi-architecture bases such as `rocker/r-ver`, to
+avoid emulation, rather than passing
+`--platform linux/amd64` as this book does. The Mac
+image therefore differs from the one CI and an `x86`
+cluster build. The publishing switch is the exception: for
+`rocker/verse` the tool builds `linux/amd64` under
+emulation. It sets `OMP_NUM_THREADS` but not
+`OPENBLAS_NUM_THREADS`, so the second thread pin must be
+added by hand. And if Docker cannot pull the base when
+the Dockerfile is generated, it warns and leaves the
+`FROM` line pinned by tag only. The project's
 `Makefile` honors `PLATFORM=linux/amd64` for the
 containers it runs, but the build itself does not, so a
 Mac user who needs the CI image should build it with
 `docker build --platform linux/amd64` directly or pull
-the image CI built. The image records its own
-provenance in labels, the base image, its digest, and
-the snapshot date, so a later reader can see exactly what
-was pinned without leaving the image.
-
-Now suppose a reviewer asks for a typeset manuscript with
-the analysis embedded. The archetype has shifted, and so
-should the profile. She regenerates against the
-publishing base:
-
-```bash
-$ zzc publishing
-$ make docker-build
-```
-
-The `FROM` line now names `rocker/verse`, the LaTeX
-toolchain comes with it, and the manuscript renders to
-PDF inside the container. Almost nothing else in the
-recipe changed: the locale and thread variables, the
-dated snapshot, and the lockfile restore are identical.
-The same reproducibility machinery served both
-archetypes, and the move between them was a single
-changed line. On an Apple Silicon Mac it also changes
-the architecture: `rocker/verse` publishes no `arm64`
-image, so the tool builds this one for `linux/amd64`
-under emulation, slower than the minimal build was.
+the image CI built. These commands were checked against
+the framework's source, not run for this chapter.
+:::
 
 What has she gained, in the vocabulary of the ladder?
 Before the container, at L1, her collaborator's restore
@@ -1580,22 +1616,24 @@ recorded baseline. That is the subject of
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what changed and what did not
 
-Between the minimal and the publishing build in the
-worked example, name every line of the Dockerfile that
-had to change, and every piece of reproducibility
+Between the `rocker/r-ver` and the `rocker/verse` build
+in the worked example, name every line of the Dockerfile
+that had to change, and every piece of reproducibility
 machinery that stayed exactly as it was.
 
 ::: {.callout-note icon=false collapse=true}
 ## Answer
 
 Only the `FROM` line changed, from the digest-pinned
-`rocker/r-ver` to the digest-pinned `rocker/verse`. Every
-other reproducibility-relevant line stayed fixed: the
-locale and time-zone and thread-count variables, the
-dated snapshot wired into the repository options, and the
+`rocker/r-ver` to the digest-pinned `rocker/verse`, with
+the label values that describe it. Every other
+reproducibility-relevant line stayed fixed: the locale
+and time-zone and thread-count variables, the dated
+snapshot wired into the repository options, and the
 `renv::restore()` that installs the locked packages. This
-is the point of keeping the profiles cleanly separated
-from the rest of the recipe: changing what the deliverable
+is the point of keeping the choice of base cleanly
+separated from the rest of the recipe: changing what the
+deliverable
 is changes one line, not the discipline that makes either
 build reproducible.
 :::
@@ -1604,9 +1642,9 @@ build reproducible.
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: complete the Dockerfile
 
-The worked example's generated Dockerfile is, in
-essence, the tested recipe of the section on making the
-image itself reproducible. It is reprinted below with
+The worked example's Dockerfile is the tested recipe of
+the section on making the image itself reproducible. It
+is reprinted below with
 four of its lines removed, and the two label values that
 would give lines 1 and 2 away masked. Write each missing
 line so
@@ -1890,7 +1928,7 @@ contributions, and it is not one to delegate.
 
 3. For each of the five archetypes, data analysis,
    manuscript, R package, simulation, and blog, name the
-   profile you would choose and justify the choice in one
+   base image you would choose and justify the choice in one
    sentence. For the two archetypes where the choice is
    genuinely arguable, state the trade-off on both sides.
 
@@ -2049,33 +2087,37 @@ the recipe from unpinned to pinned.
 ::: {.callout-note icon=false collapse=true}
 ## Exercise 3
 
-**Data analysis:** tidyverse, because the analysis draws
-most of its stack from the base rather than the lockfile
-and the base saves the install. **Manuscript:**
-publishing, because rendering to PDF needs the LaTeX
-toolchain that `rocker/verse` carries and the lighter
-bases do not. **R package:** minimal, because a package
-must be checked against a clean environment carrying only
-its declared dependencies, and a rich base can mask a
-missing declaration. **Simulation:** minimal, because a
-simulation typically needs a small numeric stack and image
-size matters when the image is pulled onto many cluster
-nodes. **Blog:** tidyverse or publishing, depending on
-whether posts render to HTML alone.
+**Data analysis:** `rocker/r-ver`, as in the worked
+example, or `rocker/tidyverse` when the analysis draws
+most of its stack from the base rather than the lockfile;
+the trade is set out below. **Manuscript:**
+`rocker/verse`, because rendering to PDF needs the LaTeX
+toolchain that it carries and the lighter bases do not.
+**R package:** `rocker/r-ver`, because a package must be
+checked against a clean environment carrying only its
+declared dependencies, and a rich base can mask a missing
+declaration. **Simulation:** `rocker/r-ver`, because a
+simulation typically needs a small numeric stack and
+image size matters when the image is pulled onto many
+cluster nodes. **Blog:** `rocker/tidyverse` or
+`rocker/verse`, depending on whether posts render to HTML
+alone.
 
 **The two genuinely arguable cases.**
 
-*Data analysis.* Tidyverse buys a fast build and a base
-whose contents are already tested together. Minimal buys a
-smaller image and, more importantly, honesty: everything
-the analysis uses comes through the lockfile, so the
-lockfile is a complete record rather than a supplement to
-an opaque base. The trade is build convenience against
-completeness of the record.
+*Data analysis.* `rocker/tidyverse` buys a fast build and
+a base whose contents are already tested together.
+`rocker/r-ver` buys a smaller image and, more
+importantly, honesty: everything the analysis uses comes
+through the lockfile, so the lockfile is a complete
+record rather than a supplement to an opaque base. The
+trade is build convenience against completeness of the
+record.
 
-*Blog.* Publishing carries LaTeX, which a blog rendering
-only to HTML never uses, and it is a large image to pull
-and store for that. Tidyverse is lighter but leaves the
+*Blog.* `rocker/verse` carries LaTeX, which a blog
+rendering only to HTML never uses, and it is a large
+image to pull and store for that. `rocker/tidyverse` is
+lighter but leaves the
 blog unable to render a PDF version of a post without a
 rebuild. The trade is image size against format
 optionality, and it turns on whether any post will ever

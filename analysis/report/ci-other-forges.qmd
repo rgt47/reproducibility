@@ -1,0 +1,276 @@
+# Continuous Integration on Other Forges {#sec-ci-other-forges}
+
+@sec-verification writes its workflows for GitHub Actions.
+This appendix carries the same three gates and the verify
+job to GitLab CI. It then takes up two design questions
+for a compendium that must run on more than one forge:
+where the checking logic should live, and whether a
+workflow should configure itself from the files present.
+It assumes the gates, the verify job, and the
+scripts `ci/dependency-gate.R` and `ci/run-tests.R` of
+@sec-verification. Nothing in the core chapters depends on
+it.
+
+## Why the forge matters
+
+Continuous integration is a general idea with several
+implementations, and the choice of forge is often not the
+researcher's to make. Research compendia are often
+authored on institutional, self-hosted GitLab. Many
+universities and laboratories run their own GitLab servers
+and cannot, or will not, push a repository to github.com.
+This is particularly so where data-governance rules
+discourage commercial cloud hosting. For a registry study
+whose data-handling agreement forbids external hosting,
+running the same checks on institutional GitLab is a
+precondition, not a convenience.
+
+The two dialects differ structurally. GitHub Actions uses
+one or more workflow files under `.github/workflows/`, each
+organized into jobs and, within a job, a sequence of named
+steps. GitLab CI uses a single `.gitlab-ci.yml` organized
+into stages, each stage running a script. The difference
+is one of syntax and hosting, not of principle.
+
+## The three gates in GitLab's dialect
+
+The same three gates, and the verify job, expressed in the
+GitLab dialect look like this. As in @sec-verification, we
+show a static file that GitLab executes and this book does
+not; its YAML was checked for syntax only.
+
+```yaml
+stages:
+  - gates
+  - verify
+
+gates:
+  stage: gates
+  # The tag must name the R version recorded in renv.lock.
+  image: rocker/verse:4.6.1
+  script:
+    - Rscript -e 'renv::restore(prompt = FALSE)'
+    - Rscript -e 'renv::install("rcmdcheck")'
+    # Gate 1: R CMD check of the package skin
+    - Rscript -e 'rcmdcheck::rcmdcheck(args = "--no-manual",
+        error_on = "warning")'
+    # Gate 2: every package used in analysis/ is pinned
+    - Rscript ci/dependency-gate.R
+    # Gate 3: the report re-renders from source
+    - Rscript -e 'rmarkdown::render(
+        "analysis/report/report.Rmd",
+        output_format = "html_document",
+        output_dir = tempdir())'
+
+verify:
+  stage: verify
+  # A shell-executor runner with Docker installed; the
+  # tag is whatever the institution assigns to it.
+  tags: [docker-shell]
+  script:
+    - docker build -t compendium:ci .
+    - docker run --rm -e RENV_CONFIG_AUTOLOADER_ENABLED=FALSE
+        -v "$PWD":/work -w /work
+        compendium:ci Rscript ci/run-tests.R
+```
+
+The GitLab file says what the GitHub file says in other
+words. Each runs on the R version the lockfile records,
+restores the pinned library into the project library, and
+installs `rcmdcheck` beside it. Each then runs the three
+gates from the repository root, so that every R step, and
+the check subprocess it launches, sees the restored
+library. The `.Rprofile` assumption of 'Where CI bugs
+hide' in @sec-verification applies to both. The image tag
+above names R 4.6.1 only as an example; a compendium names
+the release its own lockfile records. The
+`rocker/verse` image is used here because it ships pandoc,
+which the render gate needs; on GitHub the `setup-pandoc`
+action supplies it. Each script line is a separate shell
+command, and GitLab fails the job at the first one that
+exits with a nonzero status. Every gate can therefore fail
+the pipeline.
+
+The second job, `verify`, rebuilds the project image and
+runs the baseline tests inside it, as
+@sec-verification-l3 describes. On GitLab it needs a
+runner that can build images, which is an institutional
+decision. The common alternative, Docker-in-Docker,
+requires a privileged runner that many institutions do not
+allow.
+
+## One logic, several forges
+
+Maintaining a repository on whichever forge an institution
+mandates is then a matter of translating the dialect, and
+the checks carry over. The cost is that a workflow written
+twice, once per dialect, is a workflow maintained twice.
+Every future change must be made in two incompatible
+formats, a standing divergence hazard.
+
+The resolution is to single-source the logic in a neutral
+place, the project's own `Makefile`. It holds one target
+per gate (say `check`, `deps`, and `render`), each
+carrying the commands shown above. Each forge's CI file
+then shrinks to a thin shim that checks out the code and
+calls `make`. The dialect differs only in its outermost
+lines, the checking behavior is defined once, and the same
+commands run on the analyst's own machine.
+
+## Workflows that adapt to the repository
+
+A workflow need not be configured by hand: it can adapt
+itself to what the repository contains. In such a
+presence-driven workflow, a feature is treated as present
+exactly when its defining file exists. If `renv.lock` is
+present, the workflow restores the pinned library;
+otherwise it installs from `DESCRIPTION`. If a
+`Dockerfile` or a Nix `flake.nix` is present, the workflow
+builds and runs inside that environment; otherwise it runs
+on the host runner. Such a workflow survives a project's
+toggling of `renv` or of its container backend with no
+edit, and one file can serve every archetype and every
+capture level.
+
+The workflows of @sec-verification are not written that
+way. They assume a compendium with both a lockfile and a
+`Dockerfile`, so that every step is visible. A
+presence-driven workflow wraps each step in a condition,
+in GitHub's dialect `if: hashFiles('Dockerfile') != ''`,
+and in GitLab's a `rules: exists:` clause. That
+convenience has a cost. A condition is also a way for a
+gate to disappear without notice, since a misnamed file
+switches the step off and the run stays green. A workflow
+that adapts should therefore print which gates it ran and
+which it skipped.
+
+::: {.callout-note icon=false}
+## With zzcollab
+
+Setting the forge with `zzc config set-local forge gitlab`
+and then running `zzc add cicd` installs a presence-driven
+`.gitlab-ci.yml` with a check stage and a render stage,
+chosen by `exists:` rules on `flake.nix` and `Dockerfile`.
+On GitHub the same command installs the Actions workflows
+for the archetype. The scaffolded `Makefile` offers
+targets that a shim can call, but not every target is a
+gate:
+
+- `make check-renv` runs `zzrenvcheck` with
+  `auto_fix = TRUE`. On a runner it repairs `renv.lock` in
+  place and reports success for the very omission the gate
+  exists to catch. Its sibling `make check-renv-no-fix`
+  modifies nothing and exits nonzero on failure; only that
+  target is a gate.
+- `make check` runs `R CMD check --as-cran`, which exits
+  nonzero on an ERROR but not on a WARNING, so an
+  undeclared import passes it.
+- The render targets (`docker-render`, `docker-render-qmd`,
+  `docker-render-book`) start a container with
+  `docker run`, so they need a runner that can run Docker.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: the presence-driven trap
+
+A presence-driven workflow skips the render gate when
+`if: hashFiles('report.Rmd') != ''` evaluates to false.
+Describe a concrete way this condition can silently
+disable the gate without anyone intending it to, and what
+single habit of the workflow catches the problem.
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+A rename, for instance moving `report.Rmd` to
+`analysis-report.Rmd` during a reorganization, or a typo
+in the condition itself, makes `hashFiles()` return an
+empty string. The condition then evaluates to false and
+the step is skipped. The job still reports success,
+because a skipped step is not a failed one. Nothing in
+the build output distinguishes 'rendered successfully'
+from 'did not try to render'. The habit that catches it
+is having the workflow print, for every conditional step,
+whether it ran or was skipped. A silent skip is then
+visible in the log, even though it does not turn the
+build red.
+:::
+:::
+
+## Exercises
+
+1. **Two dialects.** Take the condensed GitHub Actions
+   workflow of @sec-verification and translate its `gates`
+   job into the equivalent `.gitlab-ci.yml`. Identify the
+   two structural differences between the dialects
+   (jobs-and-steps versus stages-and-scripts, and per-file
+   versus single-file configuration), and explain why
+   single-sourcing the check logic in a `Makefile` would
+   let both files shrink to a thin shim.
+
+## Solutions
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+```yaml
+# .gitlab-ci.yml
+stages: [gates]
+
+gates:
+  stage: gates
+  image: rocker/verse:4.6.1
+  script:
+    - Rscript -e 'renv::restore(prompt = FALSE)'
+    - Rscript -e 'renv::install("rcmdcheck")'
+    # Gate 1: fails on a WARNING, as error-on does on GitHub
+    - Rscript -e 'rcmdcheck::rcmdcheck(args = "--no-manual",
+        error_on = "warning")'
+    # Gate 2: stops with an error if a used package is
+    # not pinned
+    - Rscript ci/dependency-gate.R
+    # Gate 3: render inside this image, without Docker
+    - Rscript -e 'rmarkdown::render(
+        "analysis/report/report.Rmd",
+        output_format = "html_document",
+        output_dir = tempdir())'
+```
+
+**The two structural differences.**
+
+*Jobs and steps versus stages and scripts.* GitHub Actions
+composes a job from reusable `uses:` steps, each a
+versioned action maintained elsewhere. The workflow
+therefore reads as an assembly of components. GitLab CI
+defines stages containing jobs whose bodies are shell
+scripts, so the pipeline reads as commands in an image.
+The GitHub form is more declarative and depends on an
+ecosystem of actions; the GitLab form is more direct and
+depends on nothing but the image.
+
+*Per-file versus single-file configuration.* GitHub reads
+every file under `.github/workflows/`, so a project
+naturally accumulates several workflows with separate
+triggers. GitLab reads a single `.gitlab-ci.yml` at the
+root, so everything is expressed in one file with rules
+selecting what runs when.
+
+**Why a Makefile shrinks both.** The differences above are
+entirely about *orchestration*: what runs, in what order,
+on what trigger. The check logic itself (run `R CMD
+check`, scan the dependencies, render the report) is
+identical in both and belongs in neither file. Putting it
+behind named targets leaves each CI file a thin shim
+naming the image and calling a short list of them. The
+logic is then single-sourced, testable locally with the
+same command CI runs, and portable to a third forge for
+the cost of one more shim.
+
+The file renders inside the `rocker/verse` image itself,
+after the `renv::restore()` line, because a job whose
+`image:` is `rocker/verse` has no Docker daemon.
+Rendering through the project's own image belongs in a
+job on a runner that can run Docker, as the `verify` job
+above does. If you adapt this exercise to your own
+compendium, confirm that each gate can fail.
+:::

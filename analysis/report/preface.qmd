@@ -97,7 +97,7 @@ are arranged in four parts, which we outline here.
    alternatives, from Nix to Podman to the
    high-performance-computing runtime Apptainer.
 3. **Validation.** Literate programming and the rendered
-   report; automating the analysis with make and targets;
+   report; automating the analysis with targets and make;
    testing and code quality; and
    [continuous integration](glossary.qmd#gloss-continuous-integration) and
    computational verification, the acts that turn a claimed

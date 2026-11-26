@@ -190,3 +190,49 @@ The setup page is retitled 'Setting Up Your Machine' (formerly
 'Setup Appendix: Docker and Git on Your Own Machine'), since it now
 sits in Part II and covers every tool; prose and link text say 'the
 setup page'. File name and anchors are unchanged.
+Committed as `fd068d4`.
+
+### Phase 30, cuts and tracks (`phase-30-cuts-and-tracks`)
+
+Four agents on disjoint files under `docs/fourth-review/phase30/BRIEF.md`
+(reports X, Y, Z1, Z2 there); the lead did the shared files, the
+Ch 1 dedupe, the glossary, and the boxes in files no agent owned.
+Chapter numbers below are the new ones.
+
+| Decision or finding | Change | Evidence |
+|---|---|---|
+| D29, R4-006 | 'With zzcollab' box defined in Conventions. Every `zzc` and `make <target>` command moved into boxes in Ch 3, 5, 6, 7, 8, 10, 11, 12 and the new forges appendix; tool vocabulary introduced in neutral words first; glossary entries for archetype, profile, progressive disclosure, the Five Pillars, and the baseline-file naming marked as zzcollab terms. Cheat-sheet rows that name a tool command are labeled '(zzcollab)'; one attribution remains in the closing chapter's prose | V: box-aware scan of all `.qmd` files finds no tool command outside a box except those labels |
+| R4-006 by hand | Ch 5 worked example gains a by-hand path (`usethis`, `mkdir`, `devtools::check()`, `R CMD check`); Ch 7's worked example uses the plain `docker build` and `docker run` of `sec-docker-run`; 'Profiles as base images' is now 'Choosing a base image' | V: report Z1, run in a scratch directory under R 4.6.2 (both checks 'Status: OK') |
+| Tool corrections | `zzc publishing` does not switch an existing project (uses `zzc docker --profile`); the Phase 26 `zzc init` then `zzc tidyverse` sequence replaced by `zzc init --archetype analysis`, `zzc renv`, `zzc docker --profile tidyverse` | I: zzcollab source lines in report Z1; no `zzc` command was run |
+| R6-03, R6-04 | Ch 6 teaches `renv::status()` first, with a CI line that fails on drift; the condition that the project use renv's implicit snapshot type is stated; `zzrenvcheck` and the auto-snapshot hook boxed | V: report Z2 (scratch renv projects: `renv::status()` alone exits 0; the `$synchronized` line exits 1 on drift; under the explicit snapshot type the gate missed drift) |
+| R11-06 | Ch 10 shows `styler`, `lintr` (with `LINTR_ERROR_ON_LINT`), and a test run that fails on a failing test, before the boxed make targets | V: report Z2 (lint step exited 31 on lints, 0 clean; bare `run_test_dir()` exits 0 on failure, the added `all_pass()` check exits 1) |
+| R13-10 | Ch 12: the vignette cited by a commit-pinned URL with its unmeasured timings dropped; the 'system review' quotation removed (no such document exists) | V: report Z2 (`gh api`) |
+| D27, R12-03 | Ch 11 (CI) cut from 18,573 to 15,895 words: capture test matrix removed; GitLab and presence-driven material moved to a new appendix `ci-other-forges.qmd` (`sec-ci-other-forges`, 1,672 words); repeated capture-versus-validation statements reduced; Exercise 3 solution essay cut; old Exercise 4 moved to the appendix, and the remaining exercises reordered so that Exercise 7 stays the cohort exercise the instructor guide keys | V: report X (`yaml` parses every block; `ci/dependency-gate.R` exits 0 then 1 on an unrecorded package in a scratch project) |
+| R12-02 | Gate 2 of the main and faded workflows runs `Rscript ci/dependency-gate.R`; `zzrenvcheck` only in boxes | V: report X |
+| R12-06 | Debugging sequence now starts with the failing step's log and bisects last | I |
+| D28, R10-01, R10-09 | Ch 9: `targets` first and core, Make after it as 'GNU Make, for comparison (optional)'; other optional sections marked; exercises made consistent; the 'captures no determinant' claim stated once; title now 'Automating the Analysis: targets and Make' (book, Conventions, intro, preface, instructor guide) | V: report Y (every `targets` block run with targets 1.12.1 in a scratch library; three errors found and fixed: a fragment that failed with 'cohort_path not found', missing outdated targets in a solution, and `tar_visnetwork()` needing `visNetwork`) |
+| R2-05 | Ch 1's definitions and its R-defaults and stack passages condensed to pointers to Ch 2 and 3 (about 330 words); Ch 2's apparatus untouched per D32 | I: Exercise 8 of Ch 2 still finds its premise in Ch 1 |
+
+Word count: Ch 11 down 2,678; Ch 9 up 99; the boxes and by-hand
+paths add about 1,300 words across Ch 5, 6, 7, 10, 12; the new
+appendix holds the 1,672 words moved out of Ch 11.
+
+Open for the author: `targets` is not in `renv.lock`, but Ch 9's
+Exercise 7 has readers run it in the book's own clone (report Y
+proposes adding it to the lockfile or using a scratch project).
+Tool issues found (zzcollab and zzrenvcheck, outside this
+repository): `zzrenvcheck` 0.10.0 exits 0 when `DESCRIPTION` is
+missing; it misreports `here` as declared; its advice relies on the
+auto-snapshot `make r` disables; the `CITATION.cff` template claims
+'Contains all data'; `help.sh` says a profile command switches an
+existing project, which it does not; a failed base-image pull leaves
+a tag-only `FROM` line.
+
+Verification (V): tinytest 456/456. A first render failed in Ch 10
+(a prose code span beginning `` `r `` was executed as inline R) while
+the render wrapper reported success; the span was reworded and the
+wrapper now exits with Quarto's status. The second render: logged exit
+0, no warnings, no unresolved references or missing citations, no
+literal entities in the PDF. TOC: Ch 9 'targets and Make'; Appendix A
+backends, Appendix B other forges. PDF 708 pages (700 before). The
+instructor guide renders (exit 0).
