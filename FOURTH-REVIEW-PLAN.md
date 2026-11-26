@@ -78,3 +78,37 @@ in the log, no `quarto-unresolved-ref`, `citation-missing`,
 `class="example"`, or `href="@` in `_book/*.html`, no literal HTML
 entities in the PDF text. PDF 674 pages (670 before). A first render
 showed the new Docker citation as 'n.d.'; a `year` field fixed it.
+Committed as `ebc8c5b`.
+
+### Phase 27, Tier 2a persuasion (`phase-27-persuasion`)
+
+Additive only; the moves and cuts of R4-002 and R2-05 wait for
+Phase 29 (D27). Every new fact was checked by the lead against the
+source named; nothing about a case goes beyond what was opened.
+
+| Finding | Change | Evidence |
+|---|---|---|
+| R4-001 | Case box device added to Conventions. Four case boxes: Duke signatures (Ch 1, Intro); the JAMA COPD trial, Glatard's operating systems, and Reinhart and Rogoff (Ch 2) | V: Baggerly and Coombes abstract (Semantic Scholar); both Aboumatar abstracts (Europe PMC) show identical event rates with the arms exchanged; the retraction-and-republication link from Europe PMC; Glatard abstract (Europe PMC); Herndon, Ash, and Pollin working paper (PERI WP322, 2013, read in full for the figures used). Not opened: the JAMA notices (publisher returned 403), so the box states the reversal and frames its cause as an inference; the Duke box ends in 2009 and names no investigators beyond the two authors |
+| R4-007 | New section 'Four objections, and what the evidence says' (`sec-four-objections`), a 'what this buys you' paragraph, and a 'Making the case to your lab' callout; Exercise 9 (memo to a supervisor) with solution and instructor-guide rubric | I; no time costs are stated, since none is sourced |
+| R4-008 | `tbl-mandates`: NIH DMS, 2024 NIH Public Access Policy, OSTP 2022 memo, PLOS Computational Biology, AEA journals, dated 25 November 2026; the preface's uncited claim now points to it | V: NOT-OD-21-013, NOT-OD-25-101, and NOT-OD-25-047 text; OSTP memo PDF; PLOS and AEA policy pages, all fetched 2026-11-25. The OSTP repeal report was not verified and is not stated |
+| R2-02 | SCORE (Tyner et al. 2026) beside the Open Science Collaboration; Brodeur et al. 2026 and Naudet et al. 2018 after the re-execution studies | V: Crossref and Europe PMC abstracts. Brodeur's 'highly selective' caveat rests on reviewer H's reading of the article PDF |
+| R1-01 | Ch 1 claim broadened to 'in the health sciences and well beyond them'; Ch 2 objective no longer says 'health-sciences' | I |
+| R1-07 | Ch 1 opening: 'Many quantitative researchers eventually meet' | I |
+
+New bibliography entries (from Crossref): `baggerly2009`,
+`aboumatar2018`, `aboumatar2019`, `bauchner2019`, `herndon2014`,
+`glatard2015`, `brodeur2026`, `tyner2026`, `naudet2018`, and four
+policy entries (`ostp2022`, `nihnot25101`, `ploscbcode`,
+`aeadatacode`).
+
+Chapter 2's reading time rises from 35 to 45 minutes under the
+book's rule (the drift test required the change).
+
+Verification (V): tinytest 442/442 (one new invariant check, for the
+new exercise's solution). Locked-library render: exit 0, no warnings,
+no unresolved references or missing citations in the HTML, no literal
+entities in the PDF; all four case boxes and `tbl-mandates` present.
+PDF 682 pages (674 before, +8). New prose checked against the voice
+brief: no sentence over 35 words, mean about 20. The existing 'n.d.'
+citations in the PDF belong to undated web pages already in the
+bibliography; every new entry carries a year.

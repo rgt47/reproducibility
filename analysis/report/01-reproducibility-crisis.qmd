@@ -34,7 +34,7 @@ pkgload::load_all('../..', quiet = TRUE)
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 35 minutes.
+**Reading time.** About 45 minutes.
 
 **Prerequisites.** Chapter 1 (@sec-intro), for the book's
 first, informal pass at the determinant stack and the
@@ -50,10 +50,11 @@ without having written R before.
 answer:**
 
 - Can you summarize the empirical evidence that a large
-  fraction of published health-sciences research cannot
-  be regenerated, and distinguish the studies that
-  measure replication from those that measure
-  computational re-execution?
+  fraction of published research cannot be regenerated,
+  name at least one real case in which a computational
+  error changed a published conclusion, and distinguish
+  the studies that measure replication from those that
+  measure computational re-execution?
 - Can you state the distinction the National Academies
   draw between reproducibility and replicability, name
   the third term the wider literature adds, and say why
@@ -84,6 +85,9 @@ answer:**
 - Why the failures are computational, not statistical:
   two silent defaults in R itself.
 - A reproducible analysis can still be wrong.
+- Four objections, and what the evidence says: time,
+  'my results are fine', reviewers and funders, and
+  'this is software engineering'.
 - Worked example: the same seed, two samplers.
 - The cohort, continued: a silent default made explicit
   in `load_cohort()`.
@@ -331,6 +335,35 @@ that judgment, which no tool makes for them.
 
 ## The evidence that re-execution fails
 
+Before the large studies, one case from clinical
+medicine shows how directly an analysis error can reach
+a published conclusion.
+
+::: {.callout-note icon=false}
+## Case: a trial whose result reversed
+
+In December 2018 *JAMA* published a single-site
+randomized trial, with 240 participants, of a program to
+support patients hospitalized with chronic obstructive
+pulmonary disease. Over six months the intervention
+group had fewer disease-related hospitalizations and
+emergency visits than usual care, 0.72 events per
+participant against 1.40, and a better quality-of-life
+score [@aboumatar2018]. In October 2019 the journal
+retracted the article and published a replacement
+[@bauchner2019]. The replacement reports the same two
+event rates with the arms exchanged: 1.40 in the
+intervention group against 0.72 under usual care. The
+program was associated with more acute care, not less,
+and the quality-of-life difference was no longer
+statistically significant [@aboumatar2019]. Identical
+rates, swapped between the arms, point to an error in
+how the analysis labeled the two groups rather than in
+the data collected. Such a label is often a single line
+of a script, and nothing in the output warns when it is
+wrong.
+:::
+
 We begin with the large replication studies, because
 they set the scale of the problem. We then turn to the
 narrower and, for our purposes, more damning studies that
@@ -341,7 +374,11 @@ re-ran one hundred published studies. Its teams judged
 the original finding replicated in only thirty-nine of
 them, and only thirty-six percent of the replications
 reached statistical significance
-[@opensciencecollaboration2015]. In preclinical
+[@opensciencecollaboration2015]. A larger successor,
+published in 2026, attempted replications of 274
+claims from 164 papers across the social and
+behavioral sciences; 151 of the claims, 55 percent,
+replicated in the original pattern [@tyner2026]. In preclinical
 oncology, Begley and Ellis, working from within
 industry, reported that the findings of only six of
 fifty-three landmark papers were confirmed, a success
@@ -391,6 +428,28 @@ authors rebuilt, and only one project in six ran in
 full. Close to ninety-nine percent of the projects
 carried no formal description of their dependencies at
 all [@saju2025].
+
+The same measurement in clinical medicine, and in
+journals that enforce deposit, shows where the failure
+sits. Naudet and colleagues requested the data of the
+randomized trials published in *The BMJ* and *PLOS
+Medicine* from 2013 to 2016, after both journals adopted
+full data-sharing policies. They obtained complete,
+clearly labeled data for 17 of 37 trials, and 14 of
+those 17 reproduced fully on all their primary outcomes
+[@naudet2018]. In economics and political science, a
+team of several hundred researchers reproduced 110
+articles from leading journals that require data and
+code, and found more than 85 percent of the published
+claims computationally reproducible [@brodeur2026]. The
+authors caution that such a selective sample is a best
+case. Read together with Trisovic and Saju, these studies
+say the same thing from the other side. When the data
+and code are actually deposited, most analyses
+regenerate; even under a full sharing policy, however,
+more than half of the trial data never arrived. The
+failure lies less in the analyses than in the missing
+material.
 
 We see, then, that the replication studies tell us that
 scientific findings are fragile. The re-execution
@@ -625,6 +684,31 @@ and colleagues measured when they found that most
 deposited R scripts did not run when re-executed, often
 years after the original deposit [@trisovic2022].
 
+The layers beneath R matter as much, and the best
+evidence comes from a field far from ours.
+
+::: {.callout-note icon=false}
+## Case: the same brain scans on different machines
+
+Glatard and colleagues ran three widely used
+neuroimaging packages, FSL, FreeSurfer, and CIVET, on
+the same data under different versions of GNU/Linux.
+The code and the data were identical; only the
+operating system changed. The packages rely on
+single-precision mathematical functions whose
+implementations in the operating system's libraries
+continue to evolve. Simple steps such as brain
+extraction were barely affected, but the differences
+accumulated in longer pipelines. Some agreement scores
+(Dice coefficients) between subcortical classifications
+fell as low as 0.59, and independent component analyses
+of functional MRI data differed between operating
+systems in one third of the subjects tested
+[@glatard2015]. The operating system was a determinant
+of the result, and reading the analysis code could not
+have revealed it.
+:::
+
 These are instances of a general phenomenon that we
 shall develop fully in @sec-levels. A computational
 result depends not only on the code and the data but
@@ -732,6 +816,35 @@ can be re-run is an analysis whose statistical choices
 can be inspected, criticized, and, where necessary,
 corrected.
 
+::: {.callout-note icon=false}
+## Case: the spreadsheet behind a debt threshold
+
+In 2010 the economists Carmen Reinhart and Kenneth
+Rogoff reported a threshold in public debt. Countries
+whose debt exceeded 90 percent of gross domestic product
+grew, on average, at -0.1 percent a year, against 2.8 to
+4.1 percent at lower levels of debt. Thomas Herndon, Michael
+Ash, and Robert Pollin could not reproduce the figure
+from the public data, so they asked for the authors'
+working spreadsheet, which the authors provided. With it
+they found three problems. A coding error in the
+spreadsheet left five countries out of the calculation
+entirely, and available early years were excluded for
+three others. An unusual weighting then let a single
+year of New Zealand data carry one-seventh of the weight
+of the whole high-debt category. Corrected, average growth
+above the threshold was 2.2 percent, not -0.1. The
+spreadsheet error itself accounted for only a small part
+of the gap; the exclusions and the weighting accounted
+for most of it [@herndon2014]. The critics also note how
+far the original finding had traveled into arguments
+for putting debt reduction first in public policy. The
+lesson they drew is this chapter's: the errors could be
+found only once the working file was shared, and they
+named the advantage of reproducible code over working
+spreadsheets explicitly.
+:::
+
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: floor, not ceiling
 
@@ -752,6 +865,104 @@ guarantees regeneration and not correctness
 that faithfully regenerates a mistaken p-value at L3 is
 perfectly reproducible and perfectly wrong.
 :::
+:::
+
+## Four objections, and what the evidence says {#sec-four-objections}
+
+A student who brings these practices into a laboratory
+will hear objections, often from a supervisor who has
+published for many years without them. The objections
+are reasonable, and they deserve answers drawn from
+evidence rather than enthusiasm. Four recur.
+
+**'It takes too long.'** Some of it does, and not every
+analysis warrants every practice; @sec-levels sets out
+how to match the investment to the stakes. The first
+rungs, however, ask for no new statistics and little new
+software: a version-controlled project and a recorded
+list of package versions, both taught in the next four
+chapters. The cost that is easy to overlook is the one
+paid later. The occasions are familiar: a reviewer's
+request nine months after submission, a committee member who asks to see a
+figure re-run, or a laptop that fails the week before a
+deadline. Each turns an unrecorded environment into a
+reconstruction project, at the moment when time is
+shortest.
+
+**'My results have always been fine.'** Perhaps, but
+without re-running them there is no way to know. In
+Baker's survey of more than fifteen hundred researchers,
+more than half reported having failed to reproduce their
+own experiments [@baker2016]. The trial in the first
+case above produced plausible numbers in both versions,
+and so did the debt spreadsheet; neither error announced
+itself. Glatard's operating systems changed the result
+of unchanged code. Confidence that a result is right is
+not evidence that it can be regenerated.
+
+**'Reviewers and funders do not ask for it.'** More of
+them do each year, and @tbl-mandates lists several
+current requirements, each checked against its source on
+the date shown. Requirements alone do not produce
+reproducible work. When a journal required code and data
+on request, Stodden and colleagues could obtain the
+material for 44 percent of the articles they examined.
+They could reproduce the findings of 26 percent
+[@stodden2018].
+The practical consequence is that a student who meets a
+requirement only at submission meets it badly, and one
+who has worked this way from the start meets it with
+little extra work.
+
+| Source | Applies to | What it requires | In force |
+|---------------|---------------|-----------------------------|---------------|
+| NIH Data Management and Sharing Policy [@nihdms2020] | NIH-funded research | A data management and sharing plan, and sharing of the scientific data | Proposals due on or after 25 January 2023 |
+| 2024 NIH Public Access Policy [@nihnot25101] | NIH-funded journal articles | The accepted manuscript publicly available without the former 12-month embargo | Manuscripts accepted on or after 1 July 2025 |
+| OSTP memorandum [@ostp2022] | US federal research agencies | Agency policies making publications and their supporting data public without embargo | Agency policies due by 31 December 2025; check each agency's current policy |
+| *PLOS Computational Biology* [@ploscbcode] | Articles in that journal | All author-generated code directly related to the findings, public at publication | Current |
+| American Economic Association journals [@aeadatacode] | Empirical, simulation, and experimental papers | Data, code, and computational details sufficient to permit replication, before acceptance | Current |
+
+: Funder and journal requirements for sharing data and code, checked on 25 November 2026. Requirements change; consult each source before relying on a row. {#tbl-mandates}
+
+**'This is software engineering, not science.'** The
+errors in the cases of this chapter and the last were
+not failures of programming style. They were a shifted row in a genomic
+analysis that decided treatment arms, two study arms
+exchanged, and countries left out of an average. Each is
+a scientific error that happened to live in code or a
+spreadsheet, and each was found only because someone
+could re-run or inspect the computation. That is the
+sense in which reproducibility is a floor: it is what
+makes the statistical choices inspectable at all.
+
+What the practices buy the student, rather than science
+in general, is worth stating plainly. They let the
+student answer a reviewer's request, or a committee's,
+without rebuilding anything. They make a failed laptop
+an inconvenience rather than a loss. And they let one
+chapter's code be reused in the next, and shown to a
+prospective employer as a project that runs.
+
+::: {.callout-note icon=false}
+## Making the case to your lab
+
+A first-year student rarely changes a laboratory's
+practice by argument alone, and does not need to. Three
+steps work without anyone's permission.
+
+- **Start with your own project.** Put your analysis
+  under version control and record its package
+  versions. No one else has to change anything.
+- **Make the request small and concrete.** For example:
+  'I would like to spend some time setting up my
+  project so that every figure in the paper can be
+  regenerated when the reviewers ask. It protects the
+  submission, and nothing in the analysis changes.'
+- **Bring one case, not a crusade.** A single case from
+  this chapter, matched to your field, persuades more
+  than a survey statistic.
+
+Exercise 9 asks you to draft such a request.
 :::
 
 ::: {.callout-important}
@@ -1186,6 +1397,15 @@ analyze applications or write critiques [@nihnot23149].
    naming the layer, rather than merely noting that a
    default changed, is the addition this chapter makes.
 
+9. Write a memo of about 200 words to your supervisor
+   proposing the reproducibility practices you would
+   adopt for your own thesis project. Name the rung you
+   aim for and say why it suits the project's stakes.
+   Cite one case from this chapter or Chapter 1 that a
+   researcher in your field would find relevant. Then
+   state what you are asking the laboratory to do, which
+   may be nothing at all.
+
 ## Solutions
 
 Attempt an exercise before expanding its solution. Several
@@ -1437,6 +1657,32 @@ failure, and at which rung of the ladder it would have
 been prevented. This chapter's vocabulary makes the
 informal account of Chapter 1 precise without
 contradicting it.
+:::
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 9
+
+There is no single correct memo; a good one does four
+things. It names a rung and justifies it by the stakes
+of this project, not by the ladder's top. L1 with a
+public remote may suit an exploratory thesis chapter,
+and L2 or L3 an analysis that will be submitted or
+reused. It cites one case that fits the supervisor's
+field. The trial whose arms were exchanged suits a
+clinical group, the debt spreadsheet suits economists,
+and the operating-system differences suit anyone running
+a long pipeline. It asks for little: the strongest memos
+propose to start with the student's own project and ask
+the laboratory for nothing beyond tolerance. And it
+states the benefit to the supervisor as well as to the
+student, which is a submission that survives the
+reviewers' requests.
+
+Two weaknesses are common. A memo that argues from the
+replication surveys alone can be dismissed by a
+skeptical reader as other people's problem. A memo that
+proposes every practice in the book at once reads as a
+cost rather than a plan.
 :::
 
 ## Cheat sheet {#sec-cheat-crisis}

@@ -125,6 +125,17 @@ the analysis-code layer by stating the choice explicitly.
 package-versions layer; omitting the explanation of which
 determinant-stack layer the difference occupies.
 
+**Exercise 9 (memo to a supervisor).** Not autogradable. A
+strong memo names one rung justified by the project's
+stakes, cites one case from Chapter 1 or 2 matched to the
+supervisor's field, asks the laboratory for little or
+nothing, and states the benefit to the supervisor. Mark
+down memos that argue from the replication surveys alone
+or that propose every practice at once. In a seminar,
+pairs can exchange memos and answer as a skeptical
+supervisor would, using the four objections in the book's
+section 'Four objections, and what the evidence says'.
+
 ## Chapter 3: Levels of Reproducibility {#sec-ig-ch02}
 
 ```{r}

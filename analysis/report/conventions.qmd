@@ -85,7 +85,8 @@ rather than the conclusion alone.
 
 ## Callouts
 
-Three kinds of callout appear, each with one job.
+Three kinds of callout appear, each with one job, beside
+two smaller devices described after them.
 
 ::: {.callout-tip icon=false}
 ## Verification
@@ -112,7 +113,22 @@ wherever a technique could tempt a reader into committing,
 depositing, or pasting such data.
 :::
 
-A fourth, smaller device, the honest level, closes most
+A fourth device marks a real case. Where the argument
+rests on something that happened, rather than on an
+illustration, the account is boxed and labeled as a case,
+with its primary source. Invented scenarios elsewhere in
+the book are framed as such ('Consider ...', 'Suppose
+...'); a case box is reserved for events that can be
+checked.
+
+::: {.callout-note icon=false}
+## Case
+
+A short account of a published, checkable event: what
+happened, how it was found, and what it shows.
+:::
+
+A fifth, smaller device, the honest level, closes most
 chapters: one sentence naming the rung the chapter's own
 practice reaches and what it still leaves exposed.
 

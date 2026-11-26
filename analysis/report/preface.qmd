@@ -13,8 +13,9 @@ of statistics. Each is a failure of computational
 reproducibility, and each was avoidable.
 
 The health sciences have absorbed the lesson that a
-result must be reproducible in principle, and journals now
-ask for the code. What the field has not yet absorbed is
+result must be reproducible in principle, and a growing
+number of journals and funders now ask for the code and
+the data (@tbl-mandates lists several). What the field has not yet absorbed is
 that making a computational result reproducible in
 practice is a technical discipline in its own right. It
 has its own tools, its own failure modes, and its own

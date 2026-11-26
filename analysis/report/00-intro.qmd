@@ -19,7 +19,7 @@ Claerbout, *WaveLab and Reproducible Research* (1995)
 
 ## A result that ran only once
 
-Every quantitative health scientist has met the failure
+Many quantitative researchers eventually meet the failure
 this book exists to prevent. An analysis runs cleanly on
 the machine where it was written and produces a table, a
 figure, a p-value. A year later, on a new laptop, or a
@@ -33,6 +33,34 @@ another. The result had been reproducible exactly once, on
 one machine, at one moment, and no one noticed until the
 moment had passed.
 
+The stakes are not always a revision request. The case
+below, with which several courses on reproducible
+research begin, shows what an analysis nobody can re-run
+can do.
+
+::: {.callout-note icon=false}
+## Case: the signatures no one could re-run
+
+By 2009, several papers had reported microarray
+signatures, derived from cell lines, that were meant to
+predict which drugs a patient's tumor would respond to. Patients in clinical trials were being
+assigned to treatment arms on the basis of those
+results. Keith Baggerly and Kevin Coombes tried to
+reproduce the analyses. The papers did not describe the
+data processing well enough to repeat it, so the two
+statisticians reconstructed it from the raw data and the
+reported results, work they called forensic
+bioinformatics. In five case studies they found 'several
+simple errors that may be putting patients at risk',
+most often row or column offsets: a label shifted by one
+position. Their summary is this book's argument in a
+sentence. The most common errors are simple, and the
+simplest errors are common. Poor documentation, they
+wrote, 'can shift from an inconvenience to an active
+danger when it obscures not just methods but errors'
+[@baggerly2009].
+:::
+
 This book is about closing that gap. Its subject is
 computational reproducibility, by which we mean the
 property that a computational result can be regenerated,
@@ -40,8 +68,8 @@ within a stated tolerance, by another person on another
 machine at a later time. That is a narrower claim
 than scientific replication, and we shall be careful to
 keep the two apart throughout. It is nonetheless a claim
-that a great deal of published health-sciences research
-cannot currently support. Unlike replication, it is also a
+that a great deal of published research, in the health
+sciences and well beyond them, cannot currently support. Unlike replication, it is also a
 claim that can be secured by technical means available
 today.
 
