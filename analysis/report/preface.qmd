@@ -136,7 +136,7 @@ the R Validation Hub's [@nicholls2020].
 We have written the book for a one-quarter, ten-week
 course, but not every chapter fits that schedule. The
 [Conventions](conventions.qmd) page marks a core path
-through the thirteen chapters. It also names the material
+through the fourteen chapters. It also names the material
 a ten-week offering has no room for, namely Backends and
 Runtimes in full and the latter half of Automating the
 Analysis. An instructor teaching to that pace will find a

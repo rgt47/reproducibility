@@ -61,7 +61,9 @@ independent of R, and the two R chunks that appear are
 read for their output, not written by the reader. Git
 itself must be installed and configured; the preflight in
 the setup appendix ([Git preflight](setup-appendix.qmd#sec-git-preflight)) checks both in a
-few minutes.
+few minutes. Every command here is typed in a terminal; a
+reader who has never opened one should read the
+[Shell Primer](shell-primer.qmd) first.
 
 **By the end of this chapter you will be able to
 answer:**
@@ -1524,6 +1526,93 @@ deposited to a public archive with a citable identifier.
 The tag is the local anchor to which that archival
 identity attaches.
 
+### Joining an existing project
+
+The commands above start from a repository on our own
+machine. A new member of a lab usually starts from the
+other end: the repository already exists on the forge, and
+the first task is to obtain a working copy. In the
+shared-repository model, one command does this.
+
+```bash
+git clone https://github.com/lab/diabetes-cohort.git
+cd diabetes-cohort
+# output from git 2.56.1, run 2026-11-25 against a
+# local bare repository standing in for the forge
+#> Cloning into 'diabetes-cohort'...
+#> done.
+```
+
+A clone copies the whole history, not only the current
+files, and records the forge's copy as a remote named
+`origin`. No `git remote add` is needed; `git remote -v`
+lists `origin` twice, once for fetching and once for
+pushing. Thereafter, `git pull` brings down the commits
+colleagues have pushed.
+
+```bash
+git pull
+# output abridged, from the same run
+#>    623d925..eb78c59  main       -> origin/main
+#> Updating 623d925..eb78c59
+#> Fast-forward
+#>  R/clean_cohort.R | 2 +-
+#>  1 file changed, 1 insertion(+), 1 deletion(-)
+```
+
+A pull is two steps. It fetches the new commits into
+`origin/main`, which changes none of our files, and then
+merges them into our branch. 'Fast-forward' means we had
+no commits of our own, so git simply moved our branch
+forward. Pulling before each session's work keeps the
+merges small.
+
+A contributor without write access takes the fork route.
+The first step happens on the forge: on GitHub, the Fork
+button on the repository's page makes the copy
+(<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks/fork-a-repo>).
+We then clone the fork, so `origin` is the fork. The
+canonical repository is added as a second remote,
+conventionally named `upstream`.
+
+```bash
+git clone https://github.com/<site2>/<study>.git
+cd <study>
+git remote add upstream https://github.com/<coord>/<study>.git
+git fetch upstream
+# output abridged, from the same run (local stand-ins
+# for the fork and the canonical repository)
+#>  * [new branch]      main       -> upstream/main
+```
+
+`git fetch upstream` downloads the canonical repository's
+latest commits into `upstream/main` and changes nothing
+else. Work then starts from that point, on a branch of its
+own, which is pushed to the fork.
+
+```bash
+git switch -c fix/outlier-threshold --no-track upstream/main
+# ... edit, git add, git commit ...
+git push -u origin fix/outlier-threshold
+# output abridged, from the same run
+#>  * [new branch]      fix/outlier-threshold -> fix/outlier-threshold
+```
+
+The `--no-track` flag matters. Without it, the new branch
+records `upstream/main` as its default push target. In our
+test, a later bare `git push` then stopped with 'fatal: The
+upstream branch of your current branch does not match the
+name of your current branch.' With the flag, `-u` makes the
+fork's copy of the branch the push target instead.
+
+The pull request is then opened on the forge. On GitHub,
+the canonical repository's page offers a 'Compare & pull
+request' button for the pushed branch
+(<https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/proposing-changes-to-your-work-with-pull-requests/creating-a-pull-request-from-a-fork>).
+The GitHub command-line client does the same from the
+terminal with `gh pr create`
+(<https://cli.github.com/manual/gh_pr_create>).
+
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: what does the pull request add?
 
@@ -1709,7 +1798,16 @@ git switch main            # main is untouched and still runs
 ```
 
 The work is backed up and made locatable by connecting a
-remote and pushing.
+remote and pushing. The remote must exist first: an empty
+private repository, created on the forge without a README,
+license, or `.gitignore`
+(<https://docs.github.com/en/migrations/importing-source-code/using-the-command-line-to-import-source-code/adding-locally-hosted-code-to-github>).
+In a scratch test, a push into a remote that already held
+one commit was rejected with '(fetch first)'. Over HTTPS
+the push asks for a personal access token, not the account
+password; step 4 of the
+[Git preflight](setup-appendix.qmd#sec-git-preflight) sets
+one up.
 
 ```bash
 git remote add origin https://github.com/lab/diabetes-cohort.git
@@ -2117,15 +2215,25 @@ git remote add upstream https://github.com/<coord>/<study>.git
 
 # 2. Branch from an up-to-date main.
 git fetch upstream
-git switch -c fix/outlier-threshold upstream/main
+git switch -c fix/outlier-threshold --no-track upstream/main
 
 # 3. Commit the change.
 git add R/clean_cohort.R
 git commit -m 'Raise outlier threshold to 4 SD per SAP amendment 2'
 
 # 4. Push to the fork and open a pull request.
-git push origin fix/outlier-threshold
+git push -u origin fix/outlier-threshold
+gh pr create --fill
 ```
+
+The `git` lines are those run against local stand-in
+repositories in 'Joining an existing project'. The last
+line opens the pull request with the GitHub command-line
+client, taking its title and description from the commit
+(`--fill`, per <https://cli.github.com/manual/gh_pr_create>).
+Without that client, open it on the forge instead: the
+canonical repository's page offers a 'Compare & pull
+request' button for the pushed branch.
 
 What each step records that a direct push would not. The
 **fork** lets a contributor without write access to the

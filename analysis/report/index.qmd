@@ -4,8 +4,9 @@ This is the online version of **Reproducible Research for
 the Health Sciences** by the rgtlab curriculum team, a graduate
 course textbook.
 
-In this book we take a position that a health scientist
-will recognize from their own methodological training.
+In this book we take a position that any empirical
+researcher will recognize from their own methodological
+training.
 [Computational reproducibility](glossary.qmd#gloss-computational-reproducibility)
 is not a property of any
 single file. It is a property of the relationships among
@@ -35,7 +36,8 @@ code, and manuscript inside a structure that any reader can
 navigate and any machine can rebuild.
 
 The concrete vehicle throughout is `zzcollab`, an
-open-source R framework built around the levels ladder. It
+open-source R framework built around the levels ladder and
+written by the book's authors (the preface says more). It
 composes the standard tools
 ([`renv`](glossary.qmd#gloss-renv-and-packrat) or Nix for packages,
 Docker or a runtime alternative for the environment, a
@@ -46,22 +48,35 @@ second. A reader who finishes the book should be able to
 reason about reproducibility with any toolchain, and to
 operate this one.
 
+## Who the book is for
+
+The reader we have in mind is a graduate student, often in
+the first year, in any field that analyzes data to test
+claims about the world. The health sciences, psychology,
+economics, and ecology are examples. Such a reader
+produces analyses that others will need to trust, audit,
+and rebuild. The book's examples come from health research,
+where the stakes of an analysis are easy to see, but the
+principles apply to any empirical field.
+
 ## What the reader is assumed to know
 
-- R at a working level: writing functions and scripts,
-  installing packages, and rendering an R Markdown or
-  Quarto document.
-- Comfort at the command line: running a shell command,
-  editing a text file, and using `git` at a basic level.
-- No prior experience with Docker, containers, continuous
-  integration, or Nix is assumed. Each is built up from
-  first principles.
+- R from one course: running a script, installing a
+  package, and reading a short function.
+- Nothing about the command line, `git`, Docker, YAML,
+  continuous integration, or Quarto. The
+  [Shell Primer](shell-primer.qmd) takes a reader from a
+  first terminal to the commands the book uses, and the
+  [Setup Appendix](setup-appendix.qmd) opens with a
+  checklist of the software to install and how to confirm
+  it works. Every other tool is built up from first
+  principles in the chapter that needs it.
+- Statistically, the ability to read a regression table
+  and a confidence interval.
 
-The reader we have in mind is a graduate student or
-working analyst in public health, biostatistics,
-epidemiology, or a related quantitative health science.
-Such a reader produces analyses that others will need to
-trust, audit, and rebuild.
+The first three chapters make the case for the practices
+and need nothing beyond R itself. Work at the terminal
+begins in @sec-version-control.
 
 ::: {.content-visible when-format="html"}
 The [Contents](contents.qmd) page lists every chapter on one page.

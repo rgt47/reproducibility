@@ -831,6 +831,11 @@ inputs have not changed since it was last built, so that
 rebuilding it would reproduce the stored output and can be
 skipped. (@sec-pipelines)
 
+[]{#gloss-upstream}**Upstream (remote).** By convention, the name given to a
+second remote that points at the canonical repository from
+which a fork was made; `git fetch upstream` brings its new
+commits down. (@sec-version-control)
+
 
 ## V {.unnumbered .unlisted}
 
@@ -868,6 +873,17 @@ under `.github/workflows/`; on GitLab the single file is
 []{#gloss-working-tree}**Working tree.** The ordinary files in the repository directory
 as they currently exist on disk, as opposed to the versions
 recorded in the history. (@sec-version-control)
+
+
+## Y {.unnumbered .unlisted}
+
+[]{#gloss-yaml}**YAML.** A plain-text notation of keys and values, one per line,
+in which indentation places a setting beneath its parent and a
+leading hyphen marks a list item. It carries a Quarto
+document's header, the chunk options written after `#|`, and
+continuous-integration workflow files; an indentation error
+makes the whole file unreadable. The Shell Primer explains how
+to read it. (@sec-literate)
 
 
 ## Z {.unnumbered .unlisted}

@@ -37,7 +37,7 @@ to work.
 ::: {.callout-note icon=false}
 ## Before you start
 
-**Reading time.** About 70 minutes.
+**Reading time.** About 80 minutes.
 
 **Prerequisites.** Chapter 11 (@sec-testing) supplies
 `tinytest`, the four kinds of test, and the baseline test
@@ -48,9 +48,11 @@ operational. Chapter 6 (@sec-dependencies) supplies the
 dependency invariant the dependency-manifest gate
 automates, and Chapter 7 (@sec-containers) supplies the
 Dockerfile the verify job rebuilds. The R knowledge
-assumed is writing and calling a function, together with
-enough comfort reading YAML to follow a workflow file
-line by line; no YAML is written from scratch here.
+assumed is writing and calling a function. No prior YAML
+is assumed. The chapter's first workflow is a short file
+that is read construct by construct, and Exercise 4 asks
+for one complete GitLab workflow file. The shell primer's [Reading YAML](shell-primer.qmd#sec-shell-yaml)
+section covers the syntax.
 
 **Objectives.** By the end of this chapter, can you:
 
@@ -73,9 +75,11 @@ line by line; no YAML is written from scratch here.
 
 **Outline.** We begin with where CI sits on the stack, a
 captured environment that nobody has yet rebuilt, and the
-analyst's three irreplaceable judgments. We then turn to the machine that is not yours, to
-the three gates and where their bugs hide, to secrets,
-tokens, and pinned actions, and to two CI dialects. The
+analyst's three irreplaceable judgments. We then turn to
+the machine that is not yours, to a first workflow that
+runs the tests on every push, to the three gates and
+where their bugs hide, to secrets, tokens, and pinned
+actions, and to two CI dialects. The
 middle of the chapter treats verification and level L3,
 the checksum manifest, the framework's own capture test
 matrix, and how CI adapts to five archetypes. We then
@@ -407,6 +411,159 @@ means. No engineering insight is required to make a
 runner forget what it never knew.
 :::
 :::
+
+## Your first workflow {#sec-ci-first-workflow}
+
+Before the three gates, we set up the smallest workflow
+that is still useful. It restores the lockfile on a fresh
+runner and runs the test suite, and nothing more. It
+assumes a compendium structured as an R package
+(@sec-compendium). It also assumes that `renv.lock`, the
+`.Rprofile` that `renv` writes, and `renv/activate.R` are
+committed, and that `tinytest` and `pkgload` are recorded
+in the lockfile.
+
+A workflow is a text file in the repository. GitHub runs
+the files it finds in the directory `.github/workflows/`,
+and each must end in `.yml` or `.yaml`
+[@githubworkflowsyntax]. We save the following as
+`.github/workflows/tests.yml`:
+
+```yaml
+name: tests
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-24.04
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          r-version: renv
+      - uses: r-lib/actions/setup-renv@v2
+      - name: Run the tests
+        run: |
+          Rscript --version
+          Rscript ci/run-tests.R
+```
+
+Read from the top, the file names the workflow `tests` and
+runs it on every push to the branch `main`. A repository
+whose default branch is still called `master` must say so
+here, or the workflow never starts. The token the job
+receives may read the repository's contents and is
+granted nothing more (@sec-ci-secrets). The one job,
+also called `tests`, runs on a GitHub-hosted Ubuntu
+runner, and its four steps run in order. The first
+copies the repository onto the runner. The second installs the R version recorded in `renv.lock`,
+which is not necessarily the newest release;
+`r-version: renv` is what requests it. The third installs
+`renv` and restores every package in the lockfile into
+the project library. The fourth prints the R version, for
+the record, and runs the test script. The actions are
+pinned by major-version tag, as elsewhere in this
+chapter; @sec-ci-secrets explains why a commit SHA is
+safer. @tbl-ci-reading-workflow reads the six constructs
+the file uses.
+
+| Construct | In the file | What it means |
+|---|---|---|
+| Key and value | `runs-on: ubuntu-24.04` | A name, a colon, a space, and a value. The space after the colon is required. |
+| List item | `- uses: actions/checkout@v7` | A dash and a space begin one item of a list. `steps` is such a list, run from top to bottom; `[main]` is a list written on one line. |
+| Nesting | `push:` indented under `on:` | Indentation places a key inside the one above it. Keys at the same level must start in the same column, and YAML forbids tabs for indentation. |
+| Expression | `${{ secrets.GITHUB_TOKEN }}` | Not YAML: to YAML it is plain text. GitHub evaluates it rather than treating it as a string, here inserting a token issued for the run. |
+| Block scalar | `run: |` | The indented lines that follow form one text value, with their line breaks kept. GitHub runs them in one shell, and the default shell stops at the first failing line. |
+| Quoting | `r-version: '4.10'` | An unquoted value that looks like a number is read as one, so `4.10` becomes 4.1. Quotes keep the value as text. |
+
+: Reading the workflow. Each row names a YAML or GitHub Actions construct, quotes an example from `tests.yml` (the last row's example is not in the file), and states how it is read [@githubworkflowsyntax; @githubexpressions]. {#tbl-ci-reading-workflow}
+
+The test script is the first form of a file that
+@sec-verification-l3 extends with a baseline check. It
+exists because the one-line call
+`tinytest::run_test_dir('inst/tinytest')` exits with
+status 0 even when a test fails. A runner judges a step
+only by its exit status, so that call would always show
+success. The script converts a failure into status 1:
+
+```r
+# ci/run-tests.R
+pkgload::load_all('.', quiet = TRUE)
+res <- tinytest::run_test_dir('inst/tinytest')
+print(res)
+if (!tinytest::all_pass(res)) quit(status = 1)
+```
+
+We ran it on a toy package with one passing test and one
+deliberately failing test. The bare call exited with 0,
+and the script exited with 1.
+
+Committing the two files and pushing them to `main` is the
+event that starts the run [@githubquickstart]. The result
+appears in two places. The repository's Actions tab lists
+every run of every workflow. Clicking a run, and then its
+job, shows each step in turn, and a failed step is
+expanded automatically to show its log [@githubrunlogs].
+The commit itself also carries the run's status, passed
+or failed, shown beside it in the commit list and on any
+pull request it belongs to [@githubstatuschecks].
+
+This book's house rule, that a gate is not shown to work
+until it has been seen to fail, applies to the first
+workflow too. The habit has five steps. We push the
+workflow and confirm that the run passes. We then add a
+`library()` call for a package that is not in the
+lockfile, such as `library(fixest)`, to a test file, and
+push again. The runner has only what `renv.lock` declares,
+so the run fails. We open the failed step and read the
+line that names the cause. On our toy package, outside a
+runner, the same script printed it as
+
+```
+Error in library(fixest) : there is no package called 'fixest'
+```
+
+and exited with status 1. Lastly, we remove the call, or
+install the package and record it with `renv::snapshot()`,
+and push once more to see the run pass. A workflow that
+has never been seen to fail has not been shown to check
+anything.
+
+The commonest first failure is not in R at all. YAML reads
+structure from indentation, so a line moved by a few
+spaces changes, or breaks, the file. We moved
+`r-version: renv` three columns to the left of where it
+belongs, under `with:`, and parsed the result with R's
+`yaml::yaml.load()`:
+
+```
+Parser error: while parsing a block collection at line
+16, column 7 did not find expected '-' indicator at line
+19, column 8
+```
+
+The message is wrapped here to fit the page. The parser
+was reading the `steps` list, which begins at line 16,
+column 7. At line 19 it met a line that was neither a new
+item nor part of the previous one. GitHub cannot run such
+a file either. We did not push one, so GitHub's own
+message is not reproduced here. Running
+`yaml::read_yaml('.github/workflows/tests.yml')` locally,
+or opening the file in an editor that marks YAML errors,
+catches the mistake before the push. Such a check
+confirms only the syntax. A key that is misspelled but
+correctly indented parses without complaint and is
+rejected, if at all, by GitHub. The shell primer's
+[Reading YAML](shell-primer.qmd#sec-shell-yaml) section covers the syntax
+in more detail.
 
 ## What the checks are: the three gates
 
@@ -1000,7 +1157,7 @@ build red.
 :::
 :::
 
-## Verification and level L3
+## Verification and level L3 {#sec-verification-l3}
 
 The first three gates confirm that the compendium builds,
 checks, and renders on a clean machine. They do not
@@ -1050,15 +1207,12 @@ workflow, run after the gates pass:
           compendium:ci Rscript ci/run-tests.R
 ```
 
-The test step runs a short script from the repository.
-The obvious one-line call,
-`tinytest::run_test_dir('inst/tinytest')`, returns its
-results and exits with status 0 even when an expectation
-fails; we confirmed this with a deliberately failing test.
-The script turns failures into a nonzero exit. It also
-refuses to pass if no baseline test produced a result,
-which is the case when the baseline file is missing or
-when its guard found no data and exited early:
+The test step runs `ci/run-tests.R`, the script of
+@sec-ci-first-workflow, which already turns a failed
+expectation into a nonzero exit. For L3 it gains one
+check. It refuses to pass if no baseline test produced a
+result, which is the case when the baseline file is
+missing or when its guard found no data and exited early:
 
 ```r
 # ci/run-tests.R

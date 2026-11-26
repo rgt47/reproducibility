@@ -112,3 +112,42 @@ PDF 682 pages (674 before, +8). New prose checked against the voice
 brief: no sentence over 35 words, mean about 20. The existing 'n.d.'
 citations in the PDF belong to undated web pages already in the
 bibliography; every new entry carries a year.
+Committed as `b62183e`.
+
+### Phase 28, Tier 2b novice on-ramps (`phase-28-onramps`)
+
+Three agents drafted disjoint files under a shared brief
+(`docs/fourth-review/phase28/BRIEF.md`; reports P, L, C in the same
+directory); the lead wrote the Chapter 7 section, the closing
+chapter, the Welcome page, the shared files, and the links. The
+brief wrongly said `@sec-shell` was a valid target; the manuscript
+test rejects every `@sec-` link to an unnumbered page, so all such
+links are plain file links.
+
+| Finding | Change | Evidence |
+|---|---|---|
+| R4-003 | Welcome page: reader stated per D26 (first-year graduate student, any empirical field, R from one course; no terminal, git, Docker, YAML, CI, or Quarto assumed); points to the primer and the setup checklist; `zzcollab` authorship noted | I |
+| R4-004 | Primer: 'Opening a terminal' (macOS, Windows via WSL2 or Git Bash, RStudio and Positron), 'Getting unstuck' table, `mkdir`, `cat`/`less`, quoting, `~`; false opening sentence fixed; typed chapter numbers replaced; 'child shell' corrected; three checks and one exercise. Links to the primer from the prerequisites of Ch 4, 5, 7, 9, 10 | V (agent P ran the commands in bash and zsh; report P). Windows, RStudio, and Positron steps from official docs, untested |
+| R4-014 | Primer 'Reading YAML' section; glossary entry; Ch 12 links to it | V: `yaml::yaml.load` on the example and on mis-indented and tab variants (report P) |
+| R4-013 | Setup appendix opens with an eight-row machine checklist with check commands; anchors for its Docker sections | V: each check command run on this Mac; install URLs resolved (report P). RStudio not installed here; make on Windows untested |
+| R7-01 | Ch 7 'Running the analysis inside the image' (`sec-docker-run`): build, `docker run --rm --platform -v -w`, output on the host, the image-only listing, a Pitfall for a mounted `renv` `.Rprofile`, a check | V: the showcase Dockerfile extracted from the chapter and built with `--platform linux/amd64` (Docker Desktop, Apple Silicon, 2026-11-25); five runs recorded in the scratchpad. The mounted `renv` activation failed with 'there is no package called jsonlite' after bootstrapping `renv` into the host project; `RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` and `Rscript --vanilla` each fixed it |
+| R9-01 | Ch 9 'Anatomy of a literate document': a minimal `.qmd` displayed literally, three ways to render | V: rendered with Quarto 1.11.9 in a scratch directory; the book's display checked by a scratch render (report L). `quarto::quarto_render()` not run (package not installed) |
+| R4-V02, R4-V12 | Ch 4 'Joining an existing project' (clone, pull, upstream, fetch, pull request); Exercise 5 solution corrected (`--no-track` and `git push -u origin`), since the old form set the branch to push to the lab's `main`; empty private repository and token note before the first push | V: every git command run against local bare repositories (report L); `gh` lines untested, cited |
+| R12-01, R12-08 | Ch 12 'Your first workflow' (24-line workflow, where it goes, the Actions tab, the failed-step log, the fail-once habit) and a six-row 'Reading the workflow' table; prerequisite corrected; card 70 to 80 minutes | V: test script exits 1 on a failing test in a scratch package; workflow parsed by `yaml`; mis-indented copy's parser error recorded (report C). GitHub's own messages untested; status-checks sentence cited to GitHub docs |
+| R4-012 | New closing chapter `11-closing.qmd` ('Where to Begin', Ch 14): the four-point conclusion moved from Ch 13 (only the `zzc verify` sentence reworded tool-neutrally), a staged plan, a one-page brief for a supervisor, advice for labs that do not yet work this way, and the habits; Ch 13 now points to it; contents, core-path table, preface count, and intro plan updated | I (diff of the moved text against `b62183e`) |
+
+New bibliography entries: five GitHub documentation pages (URLs
+checked, HTTP 200). New glossary entries: YAML, upstream (remote).
+
+Verification (V): tinytest 452/452. Locked-library render: exit 0,
+no warnings, no unresolved references or missing citations in the
+HTML, no literal entities in the PDF. The Ch 9 listing prints
+literally in the PDF (`pdftotext -layout`: header dashes, fenced
+chunk, `#|` lines, and the inline expression). PDF 706 pages (682
+before, +24); the closing chapter is Ch 14 in the TOC.
+
+Not done in this phase (still open from Tier 2): R10-03 starter
+project for the pipeline exercises; 'Before you run this' boxes for
+`make` and `pre-commit` (Ch 10, 11); the Ch 8 Apptainer note; R12-08's
+nested-quoting row. The primer and setup appendix stay in the
+appendices until Phase 29 moves them (D27 scope).

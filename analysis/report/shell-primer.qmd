@@ -1,14 +1,64 @@
 # Shell Primer {#sec-shell .unnumbered}
 
-Every chapter in this book runs commands at a shell prompt:
-`docker build`, `git commit`, `Rscript`, `quarto render`. The
-book assumes a reader can already type these and read what
-comes back. This appendix supplies that prerequisite for a
-reader who has not yet acquired it. It covers enough of the Unix shell to follow every
-command shown elsewhere in the book, in the order those commands
-are needed, with nothing beyond that scope. The treatment below
-follows the scope and sequencing of a widely used open lesson
-covering the same ground [@swcarpentry2024shell].
+From @sec-version-control onward, most chapters of this book
+run commands at a shell prompt: `git commit`, `docker build`,
+`Rscript`, `quarto render`. The earlier chapters need little
+beyond R itself. This appendix supplies the shell for a reader
+who has never opened a terminal. It covers enough of the Unix
+shell to follow every command shown elsewhere in the book, in
+the order those commands are needed, with nothing beyond that
+scope. It ends with a page on reading YAML, the configuration
+format the later chapters edit. The treatment follows the
+scope and sequencing of a widely used open lesson covering the
+same ground [@swcarpentry2024shell].
+
+## Opening a terminal {#sec-shell-open}
+
+A terminal is a window that runs a shell, the program that
+reads a typed command, runs it, and prints the result. The
+commands in this book assume a bash-compatible shell.
+
+- **macOS.** Open the Terminal application from Spotlight, or
+  from the `Applications/Utilities` folder in the Finder
+  (<https://support.apple.com/guide/terminal/open-or-quit-terminal-apd5265185d-f365-44cb-8b09-71a064a42125/mac>).
+  Its default shell is zsh; the last section of this appendix
+  covers the two differences that matter.
+- **Windows.** We recommend one shell: the Linux terminal of
+  WSL2, which the Docker chapters need anyway
+  ([Windows with WSL2](setup-appendix.qmd#sec-setup-wsl)). Once
+  WSL2 is installed, typing the distribution's name, such as
+  'Ubuntu', in the Start menu opens it [@mswslinstall2024]. For
+  the git chapters alone, Git Bash, which ships with Git for
+  Windows, also suffices [@bryanhappygit]. A repository cloned
+  from Git Bash lives on the Windows side, so clone it again
+  inside WSL2 before the Docker chapters. PowerShell and the
+  Command Prompt are not what this book's commands assume. In
+  PowerShell, `ls` is an alias for its own `Get-ChildItem`
+  command, which takes different options, so a book command can
+  appear to work and then behave differently.
+- **RStudio.** The Terminal tab sits beside the Console. The
+  New Terminal command on its drop-down menu, or Alt+Shift+R,
+  opens another session
+  (<https://docs.posit.co/ide/user/ide/guide/tools/terminal.html>).
+  On Windows, RStudio detects Git Bash and can be set to use it
+  under Tools > Global Options > Terminal.
+- **Positron.** The Terminal sits in the Panel below the editor,
+  beside the Console (<https://positron.posit.co/layout.html>).
+
+A new terminal starts in the home directory. The line ending in
+`$` or `%` where the cursor waits is the prompt.
+
+## Getting unstuck {#sec-shell-unstuck}
+
+| Situation | What to do |
+|---|---|
+| A command runs too long, or the prompt has changed to `>` or `quote>` after an unclosed quotation mark | Press Ctrl-C. It stops the running command and returns a fresh prompt. |
+| A long command must be run again with a small change | Press the up arrow to recall earlier commands, edit the line, and press Enter. |
+| A long file or folder name must be typed | Type its first few letters and press Tab. The shell completes the name, or a second Tab lists the candidates. |
+| The options of a command are unknown | `git --help`, `docker --help`, and `quarto --help` print a summary. macOS's own `ls` and `mkdir` reject `--help`, though the error shows a one-line usage summary. |
+| A fuller description is needed | `man ls` opens the manual page on macOS and Linux. Space pages down, and `q` quits. |
+
+: Five ways out of the most common terminal predicaments. {#tbl-shell-unstuck}
 
 ## Where you are: `pwd`, `ls`, `cd`
 
@@ -33,7 +83,8 @@ ls analysis
 ```
 
 Plain `ls` hides entries whose name starts with a dot, such as
-`.gitignore` or the `.here` marker Chapter 5 relies on. `ls -a`
+`.gitignore` or the `.here` marker that @sec-compendium relies
+on. `ls -a`
 ('all') shows them, along with the two special entries every
 directory has, `.` for itself and `..` for its parent:
 
@@ -56,8 +107,9 @@ The distinction between a relative path (`analysis/report`,
 `../data`) and an absolute path (`/Users/jane/project`) matters
 throughout this book. A relative path resolves differently
 depending on the working directory the shell happens to be in
-when the command runs. This is exactly the fragility Chapter 5
-examines in its section on project-oriented paths. A script
+when the command runs. This is exactly the fragility that
+@sec-compendium examines in its section on project-oriented
+paths. A script
 that is correct when launched from the project root can be
 wrong when launched from `analysis/report/`, because a relative
 path has no fixed meaning on its own. `here::here()` fixes this
@@ -66,7 +118,53 @@ However, the underlying hazard (that a relative path depends on
 the starting directory) is a shell concept first and an R
 concept second.
 
-## File operations: `cp`, `mv`, `rm`
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: relative moves
+
+The shell is in `/Users/jane/project/analysis/report`. Where
+is it after `cd ../..`, and where after a bare `cd`?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+`cd ../..` climbs two levels, to `/Users/jane/project`. A bare
+`cd` goes to the home directory, `/Users/jane`, wherever the
+shell started.
+:::
+:::
+
+## File operations: `mkdir`, `cat`, `cp`, `mv`, `rm`
+
+`mkdir name` makes a directory. `mkdir -p a/b/c` makes every
+missing level at once; without `-p`, `mkdir a/b` fails with
+`mkdir: a: No such file or directory` when `a` does not exist.
+`cat file` prints a file's contents to the terminal, which suits
+a short file. `less file` shows a long one a screen at a time:
+Space pages down, and `q` quits.
+
+The tilde, `~`, is shorthand for the home directory, which the
+shell also stores in the variable `HOME`. `~/project` and
+`"$HOME/project"` name the same folder.
+
+The shell splits a command line into words at spaces. A path
+containing a space must therefore be quoted, or the command
+receives two arguments instead of one:
+
+```bash
+ls ~/shell practice
+#> ls: /Users/jane/shell: No such file or directory
+#> ls: practice: No such file or directory
+ls ~/'shell practice'
+#> data
+```
+
+The same mistake makes bash's `cd` report
+`cd: too many arguments` and zsh's report `string not in pwd`.
+The tilde must stay outside the quotes, because a quoted `~` is
+taken literally: `cd '~/shell practice'` fails with
+`No such file or directory`. Double quotes around `$HOME` work,
+since the shell expands a variable inside double quotes but not
+inside single ones.
 
 `cp source destination` copies a file, leaving the original in
 place. `mv source destination` moves or renames a file; the
@@ -173,6 +271,22 @@ standard output and leaves error messages visible. This is why
 a redirected command can still fail loudly even though its
 output file is empty.
 
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: an empty log
+
+After `cat does_not_exist.txt > out.txt`, an error appears in
+the terminal and `out.txt` exists but is empty. Why, and how
+would the error be captured in a file?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The error went to standard error, and `>` redirects only
+standard output, of which there was none; the shell still
+created the empty file. `2> err.txt` captures the error.
+:::
+:::
+
 ## Environment variables and `PATH`
 
 An environment variable is a named value the shell makes
@@ -182,19 +296,24 @@ meaning child processes, programs the shell launches, inherit
 it too:
 
 ```bash
+MYVAR=hello
+bash -c 'echo "in child shell: $MYVAR"'
+#> in child shell:
 export MYVAR=hello
-echo "$MYVAR"
-#> hello
-bash -c 'echo "in subshell: $MYVAR"'
-#> in subshell: hello
+bash -c 'echo "in child shell: $MYVAR"'
+#> in child shell: hello
 ```
 
-Without `export`, a variable assignment (`MYVAR=hello`, no
-`export`) is visible only to the current shell, not to programs
-it starts. This is the mechanism behind an instruction we give
-more than once in this book without naming it. Setting
-`RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` before an R session, as
-Chapter 12's continuous-integration examples do, works because
+`bash -c` starts a new shell as a separate child process, so it
+sees only what was exported. Without `export`, the assignment is
+visible to the current shell and not to programs it starts. A
+parenthesized subshell, `( ... )`, is different: it is a copy of
+the current shell and sees unexported variables too, so it
+cannot show the distinction. This is the mechanism behind an
+instruction we give more than once in this book without naming
+it. Setting `RENV_CONFIG_AUTOLOADER_ENABLED=FALSE` before an R
+session, as the continuous-integration examples of
+@sec-verification do, works because
 the shell exports it into the environment that `R` or `Rscript`
 then reads when it starts. The variable is not an R setting. It
 is a value the shell handed to the R process at launch, and any
@@ -209,6 +328,22 @@ in `PATH` contains a program named `Rscript`. `echo $PATH` shows
 the search list, and prepending a directory to it (`export
 PATH="$HOME/bin:$PATH"`) makes programs placed there runnable by
 name without typing their full path.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what R can see
+
+In a new terminal, an analyst types `MYVAR=hello` and then
+`Rscript -e 'Sys.getenv("MYVAR")'`. What does R print, and what
+one word would change the result?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+R prints `[1] ""`, because the unexported variable never reached
+the R process. Typing `export MYVAR=hello` instead makes R print
+`[1] "hello"`.
+:::
+:::
 
 ## Permissions and the execute bit
 
@@ -285,3 +420,137 @@ hits a syntax error on a book command that looks exactly as
 written should suspect a shell difference before suspecting a
 typo. The running shell can be checked with `echo $0`
 (`echo $SHELL` reports the login shell, which may differ).
+
+## Reading YAML {#sec-shell-yaml}
+
+YAML is the plain-text configuration format behind the header
+of every Quarto document (the block between two `---` lines),
+the GitHub Actions workflows of @sec-verification, a
+`CITATION.cff` file, and `zzcollab.yaml`. It is read far more
+often than written, and five rules cover most of what a reader
+meets:
+
+```yaml
+title: 'Cohort report'      # a key, a colon, a space, a value
+draft: false                # true and false become logicals
+version: '1.10'             # quoted, so it stays text
+format:                     # a key whose value is a nested mapping
+  html:
+    toc: true
+  pdf:
+    toc: false
+params:
+  sites:                    # a list: one '- ' item per line
+    - Boston
+    - 'San Diego'
+  min_age: 18
+notes: |                    # a block scalar keeps line breaks
+  Synthetic data only.
+  No identifiers.
+```
+
+- **Mappings.** Each line pairs a key with a value, separated by
+  a colon and a space. Text after `#` is a comment.
+- **Nesting by indentation.** A key with nothing after its
+  colon holds the indented lines below it. Indentation must use
+  spaces, never tabs, and siblings must align exactly.
+- **Lists.** Each item starts with a hyphen and a space.
+- **Quoting.** Unquoted values are typed: `version: 1.10` is
+  read as the number 1.1, so a value meant as text is quoted.
+- **Block scalars.** After `|`, the indented lines form one
+  string with its line breaks kept, the form CI workflows use
+  for multi-line `run:` steps.
+
+R's `yaml` package shows what a parser makes of the example,
+saved as `report.yml`:
+
+```r
+str(yaml::read_yaml('report.yml'))
+#> List of 6
+#>  $ title  : chr "Cohort report"
+#>  $ draft  : logi FALSE
+#>  $ version: chr "1.10"
+#>  $ format :List of 2
+#>   ..$ html:List of 1
+#>   .. ..$ toc: logi TRUE
+#>   ..$ pdf :List of 1
+#>   .. ..$ toc: logi FALSE
+#>  $ params :List of 2
+#>   ..$ sites  : chr [1:2] "Boston" "San Diego"
+#>   ..$ min_age: int 18
+#>  $ notes  : chr "Synthetic data only.\nNo identifiers."
+str(yaml::yaml.load('version: 1.10'))
+#> List of 1
+#>  $ version: num 1.1
+```
+
+The commonest error is indentation. In this file, `pdf:` is
+indented three spaces where its sibling `html:` has two:
+
+```yaml
+format:
+  html:
+    toc: true
+   pdf:
+    toc: false
+```
+
+The parser cannot place `pdf:` and stops:
+
+```r
+yaml::read_yaml('bad.yml')
+#> Error in yaml.load(string, error.label = error.label, ...) :
+#>   (bad.yml) Parser error: while parsing a block mapping at
+#>   line 2, column 3 did not find expected key at line 4,
+#>   column 4
+```
+
+The message names two positions: where the enclosing mapping
+began (line 2, `html:`) and where the stray line sits (line 4,
+column 4). Quarto and CI services report the same fault in
+their own words, but the cure is always to align the line with
+its siblings. A tab character fails the same way, with a
+`found character that cannot start any token` error.
+
+## Exercises
+
+1. In a terminal, starting from your home directory, make a
+   folder named `shell practice` (with the space) containing a
+   `data` folder, in one command. Move into `shell practice`,
+   write a file `data/cohort.csv` holding the three lines
+   `id,age`, `1,34`, and `2,51`, and copy it to
+   `data/cohort_backup.csv`. List `data` and print the original
+   file. Return home, try `cd ~/shell practice` without quotes,
+   and explain the error. Finally, delete the folder.
+
+## Solutions
+
+::: {.callout-note icon=false collapse=true}
+## Exercise 1
+
+```bash
+mkdir -p ~/'shell practice'/data
+cd ~/'shell practice'
+printf 'id,age\n1,34\n2,51\n' > data/cohort.csv
+cp data/cohort.csv data/cohort_backup.csv
+ls data
+#> cohort_backup.csv
+#> cohort.csv
+cat data/cohort.csv
+#> id,age
+#> 1,34
+#> 2,51
+cd ~
+cd ~/shell practice
+#> bash: cd: too many arguments
+rm -r ~/'shell practice'
+```
+
+`-p` creates `shell practice` and `data` in one step. Without
+quotes, the shell splits `~/shell practice` into two words, so
+`cd` receives two arguments; zsh instead reports
+`string not in pwd`. `rm -r` deletes a folder and everything in
+it, and the quotes matter most here: unquoted, the same command
+would act on `~/shell` and on `practice` in the current
+directory, two different paths.
+:::

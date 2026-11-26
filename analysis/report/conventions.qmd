@@ -216,6 +216,7 @@ a reader working alone, can take the whole book in order.
 | Testing and Code Quality | Core |
 | Continuous Integration and Verification | Core |
 | Collaboration, Archiving, and Stewardship | Core |
+| Where to Begin | Core |
 
 ## Cross-references
 

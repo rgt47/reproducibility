@@ -340,6 +340,9 @@ material as optional. The four parts proceed as follows.
   verification (@sec-verification).
 - **Part IV, Collaboration and stewardship.** Sharing a
   compendium with a team and with the world (@sec-archiving).
+- **Closing.** The argument in four points, a plan for
+  the reader's own project, and a one-page brief for a
+  supervisor (@sec-closing).
 
 ## How to use this book
 

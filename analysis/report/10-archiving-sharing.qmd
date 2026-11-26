@@ -2277,72 +2277,9 @@ items is doing real work.
   human participants; read them before writing a
   data-availability statement for such a project.
 
-## In conclusion
+## Where the book goes from here
 
-The book's argument comes down to four points.
-Reproducibility, we have maintained throughout,
-is not a badge a project either holds or lacks. It is a
-level a project reaches. The discipline is to reach as
-high as the work warrants and to say plainly how high
-that was.
-
-First, reproducibility comes in degrees, and the ladder
-names them: locatable (L0), pinned packages (L1), pinned
-environment (L2), and verified (L3). Every chapter of
-this book has been an ascent of that ladder. We began by
-finding the source and pinning the packages with a
-lockfile. We then fixed the environment with a container
-or a content-addressed alternative, and finally
-regenerated the outputs and confirmed they match. The
-ladder is the common scale on which any analysis, built
-with any toolchain, can be placed and compared.
-
-Second, the rungs are reached by two different kinds of
-work, and conflating them is the source of much
-confusion. Capture fixes the inputs and sets the level
-from L0 to L2. Pinning the packages and the environment
-is capture, which carries a compendium as far as L2. The
-last rung, L3, is reached not by capture but by an act
-of verification: a clean rebuild after which a baseline
-test passes within a stated tolerance. Running
-`zzc verify` once, with such a baseline test in place,
-is therefore what lifts a pinned L2 compendium to a
-verified L3 one. Automated re-checking is
-distinct from that act. Continuous integration reruns the
-verification on every change and certifies that the L3
-state still holds, but it adds no rung of its own.
-Removing it does not lower the level; it only stops the
-automated confirmation. Keeping these registers distinct
-is what lets a project report, honestly and
-mechanically, exactly where it stands.
-
-Third, the unit of reproducible work is the research
-compendium, and it is not only a manuscript. The same
-machinery, the same pillars, and the same ladder serve a
-data analysis, a simulation study, an R package, a blog,
-and a scholarly manuscript alike. The archetypes differ
-only in their directory layout, in whether a report is
-rendered, and in the last mile of publication: a package
-submission, a deployed website, or a deposit beside an
-article.
-
-Fourth, and above all, the goal is reproducibility
-matched honestly to the level actually reached. The
-tools this book has taught, and the framework it has used
-as its running example, are strong but partial. They
-firmly secure some determinants and leave others to
-convention, and an honest practitioner discloses the
-difference. A verified L3 compendium and a locatable L0
-script are both legitimate outputs of a scientific
-process; what is not legitimate is to present the second
-as the first. The reader who finishes this book with the
-judgment to name the level a given analysis has reached,
-across whatever archetype the work takes, and the
-honesty to claim no more, has learned the one thing the
-book most wished to teach.
-
-The introduction named seven habits that recur across
-every chapter since. They are worth gathering here, once
-more, as the book's last word rather than its first.
-
-{{< include _habits.qmd >}}
+The book's closing chapter (@sec-closing) gathers its
+argument into four points, turns it into a plan for a
+student's own project, and offers a one-page brief for a
+supervisor.

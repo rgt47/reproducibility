@@ -75,6 +75,8 @@ book:
       chapters:
         - 10-archiving-sharing.qmd
 
+    - 11-closing.qmd
+
     - references.qmd
 
   appendices:

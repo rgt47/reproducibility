@@ -13,8 +13,31 @@ sections do the same for git, which @sec-version-control needs
 earlier in the course: a preflight to run once per machine
 before the first commit ([Git preflight](setup-appendix.qmd#sec-git-preflight)), and a table of the
 refusals a new user meets most often ([When git refuses](setup-appendix.qmd#sec-git-refuses)).
+It opens with a checklist of every tool the book uses.
 
-## Apple Silicon (M-series Mac)
+## Machine checklist {#sec-setup-checklist}
+
+@tbl-machine-checklist lists each tool, the chapter that first
+needs it, its official install page, and a command that
+confirms it works. Each check is run in a terminal
+([Shell Primer](shell-primer.qmd)). Version numbers change, so
+the last column describes the shape of a successful answer,
+not a particular version.
+
+| Tool | First needed | Install page | Check | Success looks like |
+|---|---|---|---|---|
+| R | @sec-crisis | <https://cran.r-project.org/> | `R --version` | A first line beginning `R version`, then copyright and license lines. |
+| RStudio or Positron | @sec-crisis | <https://posit.co/download/rstudio-desktop/>; <https://positron.posit.co/download.html> | Open the application. | The Console shows R's start-up message. |
+| git | @sec-version-control | <https://git-scm.com/downloads>; on Windows, Git for Windows (<https://gitforwindows.org/>) | `git --version` | One line beginning `git version`. |
+| Quarto | @sec-literate | <https://quarto.org/docs/get-started/> | `quarto --version` | A bare version number on one line. |
+| TeX, for PDF output | @sec-literate | `quarto install tinytex` (<https://quarto.org/docs/output-formats/pdf-engine.html>) | `quarto check` | Under `Checking LaTeX`, `OK` and a `Using:` line naming the distribution. |
+| Typst, an alternative PDF route in Quarto | @sec-literate | Bundled with Quarto (<https://quarto.org/docs/output-formats/typst.html>) | `quarto typst --version` | One line beginning `typst`. |
+| Docker | @sec-containers | <https://docs.docker.com/get-started/get-docker/> | `docker version` | A `Client` block and a `Server` block (see [Apple Silicon](setup-appendix.qmd#sec-setup-apple), step 1). |
+| make | @sec-dependencies | macOS: the Command Line Tools (<https://developer.apple.com/documentation/xcode/installing-the-command-line-tools/>); Windows: inside WSL2, the distribution's package manager | `make --version` | A first line beginning `GNU Make`. |
+
+: Tools the book uses, where to get them, and how to confirm each works. {#tbl-machine-checklist}
+
+## Apple Silicon (M-series Mac) {#sec-setup-apple}
 
 @sec-containers already explains the mechanism. The Rocker images
 differ. `rocker/r-ver`, the base of the showcase Dockerfile, is
@@ -57,7 +80,11 @@ at such a machine for the first time.
    A `renv::restore()` that compiles several packages from source
    is exactly that kind of task; budget minutes, not seconds, for
    a first build, and do not read slowness alone as a broken
-   Dockerfile.
+   Dockerfile. Docker Desktop's General settings also list
+   'Use Rosetta for x86_64/amd64 emulation on Apple Silicon',
+   which Docker describes as accelerating x86 emulation and
+   offers only with the Apple Virtualization framework
+   (<https://docs.docker.com/desktop/settings-and-maintenance/settings/>).
 
 4. **Confirm emulation is actually what is happening**, rather
    than guessing from slowness alone. `docker image inspect
@@ -68,7 +95,7 @@ at such a machine for the first time.
    stage (`[linux/amd64 ...]`) when `--platform` was passed
    explicitly.
 
-## Windows with WSL2
+## Windows with WSL2 {#sec-setup-wsl}
 
 This book's images are Linux-based, and Docker Desktop on Windows
 runs them through the **WSL2 backend**. It does not run them
@@ -117,7 +144,7 @@ filesystem, where Git's Linux default is LF, avoids this
 entirely; cloning on the Windows side and later copying into WSL2
 does not.
 
-## Locked-down institutional laptops
+## Locked-down institutional laptops {#sec-setup-locked}
 
 A reader with no administrator rights cannot install Docker
 Desktop at all, and nothing on the laptop itself will fix
@@ -159,7 +186,7 @@ worth asking for:
   (@sec-backends). Docker Engine on Linux or WSL2, or Podman,
   runs the same images without that license.
 
-## Diagnosing a failed or unexpectedly slow build
+## Diagnosing a failed or unexpectedly slow build {#sec-setup-diagnose}
 
 When a build fails or crawls, work through this sequence before
 assuming the Dockerfile itself is wrong:

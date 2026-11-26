@@ -47,6 +47,12 @@ and the L0-to-L1 step the container builds on. No R
 fluency beyond reading a short script is assumed; no
 Docker or systems-administration background is assumed,
 since the chapter builds the idea from first principles.
+The commands are typed in a terminal; the
+[Shell Primer](shell-primer.qmd) covers that for a reader who has never
+used one. Docker itself must be installed and running
+before the hands-on sections. The
+[Setup Appendix](setup-appendix.qmd) covers installation, Apple Silicon, and
+Windows.
 
 **By the end of this chapter you will be able to
 answer:**
@@ -82,6 +88,8 @@ answer:**
   project.
 - Making the image itself reproducible: pinning by
   digest and by dated snapshot.
+- Running the analysis inside the image: `docker run`
+  with the project mounted, and the `renv` pitfall.
 - Apple Silicon and multi-architecture images: why a
   digest needs a fixed platform.
 - Environment-variable determinism: locale, time zone,
@@ -856,7 +864,7 @@ restored
 concluded that containers so far may not give the
 robustness a regulatory submission needs
 [@fdapilot4review2026; @rconsortiumpilot4_2026]; the
-[setup appendix](setup-appendix.qmd) covers such locked-down
+[setup appendix](setup-appendix.qmd#sec-setup-locked) covers such locked-down
 machines. 'Unlicensed' matters beyond the agency: Docker
 Desktop requires a paid subscription in larger
 organizations, and its terms limit free educational use
@@ -886,6 +894,105 @@ packages on two builds months apart, even though the
 `FROM` line is identical both times. Pinning the base and dating the
 package source are two separate refinements, and a recipe
 that does only the first has not finished the second.
+:::
+:::
+
+## Running the analysis inside the image {#sec-docker-run}
+
+An image that builds is not yet an analysis that runs.
+The showcase recipe copies only the lockfile into the
+image, deliberately: the code and the data change daily,
+and rebuilding the image for every edit would be slow
+and pointless. The project instead stays on the host,
+and each run makes it visible inside a fresh container.
+This is the 'host directory made visible inside it' of
+the section on images and containers, and `docker run`
+does it with a bind mount.
+
+We built the showcase image under the name `cohort-env`
+and ran a small script from a project directory on the
+host (run 2026-11-25, Docker Desktop on Apple Silicon).
+The commands are typed in a terminal
+([Shell Primer](shell-primer.qmd)) from
+the project's root directory:
+
+```bash
+docker build --platform linux/amd64 -t cohort-env .
+
+docker run --rm --platform linux/amd64 \
+  -v "$PWD":/project -w /project \
+  cohort-env Rscript analysis/scripts/01-summary.R
+#> R 4.4.0 | jsonlite 2.0.0
+```
+
+Each flag has one job. `--rm` discards the container when
+the command ends, so that nothing accumulates and every
+run starts from the image. `--platform linux/amd64` runs
+the same architecture that was built, for the reasons the
+next section gives. `-v "$PWD":/project` mounts the
+current host directory at `/project` inside the
+container, and `-w /project` makes it the working
+directory. The script's output file, written under
+`analysis/output/`, therefore appears on the host and
+survives the container. The R version and the package
+version reported come from the image, not from the host,
+which is the point of the exercise. For an interactive
+session in the same environment, replace the command at
+the end with `R` and add `-it` before the image name.
+
+Omitting the mount shows what the image alone contains.
+Listing `/project` in a container started without `-v`
+printed a single file, `renv.lock`, the one the recipe
+copied.
+
+::: {.callout-warning}
+## Pitfall
+
+A compendium whose `.Rprofile` activates `renv`, as most
+do, carries that activation into the container through
+the mount. `renv` then looks for the project library,
+not the image's library, and the run fails. With a
+one-line `.Rprofile` that sources `renv/activate.R`, the
+same command ended with:
+
+```
+#> - None of the packages recorded in the lockfile are currently installed.
+#> Error in packageVersion("jsonlite") :
+#>   there is no package called 'jsonlite'
+```
+
+Worse, before failing it downloaded and installed a copy
+of `renv` into the mounted project, on the host. Either
+of two changes made the run succeed with the image's
+packages: passing `-e RENV_CONFIG_AUTOLOADER_ENABLED=FALSE`
+to `docker run`, which tells `renv` not to activate, or
+running `Rscript --vanilla`, which reads no startup file
+at all.
+:::
+
+On Windows, keep the project inside the WSL2 file system
+and run these commands from a WSL2 terminal; the
+[setup appendix](setup-appendix.qmd#sec-setup-wsl) explains why.
+
+::: {.callout-note icon=false collapse=true}
+## Check your understanding: what the mount does
+
+A colleague runs the showcase image without `-v` and
+asks why `Rscript analysis/scripts/01-summary.R` stops
+with 'cannot open file ... No such file or directory',
+when the script is plainly in the project. What is missing, and where would the
+script's output have gone if it had run?
+
+::: {.callout-note icon=false collapse=true}
+## Answer
+
+The image contains only what the recipe copied into it,
+here the lockfile, so the container cannot see the
+host's project directory at all. The `-v "$PWD":/project`
+mount makes it visible. Without the mount, any output the
+script wrote would have gone into the container's own
+file system and been discarded with the container,
+since `--rm` removes it when the command ends.
 :::
 :::
 

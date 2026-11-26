@@ -43,7 +43,8 @@ beyond reading a hazard ratio and a coefficient table, as
 in the chapter's cohort and comorbidity examples, is
 required. No R fluency beyond reading a short script and a
 directory listing is assumed; this chapter writes almost
-no code itself.
+no code itself. The few shell commands it shows are
+explained in the [Shell Primer](shell-primer.qmd).
 
 **By the end of this chapter you will be able to
 answer:**

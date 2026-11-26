@@ -72,7 +72,8 @@ prior exposure to `knitr` or Quarto chunk syntax is assumed.
 stack, and then trace the oldest idea in the book, from
 Knuth to Buckheit and Donoho. We next follow the R
 lineage from Sweave to Quarto. With that history in
-hand, we develop the sealed render, apply the same seal
+hand, we take apart a minimal Quarto document and render
+it three ways. We then develop the sealed render, apply the same seal
 to inline numbers, and catalog the landmines that break
 the seal. Quarto's freeze and knitr's cache, which let a
 render skip the code, come next. We then consider HTML or
@@ -469,6 +470,98 @@ does not produce.
 :::
 :::
 
+## Anatomy of a literate document
+
+A literate document is a plain text file, and three kinds
+of material make it up. The listing below is a complete
+Quarto document, saved as `report.qmd`, shown exactly as
+it appears in a text editor. It is short on purpose, so
+that every part is visible at once.
+
+<!-- The double braces and knitr::inline_expr() make this
+book print the chunk fence and the inline expression
+literally instead of running them; the reader's own file
+uses single braces and a plain inline expression. -->
+
+````{.markdown}
+---
+title: 'Laser arm summary'
+format: html
+---
+
+```{{r}}
+#| label: count-eyes
+#| echo: false
+d <- survival::diabetic
+n_eyes <- nrow(d[d$trt == 1, ])
+```
+
+The laser-treated arm holds `r knitr::inline_expr('n_eyes')` eyes.
+````
+
+The first part, between the two lines of three dashes, is
+the **YAML header**. It holds settings for the document as
+a whole: here a title, and `format: html`, which names the
+kind of output file to produce. YAML is a plain notation of
+keys and values, one per line, in which indentation places
+a nested setting beneath its parent.
+
+The second part is a **code chunk**. It opens with a line
+of three backticks followed by `{r}`, which names R as the
+language, and closes with a line of three backticks alone.
+The lines that begin with `#|` are chunk options, written
+in the same YAML notation. The `label` option names the
+chunk in progress messages and error reports. The
+`echo: false` option hides the code from the rendered page
+while still running it. Every other line in the chunk is
+ordinary R.
+
+The third part is everything else: prose, written in
+Markdown. Within the prose, a backtick, the letter `r`, a
+space, an R expression, and a closing backtick form an
+**inline expression**. When the document is built, R
+evaluates the expression and its value replaces it in the
+sentence, so the reader sees a number where the source
+holds code.
+
+Rendering runs the chunks in order, substitutes the inline
+values, and converts the result to the format the header
+names. There are three ways to start it, and all three run
+the same Quarto program. In a terminal opened in the
+document's folder (the
+[Shell Primer](shell-primer.qmd) covers opening one), the
+command is the following.
+
+```bash
+quarto render report.qmd
+# output abridged, from Quarto 1.11.9, run 2026-11-25
+#> processing file: report.qmd
+#> output file: report.knit.md
+#> Output created: report.html
+```
+
+In RStudio, the Render button on the editor toolbar does
+the same
+(<https://quarto.org/docs/tools/rstudio.html>). In
+Positron, the Preview button, or the command
+'Quarto: Preview', renders the file and opens the result
+(<https://quarto.org/docs/tools/positron/>). From the R
+console, `quarto::quarto_render('report.qmd')` starts the
+same render. This last route needs the `quarto` R package
+as well as the Quarto program itself, which the package
+calls
+(<https://quarto-dev.github.io/quarto-r/reference/quarto_render.html>).
+
+The output is `report.html`, written beside the source.
+For HTML output Quarto also writes a folder,
+`report_files/`, holding the scripts and style sheets the
+page loads, and the two travel together. When we rendered
+the listing above, the page read 'The laser-treated arm
+holds 197 eyes.' and showed no R code, because of
+`echo: false`. The number 197 appears nowhere in the
+source. The rest of this chapter is about keeping that
+property true as documents grow.
+
 ## The sealed render
 
 We begin with a figure. The following chunk generates a
@@ -585,9 +678,14 @@ typed. In the laser-treated arm of the retinopathy
 trial there are `r n_eyes` eyes, of which `r n_events`
 progressed to visual loss, a rate of `r pct` percent.
 
-If we read the source of that sentence, we find no
-numerals in it. Each is an inline expression evaluated
-at build time, so if the trial data were corrected, or
+The source of that sentence holds no numerals. It is
+written in the form of the last line of `report.qmd` in
+the anatomy listing above: where the page shows the
+count of eyes, the source holds
+`r knitr::inline_expr('n_eyes')`, and the other two
+numbers are written the same way. Each is an inline
+expression evaluated at build time, so if the trial data
+were corrected, or
 the arm redefined, the sentence would change with it.
 This is the same seal the figure has, applied to the
 unit of text where a reader is least able to detect a

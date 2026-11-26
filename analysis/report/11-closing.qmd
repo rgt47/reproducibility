@@ -1,0 +1,209 @@
+# Where to Begin {#sec-closing}
+
+The book opened with a case: drug-sensitivity signatures,
+used to assign patients to treatment arms, that rested on
+analyses no one could re-run. Two statisticians
+reconstructed the analyses from the outside and found
+simple errors (@sec-intro). Every chapter since has
+supplied part of the remedy. This closing chapter gathers
+the argument into four points and turns it into a plan a
+student can start this week. It ends with a page that a
+student can hand to a supervisor who has not read the
+book.
+
+## The argument in four points {#sec-conclusion}
+
+The book's argument comes down to four points.
+Reproducibility, we have maintained throughout,
+is not a badge a project either holds or lacks. It is a
+level a project reaches. The discipline is to reach as
+high as the work warrants and to say plainly how high
+that was.
+
+First, reproducibility comes in degrees, and the ladder
+names them: locatable (L0), pinned packages (L1), pinned
+environment (L2), and verified (L3). Every chapter of
+this book has been an ascent of that ladder. We began by
+finding the source and pinning the packages with a
+lockfile. We then fixed the environment with a container
+or a content-addressed alternative, and finally
+regenerated the outputs and confirmed they match. The
+ladder is the common scale on which any analysis, built
+with any toolchain, can be placed and compared.
+
+Second, the rungs are reached by two different kinds of
+work, and conflating them is the source of much
+confusion. Capture fixes the inputs and sets the level
+from L0 to L2. Pinning the packages and the environment
+is capture, which carries a compendium as far as L2. The
+last rung, L3, is reached not by capture but by an act
+of verification: a clean rebuild after which a baseline
+test passes within a stated tolerance. Running that
+verification once, with such a baseline test in place
+(in the book's framework, `zzc verify`), is therefore
+what lifts a pinned L2 compendium to a verified L3 one.
+Automated re-checking is distinct from that act.
+Continuous integration reruns the verification on every
+change and certifies that the L3 state still holds, but
+it adds no rung of its own. Removing it does not lower
+the level; it only stops the automated confirmation.
+Keeping these registers distinct is what lets a project
+report, honestly and mechanically, exactly where it
+stands.
+
+Third, the unit of reproducible work is the research
+compendium, and it is not only a manuscript. The same
+machinery, the same pillars, and the same ladder serve a
+data analysis, a simulation study, an R package, a blog,
+and a scholarly manuscript alike. The archetypes differ
+only in their directory layout, in whether a report is
+rendered, and in the last mile of publication: a package
+submission, a deployed website, or a deposit beside an
+article.
+
+Fourth, and above all, the goal is reproducibility
+matched honestly to the level actually reached. The
+tools this book has taught, and the framework it has used
+as its running example, are strong but partial. They
+firmly secure some determinants and leave others to
+convention, and an honest practitioner discloses the
+difference. A verified L3 compendium and a locatable L0
+script are both legitimate outputs of a scientific
+process; what is not legitimate is to present the second
+as the first. The reader who finishes this book with the
+judgment to name the level a given analysis has reached,
+across whatever archetype the work takes, and the
+honesty to claim no more, has learned the one thing the
+book most wished to teach.
+
+## A plan for your own project
+
+A book this long can leave the impression that the
+practices arrive all at once. They do not, and they
+should not. The order below follows the ladder, and each
+step is useful on its own if the next never comes. The
+time labels are suggestions for a student starting a
+thesis project, not measurements.
+
+**This week: make the project locatable (L0).** Put the
+analysis under version control and push it to a private
+remote (@sec-version-control). Add a README that says
+what the project is, where the data come from, and how
+to run the analysis. Keep raw data out of the history
+from the first commit, with a `.gitignore` written before
+any data arrive.
+
+**This month: pin the packages (L1).** Initialize `renv`,
+take a snapshot when the analysis runs cleanly, and
+commit the lockfile (@sec-dependencies). Move file paths
+to project-relative form, and replace every typed number
+in the report with an inline expression
+(@sec-literate). Record the R version the analysis uses.
+
+**Before the first submission: pin the environment and
+check it (L2, then L3).** Write a Dockerfile, or choose
+an alternative backend if Docker is not available
+(@sec-containers, @sec-backends). Add a baseline test
+that compares the main estimates with recorded values
+within a stated tolerance (@sec-testing). Run the
+verification once on a clean machine, then let
+continuous integration repeat it on every change
+(@sec-verification).
+
+**At publication: deposit and disclose.** Archive the
+compendium with a persistent identifier, cite the
+version used, and state in the article the level the
+analysis actually reached (@sec-archiving). Where the
+data cannot be shared, say how they can be obtained and
+share everything else.
+
+Not every project needs every step. An exploratory
+analysis that will never be published may rightly stop
+at L1. The judgment that @sec-levels asks of every
+analyst is the same one this plan asks of its reader:
+climb as far as the stakes warrant, and say where the
+climb stopped.
+
+## For your supervisor: one page
+
+A supervisor who has published for years without these
+practices is entitled to ask what they cost and what
+they buy. The following page is written to be handed
+over as it stands.
+
+::: {.callout-note icon=false}
+## Reproducible analysis: a one-page brief
+
+**What is proposed.** The student's analysis will be
+kept under version control, with its package versions
+recorded, and, before submission, run once more from a
+clean start to confirm that the published numbers
+regenerate. Nothing in the statistical analysis changes.
+
+**What it protects against.** Analyses fail to re-run
+far more often than is usually assumed. Of more than
+nine thousand R files deposited with published articles,
+roughly one in four ran without error
+[@trisovic2022]. Errors that survive into print are
+usually simple. Genomic analyses used to assign patients
+to treatment arms rested on errors as plain as shifted
+rows [@baggerly2009]. A published clinical trial was
+retracted and republished with its two arms' results
+exchanged, reversing its conclusion [@aboumatar2019]. Each was found only because
+someone could re-run or inspect the computation.
+
+**What it costs.** The first steps, version control and
+a recorded list of package versions, add little to the
+work and change nothing in the analysis. The later steps
+are taken only where the stakes of the project warrant
+them.
+
+**What it buys the laboratory.** A reviewer's request
+for a re-analysis can be answered without rebuilding
+anything. A student's departure does not take the
+analysis with it. And the project meets the data- and
+code-sharing requirements that funders and journals
+increasingly impose (@tbl-mandates).
+
+**What is asked of the supervisor.** Nothing beyond
+tolerance for the student's own project. Further steps
+can wait until the first ones have proved their worth.
+:::
+
+## When your laboratory does not work this way yet
+
+Most students who adopt these practices do so in a group
+that has not. That is no obstacle to starting, because
+every step in the plan above can be taken on one
+person's project without changing anyone else's. Three
+observations may help.
+
+First, practice spreads by example more than by
+argument. A student whose figures regenerate on request,
+whose analysis survives a change of laptop, and whose
+code a newcomer can run, demonstrates the case more
+persuasively than any chapter of this book.
+
+Second, the parts that touch other people deserve
+care. Restricted data are governed by agreements the
+student did not write (@sec-archiving), and a
+laboratory's shared resources, such as a common image or
+a shared repository, belong to the group. Propose those
+changes rather than make them.
+
+Third, the case should be made in the supervisor's
+terms, not the book's. A supervisor in clinical research
+may respond to the trial whose arms were exchanged, and an
+economist to the spreadsheet behind the debt threshold.
+Anyone running a long pipeline may respond to the
+operating systems that changed brain scans (@sec-crisis). The four
+objections that @sec-four-objections answers are the
+ones most likely to be raised.
+
+## The habits, once more
+
+The introduction named seven habits that recur across
+every chapter since. They are worth gathering here, once
+more, as the book's last word rather than its first.
+
+{{< include _habits.qmd >}}

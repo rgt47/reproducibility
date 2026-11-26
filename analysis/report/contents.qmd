@@ -41,6 +41,7 @@ Every part and chapter of the book on one page, in reading order.
 
 ## References and Appendices {.unnumbered}
 
+- [14 Where to Begin](11-closing.qmd)
 - [References](references.qmd)
 - [Shell Primer](shell-primer.qmd)
 - [Setup Appendix: Docker and Git on Your Own Machine](setup-appendix.qmd)
