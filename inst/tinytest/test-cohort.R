@@ -143,6 +143,6 @@ expect_equal(bootstrap_ci(cohort, B = 50), bootstrap_ci(cohort, B = 50),
 expect_true(unname(bootstrap_ci(cohort, B = 50)['lower']) <
             unname(bootstrap_ci(cohort, B = 50)['upper']),
             info = 'the interval is ordered')
-expect_equal(run_primary_analysis(raw_path)$estimate,
-             run_primary_analysis(raw_path)$estimate,
-             info = 'the primary analysis is deterministic')
+expect_equal(run_logistic_analysis(raw_path)$estimate,
+             run_logistic_analysis(raw_path)$estimate,
+             info = 'the logistic analysis is deterministic')

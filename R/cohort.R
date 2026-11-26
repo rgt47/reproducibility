@@ -112,15 +112,18 @@ bootstrap_ci <- function(x, B = 1000, seed = 20260908) {
     stats::setNames(c('lower', 'upper'))
 }
 
-#' Run the primary analysis end to end
+#' Run the logistic analysis end to end
 #'
-#' The driver the testing chapter checks against a recorded baseline.
+#' The compendium's first and simpler analysis: incident diabetes on
+#' HbA1c, from the raw extract to the odds ratio. The analysis the
+#' book checks against a recorded baseline is the Cox model of
+#' [fit_cox()].
 #'
 #' @param path Path to the raw extract.
 #' @return A list with the fitted model, its tidy summary, and the
 #'   HbA1c odds ratio as `estimate`.
 #' @export
-run_primary_analysis <- function(
+run_logistic_analysis <- function(
     path = file.path('analysis', 'data', 'raw_data', 'cohort_raw.csv')) {
   cohort <- path |> load_cohort() |> clean_cohort()
   fit <- fit_model(cohort)

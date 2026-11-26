@@ -1095,8 +1095,10 @@ R-package skin, `R CMD check` remains the universal gate
 across all five. The reproducibility machinery is
 identical; what varies is the shape of the work and the
 gates it warrants. We take each in turn, with a
-health-sciences example, and then tabulate the
-differences.
+health-sciences example and one from another field, and
+then tabulate the differences. All of these examples are
+hypothetical, chosen to illustrate the shape of each
+project type rather than to describe a particular study.
 
 ::: {.callout-note icon=false}
 ## With zzcollab
@@ -1152,8 +1154,8 @@ principle. A `report.Rmd` or `index.qmd` file in
 parallel with the analysis, so that the prose and the
 numbers never drift apart. Every figure in the paper is
 regenerated on each render, rather than pasted in by hand.
-Consider a paper on the comorbidity of PTSD, depression,
-and diabetes in a trauma-study cohort. It uses variable
+Suppose, for example, a paper on the comorbidity of PTSD,
+depression, and diabetes in a trauma-study cohort. It uses variable
 selection, multiple imputation, and causal mediation
 analysis. (An economics replication package accompanying
 a journal article has the same shape.) The compendium

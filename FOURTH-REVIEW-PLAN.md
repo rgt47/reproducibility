@@ -293,3 +293,21 @@ citations, no literal entities in the PDF; TOC shows Appendices A
 (backends), B (other forges), C (translating the tools). PDF 738
 pages (708 before, +30). Instructor guide renders (exit 0). No
 citation key is missing from `references.bib`.
+Committed as `ab65524`; Phases 26 to 31 fast-forwarded into `main`
+and pushed on 2026-11-26 (CI render and deploy succeeded).
+
+### Phase 32, author decisions (`phase-32-author-decisions`)
+
+Decisions recorded 2026-11-26 (AskUserQuestion):
+
+| ID | Decision | Change |
+|---|---|---|
+| D33 | Ch 5's project-type examples stay hypothetical | One sentence states that every example in the walkthrough is hypothetical; the manuscript example is framed 'Suppose, for example' |
+| D34 | `targets` exercises run outside the book's clone | Ch 9 Exercise 7 keeps its `nrow()` part in the clone (the instructor guide keys it) and moves the `_targets.R` part into a copy of the starter project, so `targets` enters that project's lockfile, not the book's |
+| D35 | Rename the logistic driver | `run_primary_analysis()` is now `run_logistic_analysis()`; its documentation no longer claims to be the baseline-checked analysis (the Cox model of `fit_cox()` is); `NAMESPACE` and `man/` regenerated; `test-cohort.R` updated |
+| D36 | Move Ch 2's agent-governance subsections to an appendix | 'What to delegate to a coding agent' and 'Disclosing and recording model use' moved verbatim (666 words) to new Appendix D, 'Working with Coding Agents' (`coding-agents.qmd`, `sec-coding-agents`), anchors kept so all 16 references resolve; Ch 2 keeps a pointer paragraph |
+
+Verification (V): tinytest 461/461. Render: logged exit 0, no
+warnings, no unresolved references or missing citations; TOC shows
+Appendix D. PDF 740 pages (738 before). Instructor guide renders
+(exit 0).

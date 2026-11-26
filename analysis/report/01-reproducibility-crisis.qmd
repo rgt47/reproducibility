@@ -1262,96 +1262,12 @@ analysis has genuinely reached, and edit the paragraph
 to claim that rung and no higher. The claim is your
 responsibility, not the model's.
 
-### What to delegate to a coding agent {#sec-llm-delegate}
-
-A coding agent does not only read; it runs commands,
-edits files, commits, and pushes if its credentials
-allow. Settle the division of labor before it starts.
-
-The agent may scaffold, edit code on a branch, run the
-tests, and open a pull request (@sec-version-control);
-the analyst reviews and merges. Three cautions govern
-that review. First, a self-report is not an observation.
-'The tests pass' is a claim, so read the run log
-yourself. Second, an agent asked to make a failure go
-away can change the check instead of the code: an
-expected value, a baseline, a tolerance, or a CI step
-allowed to fail. Treat as protected the paths that hold
-checks and inputs, in this book's layout
-`inst/tinytest/`, `inst/baseline/`, `renv.lock`,
-`.github/workflows/`, and `analysis/data/raw_data/`, and
-read every diff that touches them line by line. Third,
-irreversible actions stay with the analyst: pushing to a
-registry, minting a DOI, depositing, rewriting history,
-force-pushing, and merging. Withhold the credentials
-that would let the agent take them.
-
-An agent can also be steered by what it reads. A
-downloaded README, an issue comment, a CI log, or a data
-file can carry instructions that the agent follows as if
-they were yours. OWASP lists this risk, prompt
-injection, first among the risks of LLM applications and
-states that no fool-proof prevention is known
-[@owasp2025llm01]. Its entry on excessive agency
-recommends least privilege and human approval of
-high-impact actions [@owasp2025llm06], which is the
-division above.
-
-The data boundary has to be the filesystem. An agent
-sees whatever its working tree holds, and an ignore
-setting is a request the agent is expected to honor, not
-a control the operating system enforces. Run the agent
-where the real data are not mounted, against synthetic
-rows generated from the data dictionary.
-
-### Disclosing and recording model use {#sec-llm-disclosure}
-
-If a large language model contributed to the code, prose,
-or analysis behind a paper, disclose that use. The
-International Committee of Medical Journal Editors bars
-AI tools from authorship, because a tool cannot be
-responsible for the accuracy, integrity, and originality
-of the work, and places that responsibility on the human
-authors [@icmje2026ai]. It also asks authors to describe
-their use of AI at submission, in the cover letter and in
-the appropriate section of the manuscript. Journals
-differ about which section that is. Place the statement
-where the target journal's instructions say, and name the
-use in the cover letter as well.
-
-A usable statement has the parts of a package citation:
-
-> `<tool name>`, `<version or model identifier>`,
-> `<provider>`, used `<dates>` to `<purpose>` on
-> `<files or sections>`; output reviewed and verified by
-> `<author>`.
-
-A statement that says only 'written with AI assistance'
-gives a future reader no way to audit what was used. Give
-the identifier exactly as the interface or the API
-reported it, as 'R 4.4.1, glmnet 4.1-8' gives a package,
-not an approximate version. Since a model's output is not
-a fixed artifact, the identifier only narrows the search,
-the way a `sessionInfo()` snapshot narrows an R version
-mismatch, but it cannot regenerate the text. Keep the
-prompts, and the transcripts where the interface allows,
-as files in the compendium.
-
-The compendium is where this provenance belongs, as it is
-for every other input. Commit a file `LLM-USE.md`, or a
-section of the README, with one row per use: the date,
-the tool and its identifier, the purpose, the affected
-files, the path to the prompt file, and the verification
-performed. A commit that an agent made should say so,
-in the commit message or in a trailer line used
-consistently, such as `Assisted-by: <tool name>`, so that
-the history shows which changes a person wrote.
-
-Funders set their own rules. NIH will not treat an
-application substantially developed by AI as the
-applicant's original idea [@nihnot25132], and it
-prohibits its peer reviewers from using generative AI to
-analyze applications or write critiques [@nihnot23149].
+Two further questions, what to delegate to a coding agent
+and how to disclose and record a model's use, belong to
+everyday practice rather than to this chapter's argument;
+@sec-coding-agents takes them up once the tools they
+protect (version control, the lockfile, tests, and
+continuous integration) have been introduced.
 
 ## Exercises
 

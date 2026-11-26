@@ -1734,11 +1734,16 @@ in a checkout where the real notes are not mounted
    `pkgload::load_all()`, run
    `cohort <- clean_cohort(load_cohort(path))` with `path`
    set to `'analysis/data/raw_data/cohort_raw.csv'`, and
-   report `nrow(cohort)`. Then write the three-target
-   `_targets.R` that wraps `load_cohort()` and
-   `clean_cohort()` on this path, following the `raw_file`
-   and `raw` split of Exercise 3's solution and loading the
-   functions with `tar_source('R')`. State what
+   report `nrow(cohort)`. Then, outside the clone, write the
+   three-target `_targets.R` that wraps `load_cohort()` and
+   `clean_cohort()`: copy the starter project
+   (`analysis/exercises/pipeline-start/`) somewhere else, add
+   this repository's `R/cohort.R` and the generated extract
+   to the copy, and work there, so that `targets` is
+   recorded in that project's lockfile rather than this
+   book's. Follow the `raw_file` and `raw` split of
+   Exercise 3's solution and load the functions with
+   `tar_source('R')`. State what
    `tar_outdated()` would report immediately after the first
    `tar_make()` and after a second one with no file changed.
 

@@ -53,6 +53,7 @@ Every part and chapter of the book on one page, in reading order.
   Apptainer](06-backends-runtimes.qmd)
 - [B Continuous Integration on Other Forges](ci-other-forges.qmd)
 - [C Translating the Tools](translating-tools.qmd)
+- [D Working with Coding Agents](coding-agents.qmd)
 - [Cheat-Sheet Index](cheat-sheet-index.qmd)
 - [Glossary](glossary.qmd)
 - [Credits](credits.qmd)

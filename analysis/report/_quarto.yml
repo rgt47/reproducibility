@@ -90,6 +90,7 @@ book:
     - 06-backends-runtimes.qmd
     - ci-other-forges.qmd
     - translating-tools.qmd
+    - coding-agents.qmd
     - cheat-sheet-index.qmd
     - glossary.qmd
     - credits.qmd
