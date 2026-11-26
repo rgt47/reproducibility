@@ -190,10 +190,12 @@ identical output file. A rendered PDF is usually not
 deterministic in this strict sense, because it embeds
 timestamps and other build-time metadata. (@sec-literate)
 
-[]{#gloss-digest}**`digest()`.** Computes a content hash of an R object. Used to
-verify that a regenerated computational output matches a
-recorded one, on objects rather than on rendered documents.
-(@sec-verification)
+[]{#gloss-digest}**`digest()`.** Computes a hash of an R object's serialization,
+or with `file =` of a file's bytes. Use it on files to detect
+changed raw data. Do not use it to compare estimates: a
+harmless floating-point difference, or the same values in a
+different class, changes the hash. Estimates are compared
+within a tolerance (@sec-testing). (@sec-verification)
 
 []{#gloss-docker}**Docker.** The most widely used container platform, and one
 instrument for reaching a pinned environment rather than a
@@ -209,8 +211,11 @@ because a registry can delete, rate-limit, or repoint what it
 holds. (@sec-archiving)
 
 []{#gloss-docker-pull-and-docker-inspect}**`docker pull` and `docker inspect`.** Fetch an image and read
-its metadata, including the content digest that a reproducible
-recipe pins instead of a tag. (@sec-containers)
+its local metadata. The digest to pin in a recipe is better
+read from the registry with `docker buildx imagetools
+inspect`, which reports the index digest and each platform's
+manifest digest; a locally cached digest may be stale.
+(@sec-containers)
 
 
 ## E {.unnumbered .unlisted}
@@ -744,8 +749,10 @@ submission. (@sec-version-control)
 
 []{#gloss-tag-and-digest}**Tag and digest.** A tag, such as `rocker/tidyverse:4.4.0`, is
 a human-readable pointer that may later be repointed. A digest,
-`@sha256:...`, is an immutable hash of the image's exact
-content. The same digest always denotes the same bytes.
+`@sha256:...`, is an immutable hash of content. An index
+digest names one entry per platform, so the same index digest
+yields different filesystems on arm64 and amd64; a recipe pins
+the index digest and passes `--platform linux/amd64`.
 (@sec-containers)
 
 []{#gloss-target}**Target.** A single step in the pipeline, together with the
@@ -810,7 +817,8 @@ the project lockfile. (@sec-archiving)
 ## U {.unnumbered .unlisted}
 
 []{#gloss-union-model}**Union model.** The rule that the project lockfile records the
-union of every package any contributor has installed, so that a
+union of the packages every contributor's committed code uses,
+so that a
 rebuilt image carries what the whole team needs, not only what
 one member used. (@sec-archiving)
 
@@ -870,10 +878,12 @@ CERN, that mints a DOI for any deposited file set.
 
 []{#gloss-zzcollab}**zzcollab.** The framework this book uses to compose the
 reproducibility tools into one system, organized around the
-levels ladder. (@sec-compendium)
+levels ladder. Written by the book's authors; GPL (>= 3),
+<https://github.com/rgt47/zzcollab>. (@sec-compendium)
 
 []{#gloss-zzrenvcheck-check-packages}**`zzrenvcheck::check_packages()`.** Checks the dependency triad
 and can repair it, writing a missing package into `DESCRIPTION`
-and injecting a resolved entry into the lockfile.
+and injecting a resolved entry into the lockfile. The package
+is written by the book's authors and is not on CRAN.
 (@sec-dependencies)
 

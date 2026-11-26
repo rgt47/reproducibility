@@ -322,9 +322,10 @@ tool makes them.
   the lab uses, pinned by digest. The package layer is
   the project lockfile.
 - **Union model.** The rule that the project lockfile
-  records the union of every package any contributor
-  has installed, so that a rebuilt image carries what
-  the whole team needs, not only what one member used.
+  records the union of the packages every contributor's
+  committed code uses, so that a rebuilt image carries
+  what the whole team needs, not only what one member
+  used.
 - **Persistent identifier (DOI).** A durable, resolvable
   name for a deposited artifact, such as a Digital
   Object Identifier, that continues to resolve even if
@@ -416,8 +417,16 @@ contributor-governed under the union model.** Each
 member installs, on top of the team image, the packages
 their part of the work requires, freely and without
 coordination. The project
-lockfile at any moment records the *union* of everything
-anyone has installed. The shared image is rebuilt from
+lockfile at any moment records the *union* of the
+packages that anyone's committed code uses. Nothing
+extra is needed to produce it: under `renv`'s default
+implicit snapshot (@sec-dependencies), a snapshot taken
+on the merged main branch scans everyone's code at once.
+Recording packages that are installed but used by no
+code is a different setting,
+`renv::settings$snapshot.type('all')`, which trades a
+complete record of the library for a lockfile that also
+pins whatever anyone happened to try. The shared image is rebuilt from
 that lockfile periodically rather than on every change.
 When it is, it carries the full set every contributor
 needs, not merely the subset one member happened to use.
@@ -431,9 +440,9 @@ pillar two, and it is governed by every member.
 The union model buys the elimination of a common and
 maddening failure, the analysis that runs for its author
 and nowhere else. The price is a little environmental
-bloat. A package installed once for an exploratory
-notebook remains in the lockfile for everyone until it
-is deliberately removed. In our view this is a sound
+bloat. A package used by one member's exploratory
+notebook stays in the lockfile for everyone as long as
+that notebook is committed. In our view this is a sound
 trade. On the one hand, the bloat is bounded and
 visible, a few extra megabytes in an image that is
 already a gigabyte or more, and it can be pruned when it
@@ -443,6 +452,17 @@ a dependency. That is the precise 'works on my machine'
 pathology that the whole enterprise exists to abolish.
 We would rather carry an unused package than lose a day
 to a missing one.
+
+The union model has one practical cost that every team
+meets in its first month: two contributors who snapshot
+on separate branches both edit `renv.lock`, and the
+merge reports a conflict in it. The lockfile is
+generated, so the conflict should be resolved by
+regenerating it, not by hand-editing the JSON. Finish the
+merge with either side's version of the file, restore
+and install on the merged branch, then run
+`renv::snapshot()` there, so that the new lockfile is
+computed from the merged code.
 
 ### The Dockerfile, not the image, is the guarantee
 
@@ -805,7 +825,11 @@ contain the data. A `COPY . .` executed while the extract
 sat in the build context places it inside the image. A
 `.dockerignore` that excludes the data directory, and an
 inspection of the built image's file system, are
-therefore part of the deposit. And the other artifacts
+therefore part of the deposit. Patterns in a
+`.dockerignore` are matched from the root of the build
+context, so `*.csv` excludes only the CSV files at the
+top level; `analysis/data/raw_data/` (the directory) or
+`**/*.csv` (every depth) is needed for files below it. And the other artifacts
 must not carry individual-level rows by another route.
 Rendered reports, cached chunk output, saved workspaces,
 logs, and test fixtures are all places where records
@@ -1303,7 +1327,7 @@ every render.
 
 ```{r}
 #| label: tbl-union
-#| tbl-cap: 'The renv union model over one quarter of team collaboration. Each contributor installs packages independently; the project lockfile records the cumulative union, which the shared image is periodically rebuilt from. Because it is a union rather than a running total, a package a contributor installs that another already has does not enlarge it, so the union can grow by fewer than the number of packages added. The union size never shrinks, so every contributor who rebuilds inherits the full set.'
+#| tbl-cap: 'The renv union model over one quarter of team collaboration. Each contributor installs packages independently; the project lockfile records the cumulative union, which the shared image is periodically rebuilt from. Because it is a union rather than a running total, a package a contributor installs that another already has does not enlarge it, so the union can grow by fewer than the number of packages added. No contributor removed code this quarter, so the union never shrinks, and every contributor who rebuilds inherits the full set.'
 
 library(tibble)
 library(knitr)
@@ -1779,7 +1803,7 @@ trusting it.
    (@sec-version-control): never commit restricted data,
    because `git` keeps every version forever even after a
    file is deleted. The same rule applies one layer up.
-   Suppose a `.dockerignore` lists `*.csv` but a
+   Suppose a `.dockerignore` lists `**/*.csv` but a
    teammate's branch adds `analysis/data/raw_data/extra.tsv`
    the week before a deposit, and nobody updates the
    ignore patterns. Walk through what happens to that file
@@ -1836,8 +1860,8 @@ and three kinds recur.
 A package that *started* in the package layer and is now
 used by everyone belongs in the environment layer at the
 next rebuild. The signal is the union model: when a package
-appears in the lockfile because several contributors
-installed it independently, it has outgrown the fast layer.
+appears in the lockfile because several contributors'
+code uses it independently, it has outgrown the fast layer.
 
 A package with heavy system dependencies used by only one
 contributor is ambiguous. Installing it from the
@@ -1927,7 +1951,8 @@ to its forge in ways it should not have been.
 **Where the CI logic should live.** In a `Makefile`, or an
 equivalent single entry point, so that both forges' CI
 files reduce to a shim naming an image and calling
-`make check`, `make check-renv`, and the render target
+`make check`, `make check-renv-no-fix` (the variant that
+fails rather than repairs), and the render target
 that matches the archetype (`make docker-render` for an
 `.Rmd` report; there is no plain `make render`). The
 migration then touches one thin file rather than the
@@ -2118,10 +2143,16 @@ context.
 
 **At `docker build`.** The build context includes every
 file under the Dockerfile's directory not excluded by
-`.dockerignore`. Because `*.csv` does not match
+`.dockerignore`. Because `**/*.csv` does not match
 `extra.tsv`, the file is copied into the image by any
 `COPY . .` or equivalent instruction. It thereby becomes
-part of the image's file system layers.
+part of the image's file system layers. Had the file
+listed only `*.csv`, the leak would be wider still:
+patterns are matched from the context root, so `*.csv`
+excludes only top-level files, and every CSV under
+`analysis/data/raw_data/`, the real extract included,
+would also have been copied. Excluding the directory
+itself closes both gaps.
 
 **At `docker push`.** The image, `.tsv` included, is
 uploaded to the registry as-is. The registry has no

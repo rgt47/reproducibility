@@ -1,8 +1,9 @@
 # Credits {.unnumbered}
 
-The framework at the center of this book, `zzcollab`, and
-the argument that motivates it are developed in the
-accompanying methodological paper, *zzcollab: A Flexible
+The framework of the book's running example, `zzcollab`,
+written by the book's authors, and the argument that
+motivates it are developed in the accompanying
+methodological paper, *zzcollab: A Flexible
 Extension of rrtools for Reproducible, Collaborative
 Research Compendia in R*. The book draws its worked
 apparatus, its reproducibility-levels ladder, and its

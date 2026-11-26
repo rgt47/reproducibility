@@ -2422,7 +2422,7 @@ the deliverable. **R package:** `R CMD check` and the
 manifest gate; the render gate only if a vignette exists.
 **Simulation:** `R CMD check` and the manifest gate; the
 render gate if a report is produced, plus a
-seed-determinism check. **Blog:** the render gate above
+seeded-baseline check. **Blog:** the render gate above
 all, since the deliverable is the site. `R CMD check`
 and the manifest gate apply to any code the posts run.
 
@@ -2435,9 +2435,16 @@ and its outputs are recorded and deposited.
 
 **What the fixed seed contributes.** It is what makes the
 reduced run a genuine reproducibility test rather than a
-smoke test. With the seed fixed, the first hundred
-replicates of the reduced run are *the same hundred
-replicates* the full run begins with. Their summary is
+smoke test. With the seed fixed, and provided each
+replicate's draws are fixed by its index (a seed or
+random-number stream per replicate, as with the per-task
+streams of @sec-testing, or one serial stream consumed in
+exactly the same order), the first hundred replicates of
+the reduced run are *the same hundred replicates* the
+full run begins with. A full run made in parallel on
+streams assigned per worker does not qualify, because
+which stream a replicate drew from depends on the worker
+count. Under that condition, their summary is
 therefore a deterministic value that can be recorded and
 compared exactly. Without the seed, the reduced run could
 only be checked against a tolerance derived from Monte

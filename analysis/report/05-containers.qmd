@@ -857,7 +857,11 @@ concluded that containers so far may not give the
 robustness a regulatory submission needs
 [@fdapilot4review2026; @rconsortiumpilot4_2026]; the
 [setup appendix](setup-appendix.qmd) covers such locked-down
-machines.
+machines. 'Unlicensed' matters beyond the agency: Docker
+Desktop requires a paid subscription in larger
+organizations, and its terms limit free educational use
+(@sec-backends sets out the current terms and the
+license-free alternatives).
 :::
 
 ::: {.callout-note icon=false collapse=true}
@@ -911,9 +915,15 @@ buildx imagetools inspect`. The digest on the showcase
 Dockerfile's `FROM` line names an index with a
 `linux/amd64` and a `linux/arm64` image (verified). But
 `rocker/tidyverse:4.4.0` and `rocker/verse:4.4.0`, the
-bases of the tidyverse and publishing profiles, publish
-`linux/amd64` only (verified); neither carries an `arm64`
-entry. An Apple Silicon Mac is an `arm64` host. A plain
+bases of the tidyverse and publishing profiles at that
+version, publish `linux/amd64` only (verified); neither
+carries an `arm64` entry. This changes from version to
+version: on 25 November 2026 the `rocker/tidyverse`
+tags for R 4.6.1 and 4.6.2 carried both architectures,
+while `rocker/verse` remained `amd64` only (Docker Hub).
+The architecture of a base is therefore something to
+check with `docker buildx imagetools inspect`, not to
+assume from its name. An Apple Silicon Mac is an `arm64` host. A plain
 `docker build` of the showcase Dockerfile on such a Mac
 therefore succeeds without any flag, natively, on the
 `arm64` image (verified), while a recipe built on
@@ -1340,12 +1350,27 @@ The `zzc minimal` step generates the project, including
 a Dockerfile pinned to a digest and a dated snapshot;
 `make docker-build` builds the image; and `make r` starts
 a container and drops her into an R session inside it.
-The generated Dockerfile is, in essence, the one shown
-earlier. It carries a digest-pinned `FROM rocker/r-ver`,
-the locale and time-zone and thread variables, and the
-dated snapshot wired into the repository options. It
-ends with a `renv::restore()` that installs the locked
-packages inside the fixed environment. The image records its own
+The generated Dockerfile follows the showcase's
+structure. It carries a digest-pinned `FROM rocker/r-ver`,
+the locale and time-zone variables, and the dated
+snapshot wired into the repository options. It ends with
+a `renv::restore()` that installs the locked packages
+inside the fixed environment. It departs from this
+chapter's rules in two respects that a reader should
+know (this book's authors maintain the tool, and both are
+recorded as tool issues). On an Apple Silicon Mac the
+tool builds a native `linux/arm64` image for multi-
+architecture bases such as `rocker/r-ver`, to avoid
+emulation, rather than passing `--platform linux/amd64`
+as this book does; the Mac image therefore differs from
+the one CI and an `x86` cluster build. And it sets
+`OMP_NUM_THREADS` but not `OPENBLAS_NUM_THREADS`, so the
+second thread pin must be added by hand. The project's
+`Makefile` honors `PLATFORM=linux/amd64` for the
+containers it runs, but the build itself does not, so a
+Mac user who needs the CI image should build it with
+`docker build --platform linux/amd64` directly or pull
+the image CI built. The image records its own
 provenance in labels, the base image, its digest, and
 the snapshot date, so a later reader can see exactly what
 was pinned without leaving the image.
@@ -1367,7 +1392,10 @@ recipe changed: the locale and thread variables, the
 dated snapshot, and the lockfile restore are identical.
 The same reproducibility machinery served both
 archetypes, and the move between them was a single
-changed line.
+changed line. On an Apple Silicon Mac it also changes
+the architecture: `rocker/verse` publishes no `arm64`
+image, so the tool builds this one for `linux/amd64`
+under emulation, slower than the minimal build was.
 
 What has she gained, in the vocabulary of the ladder?
 Before the container, at L1, her collaborator's restore
@@ -2073,7 +2101,7 @@ the lockfile could not prevent and the container does.
 | `ENV OMP_NUM_THREADS=1`, `OPENBLAS_NUM_THREADS=1` | Removes thread count as a source of floating-point variation, trading speed for stability. |
 | `WORKDIR /project` | Keeps `renv` out of the image root, where it refuses to initialize. |
 | `COPY renv.lock renv.lock` + `renv::restore()` | Restores the exact package set inside the fixed environment. |
-| `docker build --platform linux/amd64` | Selects the `amd64` entry of an index, so a Mac builds the same image as CI and the cluster; required on Apple Silicon for `amd64`-only bases such as `rocker/tidyverse:4.4.0`. |
+| `docker build --platform linux/amd64` | Selects the `amd64` entry of an index, so a Mac builds the same image as CI and the cluster; required on Apple Silicon for `amd64`-only bases such as `rocker/tidyverse:4.4.0` (check each version with `imagetools inspect`). |
 | `docker buildx imagetools inspect image:tag` | Asks the registry for the index digest a tag currently resolves to, and each platform's manifest digest. |
 | `docker image inspect --format '{{index .RepoDigests 0}}' image:tag` | Reports the digest a local copy was pulled under, which may be stale. |
 | Rule of thumb | Compare content (`renv::status()`, package lists) across two builds to verify pinning; never compare digests, which differ by default even when content is identical (habit 4). |

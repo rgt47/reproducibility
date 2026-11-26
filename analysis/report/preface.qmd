@@ -58,8 +58,16 @@ deal of false confidence.
 
 The book uses `zzcollab`, an R framework for building
 reproducible research compendia, as its concrete
-apparatus. The choice is deliberate and, we hope, honestly
-motivated. Reproducibility is learned by building
+apparatus. A disclosure belongs here: `zzcollab` and its
+companion package `zzrenvcheck` are written and
+maintained by the authors of this book. Both are open
+source under the GNU General Public License, version 3
+or later, at <https://github.com/rgt47/zzcollab> and
+<https://github.com/rgt47/zzrenvcheck>; the `zzcollab`
+README gives the install commands. Neither is on CRAN,
+and each has a single maintainer, a limitation
+@sec-archiving discusses. The choice is deliberate and,
+we hope, honestly motivated. Reproducibility is learned by building
 something that reproduces, and that requires a real
 toolchain. `zzcollab` composes the established R tools
 into one workflow organized by the levels ladder. This

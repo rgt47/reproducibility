@@ -779,7 +779,7 @@ anything held under a data-use agreement that forbids
 redistribution must never go into a git history. The
 rule admits no exception: not even briefly on a branch
 that is never merged, and not even in a local repository
-that will ever be pushed. A commit is permanent by
+that is never pushed. A commit is permanent by
 design and, once pushed, copied to every clone. The
 gravest and least intuitive fact about git is that its
 ordinary commands only ever *add* to the history. Suppose a file containing protected health
@@ -822,6 +822,13 @@ last step.
    every branch and tag. Its `--sensitive-data-removal`
    option also fetches all refs first and keeps the
    remote configured so that the result can be pushed.
+   `git filter-repo` is a separate tool, not part of git:
+   install it with `brew install git-filter-repo`,
+   `pip install git-filter-repo`, or the system package
+   manager. The option below needs version 2.47 or
+   later; confirm that `git filter-repo -h` lists
+   `--sensitive-data-removal` before relying on it
+   [@githubsensitive].
 
    ```bash
    git clone https://github.com/lab/diabetes-cohort.git
@@ -1423,6 +1430,22 @@ a URL a reviewer can be given, a repository a reader can
 clone, the concrete form of the L0 rung of the ladder. The third
 is **collaboration**, the purpose that shapes the rest of
 this section.
+
+The first decision about a remote is its visibility, and
+for a project that touches human-subjects data the
+default should be **private**: a private repository on
+GitHub or GitLab, or on the institution's own instance.
+A private repository shared with a committee or a
+collaborator already gives the second person the
+locatable copy that L0 asks for; publication can come
+later, by decision. When that decision comes, remember
+that visibility applies to the whole history, not to the
+current files. Making a repository public publishes every
+commit it has ever held, including anything committed by
+mistake and later deleted. Before the switch, read the
+full history, for example with `git log --all --stat`,
+and if any restricted file ever appears in it, follow the
+incident procedure above rather than flipping the switch.
 
 The commands that connect to and synchronize with a
 remote are few. One names the remote once, then pushes

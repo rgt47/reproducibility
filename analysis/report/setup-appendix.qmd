@@ -21,10 +21,15 @@ differ. `rocker/r-ver`, the base of the showcase Dockerfile, is
 published for both `linux/amd64` and `linux/arm64`, so on an Apple
 Silicon Mac (an `arm64` host) it builds natively without any flag.
 `rocker/tidyverse` and `rocker/verse` at 4.4.0, the bases of the
-tidyverse and publishing profiles, publish a `linux/amd64` entry
-only, so the Mac has nothing native to match, and the flag
-`--platform linux/amd64` is not an optimization but the only way
-to get a build at all. For either kind of base, the flag is what
+tidyverse and publishing profiles at that version, publish a
+`linux/amd64` entry only, so the Mac has nothing native to match,
+and the flag `--platform linux/amd64` is not an optimization but
+the only way to get a build at all. Architectures change between
+versions (the `rocker/tidyverse` tags for R 4.6.1 and 4.6.2 carry
+both on 25 November 2026; `rocker/verse` does not), so check the
+image you use: `docker buildx imagetools inspect
+rocker/verse:<version>` lists a `linux/arm64` line only if a
+native build exists. For either kind of base, the flag is what
 makes a Mac build the same image that a CI runner or an `x86`
 cluster builds, which is why this book passes it to every build.
 That section of @sec-containers is worth reading before this
@@ -148,7 +153,11 @@ worth asking for:
   is easy to deny or stall. On the other hand, one phrased as 'I
   need to run `docker build` and `docker run` as my own user,
   without root' is a specification someone can actually approve
-  or substitute for.
+  or substitute for. Expect licensing to be the first question:
+  Docker Desktop is licensed software, and its free educational
+  use does not cover a research group's shared work
+  (@sec-backends). Docker Engine on Linux or WSL2, or Podman,
+  runs the same images without that license.
 
 ## Diagnosing a failed or unexpectedly slow build
 

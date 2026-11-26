@@ -1023,9 +1023,15 @@ computational environment [@thomas2026zzcollab]. Where
 the base image fixes the environment, the archetype
 determines the starting scaffolding: the directory
 emphasis, whether a primary report exists, and which
-validation gates apply on top of the universal one. Five
-archetypes are advertised. Because
-every one of them carries the minimal R-package skin,
+validation gates apply on top of the universal one. The
+tool accepts six archetypes; this chapter teaches the
+five a research project uses. The sixth, `book`, is the
+shape of this book's own repository, a long Quarto
+document whose code supports the prose; for the purposes
+of this chapter it behaves as a manuscript at book
+length, and the cohort analysis inside it is classified
+below as a data analysis. Because
+every one of the five carries the minimal R-package skin,
 `R CMD check` remains the universal gate across all five.
 The framework's own whitepaper stresses this point in its
 account of the archetype axis. The reproducibility
@@ -1208,7 +1214,7 @@ archetypes <- tibble::tibble(
     'R CMD check and tests',
     'R CMD check plus render',
     'R CMD check and unit tests',
-    'R CMD check plus seed determinism',
+    'R CMD check plus seeded baseline',
     'R CMD check plus render of each post'
   ),
   example = c(
@@ -1232,7 +1238,7 @@ knitr::kable(
 ```{r}
 #| label: fig-gates
 #| fig-cap: 'Validation gates by archetype. The R-package check and the unit tests apply universally; the render and seeding gates apply selectively. Where a render gate is only optional, as for a data analysis or a simulation study without a report, the cell is left unmarked. The underlying reproducibility machinery, the Five Pillars, is identical across every row.'
-#| fig-alt: 'A grid of five archetype rows (data analysis, scholarly manuscript, R package, simulation study, and blog) against four gate columns (R CMD check, unit tests, render report, and seed determinism). Universal cells use a dark blue fill with a white filled circle, selective cells a dark green fill with a white filled triangle, and cells where the gate does not apply are a medium blue-gray without a symbol. Every cell in the R CMD check and unit tests columns is universal, ten circles in all. The render report column is selective for scholarly manuscript and blog, and the seed determinism column is selective for simulation study only, three triangles in all. A legend below the grid keys the three statuses, Universal, Selective, and Does not apply, by both fill and symbol.'
+#| fig-alt: 'A grid of five archetype rows (data analysis, scholarly manuscript, R package, simulation study, and blog) against four gate columns (R CMD check, unit tests, render report, and seeded baseline). Universal cells use a dark blue fill with a white filled circle, selective cells a dark green fill with a white filled triangle, and cells where the gate does not apply are a medium blue-gray without a symbol. Every cell in the R CMD check and unit tests columns is universal, ten circles in all. The render report column is selective for scholarly manuscript and blog, and the seeded baseline column is selective for simulation study only, three triangles in all. A legend below the grid keys the three statuses, Universal, Selective, and Does not apply, by both fill and symbol.'
 
 library(ggplot2)
 
@@ -1242,7 +1248,7 @@ archs <- c(
 )
 gates <- c(
   'R CMD check', 'Unit tests', 'Render report',
-  'Seed determinism'
+  'Seeded baseline'
 )
 grid <- expand.grid(
   archetype = archs, gate = gates,
@@ -1257,7 +1263,7 @@ grid$status[grid$gate %in% c('R CMD check', 'Unit tests')] <-
   'universal'
 grid$status[grid$gate == 'Render report' &
               grid$archetype %in% renders] <- 'applies'
-grid$status[grid$gate == 'Seed determinism' &
+grid$status[grid$gate == 'Seeded baseline' &
               grid$archetype %in% seeded] <- 'applies'
 
 grid$archetype <- factor(grid$archetype, levels = rev(archs))
@@ -1351,7 +1357,7 @@ compendium is ultimately shared (@sec-archiving).
 | Data analysis | Same rungs as a manuscript; L3 via a baseline on a derived rate | Light; an internal HTML summary, not a typeset report | Leans on data-validation and reproducibility tests | Render gate only if a report exists | Strong case for `targets`, since it is re-run constantly and skipping unchanged steps saves time | Deposited as itself |
 | Scholarly manuscript | Full apparatus; L3 compares tables and figures with recorded baselines | Center of gravity; the sealed render this chapter is built around | Adds a report-renders-and-matches-baseline test | Render gate is central, not optional | Modest; often a one-target build around the sealed report | Deposited beside the article it supports |
 | R package | L1 and L2 as for any archetype, since `R CMD check` is a gate, not a rung; L3 via a baseline on function output after a clean rebuild | Largely absent; help pages and vignettes stand in | Native home of unit testing; `R CMD check` runs the suite | No render gate unless a vignette exists | None; `R CMD check` plays the corresponding role | Also released to CRAN or an R-universe, not only archived |
-| Simulation study | L2 is nominal without the seed discipline; RNG kind is the load-bearing determinant | Thin; a presentation layer over pre-computed, stored results | Leans hardest on the seed-determinism test | A reduced, fixed-seed grid runs under CI; the full grid runs elsewhere | Strongest case of the five; `targets` branching maps the parameter grid | Recorded seeds and the union lockfile are what a re-runner needs |
+| Simulation study | L2 is nominal without the seed discipline; RNG kind is the load-bearing determinant | Thin; a presentation layer over pre-computed, stored results | Leans hardest on the seeded baseline test | A reduced, fixed-seed grid runs under CI; the full grid runs elsewhere | Strongest case of the five; `targets` branching maps the parameter grid | Recorded seeds and the union lockfile are what a re-runner needs |
 | Blog | Applies post by post; L3 needs a baseline per post | Central but multiplied across many rendered posts | Tests the code each post's examples depend on | Render gate iterates over every post | Rebuilds only the posts whose sources changed | Deployed as a website; the compendium behind it is still deposited |
 
 : How each archetype treats the topics of the chapters ahead. The reproducibility machinery under every cell is the same; the table records only where the emphasis falls. {#tbl-archetype-weight}
@@ -1427,8 +1433,14 @@ session below is illustrative and is not executed.
 
 ```bash
 $ mkdir diabetes-cohort && cd diabetes-cohort
-$ zzc analysis  # tidyverse base-image profile; archetype set separately
+$ zzc init --archetype analysis  # layout, archetype recorded
+$ zzc tidyverse                  # renv and a tidyverse-based image
 ```
+
+`make` runs named recipes, the targets defined in the
+project's `Makefile`; the `docker-` targets below run
+each step inside the project's container, which
+@sec-containers introduces.
 
 The student places the registry extract under `raw_data/`
 and writes `analysis/scripts/01_clean.R` to produce a
@@ -1445,7 +1457,7 @@ gates that apply are the universal check and the tests,
 run in a clean environment:
 
 ```bash
-$ make check-renv     # dependencies declared and locked
+$ make check-renv-no-fix  # dependencies declared and locked; fails if not
 $ make docker-test    # tinytest only
 $ make docker-check   # R CMD check
 ```
@@ -1752,7 +1764,7 @@ may not apply. If it is a function other people will call,
 it is an R package and the render gate does not apply at
 all. If it is an estimate of an operating characteristic
 obtained by repeated sampling, it is a simulation study and
-the seed-determinism gate applies. If it is a post, it is a
+the seeded-baseline gate applies. If it is a post, it is a
 blog.
 
 The gates on top of the universal `R CMD check` are drawn
@@ -1817,7 +1829,7 @@ tests that must pass. `R CMD check` verifies exactly those
 three things without knowing or caring what the project
 produces. The
 archetype-specific gates, rendering a document and
-checking seed determinism, apply to some archetypes and
+checking a seeded baseline, apply to some archetypes and
 not others; this one applies to all of them.
 
 A complete answer also states the limit. The check runs on
@@ -1852,7 +1864,7 @@ things already understand it.
 
 A serviceable trajectory has three transitions.
 
-**Simulation study.** The seed-determinism gate is active,
+**Simulation study.** The seeded-baseline gate is active,
 since the results are draws and their reproducibility
 depends on the generator. `R CMD check` and unit tests are
 active, as always. The render gate is inactive: there is no
@@ -1865,7 +1877,7 @@ simulation still runs. Nothing else changes.
 **R package, the simulation logic extracted into exported
 functions.** The render gate becomes inactive again if the
 report is dropped, or stays active if a vignette replaces
-it, which is the usual outcome. Seed determinism becomes
+it, which is the usual outcome. The seeded baseline becomes
 inactive as a *project* gate and reappears inside the unit
 tests, as an assertion that a seeded function returns a
 recorded value. `R CMD check` becomes more demanding rather

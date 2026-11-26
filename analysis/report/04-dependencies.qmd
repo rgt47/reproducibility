@@ -150,12 +150,16 @@ the repository onto a new laptop, installs the
 packages afresh, and reruns the analysis. The model
 now reports a different coefficient. Nothing in the
 code changed. What changed is that `dplyr` had moved
-from version 1.1.0 to 1.2.1, a grouping default had
-been refined, and one intermediate summary was
-computed over a slightly different partition.
-The number in the published table can no
-longer be regenerated, and the student cannot say with
-certainty which number was correct.
+from version 1.0.10 to 1.1.0, whose release notes list
+among their breaking changes that `group_by()` and
+`arrange()` now order character values in the C locale
+rather than the system locale. The hospital codes mixed
+upper and lower case, so the order of the groups
+changed, and the script, which took the first group as
+the reference category, now compared every hospital
+against a different one. The number in the published
+table can no longer be regenerated, and the student
+cannot say with certainty which number was intended.
 
 This is the package-churn failure mode. It is the
 specifically computational failure that the empirical
@@ -204,9 +208,10 @@ prevented the drift?
 ## Answer
 
 The package-versions layer changed. `dplyr` moved from
-1.1.0 to 1.2.1 between the original run and the
-revision, and a refined grouping default altered an
-intermediate summary. A committed `renv.lock`, restored
+1.0.10 to 1.1.0 between the original run and the
+revision, and its switch to C-locale ordering changed
+which group came first, and so the reference category.
+A committed `renv.lock`, restored
 rather than freshly installed, would have reinstalled
 the exact version the student originally ran against.
 That would have closed the gap the bare script left open.
@@ -893,11 +898,13 @@ The invariant is the composition of two atomic
 inclusions. The one violated here is the first,
 $\mathrm{Code} \subseteq \mathrm{DESCRIPTION}$: the code
 references `survival` while `DESCRIPTION` does not
-declare it. This in turn leaves it unpinned in the
-lockfile. The transitive composition
-$\mathrm{Code} \subseteq \mathrm{renv.lock}$ therefore
-fails as a consequence, but the atomic breach is at the
-code-to-`DESCRIPTION` step. The likely cause is that
+declare it. That is the only inclusion known to fail.
+Whether $\mathrm{Code} \subseteq \mathrm{renv.lock}$
+also fails depends on whether the lockfile already
+records `survival`, for instance as a dependency of
+another package or through an implicit snapshot;
+`renv::status()` answers that question. The atomic
+breach to report is the code-to-`DESCRIPTION` step. The likely cause is that
 `survival` was installed interactively but never
 declared. Running `make check-renv`, which invokes
 `zzrenvcheck::check_packages()` with automatic repair,
@@ -1516,11 +1523,12 @@ metadata moves with the version.
 The violated inclusion is the first atomic one,
 $\mathrm{Code} \subseteq \mathrm{DESCRIPTION}$. The code
 now references a package that `DESCRIPTION` does not
-declare. This in turn leaves it unpinned in the
-lockfile, so the transitive composition
-$\mathrm{Code} \subseteq \mathrm{renv.lock}$ fails as a
-consequence. The breach to report is the atomic one, not
-the consequence.
+declare. Only that inclusion is known to fail: the
+package may still be pinned in the lockfile, as another
+package's dependency or through an implicit snapshot, so
+whether $\mathrm{Code} \subseteq \mathrm{renv.lock}$
+also fails must be checked, with `renv::status()`, not
+inferred. The breach to report is the atomic one.
 
 Running `make check-renv` invokes
 `zzrenvcheck::check_packages()` with automatic repair. It

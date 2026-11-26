@@ -343,9 +343,19 @@ them, and only thirty-six percent of the replications
 reached statistical significance
 [@opensciencecollaboration2015]. In preclinical
 oncology, Begley and Ellis, working from within
-industry, reported that only six of fifty-three
-landmark findings could be reproduced, a success rate
-close to one in ten [@begley2012]. These figures were
+industry, reported that the findings of only six of
+fifty-three landmark papers were confirmed, a success
+rate close to one in ten [@begley2012]. Their commentary
+chose deliberately novel findings and did not name the
+papers, so its figure cannot itself be checked, a small
+lesson in this book's theme. The open successor that can
+be checked, the Reproducibility Project: Cancer Biology,
+repeated 50 experiments from 23 papers. For positive
+effects, the median replication effect size was 85
+percent smaller than the median original, and about 46
+percent of the replications it could assess (51 of 112)
+succeeded on at least three of its five binary criteria
+[@errington2021]. These figures were
 not, at first, universally believed.
 But the suspicion that the published literature was less
 solid than it appeared already had a theoretical footing.

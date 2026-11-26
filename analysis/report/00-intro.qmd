@@ -97,7 +97,7 @@ The case for taking this seriously is empirical, and it is
 grim. In psychology, the Open Science Collaboration's
 teams judged only 39 of 100 replications successful
 [@opensciencecollaboration2015]. In preclinical oncology,
-@begley2012 reproduced only 6 of 53 landmark findings.
+@begley2012 confirmed only 6 of 53 landmark findings.
 These are replication failures, at the scientific end of
 the spectrum, and their causes are many. However, a
 growing body of evidence isolates the specifically

@@ -1304,11 +1304,18 @@ that actually matters. It passes under any correct
 implementation. As a general rule, a test should
 fail when, and only when, the function's contract is
 broken. Tests that fail for other reasons are a tax
-on maintenance. Wilson and colleagues, in their
-best-practices and
-good-enough-practices guidance, make behavioral
-testing a recurring recommendation [@wilson2014;
-@wilson2017].
+on maintenance. Wilson and colleagues' best-practices
+paper recommends assertions, an off-the-shelf testing
+library, and turning each bug found into a test
+[@wilson2014]. Their later good-enough-practices paper
+deliberately leaves unit testing off its list, on the
+ground that it is usually not compelling for solo
+exploratory work [@wilson2017]. That is the skeptic's
+position, stated by the field's own guidance, and this
+chapter takes it seriously. Two kinds of test repay even
+solo exploratory work, data validation and the baseline
+test; unit tests earn their cost once functions are
+shared or reused.
 
 A corollary concerns how much to test. A test that
 merely confirms a result is a data frame, without
@@ -1430,8 +1437,12 @@ the fast local gate. A collaborator who has not
 installed it is caught only if continuous integration
 (@sec-verification) runs the same checks on the
 server. The workflows in that chapter do not, so a
-project that relies on the hook should add a step
-running `lintr::lint_dir()` there.
+project that relies on the hook should add a lint step
+there. A bare `lintr::lint_dir()` reports lints but
+exits successfully, so the step cannot fail; set the
+environment variable `LINTR_ERROR_ON_LINT` to `true`
+for the step, or use the `lint` workflow of
+`r-lib/actions`, so that a lint turns the run red.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: capture or validation?
@@ -1792,9 +1803,10 @@ and the pre-commit configuration shown earlier
 completes the picture. The linter and styler guard
 the code's legibility on every commit, and the
 tinytest suite guards its correctness. Continuous
-integration re-runs both on a clean machine, so that
-neither guarantee depends on the author's local
-setup.
+integration re-runs the suite on a clean machine, and
+re-runs the linter too once a failing lint step is added
+as described above, so that neither guarantee depends on
+the author's local setup.
 
 ::: {.callout-note icon=false collapse=true}
 ## Check your understanding: the oracle in the table
@@ -2376,8 +2388,10 @@ tree now contains the reformatted code, which must be
 staged and committed again. The effect is that
 misformatted code cannot enter the history at all.
 
-**The contrast with continuous integration.** CI would let
-the commit through. The code enters the history, the push
+**The contrast with continuous integration.** Assume the
+workflow includes a lint step that fails on a lint, as
+described in the chapter; the book's own workflows do not
+yet. CI would let the commit through. The code enters the history, the push
 succeeds, and the check runs afterward on the server,
 reporting a failure against a commit that already exists.
 Fixing it requires a second commit, so the history now
@@ -2520,14 +2534,17 @@ itself be a heavy dependency.
 For the practice of testing and code quality as
 components of scientific computing, the two papers by
 Wilson and colleagues are the standard references.
-They are the best-practices paper [@wilson2014] and the
-good-enough-practices paper [@wilson2017], the latter
-pitched deliberately at researchers without a
-software background. Sandve and colleagues' ten
-simple rules [@sandve2013] cover the same ground in a
-compact, rule-by-rule form, and situate version control
-and recorded results within a general reproducibility
-discipline.
+They are the best-practices paper [@wilson2014], which
+makes the case for testing, and the good-enough-practices
+paper [@wilson2017], pitched deliberately at researchers
+without a software background, which sets unit testing
+aside for solo exploratory work. Reading the two together
+shows where the line between essential and optional
+practice has been drawn. Sandve and colleagues' ten
+simple rules [@sandve2013] cover the adjacent ground of
+provenance in a compact, rule-by-rule form, situating
+version control, recorded seeds, and recorded results
+within a general reproducibility discipline.
 
 The connection between testing and the highest rung
 of the ladder is taken up in @sec-verification, where

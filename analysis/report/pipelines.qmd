@@ -1855,13 +1855,18 @@ anything is stale.
 `targets` avoids this because it hashes the *bodies of the
 functions each target calls*, and the R objects those
 targets produce, rather than the modification times of a
-declared file list. Because the dependency is discovered
-from the code, the analyst cannot declare it incompletely.
+declared file list. Because function dependencies are
+discovered from the code, an edited helper that
+`tar_source()` loaded cannot be forgotten. Other
+dependencies still can: a file read inside a function
+without a `format = 'file'` target, or a function from an
+installed package, is not tracked this way.
 
 The fair statement of the comparison is that a correctly
 and completely written Makefile would catch this too. The
 difference is that `targets` makes completeness the
-default and Make makes it the analyst's responsibility,
+default for function code and Make makes it the analyst's
+responsibility,
 and the failure mode of an incomplete Makefile is silence.
 :::
 

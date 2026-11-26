@@ -330,11 +330,22 @@ licensing, and it catches many university users unawares.
 Docker Desktop, the packaged Docker distribution for macOS
 and Windows, is under its current terms not free for use
 by larger commercial and institutional organizations, and
-many universities fall within those terms. The terms do
-carve out an exception for education, but institutions
-differ on whether a given use qualifies. The point is
-contested, which is why many institutions either license
-Docker Desktop or avoid it. Podman carries no such
+many universities fall within those terms. The
+subscription agreement, as last updated on 26 August
+2026, is narrower than the short summary on Docker's
+documentation site suggests [@dockerssa2026]. Free
+educational use is limited to individual members of an
+educational organization enrolled in a classroom
+learning environment, and it excludes several members of
+one department or research group using personal
+subscriptions for a shared project, which is the usual
+situation of a lab. Government entities, a definition
+that includes public education entities of a US state,
+may not use Docker Desktop without a paid subscription.
+A student in a research group at a public university
+should therefore ask the institution before relying on
+Docker Desktop, which is why many institutions either
+license it or avoid it. Podman carries no such
 restriction. For an analyst whose institution has
 declined to license Docker Desktop, Podman reaches the
 same L2 environment, from the same image, at no
@@ -1013,6 +1024,10 @@ works only because the group built `cohort-env` on a
 `rocker/binder` base, so the image already serves Jupyter
 and RStudio and has the required user:
 
+```dockerfile
+FROM ghcr.io/lab/cohort-env@sha256:9f2c...
+COPY --chown=${NB_USER} . /home/${NB_USER}
+```
 
 Binder builds from that file on a hosted server and
 serves the environment in the browser, reached by a
