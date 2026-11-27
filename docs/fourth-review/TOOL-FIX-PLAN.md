@@ -182,3 +182,50 @@ Estimated changes: about 15 files in zzcollab, 2 in zzrenvcheck,
   30 run; no zzcollab-initialized project was snapshotted today.
 - Whether existing user projects depend on the old `check-renv`
   auto-fix behavior is unknown; the alias period in step 5 hedges it.
+
+## 6. Implementation record
+
+### Phase T-A (2026-11-26 16:07 PST): done, not pushed
+
+Branches: `zzrenvcheck` `fix/missing-description-gate` (1 commit,
+`cb0afc0`); `zzcollab` `fix/false-pass-gates` (5 commits, `71aaa04`
+to `89a339e`). Nothing pushed or merged.
+
+| Item | Change | Evidence |
+|---|---|---|
+| T16 | Missing `DESCRIPTION` returns `status = 'fail'` and signals `zzrenvcheck_validation_failure` under `error_on_fail` | V: 2 new tinytest checks failed before the fix; suite 213/213 after |
+| T12 | `TINYTEST_RUN` (both Makefiles) and the GitHub and GitLab test steps exit 1 when no expectation ran | V: expectation-free fixture exits 1, passing exits 0, failing exits 1 |
+| T12a (new) | GitLab test steps were non-blocking (`\|\| echo "... (non-blocking)"`); suffix removed, own commit | I: present since the GitLab template was added, with no stated reason |
+| T11 | Baseline credited only when its final tinytest log line shows at least one test and no `[Exited at` | V: log fixtures for early exit, late exit, rewritten lines, ANSI codes |
+| T13 | R version read from the `FROM` tag; `ARG R_VERSION` kept as fallback; `doctor` likewise | V: see below |
+| T5 | `make lint` exits 1 on any lint; `make lint-report` keeps the listing | V: dirty `R/`, dirty `analysis/`, and clean fixtures |
+| T4 | `check-renv*` edit nothing and fail with a `make fix-renv` hint; `fix-renv*` repair; `check-renv-no-fix` deprecated alias; `make r` post-session hook uses `fix-renv`; 7 docs corrected | V: dry-run tests on both Makefiles; live fixture: `check-renv` nonzero with files unchanged, `fix-renv` added the package to both files |
+
+**T13 was worse than reported.** Under `zzcollab.sh`'s
+`set -euo pipefail`, the failed `grep` for `ARG R_VERSION` ended an
+assignment with status 1, so `zzc verify` aborted mid-check (exit 1)
+on any project with a `renv.lock` and a generated Dockerfile. Two
+existing capture-matrix tests (`test_matrix_L2_renv_backend`,
+`test_matrix_renv_toggle_roundtrip`) failed on the base for this
+reason and pass after the fix. The first version of the new helper had
+the same latent bug; the test suite could not see it because
+`run_test_suite` runs each test inside a `||` list, which disables
+`set -e`. A test now runs the helper in a fresh `set -e` shell.
+
+**Test evidence.** New `tests/shell/test-gates.sh` (9 tests): all six
+tests present at the T11/T13 commit fail on the base commit `eb51135`
+and pass on the branch. Full shell suite: base 192 passed, 17 failed;
+branch 203 passed, 15 failed. Every branch failure also fails on the
+base (pre-existing, not addressed: 11 in `test-capture-matrix`
+(toggle, blog archetype, init wizard, apptainer wiring), 1 in
+`test-docker` (yaml install), 1 in `test-docs` (removed profile named
+in docs), 2 in `test-scaffold-build-run` (scaffold exits nonzero)).
+The zzcollab R package tests were not run; no R code changed.
+
+**Not done in T-A.** `snapshot` and the host post-session hook still
+call `check_packages(auto_fix = TRUE)` inline, by design (both are
+repair steps). Several vignettes say `check-renv` runs 'in the
+container'; it runs on the host when R is present (pre-existing, left
+alone). The Makefile's `R_VERSION` variable (line 14) is dead code.
+`zzvim-R` depends only on the `/tmp/zzvim-r-hook-ran` marker, not on
+target names, so the rename does not affect it.
