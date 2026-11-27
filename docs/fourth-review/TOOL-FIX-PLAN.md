@@ -289,3 +289,48 @@ Not changed: zzvim-R, on an abnormal exit (`:qa!`) without the marker,
 runs zzrenvcheck itself in the background (`plugin/zzvim-R.vim:2662`);
 for a bare project that run now logs a failure to
 `/tmp/zzvim-r-renvcheck.log`. Harmless, outside zzcollab, not edited.
+
+### Phase T-B (2026-11-27 10:50 PST): done; zzrenvcheck released
+
+**TD5 revised (author, 2026-11-27).** `DESCRIPTION` became 0.10.0 at
+`354a30a`; `main` later added the `skip_image_pkgs`/`image` arguments
+(used by zzcollab's `check-renv-slim`, `fix-renv-slim`, and post-session
+hook), the cleanup-gate change, and T16. Tagging that work `v0.10.0`
+would mislabel it, and tagging `354a30a` would break those zzcollab
+targets, so the author chose a `v0.11.0` release and approved merging,
+tagging, and pushing.
+
+**zzrenvcheck 0.11.0 (pushed).** T16 merged into `main` (`410e8af`);
+release commit `5d22bf3` (version bump; NEWS gains the unrecorded
+`skip_image_pkgs` feature and a breaking-changes note); annotated tag
+`v0.11.0`. Tests 213/213; `R CMD check --as-cran`: 0 errors, 0
+warnings, 1 note (new submission). The first `git push origin main
+v0.11.0` reported a ref-lock error for `main` although the remote
+`main` did advance to `5d22bf3`, and the tag was not created; a second
+push of the tag alone succeeded (V: `git ls-remote --tags`). Local
+branch `fix/missing-description-gate` deleted.
+
+**zzcollab `fix/build-provenance`** (stacked on `fix/false-pass-gates`;
+not pushed): `7a1df5e`, `70c281f`, `fbd5535`, `4f33cdb`.
+
+| Item | Change | Evidence |
+|---|---|---|
+| T1 | An explicit `PLATFORM` reaches `zzc rebuild` as `ZZCOLLAB_PLATFORM`, honored by the build and its cache key; the auto default is not passed; arm64 for verse is refused; a native arm64 build warns that CI builds amd64 | V: `docker`/`uname` stubbed, build arguments recorded; Makefile dry-runs |
+| T1a (new) | The run targets' `PLATFORM` default was `linux/arm64` on arm64 hosts even for a verse image, which is always amd64; it now follows the Dockerfile base | V: dry-run on this arm64 Mac |
+| T2 | `OPENBLAS_NUM_THREADS=1` and `MKL_NUM_THREADS=1` join `OMP_NUM_THREADS=1` | V: generated Dockerfile |
+| T3 | An unresolved digest stops generation (nothing written); global `--allow-unpinned` writes a tag-only `FROM` with a warning; `verify` warns on any tag-only `FROM`; README, vignette, help, cheatsheet updated | V: failed pull stubbed; verify fixtures |
+| T3a (new) | `verify` aborted under `set -e` on a malformed `renv.lock` before reporting it | V: fixture |
+| T15 | Default tag `v0.11.0`; the Makefile reads the tag from `tooling.lock` and installs exactly that release (host and post-session paths); `tooling.lock` states the tool is not in the image; unused generator variables and a comment naming a nonexistent target removed | V: dry-runs; live install of the Makefile's expression from GitHub into a temporary library gave 0.11.0 |
+| T20 | `docker-rstudio` passes `--platform`; the snapshot variable is left to T-C (TD3) | V: dry-run |
+
+Each new test fails on the commit before its fix. Full shell suite:
+219 passed, 15 failed (the same 15 as the base).
+
+**Not verified.** No real image was built: T1 rests on stubbed build
+arguments, not on `docker build` producing an amd64 image on this Mac;
+T2's effect on numerical results is not measured. Commands that
+regenerate the Dockerfile in passing (`zzc renv`, `zzc update`) keep
+the old Dockerfile and warn when the digest cannot be resolved; that is
+from reading `zzcollab.sh:865, 1439, 2674`, not from a test. The
+zzcollab repository's own `tooling.lock` (not a generated project's)
+still records `v0.3.1`; it was left alone.
