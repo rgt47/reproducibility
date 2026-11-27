@@ -376,3 +376,40 @@ host gets 0.11.0 from GitHub sees the failure. Separately, `make r`'s
 post-session hook on the host runs whatever zzrenvcheck is installed
 (it calls `check_packages` directly and installs only when none is
 present).
+
+### Phase T-C (2026-11-27 11:35 PST): done, not pushed
+
+Branches: zzcollab `fix/defaults-messages` (9 commits, `acd2029` to
+`b6daae0`); zzrenvcheck `fix/messages` (2 commits, `041a5c4`,
+`10d09ad`). Nothing pushed or merged.
+
+| Item | Change | Evidence |
+|---|---|---|
+| T6 | New projects initialize renv with `snapshot.type = "implicit"` | V: renv 1.3.1, a compendium whose `analysis/` alone uses jsonlite: not locked under explicit, locked under implicit; a test runs this with the template's type |
+| T7 | The `.Last()` exit snapshot defaults off; opt in with `make r ZZCOLLAB_AUTO_SNAPSHOT=true`; every container run target (`make r`, `sh`, `docker-rstudio`, `DOCKER_RUN`) passes the Makefile default, which also keeps a project with an older `.Rprofile` off | V: the template's actual `.Last()` run with `renv::snapshot` stubbed (old template snapshots when unset, new does not); dry-runs |
+| T7 docs | 18 documents corrected (delegated, then spot-checked): capture comes from `make r`'s post-session check or an explicit snapshot; RStudio sessions are not captured on exit | I: diff review; no em dashes added; docs test unchanged |
+| T18 | zzrenvcheck advice says `renv::snapshot()` and review the diff, not `q()  # Auto-snapshot on exit` | V: test fails on the old code |
+| T17 | zzrenvcheck's lockfile warning gives the total, then lists declared and code-only packages | V: 6 new tests, all fail on the old code; suite 219/219 |
+| T8, T9 | Typing the `analysis` profile (command, `--profile`, `config set`) warns of removal next release; main help and `help.sh` recommend `tidyverse` and say profiles create projects, with `docker --profile` to switch; `make r` no longer suggests `--profile analysis` or labels tidyverse 'analysis' | V: tests on help output, the config warning, and the label `sed` taken from `make -n r` |
+| T10 | `CITATION.cff` template no longer claims all data are included | V: parses as YAML |
+| T19 | `LICENSE.md` (GPL-3) in both repositories via `usethis` | I |
+
+Full zzcollab shell suite: 228 passed, 15 failed (the same 15 as the
+base).
+
+**Found in passing.** The `make r` profile-label `sed` would have
+rewritten 'tidyverse' to 'tidyrocker/verse' once the tidyverse-to-
+analysis substitution was removed; the patterns are now anchored. The
+user guide named a nonexistent validation command; `add_package()` and
+`install.packages()` were documented as identical (only the first
+snapshots); the blog vignette claimed validation on entry to `make r`.
+
+**Not done or not verified.** A config file that already names
+`analysis` still maps to `tidyverse` without a warning; removing the
+alias will need to migrate such configs. Vignettes were not rendered.
+Statements that auto-restore runs on startup (`quickstart-rstudio.Rmd`,
+the publishing playbook) look wrong, since `make r` passes
+`ZZCOLLAB_AUTO_RESTORE=false`, and were left for a later pass.
+quickstart1 runs `Rscript` lines right after `make r`, which starts R,
+not a shell (pre-existing). zzrenvcheck's T17/T18 fixes are unreleased
+(development version after 0.11.0).
