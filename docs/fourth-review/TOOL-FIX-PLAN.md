@@ -334,3 +334,45 @@ the old Dockerfile and warn when the digest cannot be resolved; that is
 from reading `zzcollab.sh:865, 1439, 2674`, not from a test. The
 zzcollab repository's own `tooling.lock` (not a generated project's)
 still records `v0.3.1`; it was left alone.
+
+#### Phase T-B review follow-ups (same day)
+
+A second review found four gaps; all fixed on `fix/build-provenance`
+(`a7e81e9`, `03ce03f`, `e9d77a2`, `77dbadd`).
+
+- **T15 would have downgraded existing projects.** At least 20
+  projects under `~/prj` record `zzrenvcheck` `v0.3.1` in
+  `tooling.lock`, and only `zzc docker` rewrites that file. Installing
+  exactly the lock's tag would have put `v0.3.1`, which lacks
+  `skip_image_pkgs`, into the shared host library, and projects with
+  different tags would have reinstalled over each other. The lock tag
+  is now a floor: the Makefile wants the newer of it and
+  `ZZRENVCHECK_MIN` (`v0.11.0`), says to rerun `zzc docker` when the
+  lock is older, and keeps any installed release at least as new
+  (V: install expression evaluated with `install_github` stubbed for
+  four cases; live install from GitHub gave 0.11.0).
+- **T1 end to end.** With a recording `docker` on `PATH`, a real `make
+  docker-build PLATFORM=linux/amd64` passed `--platform linux/amd64`
+  through `zzc rebuild` to `docker build` (V). But `make r` without
+  `PLATFORM` then asked for arm64; `PLATFORM` now defaults to the local
+  image's `zzcollab.platform` label (V: same test).
+- **T3 and podman.** Digest resolution called `docker` only, so a
+  podman-only setup would have needed `--allow-unpinned`. It now uses
+  the configured runtime (V: stubbed podman; no real podman pull, no
+  podman machine on this host).
+- **Renovate.** Its zzrenvcheck rule did not cover the Makefile
+  minimum (a bump PR would fail the agreement test) and used the
+  `github-releases` datasource for a repository that publishes only
+  tags; both fixed (I: patterns checked against the files).
+
+zzrenvcheck CI on `5d22bf3`: R Package Check and pkgdown passed (V:
+`gh run list`). Full zzcollab shell suite: 222 passed, 15 failed (the
+same 15 as the base).
+
+**Open, for the author.** zzrenvcheck 0.11.0 is public and fails a
+project without `DESCRIPTION`; the zzcollab bare-compendium skip is on
+unpushed branches, so until they are pushed, a bare compendium whose
+host gets 0.11.0 from GitHub sees the failure. Separately, `make r`'s
+post-session hook on the host runs whatever zzrenvcheck is installed
+(it calls `check_packages` directly and installs only when none is
+present).
