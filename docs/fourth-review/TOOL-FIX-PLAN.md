@@ -267,3 +267,25 @@ which writes one unconditional expectation). The T13 abort in
 `cmd_verify` is inferred from two capture-matrix tests changing from
 fail to pass plus the same mechanism reproduced on the helper; `zzc
 verify` itself was not traced.
+
+#### T16 and bare compendia: decided 2026-11-27 (option 1)
+
+zzrenvcheck keeps failing a project without `DESCRIPTION`; zzcollab
+skips. Commit `0af98e5` on `fix/false-pass-gates`: the `check-renv*`,
+`fix-renv*`, `snapshot` (check step), and `reset-lock` targets, `make
+r`'s post-session hook, `zzc validate`, and `zzc verify` report
+'No DESCRIPTION (bare compendium): dependency check skipped' with exit
+0; `ensure-zzrenvcheck` installs nothing for a bare project; the hook
+still writes the zzvim-R marker. Also fixed in passing: `verify` ran
+zzrenvcheck in the caller's directory, not the verified one.
+
+Evidence (V): three new tests (every target with R made unreachable;
+the hook; a scaffolded `--bare` project under `verify` and `validate`)
+fail on the previous commit and pass; `test-gates.sh` 14 of 14; full
+suite 208 passed, 15 failed, the same 15 as the base. T16 is no
+longer held.
+
+Not changed: zzvim-R, on an abnormal exit (`:qa!`) without the marker,
+runs zzrenvcheck itself in the background (`plugin/zzvim-R.vim:2662`);
+for a bare project that run now logs a failure to
+`/tmp/zzvim-r-renvcheck.log`. Harmless, outside zzcollab, not edited.
