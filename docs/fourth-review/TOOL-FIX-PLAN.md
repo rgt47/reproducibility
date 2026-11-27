@@ -229,3 +229,41 @@ container'; it runs on the host when R is present (pre-existing, left
 alone). The Makefile's `R_VERSION` variable (line 14) is dead code.
 `zzvim-R` depends only on the `/tmp/zzvim-r-hook-ran` marker, not on
 target names, so the rename does not affect it.
+
+#### Review follow-ups (same day)
+
+A second review of T-A found five gaps; four are fixed on the same
+branch (`39bea57`, `d3e0b99`, `051465b`), one is open.
+
+- `doctor.sh` (also `set -euo pipefail`) aborted its state back-fill
+  when a `grep | cut` read found nothing. Fixed; a strict-shell test
+  aborts on the old file and passes on the new (V).
+- `check-renv-no-strict` and `check-renv-slim` named `fix-renv` as
+  the repair, which would add the very packages they exclude. Each now
+  names its matching variant (V, dry-run test).
+- `c()` on two `lints` objects drops the class, so `make lint`'s
+  listing printed as a bare list. Each directory is printed on its own
+  (V: old expression prints `[[1]]`, new does not).
+- `toggle.sh` claimed the validate settings apply to `make
+  check-renv`; the Makefiles never read them. Wording corrected (I).
+- **Open: T16 and bare compendia.** `zzc init --bare` omits
+  `DESCRIPTION` by design (I: `modules/project.sh:657-662`). With T16,
+  `check_packages()` fails on such a project, so `check-renv` and
+  `fix-renv` fail, `make r`'s post-session hook prints 'Package
+  validation failed' after every session, and `verify`'s advisory
+  dependency step warns. Before T16 all of these passed silently. The
+  `zzrenvcheck` branch is therefore held unmerged pending a decision.
+
+Test count: `tests/shell/test-gates.sh` 11 of 11 pass.
+
+**Still unverified.** The no-host-R (container) paths of `check-renv`
+and `fix-renv`; the cached `test-container` recipe with the new
+expression; the R code embedded in the edited CI YAML (both files
+parse as YAML; the R was not run); the 15 pre-existing shell-suite
+failures, including both `test-scaffold-build-run` tests, so no
+end-to-end scaffold run backs the claim that new projects pass the
+empty-suite rule (that claim rests on reading `create_test_infrastructure`,
+which writes one unconditional expectation). The T13 abort in
+`cmd_verify` is inferred from two capture-matrix tests changing from
+fail to pass plus the same mechanism reproduced on the helper; `zzc
+verify` itself was not traced.
