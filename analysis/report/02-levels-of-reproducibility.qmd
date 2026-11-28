@@ -566,8 +566,8 @@ was rebuilt and tested, L2, with no baseline comparison.
 `zzc verify --full` applies this definition. It records L3
 only when the image rebuilds, the test suite passes, and at
 least one baseline test (a file named
-`inst/tinytest/test-baseline*.R`) exists and appears in the
-test log.
+`inst/tinytest/test-baseline*.R`) exists and every such
+file ran to completion with at least one expectation.
 :::
 
 Continuous integration
@@ -1482,7 +1482,7 @@ lockfile alone does not.
 | L3 verified | A baseline test compares regenerated outputs with recorded values, within a stated tolerance, after a clean rebuild |
 | Capture vs. validation | Capture (a lockfile, a container) sets L0 to L2; validation (CI, a baseline test) adds nothing pinned, confirms the captured level, and is what reaches L3 (habit 5) |
 | Reproduced (this book) | Same code, same data, re-run; contrast replicated: a new study, new data |
-| `zzc verify --full` (zzcollab) | Reports L3 only if the image rebuilds, tests pass, and a `test-baseline*.R` file appears in the test log |
+| `zzc verify --full` (zzcollab) | Reports L3 only if the image rebuilds, tests pass, and each `test-baseline*.R` file ran at least one expectation |
 | Honest statement | Name the rung, the artifact, and what remains exposed; never claim 'fully reproducible' (motto) |
 
 ## Further reading

@@ -889,7 +889,10 @@ and `zzrenvcheck` tools in Phase 6: `make docker-test` exits
 nonzero when a test fails, and `zzc verify --full` requires
 a baseline test before it stamps a compendium L3. A course
 built on an unpatched install of either tool will accept a
-failing submission as passing.
+failing submission as passing. Use `zzcollab` 0.4.1 or
+later: it also fails a suite in which no expectation ran,
+and does not count a baseline file that exits before its
+comparison.
 
 ## Known rough edges, by week {#sec-ig-rough-edges}
 

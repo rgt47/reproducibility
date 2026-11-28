@@ -311,3 +311,15 @@ Verification (V): tinytest 461/461. Render: logged exit 0, no
 warnings, no unresolved references or missing citations; TOC shows
 Appendix D. PDF 740 pages (738 before). Instructor guide renders
 (exit 0).
+
+### Tool issues closed (2026-11-27)
+
+The tool issues recorded above (Phase 26: R7-02's platform and
+`OPENBLAS_NUM_THREADS` gaps; Phase 30: the zzrenvcheck 0.10.0 gate
+that exits 0 without `DESCRIPTION`, the mislabeled lockfile warning,
+the auto-snapshot advice, the `CITATION.cff` abstract, the profile
+help, the tag-only `FROM` fallback) are fixed in `zzcollab` 0.4.1 and
+`zzrenvcheck` 0.11.1 (both tagged 2026-11-27). The plan and the
+evidence are in `docs/fourth-review/TOOL-FIX-PLAN.md`, Phases T-A to
+T-D. The 'With zzcollab' boxes now describe those versions; the
+Conventions box names them.

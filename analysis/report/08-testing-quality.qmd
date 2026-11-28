@@ -1128,7 +1128,9 @@ in the rebuilt environment.
 image with `make docker-build`, runs the suite inside
 it with `make docker-test`, and stamps L3 only when
 both succeed and every `inst/tinytest/test-baseline*.R`
-file is named in the test log. The file-name prefix is
+file ran to completion with at least one expectation; a
+file that exits early, before its comparison, does not
+count. The file-name prefix is
 how the tool recognizes a baseline test; it is the
 tool's convention, not a `tinytest` one. Without such a
 file it reports the project as rebuilt and tested, at
@@ -1641,12 +1643,13 @@ run `styler::style_dir()` and `lintr::lint_dir()` on
 project container, so no host R installation is
 needed. They assume the code-quality feature, added
 with `zzc add code-quality`, which also installs the
-pre-commit hook described next. The `lint` target does
-not set `LINTR_ERROR_ON_LINT`, so it reports lints
-without failing; it is a report, not a gate.
-`make test` (on the host) and `make docker-test` (in
-the container) run the suite and exit nonzero on any
-failure, as the `all_pass()` form above does.
+pre-commit hook described next. `make lint` exits
+nonzero when it finds any lint, so it can serve as a
+gate; `make lint-report` lists the same lints without
+failing. `make test` (on the host) and
+`make docker-test` (in the container) run the suite and
+exit nonzero on any failure, as the `all_pass()` form
+above does, and also when no expectation ran at all.
 :::
 
 **A pre-commit hook** enforces them. A hook is a
@@ -2800,12 +2803,13 @@ on double programming warns.
 ## With zzcollab
 
 `make style` and `make lint` run `styler` and `lintr`
-in the project container; `make lint` reports without
-failing. `make test` and `make docker-test` run the
-suite and fail on any failure. `zzc verify --full`
-certifies L3 only when a file named
-`inst/tinytest/test-baseline*.R` ran in the rebuilt
-image.
+in the project container; `make lint` fails on any
+lint, and `make lint-report` only lists them.
+`make test` and `make docker-test` run the suite and
+fail on any failure or when no expectation ran.
+`zzc verify --full` certifies L3 only when every file
+named `inst/tinytest/test-baseline*.R` ran at least one
+expectation in the rebuilt image.
 :::
 
 ## Further reading

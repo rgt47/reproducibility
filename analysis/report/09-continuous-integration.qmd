@@ -669,9 +669,10 @@ step's failure from depending on how R was started. The
 package is not on CRAN, so a workflow installs it with
 `remotes::install_github('rgt47/zzrenvcheck', ref = <commit>)`,
 pinned to a commit. In a scaffolded project,
-`make check-renv-no-fix` runs this check without
-modifying anything. The similarly named `make check-renv`
-repairs `renv.lock` in place and is therefore not a gate.
+`make check-renv` runs this check without modifying
+anything. The separate `make fix-renv` repairs
+`DESCRIPTION` and `renv.lock` in place and is therefore
+not a gate.
 :::
 
 How do the three gates fit together in practice? A
@@ -1206,10 +1207,13 @@ the raw data still match their recorded checksums. `zzc verify --full` rebuilds 
 image and runs the test suite inside it. It stamps L3
 into the project's state record only when the image
 rebuilt, the tests passed, and at least one
-`inst/tinytest/test-baseline*.R` file exists and is named
-in the test log. The log names a file even when its guard
-exits early with no tests, so `ci/run-tests.R`, which
-counts results, is the stricter check. The stamp is
+`inst/tinytest/test-baseline*.R` file exists and every
+such file ran to completion with at least one
+expectation. A file whose guard exits early with no
+tests therefore does not count, as in `ci/run-tests.R`.
+The tool is the stricter of the two: it requires every
+baseline file to run, not just one, and it rejects a
+file that stopped part way. The stamp is
 removed when `zzcollab` regenerates the Dockerfile or
 when a later `--full` run falls short of L3. A change made
 outside the tool, such as `renv::snapshot()` or an edited

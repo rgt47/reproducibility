@@ -377,7 +377,7 @@ post-session hook on the host runs whatever zzrenvcheck is installed
 (it calls `check_packages` directly and installs only when none is
 present).
 
-### Phase T-C (2026-11-27 11:35 PST): done, not pushed
+### Phase T-C (2026-11-27 11:35 PST): done; merged and pushed the same day
 
 Branches: zzcollab `fix/defaults-messages` (9 commits, `acd2029` to
 `b6daae0`); zzrenvcheck `fix/messages` (2 commits, `041a5c4`,
@@ -413,3 +413,50 @@ the publishing playbook) look wrong, since `make r` passes
 quickstart1 runs `Rscript` lines right after `make r`, which starts R,
 not a shell (pre-existing). zzrenvcheck's T17/T18 fixes are unreleased
 (development version after 0.11.0).
+
+### Phase T-D (2026-11-27 16:15 PST): tools released; book on a branch
+
+**Releases (author approved each).** `zzrenvcheck` 0.11.1 (tag
+`v0.11.1`, commit `8bb13cb`): T17 and T18. `zzcollab` 0.4.0 (tag
+`v0.4.0`, `03e6eb5`) unified the drifted CLI (0.3.0) and R package
+(0.2.0) versions and added upgrade notes: regenerate the `Makefile`
+and `.Rprofile` with `zzc update`, because `zzc doctor --fix` bumps
+only the stamp line. A review then found that 0.4.0 still required
+`zzrenvcheck` v0.11.0, so a host with 0.11.0 kept the old advice;
+`zzcollab` 0.4.1 (tag `v0.4.1`, `f465879`) raises the minimum and
+default tag to v0.11.1, with a test that an installed 0.11.0 is
+upgraded. Neither repository gets GitHub Releases for these tags.
+
+**CI caught a test that passed only under `load_all()`.** The merged
+T-C test called an internal function without `:::`; `R CMD check`
+failed on `main`. Fixed in `47fdfdd`. zzrenvcheck tests are now run
+through `R CMD build` and `R CMD check` before a release (Status OK,
+219 results). CI green on every release commit (V: `gh run list`).
+
+**Book (`docs/tool-fix-td`, not merged).** Boxes revised in Ch 2
+(verify rule, summary row), Ch 3 (`check-renv` is the gate,
+`fix-renv` repairs; empty suites fail), Ch 4 (exit hook off by
+default, implicit snapshot type; the gate box re-run on 0.11.1 and the
+pin moved to `8bb13cb`), Ch 5 (native arm64 with a warning,
+`make docker-build PLATFORM=linux/amd64`, both thread pins, an
+unresolved digest stops unless `--allow-unpinned`), Ch 8 (`make lint`
+fails, `lint-report` lists; the baseline rule), Ch 9 (`check-renv`;
+the verify rule, stated as stricter than `ci/run-tests.R`), Ch 10
+(`CITATION.cff` abstract, `check-renv`), Appendix B (the shim list),
+Conventions (the versions the boxes describe), and the instructor
+guide (use `zzcollab` 0.4.1 or later).
+
+Evidence: the Ch 4 run (V) was a re-created scratch project
+(`analysis/report.qmd` calling `library(here)`, an empty
+`renv.lock`) checked with 0.11.1 built from the tag's tree: status 1
+with a minimal `DESCRIPTION` and status 1 without one. Every other
+box claim was read from the tool source at the tags (I); no `zzc`
+command or image build was run for the book. tinytest 461/461; full
+render exit 0, no warnings, no unresolved references, PDF 740 pages
+(unchanged); instructor guide renders.
+
+**Not done.** The book repository's own `Makefile` and `.Rprofile`
+come from an old template (its exit snapshot still defaults on);
+regenerating them with `zzc update` was left for the author. The
+configs-naming-`analysis` migration and the auto-restore wording in
+the zzcollab vignettes remain open from T-C.
