@@ -1748,27 +1748,31 @@ untouched. A bare `zzc publishing` does not switch an
 existing project; it stops and names this command.
 
 The generated recipe follows the showcase's structure
-but departs from this chapter's rules in three respects
-(this book's authors maintain the tool; the first two
-are recorded as tool issues). On an Apple Silicon Mac
+and sets both thread pins, `OMP_NUM_THREADS` and
+`OPENBLAS_NUM_THREADS`. It departs from this chapter's
+rules in one respect, by design. On an Apple Silicon Mac
 the tool builds a native `linux/arm64` image for
 multi-architecture bases such as `rocker/r-ver`, to
 avoid emulation, rather than passing
-`--platform linux/amd64` as this book does. The Mac
-image therefore differs from the one CI and an `x86`
-cluster build. The publishing switch is the exception: for
-`rocker/verse` the tool builds `linux/amd64` under
-emulation. It sets `OMP_NUM_THREADS` but not
-`OPENBLAS_NUM_THREADS`, so the second thread pin must be
-added by hand. And if Docker cannot pull the base when
-the Dockerfile is generated, it warns and leaves the
-`FROM` line pinned by tag only. The project's
-`Makefile` honors `PLATFORM=linux/amd64` for the
-containers it runs, but the build itself does not, so a
-Mac user who needs the CI image should build it with
-`docker build --platform linux/amd64` directly or pull
-the image CI built. These commands were checked against
-the framework's source, not run for this chapter.
+`--platform linux/amd64` as this book does, and it warns
+that the image differs from the one CI and an `x86`
+cluster build. The CI-matching image is built with
+
+```bash
+make docker-build PLATFORM=linux/amd64
+```
+
+and the run targets such as `make r` then use the
+platform the image was built for. The publishing switch
+needs no flag: `rocker/verse` publishes only
+`linux/amd64`, and the tool builds that under emulation.
+If Docker cannot pull the base when the Dockerfile is
+generated, the tool stops rather than write a `FROM`
+line pinned by tag only; `zzc --allow-unpinned docker`
+writes one anyway, with a warning, and `zzc verify`
+flags it. These commands were checked against the
+framework's source and its tests, not run for this
+chapter.
 :::
 
 In the vocabulary of the ladder she has moved from L1

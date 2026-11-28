@@ -846,11 +846,12 @@ the file answers.
 `zzcollab` writes a `CITATION.cff` from a template when
 it creates a project, which is where this book's file
 came from. The template leaves `orcid` empty, and its
-abstract states that the compendium 'Contains all data,
-code, and computational environment needed to reproduce
-the analyses'. Both need editing before a deposit, the
-second especially when the data are withheld
-(@sec-restricted-deposit).
+abstract is a placeholder: it describes 'the code and
+computational environment for the analyses' and points
+to the data availability statement for the data, with a
+comment asking the author to rewrite it. Both need
+editing before a deposit, the abstract especially when
+the data are withheld (@sec-restricted-deposit).
 :::
 
 Two broader efforts merit the analyst's attention.
@@ -2133,8 +2134,8 @@ run locally.
 ## With zzcollab
 
 In a `zzcollab` project the entry points already exist
-as Make targets: `make check`, `make check-renv-no-fix`
-(the variant that fails rather than repairs), and the
+as Make targets: `make check`, `make check-renv`
+(which fails rather than repairs), and the
 render target that matches the archetype
 (`make docker-render` for an `.Rmd` report; there is no
 plain `make render`).

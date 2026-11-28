@@ -141,7 +141,10 @@ not use the framework can skip.
 
 The framework command that performs the step just shown
 by hand, and what it adds. Nothing in the chapter depends
-on reading these boxes.
+on reading these boxes. The boxes describe `zzcollab`
+0.4.1 and `zzrenvcheck` 0.11.1, both released on
+2026-11-27; a box that reports a run names the version
+it ran.
 :::
 
 A sixth, smaller device, the honest level, closes most

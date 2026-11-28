@@ -166,11 +166,12 @@ targets that a shim can call, but not every target is a
 gate:
 
 - `make check-renv` runs `zzrenvcheck` with
-  `auto_fix = TRUE`. On a runner it repairs `renv.lock` in
-  place and reports success for the very omission the gate
-  exists to catch. Its sibling `make check-renv-no-fix`
-  modifies nothing and exits nonzero on failure; only that
-  target is a gate.
+  `auto_fix = FALSE`; it modifies nothing and exits
+  nonzero on failure, so it is a gate. Its sibling
+  `make fix-renv` runs with `auto_fix = TRUE`. On a
+  runner it would repair `renv.lock` in place and report
+  success for the very omission the gate exists to
+  catch, so a shim must not call it.
 - `make check` runs `R CMD check --as-cran`, which exits
   nonzero on an ERROR but not on a WARNING, so an
   undeclared import passes it.

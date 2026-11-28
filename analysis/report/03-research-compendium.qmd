@@ -1589,16 +1589,17 @@ project's `Makefile`. The `docker-` targets run each
 gate inside the project's container (@sec-containers).
 
 ```bash
-make check-renv-no-fix
+make check-renv
 make docker-test
 make docker-check
 make docker-render
 ```
 
-`check-renv-no-fix` fails when a package is used but not
-declared and locked; the plain `check-renv` repairs the
-files instead, so it cannot serve as a gate.
-`docker-test` runs the `tinytest` suite,
+`check-renv` fails when a package is used but not
+declared and locked, and edits nothing; the separate
+`fix-renv` repairs the two files and so is not a gate.
+`docker-test` runs the `tinytest` suite, and fails when
+a test fails or when no expectation ran,
 `docker-check` runs `R CMD check`, and `docker-render`
 rebuilds `analysis/report/report.Rmd`. At the manuscript
 transition the archetype line in `zzcollab.yaml` is

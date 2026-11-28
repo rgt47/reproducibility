@@ -520,31 +520,28 @@ versions are current.
 ::: {.callout-note icon=false}
 ## With zzcollab
 
-`zzcollab` automates part of this lifecycle, and the
-automation trades the analyst's control for coverage.
-The `.Rprofile` it generates defines an exit hook that
-calls `renv::snapshot()` whenever an R session in the
-project container ends normally, a script run by
-`Rscript` included, provided the project's `renv/`
-directory is present. A matching step restores missing
-packages when a session starts. Neither runs on the
-host or when the `CI` variable is set. The cost falls
-on the first judgment above: a package installed and
-used in passing enters the lockfile at the next exit,
-whether or not the analysis is at a point worth
-recording. Setting `ZZCOLLAB_AUTO_SNAPSHOT=false` (and
-`ZZCOLLAB_AUTO_RESTORE=false`) in the container's
-environment disables the hooks. The snapshot hook reads
-its variable at exit, so
-`Sys.setenv(ZZCOLLAB_AUTO_SNAPSHOT = 'false')` during a
-session also works. The framework's own `make r` sets
-both variables to `false` and runs its repairing
-dependency check after the session instead. When the
-profile itself initializes `renv` in a new project, it
-sets the `explicit` snapshot type. A snapshot then
-records the packages `DESCRIPTION` declares rather than
-those the code uses, so the implicit behavior described
-above does not hold there.
+`zzcollab` leaves the first judgment above with the
+analyst by default. The `.Rprofile` it generates
+defines an exit hook that can call `renv::snapshot()`
+when an R session in the project container ends, but
+the hook is off unless `ZZCOLLAB_AUTO_SNAPSHOT=true` is
+set; `make r ZZCOLLAB_AUTO_SNAPSHOT=true` opts in for one
+session. With it on, a package installed and used in
+passing enters the lockfile at the next exit, whether or
+not the analysis is at a point worth recording, which is
+why it is off. A second step restores missing packages
+when a session starts. It is on by default
+(`ZZCOLLAB_AUTO_RESTORE=false` disables it), and
+`make r` turns it off. Neither hook runs on the host or
+when the `CI` variable is set. After a `make r` session
+ends, the framework runs its repairing dependency check,
+which writes missing packages into
+`DESCRIPTION` and `renv.lock`; the diff is then the
+analyst's to review. When the profile initializes
+`renv` in a new project, it sets the `implicit`
+snapshot type described above; a project created before
+`zzcollab` 0.4.0 may still carry `explicit`, which
+`renv::settings$snapshot.type()` reports.
 :::
 
 ::: {.callout-tip icon=false}
@@ -808,10 +805,8 @@ package alone, not that package's own dependencies, so
 a later `renv::snapshot()` remains the authoritative
 record.
 
-`make check-renv` runs the check with repair enabled,
-on a developer's machine before a commit.
-`make check-renv-no-fix` is the gate form, which a CI
-job runs as
+`make check-renv` is the gate form. It edits nothing
+and runs
 
 ```r
 zzrenvcheck::check_packages(
@@ -819,18 +814,21 @@ zzrenvcheck::check_packages(
 )
 ```
 
-On the scratch project above, with a minimal
-`DESCRIPTION` added, this call printed 'Validation
-failed.' and exited with status 1. Without a
-`DESCRIPTION` file, version 0.10.0 printed an error and
-exited with status 0, so on such a project the gate
-cannot fail. The package is not on CRAN, so the CI job
-installs it pinned to one commit, the 0.10.0 release
-this box describes:
+which a CI job runs as well. `make fix-renv` runs the
+same check with repair enabled, on a developer's machine
+before a commit. On the scratch project above, with a
+minimal `DESCRIPTION` added, version 0.11.1 printed
+'Validation failed.' and exited with status 1. Without
+a `DESCRIPTION` file it printed that the file was not
+found and also exited with status 1; version 0.10.0
+exited with status 0 there, so on such a project its
+gate could not fail. The package is not on CRAN, so the
+CI job installs it pinned to one commit, the 0.11.1
+release:
 
 ```r
 remotes::install_github(
-  'rgt47/zzrenvcheck@6f53235668cb4048c1ae793d64b10d6505bf69a2'
+  'rgt47/zzrenvcheck@8bb13cba2dad5d39560e6c0ec5e976890fedd7e5'
 )
 ```
 :::
@@ -1833,14 +1831,13 @@ regenerate from the one file that actually matters.
 ::: {.callout-note icon=false}
 ## With zzcollab
 
-`make check-renv` runs
-`zzrenvcheck::check_packages(auto_fix = TRUE)`, which
-checks both inclusions of the triad and repairs a
-violation. `make check-renv-no-fix` runs it with
-`auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE`,
-the CI form, which fails rather than repairs. Set
-`ZZCOLLAB_AUTO_SNAPSHOT=false` to stop the
-container's snapshot-on-exit hook.
+`make check-renv` runs `zzrenvcheck::check_packages()`
+with `auto_fix = FALSE, strict = TRUE,
+error_on_fail = TRUE`, the CI form, which checks both
+inclusions of the triad and fails rather than repairs.
+`make fix-renv` runs it with `auto_fix = TRUE` and
+repairs a violation. The container's snapshot-on-exit
+hook is off unless `ZZCOLLAB_AUTO_SNAPSHOT=true` is set.
 :::
 
 ## Further reading
