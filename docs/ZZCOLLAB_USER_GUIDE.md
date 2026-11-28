@@ -1,4 +1,4 @@
-<!-- zzcollab ZZCOLLAB_USER_GUIDE.md v0.3.0 -->
+<!-- zzcollab ZZCOLLAB_USER_GUIDE.md v0.4.1 -->
 # ZZCOLLAB User Guide
 
 ## Table of Contents
@@ -31,7 +31,7 @@ complete reproducibility.
   individual package management
 - Four Docker profiles ranging from ~650 MB to ~4.2 GB
 - Pure-shell dependency validation (no host R required)
-- Automatic renv snapshot on container exit
+- Dependency check after each `make r` session (records packages used)
 - Content-addressable Docker build caching
 - GitHub Actions CI/CD for testing and validation
 
@@ -46,8 +46,10 @@ by all team members via Docker Hub.
 
 **Layer 2 -- renv.lock (personal/collaborative).** Any team member can
 add R packages inside the container using standard `install.packages()`
-calls. The `.Rprofile` auto-snapshots `renv.lock` on exit, and the
-lock file accumulates packages from all contributors.
+calls. After a `make r` session, the post-session check records the
+packages the code uses in DESCRIPTION and `renv.lock`; otherwise run
+`make snapshot` and review the lockfile diff. The lock file
+accumulates packages from all contributors.
 
 The **five pillars** of a zzcollab workspace are: Dockerfile +
 renv.lock + .Rprofile + source code + data.
@@ -96,7 +98,7 @@ make r                          # start development
 ```bash
 make r                          # enter container
 # ... work in R ...
-q()                             # exit (auto-snapshots renv.lock)
+q()                             # exit; post-session check runs
 make docker-test                # run tests
 git add . && git commit -m "Add analysis" && git push
 ```
@@ -186,7 +188,7 @@ myproject/
 ├── Makefile                    # Build automation
 ├── Dockerfile                  # Container definition
 ├── renv.lock                   # Package dependency lock file
-├── .Rprofile                   # renv activation + auto-snapshot
+├── .Rprofile                   # renv activation + opt-in snapshot
 ├── .gitignore                  # Git exclusions
 ├── .Rbuildignore               # R CMD build exclusions
 ├── R/                          # Reusable R functions
@@ -271,13 +273,12 @@ install.packages("newpkg")      # add a package
 q()
 ```
 
-On exit, two things happen automatically:
-
-1. **Auto-snapshot** (inside container): The `.Rprofile` `.Last()`
-   hook runs `renv::snapshot(prompt = FALSE)` to update `renv.lock`.
-2. **Post-session validation** (on host): The Makefile runs
-   `zzcollab validate --fix --strict --verbose` to verify that
-   DESCRIPTION and renv.lock are consistent with code usage.
+On exit from `make r`, the Makefile runs **post-session validation**
+(on the host, or in the container when the host has no R):
+`zzrenvcheck::check_packages(auto_fix = TRUE)` adds packages the code
+uses to DESCRIPTION and renv.lock. Review the diff before committing.
+The `.Rprofile` exit snapshot is off by default (see Auto-Snapshot on
+Exit below).
 
 ### RStudio Server
 
@@ -329,7 +330,7 @@ make r
 
 ```r
 install.packages("survival")
-q()                             # auto-snapshot writes renv.lock
+q()                             # post-session check updates renv.lock
 ```
 
 For GitHub packages:
@@ -338,11 +339,23 @@ For GitHub packages:
 renv::install("user/package")
 ```
 
-### Auto-Snapshot on Exit
+### Auto-Snapshot on Exit (Opt-In)
 
 Controlled by the environment variable `ZZCOLLAB_AUTO_SNAPSHOT`
-(default: `true`). When R exits inside a container, the `.Last()`
-function in `.Rprofile` runs `renv::snapshot(prompt = FALSE)`.
+(default: `false`). When it is set to `true` and R exits inside a
+container, the `.Last()` function in `.Rprofile` runs
+`renv::snapshot(prompt = FALSE)`. The hook is off by default because
+what enters `renv.lock` should be the analyst's decision: run
+`renv::snapshot()` (or `make snapshot`), then review the lockfile
+diff. To opt in for one session, run
+`make r ZZCOLLAB_AUTO_SNAPSHOT=true`, or `export
+ZZCOLLAB_AUTO_SNAPSHOT=true` before `make`; the Makefile passes the
+variable to `make r`, `make docker-rstudio`, and the other container
+targets.
+
+`make docker-rstudio` has no post-session check, so packages installed
+in an RStudio session are not recorded unless you run `make snapshot`
+or `renv::snapshot()` (then review the diff), or `make fix-renv`.
 
 ### Auto-Restore on Startup
 
@@ -385,9 +398,9 @@ Pure-shell validation checks that all packages referenced in code are
 listed in DESCRIPTION and renv.lock:
 
 ```bash
-make check-renv                 # strict + auto-fix (recommended)
-make check-renv-no-fix          # report only, no modifications
+make check-renv                 # strict, no edits, nonzero on failure
 make check-renv-no-strict       # skip tests/ and vignettes/
+make fix-renv                   # repair DESCRIPTION and renv.lock
 make check-system-deps          # check system library requirements
 ```
 
@@ -450,10 +463,10 @@ gh pr create --title "Add GSL system library"
 ### Validation (no host R required)
 
 ```bash
-make check-renv                 # strict + auto-fix + verbose
-make check-renv-no-fix          # report only
+make check-renv                 # strict, no edits, nonzero on failure
 make check-renv-no-strict       # skip tests/ and vignettes/
-make check-renv-ci              # same as check-renv (CI compat)
+make check-renv-slim            # skip packages already in the image
+make fix-renv                   # repair (also fix-renv-no-strict, -slim)
 make check-system-deps          # check Dockerfile system deps
 ```
 
@@ -483,8 +496,8 @@ make docker-build-pkg           # R CMD build in container
 make docker-vignettes           # build vignettes in container
 make docker-render              # render analysis/report/report.Rmd
 make docker-render-qmd          # render Quarto document
-make docker-check-renv          # renv::status() in container
-make docker-check-renv-fix      # renv::snapshot() in container
+make docker-check-renv          # alias of check-renv
+make docker-check-renv-fix      # alias of fix-renv
 make docker-rstudio             # start RStudio Server
 ```
 
@@ -492,7 +505,8 @@ make docker-rstudio             # start RStudio Server
 
 ```bash
 make style                      # format R code with styler
-make lint                       # lint R code with lintr
+make lint                       # lint; nonzero if any lints remain
+make lint-report                # list lints without failing
 make snapshot                   # grow renv.lock + DESCRIPTION from image
 ```
 
@@ -630,6 +644,14 @@ pull requests:
 The workflow tests across a matrix of R versions and platforms
 (Ubuntu, macOS, Windows).
 
+A second workflow, `render-report.yml`, renders the project's reports. It
+is installed only when the project has a report: an `.Rmd` or `.qmd` file
+in `analysis/report/`, a `report.Rmd` anywhere under `analysis/`, or an
+`.Rmd` in `analysis/posts/`. A project with nothing to render (for
+example the `package` archetype) does not carry it; `zzc status` shows
+`CI render off (no report)`, and `zzc doctor` reports a copy found without
+a report as unneeded.
+
 ### Repository Secrets
 
 For automated Docker Hub publishing, add these secrets in GitHub
@@ -701,7 +723,7 @@ Error: Package 'xyz' not available
 Solution: Check the package name; try renv::install("xyz")
 
 Error: Dependencies not synchronized
-Solution: make check-renv
+Solution: make fix-renv, review the diff, then make check-renv
 
 Error: renv cache issues
 Solution: renv::restore() then renv::rebuild() if needed

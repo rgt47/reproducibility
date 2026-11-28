@@ -1,4 +1,4 @@
-# zzcollab Makefile v0.3.0
+# zzcollab Makefile v0.4.1
 # Docker-first workflow for reproducible research
 
 # Fail-fast recipes: a command failing (or an unset variable) aborts the
@@ -20,6 +20,19 @@ IMAGE_TAG = $(GIT_SHA)
 # Report rendered by docker-render (override: make docker-render REPORT=path)
 REPORT ?= analysis/report/report.Rmd
 
+# Report rendered by docker-render-qmd: analysis/report/index.qmd or
+# report.Rmd, whichever exists (a project is expected to have only one).
+# Override with FILE=path, or a bare name resolved against analysis/report/
+# (make docker-render-qmd-pdf FILE=test.Rmd).
+REPORT_DOC := $(firstword $(wildcard analysis/report/index.qmd) $(wildcard analysis/report/report.Rmd))
+ifneq ($(strip $(FILE)),)
+  ifeq ($(wildcard $(FILE)),)
+    REPORT_DOC := analysis/report/$(FILE)
+  else
+    REPORT_DOC := $(FILE)
+  endif
+endif
+
 # Docker Hub account for team image push/pull. Override on the command line
 # (make docker-push-team DOCKERHUB_ACCOUNT=youraccount) or export it.
 DOCKERHUB_ACCOUNT ?=
@@ -31,15 +44,32 @@ RAW_DATA_DIR ?= analysis/data/raw_data
 # Container execution. The mount and work path follow the Dockerfile's
 # ARG USERNAME (default analyst), matching what the `r` target resolves at
 # runtime, so a customised container user is honoured rather than hardcoded.
-# PLATFORM is pinned so every batch container run matches CI and the cached
-# test target rather than the host architecture (the real prior inconsistency).
-PLATFORM       ?= linux/amd64
 # Container runtime: docker (default), podman (drop-in for `run`), or apptainer
 # (HPC; executes a SIF built from the project image, no --platform). The default
 # below is the configured zzcollab runtime; override per-invocation with
 # `make CONTAINER_RUNTIME=podman r`.
 CONTAINER_RUNTIME ?= docker
+# PLATFORM selects the container architecture, in this order:
+#  1. an explicit PLATFORM (command line or environment), which is also
+#     passed to the build as ZZCOLLAB_PLATFORM, so
+#     make docker-build PLATFORM=linux/amd64 builds the CI-matching image;
+#  2. the platform the local image was built for (its zzcollab.platform
+#     label), so make r runs whatever make docker-build produced;
+#  3. linux/amd64 for a rocker/verse base, which publishes amd64 only;
+#  4. the host: arm64 hosts use linux/arm64 (native; avoids QEMU emulation
+#     that breaks Haskell binaries such as pandoc).
+# Only 1 is passed to the build; otherwise the build chooses per base image.
+_HOST_ARCH      := $(shell uname -m)
+_BASE_IS_VERSE  := $(shell grep -m1 '^FROM ' Dockerfile 2>/dev/null | grep -c '/verse[:@]')
+_IMAGE_PLATFORM := $(if $(filter apptainer,$(CONTAINER_RUNTIME)),,$(filter linux/%,$(shell $(CONTAINER_RUNTIME) image inspect -f '{{index .Config.Labels "zzcollab.platform"}}' $(PACKAGE_NAME) 2>/dev/null)))
+PLATFORM        ?= $(or $(_IMAGE_PLATFORM),$(if $(filter 1,$(_BASE_IS_VERSE)),linux/amd64,$(if $(filter arm64 aarch64,$(_HOST_ARCH)),linux/arm64,linux/amd64)))
+BUILD_PLATFORM_ENV := $(if $(filter command line environment,$(origin PLATFORM)),ZZCOLLAB_PLATFORM="$(PLATFORM)",)
 SIF ?= env.sif
+# The .Rprofile auto-snapshot-on-exit hook is off unless opted in
+# (make r ZZCOLLAB_AUTO_SNAPSHOT=true, or export it). Passed to every
+# container run, so a project whose .Rprofile predates the off default
+# also stays off.
+ZZCOLLAB_AUTO_SNAPSHOT ?= false
 # Backend-aware prefix for the host-style R targets (document, build, check,
 # test, ...). With a Nix flake present the environment is entered via
 # `nix develop -c`; otherwise the commands run on the host (renv) directly.
@@ -53,11 +83,19 @@ CONTAINER_USER := $(shell grep '^ARG USERNAME=' Dockerfile 2>/dev/null | head -1
 CONTAINER_HOME := /home/$(if $(CONTAINER_USER),$(CONTAINER_USER),analyst)
 # Apptainer execs a SIF (auto-binds the CWD; no --platform); docker/podman run
 # the OCI image with explicit mounts. Both expose the project at the CWD.
+# ZZ_HOST_ROOT carries the host path of the project into the container, so a
+# render stamp names the document by the path you would open, not by the
+# container's mount point. HOST_TZ carries the host time zone, without which
+# the container's UTC clock would date a late-afternoon render to the
+# following day in both the stamp and the staged filename.
+HOST_TZ := $(shell readlink /etc/localtime 2>/dev/null | sed -e 's|.*zoneinfo/||')
 ifeq ($(CONTAINER_RUNTIME),apptainer)
-  DOCKER_RUN = apptainer exec $(SIF)
+  DOCKER_RUN = ZZ_HOST_ROOT="$(CURDIR)" TZ="$(HOST_TZ)" apptainer exec --no-home $(SIF)
 else
   DOCKER_RUN = $(CONTAINER_RUNTIME) run --rm --platform $(PLATFORM) \
     -v "$(CURDIR)":$(CONTAINER_HOME)/project \
+    -e ZZ_HOST_ROOT="$(CURDIR)" -e TZ="$(HOST_TZ)" \
+    -e ZZCOLLAB_AUTO_SNAPSHOT=$(ZZCOLLAB_AUTO_SNAPSHOT) \
     -w $(CONTAINER_HOME)/project $(PACKAGE_NAME)
 endif
 
@@ -81,36 +119,104 @@ help: ## Show this help
 # when no Dockerfile is present.
 PPM_REPO := $(shell sed -n 's/.*RENV_CONFIG_REPOS_OVERRIDE="\([^"]*\)".*/\1/p' Dockerfile 2>/dev/null | head -1)
 PPM_REPO := $(if $(PPM_REPO),$(PPM_REPO),https://cloud.r-project.org)
-HOST_CHECK := Rscript -e "options(repos = c(CRAN = '$(PPM_REPO)'))" -e
+#
+# Without R on the host, the same checks run in the project image instead.
+# zzrenvcheck is not part of the image (it is a tool, not a project
+# dependency), so it lives in a per-user library on the host, mounted into
+# the container and keyed by platform and R version: installed on first use,
+# reused afterwards, never written into renv.lock. --vanilla keeps the
+# project's .Rprofile (renv activation) from replacing that library path.
+HOST_RSCRIPT := $(shell command -v Rscript 2>/dev/null)
+IMAGE_R_VERSION := $(shell sed -n 's/^FROM [^:]*:\([0-9][0-9.]*\).*/\1/p' Dockerfile 2>/dev/null | head -1)
+ZZ_TOOLS_LIB ?= $(HOME)/.cache/zzcollab/tools-lib/$(PLATFORM)/R-$(IMAGE_R_VERSION)
+ifeq ($(HOST_RSCRIPT),)
+  TOOL_RSCRIPT = { $(CONTAINER_RUNTIME) image inspect $(PACKAGE_NAME) >/dev/null 2>&1 || \
+      { echo "No R on the host and no image '$(PACKAGE_NAME)': run 'make docker-build' first." >&2; exit 1; }; } && \
+    mkdir -p "$(ZZ_TOOLS_LIB)" && \
+    $(CONTAINER_RUNTIME) run --rm --platform $(PLATFORM) \
+      -v "$(CURDIR)":$(CONTAINER_HOME)/project -v "$(ZZ_TOOLS_LIB)":/opt/zztools \
+      -e R_LIBS=/opt/zztools -e ZZCOLLAB_AUTO_SNAPSHOT=$(ZZCOLLAB_AUTO_SNAPSHOT) \
+      -w $(CONTAINER_HOME)/project $(PACKAGE_NAME) Rscript --vanilla
+else
+  TOOL_RSCRIPT = Rscript
+endif
+HOST_CHECK := $(TOOL_RSCRIPT) -e "options(repos = c(CRAN = '$(PPM_REPO)'))" -e
 
-ensure-zzrenvcheck: ## Install zzrenvcheck on the host if missing (validation tool)
-	@Rscript -e "if (!requireNamespace('zzrenvcheck', quietly = TRUE)) { install.packages('remotes'); remotes::install_github('rgt47/zzrenvcheck', upgrade = 'never') }"
+# A bare compendium (zzc init --bare) has no DESCRIPTION by design, so there
+# is nothing for zzrenvcheck to validate. zzrenvcheck itself fails without a
+# DESCRIPTION; these targets skip instead, with a message, so a bare project
+# is neither failed nor silently passed.
+BARE_GUARD := if [ ! -f DESCRIPTION ]; then echo "No DESCRIPTION (bare compendium): dependency check skipped."; exit 0; fi;
 
-check-renv: ensure-zzrenvcheck ## Validate deps on host: strict + auto-fix (run before commit)
-	$(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE)"
+# zzrenvcheck version. ZZRENVCHECK_MIN is the oldest release whose
+# arguments these targets use (skip_image_pkgs, error_on_fail); a test keeps
+# it equal to ZZRENVCHECK_TAG in zzcollab's lib/constants.sh. tooling.lock
+# (written by zzc docker) records the release the project was set up with.
+# The release wanted is the newer of the two, so a lock written by an older
+# zzcollab (v0.3.1) cannot downgrade the tool; rerun zzc docker to update it.
+# An installed release at or above the wanted one is kept: the host library
+# is shared across projects, so an exact pin would reinstall on every switch
+# and overwrite a development install.
+ZZRENVCHECK_MIN  := v0.11.1
+ZZRENVCHECK_LOCK := $(shell sed -n 's/.*"tag": *"\(v[0-9][0-9.]*\)".*/\1/p' tooling.lock 2>/dev/null | head -1)
+ZZRENVCHECK_INSTALL := lock <- '$(ZZRENVCHECK_LOCK)'; min <- '$(ZZRENVCHECK_MIN)'; v <- function(x) package_version(sub('^v', '', x)); want <- if (nzchar(lock) && v(lock) >= v(min)) lock else min; if (nzchar(lock) && want != lock) message('tooling.lock records zzrenvcheck ', lock, ', older than the ', min, ' these targets need; using ', min, '. Rerun zzc docker to update tooling.lock.'); if (!requireNamespace('zzrenvcheck', quietly = TRUE) || utils::packageVersion('zzrenvcheck') < v(want)) { if (!requireNamespace('remotes', quietly = TRUE)) install.packages('remotes'); remotes::install_github(paste0('rgt47/zzrenvcheck@', want), upgrade = 'never') }
 
-check-renv-no-fix: ensure-zzrenvcheck ## Validate deps on host: report only, no modifications
-	$(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = FALSE, strict = TRUE)"
+ensure-zzrenvcheck: ## Install zzrenvcheck at or above the pinned tag (host R, else a tools library for the container)
+	@[ -f DESCRIPTION ] || exit 0; $(HOST_CHECK) "$(ZZRENVCHECK_INSTALL)"
 
-check-renv-no-strict: ensure-zzrenvcheck ## Validate deps on host: skip tests/ and vignettes/
-	$(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = FALSE)"
+# check-renv* are gates: they never edit DESCRIPTION or renv.lock and exit
+# nonzero on any finding, so they are safe in CI and pre-commit hooks.
+# fix-renv* repair the files (auto-fix) and fail only if issues remain.
+# $(call fix_hint,<target>) names the repair matching each check variant.
+fix_hint = { echo "Dependency check failed. To repair: make $(1) (edits DESCRIPTION and renv.lock; review the diff)." >&2; exit 1; }
+
+check-renv: ensure-zzrenvcheck ## Validate deps on host: strict, no edits; nonzero on failure
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = FALSE, strict = TRUE, error_on_fail = TRUE)" || $(call fix_hint,fix-renv)
+
+check-renv-no-strict: ensure-zzrenvcheck ## Validate deps on host, skipping tests/ and vignettes/; no edits
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = FALSE, strict = FALSE, error_on_fail = TRUE)" || $(call fix_hint,fix-renv-no-strict)
+
+check-renv-slim: ensure-zzrenvcheck ## Validate deps, skipping packages already in the image; no edits
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = FALSE, strict = TRUE, skip_image_pkgs = TRUE, error_on_fail = TRUE)" || $(call fix_hint,fix-renv-slim)
+
+check-renv-no-fix: check-renv ## Deprecated alias: check-renv no longer edits files
+	@echo "Note: check-renv-no-fix is deprecated; check-renv now validates without editing."
+
+fix-renv: ensure-zzrenvcheck ## Repair deps on host: strict auto-fix of DESCRIPTION and renv.lock
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE)"
+
+fix-renv-no-strict: ensure-zzrenvcheck ## Repair deps on host, skipping tests/ and vignettes/
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = FALSE)"
+
+fix-renv-slim: ensure-zzrenvcheck ## Repair deps, skipping packages already in the image
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE, skip_image_pkgs = TRUE)"
 
 snapshot: ensure-zzrenvcheck ## renv snapshot (container) then validate deps (host); run before commit
 	$(DOCKER_RUN) Rscript -e "renv::hydrate(); renv::snapshot(prompt = FALSE)"
-	$(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE)"
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE)"
 
 reset-lock: ensure-zzrenvcheck ## Rebuild renv.lock from a fresh host code scan, refreshing ALL versions
-	$(HOST_CHECK) "zzrenvcheck::check_packages(fresh = TRUE, strict = TRUE)"
+	@$(BARE_GUARD) $(HOST_CHECK) "zzrenvcheck::check_packages(fresh = TRUE, strict = TRUE, skip_image_pkgs = TRUE)"
 
 style: ## Format R code with styler (in container; needs code-quality enabled)
 	$(DOCKER_RUN) Rscript -e "styler::style_dir('R'); if (dir.exists('analysis')) styler::style_dir('analysis')"
 
-lint: ## Lint R code with lintr (in container; needs code-quality enabled)
-	$(DOCKER_RUN) Rscript -e "print(lintr::lint_dir('R')); if (dir.exists('analysis')) print(lintr::lint_dir('analysis'))"
+# lint is a gate: it exits nonzero when lintr reports anything, so it can
+# stand in CI or a pre-commit hook. lint-report prints the same listing
+# without failing.
+# Each directory's lints are printed on their own: c() on two lints objects
+# drops the class, and the listing then prints as a bare list.
+LINT_COLLECT := l <- lintr::lint_dir('R'); print(l); n <- length(l); if (dir.exists('analysis')) { la <- lintr::lint_dir('analysis'); print(la); n <- n + length(la) }
+
+lint: ## Lint R code with lintr (in container; nonzero if any lints)
+	$(DOCKER_RUN) Rscript -e "$(LINT_COLLECT); if (n > 0L) quit(status = 1)"
+
+lint-report: ## List lintr findings without failing (in container)
+	$(DOCKER_RUN) Rscript -e "$(LINT_COLLECT)"
 
 ##@ Main workflow (recommended)
 
-# Terminal: Interactive bash for vim editing.
+# Interactive R in the project container (make sh for a bash shell).
 # No check-renv prerequisite: that spins up a full container validation before
 # you get a shell, and a second validation already runs after the session.
 r: ## Interactive R session (Docker/Podman, nix, apptainer; host R fallback if no container)
@@ -118,8 +224,8 @@ r: ## Interactive R session (Docker/Podman, nix, apptainer; host R fallback if n
 		if [ ! -f $(SIF) ]; then \
 			echo "No $(SIF) found - build it first: make sif"; exit 1; \
 		fi; \
-		echo "📦 Apptainer: entering 'apptainer shell $(SIF)'..."; \
-		apptainer shell $(SIF); \
+		echo "📦 Apptainer: entering 'apptainer shell --no-home $(SIF)'..."; \
+		apptainer shell --no-home $(SIF); \
 		exit 0; \
 	fi; \
 	if [ -f flake.nix ]; then \
@@ -160,7 +266,7 @@ r: ## Interactive R session (Docker/Podman, nix, apptainer; host R fallback if n
 		echo "Run zzcollab to create a Docker environment:"; \
 		echo ""; \
 		echo "  zzcollab docker                            # default profile"; \
-		echo "  zzcollab docker --profile analysis         # tidyverse"; \
+		echo "  zzcollab docker --profile tidyverse        # tidyverse"; \
 		echo "  zzcollab docker --base-image rocker/verse  # LaTeX/Quarto via the rocker/verse base image"; \
 		echo ""; \
 		echo "See: zzcollab docker --help for all options"; \
@@ -169,37 +275,46 @@ r: ## Interactive R session (Docker/Podman, nix, apptainer; host R fallback if n
 	fi; \
 	echo "🔍 Checking workspace..."; \
 	BASE_IMAGE=$$(grep '^ARG BASE_IMAGE=' Dockerfile | head -1 | cut -d= -f2); \
-	PROFILE=$$(echo "$$BASE_IMAGE" | sed 's|.*/||; s|tidyverse|analysis|; s|verse|rocker/verse|; s|r-ver|minimal|'); \
+	PROFILE=$$(echo "$$BASE_IMAGE" | sed 's|.*/||; s|^verse$$|publishing|; s|^r-ver$$|minimal|'); \
 	USERNAME=$$(grep '^ARG USERNAME=' Dockerfile | head -1 | cut -d= -f2); \
 	USERNAME=$${USERNAME:-analyst}; \
 	HOME_DIR="/home/$$USERNAME"; \
 	echo "🐳 Starting R ($$PROFILE)..."; \
 	echo ""; \
-	mkdir -p $$HOME/.cache/R/renv 2>/dev/null || true; \
 	$(CONTAINER_RUNTIME) run --rm -it \
 		--platform $(PLATFORM) \
 		-v $$(pwd):$$HOME_DIR/project \
-		-v $$HOME/.cache/R/renv:/opt/renv/cache \
 		-w $$HOME_DIR/project \
 		-e KITTY_WINDOW_ID="$${KITTY_WINDOW_ID:-}" \
 		-e ITERM_SESSION_ID="$${ITERM_SESSION_ID:-}" \
 		-e TERM_PROGRAM="$${TERM_PROGRAM:-}" \
 		-e GHOSTTY_RESOURCES_DIR="$${GHOSTTY_RESOURCES_DIR:-}" \
 		-e WEZTERM_EXECUTABLE="$${WEZTERM_EXECUTABLE:-}" \
+		-e ZZCOLLAB_AUTO_SNAPSHOT=$(ZZCOLLAB_AUTO_SNAPSHOT) \
+		-e ZZCOLLAB_AUTO_RESTORE=false \
 		$(PACKAGE_NAME) R || true; \
 	echo ""; \
 	echo "📋 Post-session validation..."; \
-	if Rscript -e "quit(status = if(requireNamespace('zzrenvcheck', quietly=TRUE)) 0L else 1L)" 2>/dev/null; then \
-		Rscript -e "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE)" \
+	if [ ! -f DESCRIPTION ]; then \
+		echo "No DESCRIPTION (bare compendium): dependency check skipped."; \
+		touch /tmp/zzvim-r-hook-ran; \
+	elif [ -z "$(HOST_RSCRIPT)" ]; then \
+		echo "No R on the host: validating in the project container."; \
+		$(MAKE) --no-print-directory fix-renv || echo "⚠️  Package validation failed"; \
+		touch /tmp/zzvim-r-hook-ran; \
+	elif Rscript -e "quit(status = if(requireNamespace('zzrenvcheck', quietly=TRUE)) 0L else 1L)" 2>/dev/null; then \
+		Rscript -e "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE, skip_image_pkgs = TRUE)" \
 		|| echo "⚠️  Package validation failed"; \
+		touch /tmp/zzvim-r-hook-ran; \
 	else \
 		echo "zzrenvcheck not installed on host."; \
 		printf "Install now? [Y/n] "; \
 		read _ans; \
 		case "$$_ans" in \
 			[Nn]*) echo "Skipping validation." ;; \
-			*) Rscript -e "install.packages('remotes'); remotes::install_github('rgt47/zzrenvcheck', upgrade = 'never')" \
-			   && Rscript -e "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE)" \
+			*) Rscript -e "$(ZZRENVCHECK_INSTALL)" \
+			   && Rscript -e "zzrenvcheck::check_packages(auto_fix = TRUE, strict = TRUE, skip_image_pkgs = TRUE)" \
+			   && touch /tmp/zzvim-r-hook-ran \
 			   || echo "⚠️  Package validation failed" ;; \
 		esac; \
 	fi
@@ -207,11 +322,31 @@ r: ## Interactive R session (Docker/Podman, nix, apptainer; host R fallback if n
 		$(MAKE) test-container; \
 	fi
 
+# A bash shell in the same container as `make r`: run scripts with Rscript,
+# inspect files, or start R from the shell. SUBDIR (a path relative to the
+# project root, set by the `mr` helper) opens the shell in that folder.
+# R_PROFILE_USER points R at the root .Rprofile, which R otherwise skips
+# when started in a subfolder; the profile anchors itself to that root.
+sh: ## Interactive bash shell in the project container
+	@if [ "$(CONTAINER_RUNTIME)" = apptainer ]; then \
+		[ -f $(SIF) ] || { echo "No $(SIF) found - build it first: make sif"; exit 1; }; \
+		R_PROFILE_USER="$(CURDIR)/.Rprofile" exec apptainer shell --no-home --pwd "$(CURDIR)$(if $(SUBDIR),/$(SUBDIR))" $(SIF); \
+	fi; \
+	$(CONTAINER_RUNTIME) image inspect $(PACKAGE_NAME) >/dev/null 2>&1 || \
+		{ echo "Container image '$(PACKAGE_NAME)' not built: run 'make docker-build' first."; exit 1; }; \
+	$(CONTAINER_RUNTIME) run --rm -it --platform $(PLATFORM) \
+		-v "$(CURDIR)":$(CONTAINER_HOME)/project \
+		-w "$(CONTAINER_HOME)/project$(if $(SUBDIR),/$(SUBDIR))" \
+		-e ZZ_HOST_ROOT="$(CURDIR)" -e TZ="$(HOST_TZ)" \
+		-e R_PROFILE_USER="$(CONTAINER_HOME)/project/.Rprofile" \
+		-e ZZCOLLAB_AUTO_SNAPSHOT=$(ZZCOLLAB_AUTO_SNAPSHOT) \
+		$(PACKAGE_NAME) bash
+
 docker-rstudio: ## RStudio Server at http://localhost:8787
 	@echo "Starting RStudio Server on http://localhost:8787"
 	@echo "Username: rstudio, Password: rstudio"
 	@echo "Terminal available for code editing with vim"
-	$(CONTAINER_RUNTIME) run --rm -it -p 8787:8787 -v $$(pwd):/home/rstudio/project $(PACKAGE_NAME) /init
+	$(CONTAINER_RUNTIME) run --rm -it --platform $(PLATFORM) -p 8787:8787 -e ZZCOLLAB_AUTO_SNAPSHOT=$(ZZCOLLAB_AUTO_SNAPSHOT) -v $$(pwd):/home/rstudio/project $(PACKAGE_NAME) /init
 
 # Alias for rstudio
 rstudio: docker-rstudio ## Alias for docker-rstudio
@@ -233,8 +368,13 @@ install: document ## devtools::install
 vignettes: document ## Build vignettes
 	$(R_RUN) R --quiet -e "devtools::build_vignettes()"
 
-test: ## Run the tinytest suite
-	$(R_RUN) R --quiet -e "tinytest::run_test_dir('inst/tinytest')"
+# tinytest::run_test_dir() returns its results rather than signalling
+# failure, so R exits 0 even when assertions fail. Exit nonzero on any
+# failed assertion, so test targets (and `zzc verify --full`) are gates.
+TINYTEST_RUN := r <- tinytest::run_test_dir('inst/tinytest'); print(r); if (length(r) == 0L) { message('No expectations ran'); quit(status = 1) }; if (!all(as.logical(r))) quit(status = 1)
+
+test: ## Run the tinytest suite (exits nonzero on any failure)
+	$(R_RUN) R --quiet -e "$(TINYTEST_RUN)"
 
 deps: ## Install package dependencies
 	$(R_RUN) R --quiet -e "devtools::install_deps(dependencies = TRUE)"
@@ -253,14 +393,23 @@ check-binaries: ## Audit renv.lock for missing system deps (pre-build)
 		echo "  tools/check-binaries.py not found, skipping audit"; \
 	fi
 
+# The CLI is installed as `zzcollab`, `zzc`, or both. Shell aliases are not
+# visible to make, so look for either on PATH; override with ZZCOLLAB=path.
+ZZCOLLAB ?= $(shell command -v zzcollab 2>/dev/null || command -v zzc 2>/dev/null)
+ZZCOLLAB_CHECK = @[ -n "$(ZZCOLLAB)" ] || \
+	{ echo "zzcollab CLI not found on PATH (tried 'zzcollab' and 'zzc'); set ZZCOLLAB=/path/to/zzcollab.sh" >&2; exit 1; }
+
 docker-build: check-binaries ## Pre-build audit then build image from renv.lock
-	zzcollab rebuild
+	$(ZZCOLLAB_CHECK)
+	$(BUILD_PLATFORM_ENV) "$(ZZCOLLAB)" rebuild
 
 docker-rebuild: ## Rebuild image without cache (force fresh build)
-	zzcollab rebuild --no-cache
+	$(ZZCOLLAB_CHECK)
+	$(BUILD_PLATFORM_ENV) "$(ZZCOLLAB)" rebuild --no-cache
 
 docker-build-log: ## Build image with detailed logs (for debugging)
-	zzcollab rebuild --log
+	$(ZZCOLLAB_CHECK)
+	$(BUILD_PLATFORM_ENV) "$(ZZCOLLAB)" rebuild --log
 
 ##@ Apptainer (HPC)
 
@@ -282,8 +431,8 @@ docker-build-pkg: docker-document ## R CMD build in the container
 docker-check: docker-build-pkg ## R CMD check in the container
 	$(DOCKER_RUN) R CMD check --as-cran *.tar.gz
 
-docker-test: ## Run tinytest in the container (uncached)
-	$(DOCKER_RUN) R --quiet -e "tinytest::run_test_dir('inst/tinytest')"
+docker-test: ## Run tinytest in the container (uncached; nonzero on failure)
+	$(DOCKER_RUN) R --quiet -e "$(TINYTEST_RUN)"
 
 # Cached tinytest target. Re-runs only when R sources, test files, or
 # renv.lock change since the last passing run. Add .make/ to .gitignore.
@@ -296,10 +445,11 @@ TEST_SOURCES := $(wildcard R/*.R) $(wildcard inst/tinytest/*.R)
 		-v "$(CURDIR)":$(CONTAINER_HOME)/project \
 		-w $(CONTAINER_HOME)/project \
 		-e ZZCOLLAB_CONTAINER=true \
+		-e ZZCOLLAB_AUTO_SNAPSHOT=$(ZZCOLLAB_AUTO_SNAPSHOT) \
 		$(PACKAGE_NAME) \
-		Rscript -e "if (dir.exists('inst/tinytest')) \
-		  tinytest::run_test_dir('inst/tinytest') \
-		  else message('No inst/tinytest -- skipping')"
+		Rscript -e "if (dir.exists('inst/tinytest')) { \
+		  $(TINYTEST_RUN) \
+		  } else message('No inst/tinytest -- skipping')"
 	@touch $@
 
 test-container: .make/tests-passed ## Run tinytest in the container (cached by make)
@@ -307,25 +457,35 @@ test-container: .make/tests-passed ## Run tinytest in the container (cached by m
 docker-vignettes: docker-document ## Build vignettes in the container
 	$(DOCKER_RUN) R --quiet -e "devtools::build_vignettes()"
 
+# Rendering goes through tools/render.sh, not rmarkdown::render directly.
+# rmarkdown::render ignores the document's knit: field, so calling it here
+# would silently skip the provenance stamp and the staged copy in share/.
+# render.sh calls rmarkdown::render internally, so the output is unchanged.
 docker-render: ## Render REPORT (default analysis/report/report.Rmd)
-	$(DOCKER_RUN) R --quiet -e "rmarkdown::render('$(REPORT)')"
+	$(DOCKER_RUN) bash tools/render.sh "$(REPORT)"
 
 # Run an arbitrary R script in the container (used by zzcollab::run_script)
 docker-script:
 	$(DOCKER_RUN) Rscript -e "source('$(SCRIPT)')"
 
-docker-render-qmd: ## Render the Quarto report (analysis/report/index.qmd)
-	$(DOCKER_RUN) quarto render analysis/report/index.qmd
+docker-render-qmd: ## Render the report (default: analysis/report/index.qmd or report.Rmd); FILE=path FORMAT=pdf|html|... to override
+	$(DOCKER_RUN) quarto render $(REPORT_DOC) $(if $(FORMAT),--to $(FORMAT))
+
+docker-render-qmd-pdf: ## Render report to PDF; FILE=path to override default
+	$(MAKE) docker-render-qmd FORMAT=pdf FILE=$(FILE)
+
+docker-render-qmd-html: ## Render report to HTML; FILE=path to override default
+	$(MAKE) docker-render-qmd FORMAT=html FILE=$(FILE)
 
 docker-render-book: ## Render the Quarto book (archetype: book -> analysis/report/)
 	$(DOCKER_RUN) quarto render analysis/report
 
 # Back-compat aliases. docker-check-renv is invoked by zzcollab::run_script;
-# both are identical to check-renv-no-fix and check-renv respectively, so they
-# delegate rather than duplicate the docker run command.
-docker-check-renv: check-renv-no-fix ## Validate deps in container (alias)
+# they are identical to check-renv and fix-renv respectively, so they
+# delegate rather than duplicate the command.
+docker-check-renv: check-renv ## Validate deps (alias of check-renv)
 
-docker-check-renv-fix: check-renv
+docker-check-renv-fix: fix-renv ## Repair deps (alias of fix-renv)
 
 ##@ Team images
 
@@ -423,4 +583,4 @@ docker-prune-all: ## Deep clean all unused Docker resources (system-wide)
 	@echo "✅ Docker cleanup complete"
 	@$(MAKE) docker-disk-usage
 
-.PHONY: document build check install vignettes test deps snapshot reset-lock ensure-zzrenvcheck style lint check-renv check-renv-no-fix check-renv-no-strict check-binaries docker-build docker-rebuild docker-build-log docker-push-team docker-pull-team docker-document docker-build-pkg docker-check docker-test docker-vignettes docker-render docker-script docker-render-qmd docker-render-book docker-rstudio rstudio r test-container docker-check-renv docker-check-renv-fix hash-data verify-data clean docker-clean docker-disk-usage docker-prune-cache docker-prune-all help
+.PHONY: document build check install vignettes test deps snapshot reset-lock ensure-zzrenvcheck style lint lint-report check-renv check-renv-no-fix check-renv-no-strict check-renv-slim fix-renv fix-renv-no-strict fix-renv-slim check-binaries docker-build docker-rebuild docker-build-log docker-push-team docker-pull-team docker-document docker-build-pkg docker-check docker-test docker-vignettes docker-render docker-script docker-render-qmd docker-render-qmd-pdf docker-render-qmd-html docker-render-book docker-rstudio rstudio r sh test-container docker-check-renv docker-check-renv-fix hash-data verify-data clean docker-clean docker-disk-usage docker-prune-cache docker-prune-all help
